@@ -10,9 +10,14 @@ import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.shared.events.ShopCreatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,12 +43,15 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@CacheConfig(cacheNames = "shops")
 public class ShopService {
 
     private final ShopRepository shopRepository;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ShopStatusStateMachine stateMachine;
 
     /**
      * Creates a new shop with automatic tenant ID generation.
@@ -93,6 +101,9 @@ public class ShopService {
         auditService.logEntityCreation("Shop", shop.getId(),
             "Shop created: " + shop.getName() + " with tenant ID: " + tenant.getId());
 
+        // Publish shop created event
+        eventPublisher.publishEvent(new ShopCreatedEvent(shop.getId(), tenant.getId(), shop.getName()));
+
         log.info("Successfully created shop with ID: {} and tenant ID: {}", shop.getId(), tenant.getId());
         return ShopResponse.fromEntity(shop);
     }
@@ -112,6 +123,7 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional
+    @CacheEvict(key = "#shopId")
     public ShopResponse updateShop(String shopId, ShopUpdateRequest request) {
         log.info("Updating shop: {}", shopId);
 
@@ -155,6 +167,7 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional(readOnly = true)
+    @Cacheable(key = "#shopId", condition = "#shopId != null")
     public ShopResponse getShop(String shopId) {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
@@ -201,6 +214,7 @@ public class ShopService {
      * @return List of active shop response DTOs
      */
     @Transactional(readOnly = true)
+    @Cacheable(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
     public List<ShopResponse> getActiveShops() {
         String currentTenantId = TenantContext.getCurrentTenantId();
 
@@ -231,6 +245,7 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or invalid status transition
      */
     @Transactional
+    @CacheEvict(key = "#shopId")
     public ShopResponse changeShopStatus(String shopId, Shop.ShopStatus newStatus) {
         log.info("Changing shop status: {} to {}", shopId, newStatus);
 
@@ -245,8 +260,8 @@ public class ShopService {
 
         Shop.ShopStatus originalStatus = shop.getStatus();
 
-        // Validate status transition
-        validateStatusTransition(originalStatus, newStatus);
+        // Validate status transition using state machine
+        stateMachine.validateTransition(originalStatus, newStatus, shopId);
 
         shop.setStatus(newStatus);
         shop = shopRepository.save(shop);
@@ -335,29 +350,4 @@ public class ShopService {
         return tenantRepository.save(tenant);
     }
 
-    /**
-     * Validates if a status transition is allowed based on business rules.
-     *
-     * @param currentStatus Current shop status
-     * @param newStatus Desired new status
-     * @throws IllegalArgumentException if transition is not allowed
-     */
-    private void validateStatusTransition(Shop.ShopStatus currentStatus, Shop.ShopStatus newStatus) {
-        // Business rules for status transitions
-        switch (currentStatus) {
-            case CLOSED:
-                throw new IllegalArgumentException("Cannot change status of closed shop");
-            case SUSPENDED:
-                if (newStatus == Shop.ShopStatus.CLOSED) {
-                    throw new IllegalArgumentException("Cannot close suspended shop directly - must reactivate first");
-                }
-                break;
-            case INACTIVE:
-                // Inactive shops can transition to any status
-                break;
-            case ACTIVE:
-                // Active shops can transition to any status
-                break;
-        }
-    }
 }

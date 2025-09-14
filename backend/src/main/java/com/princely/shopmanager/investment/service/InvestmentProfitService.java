@@ -1,7 +1,9 @@
 package com.princely.shopmanager.investment.service;
 
+import com.princely.shopmanager.investment.config.ProfitCalculationConfig;
 import com.princely.shopmanager.investment.domain.Investment;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
+import com.princely.shopmanager.investment.dto.ProfitCalculationResult;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
@@ -31,6 +33,7 @@ public class InvestmentProfitService {
     private final InvestorDistributionRepository distributionRepository;
     private final SalesTransactionRepository salesTransactionRepository;
     private final AuditService auditService;
+    private final ProfitCalculationConfig profitConfig;
 
     @Transactional(readOnly = true)
     public List<InvestorDistribution> calculateProfitDistributions(LocalDateTime periodStart, LocalDateTime periodEnd) {
@@ -71,7 +74,7 @@ public class InvestmentProfitService {
         // Calculate sales and profit for the period
         ProfitCalculationResult result = calculateProfitForInvestment(investment, periodStart, periodEnd);
 
-        if (result.totalProfit().compareTo(BigDecimal.ZERO) <= 0) {
+        if (result.netProfit().compareTo(BigDecimal.ZERO) <= 0) {
             log.debug("No profit to distribute for investment {} in period {} to {}",
                 investment.getId(), periodStart, periodEnd);
             return Optional.empty();
@@ -79,7 +82,7 @@ public class InvestmentProfitService {
 
         // Calculate investor's share
         BigDecimal investorSharePercentage = calculateInvestorSharePercentage(investment);
-        BigDecimal investorProfitAmount = result.totalProfit()
+        BigDecimal investorProfitAmount = result.netProfit()
             .multiply(investorSharePercentage)
             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
@@ -89,7 +92,7 @@ public class InvestmentProfitService {
             .periodStart(periodStart)
             .periodEnd(periodEnd)
             .totalSalesRevenue(result.totalRevenue())
-            .totalProfit(result.totalProfit())
+            .totalProfit(result.netProfit())
             .investorSharePercentage(investorSharePercentage)
             .investorProfitAmount(investorProfitAmount)
             .distributionAmount(investorProfitAmount)
@@ -145,11 +148,32 @@ public class InvestmentProfitService {
             default -> totalRevenue = BigDecimal.ZERO;
         }
 
-        // Apply profit margin (configurable, default 30%)
-        BigDecimal profitMargin = BigDecimal.valueOf(0.30); // 30% profit margin
-        BigDecimal totalProfit = totalRevenue.multiply(profitMargin);
+        return calculateProfitForInvestment(investment, totalRevenue);
+    }
 
-        return new ProfitCalculationResult(totalRevenue, totalProfit);
+    private ProfitCalculationResult calculateProfitForInvestment(Investment investment, BigDecimal totalRevenue) {
+        // Calculate operational costs
+        BigDecimal operationalCosts = totalRevenue.multiply(profitConfig.getOperationalCostPercentage());
+
+        // Get profit margin (use category-specific if available)
+        BigDecimal profitMargin = getProfitMarginForInvestment(investment);
+
+        // Calculate gross and net profit
+        BigDecimal grossProfit = totalRevenue.subtract(operationalCosts);
+        BigDecimal netProfit = grossProfit.multiply(profitMargin);
+
+        return new ProfitCalculationResult(totalRevenue, grossProfit, netProfit, operationalCosts);
+    }
+
+    private BigDecimal getProfitMarginForInvestment(Investment investment) {
+        // For product-specific investments, use category-specific margins if available
+        if (investment.getInvestmentType() == Investment.InvestmentType.PRODUCT_SPECIFIC &&
+            !investment.getProducts().isEmpty()) {
+            String categoryId = investment.getProducts().iterator().next().getCategory().getId();
+            return profitConfig.getProfitMarginForCategory(categoryId);
+        }
+
+        return profitConfig.getDefaultProfitMargin();
     }
 
     private BigDecimal calculateInvestorSharePercentage(Investment investment) {
@@ -187,7 +211,7 @@ public class InvestmentProfitService {
             investment.getInvestmentType(),
             investment.getProfitSharingModel(),
             result.totalRevenue(),
-            result.totalProfit(),
+            result.netProfit(),
             sharePercentage
         );
     }
@@ -264,5 +288,4 @@ public class InvestmentProfitService {
         return distributionRepository.findByShopAndStatus(shopId, status);
     }
 
-    private record ProfitCalculationResult(BigDecimal totalRevenue, BigDecimal totalProfit) {}
 }

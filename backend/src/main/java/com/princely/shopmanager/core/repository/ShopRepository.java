@@ -34,4 +34,36 @@ public interface ShopRepository extends JpaRepository<Shop, String> {
     Page<Shop> findByTenant_Id(String tenantId, Pageable pageable);
 
     List<Shop> findByTenant_IdAndStatus(String tenantId, Shop.ShopStatus status);
+
+    // Optimized queries with fetch joins to avoid N+1 problems
+    @Query("""
+        SELECT s FROM Shop s
+        LEFT JOIN FETCH s.products p
+        LEFT JOIN FETCH s.tenant t
+        WHERE s.id = :shopId
+        """)
+    Optional<Shop> findByIdWithDetails(@Param("shopId") String shopId);
+
+    @Query("""
+        SELECT s FROM Shop s
+        LEFT JOIN FETCH s.tenant t
+        WHERE s.tenant.id = :tenantId AND s.status = :status
+        """)
+    List<Shop> findByTenantIdAndStatusWithDetails(@Param("tenantId") String tenantId, @Param("status") Shop.ShopStatus status);
+
+    @Query("""
+        SELECT s FROM Shop s
+        LEFT JOIN FETCH s.products p
+        LEFT JOIN FETCH p.category c
+        WHERE s.id = :shopId
+        """)
+    Optional<Shop> findByIdWithProductsAndCategories(@Param("shopId") String shopId);
+
+    @Query("""
+        SELECT s FROM Shop s
+        LEFT JOIN FETCH s.tenant t
+        WHERE s.status = 'ACTIVE'
+        ORDER BY s.createdAt DESC
+        """)
+    List<Shop> findActiveShopsWithTenant();
 }

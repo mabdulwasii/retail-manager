@@ -13,13 +13,19 @@ import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
+import com.princely.shopmanager.inventory.repository.InventorySpecifications;
+import com.princely.shopmanager.shared.events.InventoryLowStockEvent;
+import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +46,7 @@ public class InventoryService {
     private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public InventoryResponse createInventory(InventoryCreateRequest request) {
         String shopId = TenantContext.getCurrentTenant();
@@ -225,7 +232,132 @@ public class InventoryService {
         auditService.logEntityModification("Inventory", inventory.getId(),
             String.format("Status changed from %s to %s", previousStatus, status));
 
+        // Publish inventory updated event
+        eventPublisher.publishEvent(new InventoryUpdatedEvent(
+            inventory.getId(),
+            inventory.getProduct().getId(),
+            inventory.getShop().getId(),
+            previousStatus.ordinal(),
+            status.ordinal(),
+            "STATUS_CHANGE"
+        ));
+
         return mapToResponse(inventory);
+    }
+
+    // Advanced Inventory Management Features
+
+    @Scheduled(fixedRate = 3600000) // Every hour
+    @ConditionalOnProperty(name = "features.inventory.auto-reorder.enabled", havingValue = "true", matchIfMissing = false)
+    public void processAutomaticReorders() {
+        log.info("Processing automatic reorders for low stock items");
+
+        List<Inventory> lowStockItems = inventoryRepository.findAll(
+            InventorySpecifications.hasLowStock()
+        );
+
+        for (Inventory inventory : lowStockItems) {
+            if (isAutoReorderEnabled(inventory)) {
+                createReorderSuggestion(inventory);
+
+                // Publish low stock event
+                eventPublisher.publishEvent(new InventoryLowStockEvent(
+                    inventory.getId(),
+                    inventory.getProduct().getName(),
+                    inventory.getShop().getId(),
+                    inventory.getAvailableStock(),
+                    inventory.getMinimumStock()
+                ));
+            }
+        }
+    }
+
+    public void forecastDemand(String productId, int forecastDays) {
+        log.info("Forecasting demand for product {} for {} days", productId, forecastDays);
+
+        // Note: This is a placeholder implementation
+        // In a real system, this would integrate with historical sales data
+        // and use machine learning algorithms for demand forecasting
+
+        List<Inventory> productInventories = inventoryRepository.findAll(
+            InventorySpecifications.forProduct(productId)
+        );
+
+        for (Inventory inventory : productInventories) {
+            // Simple demand forecasting based on current consumption rate
+            int currentStock = inventory.getAvailableStock();
+            int minimumStock = inventory.getMinimumStock();
+
+            // Calculate suggested reorder point
+            int suggestedReorderPoint = Math.max(minimumStock,
+                (int) (currentStock * 0.2 * forecastDays / 30.0));
+
+            if (suggestedReorderPoint != inventory.getReorderPoint()) {
+                updateReorderPoint(inventory.getId(), suggestedReorderPoint);
+            }
+        }
+    }
+
+    private boolean isAutoReorderEnabled(Inventory inventory) {
+        // In a real implementation, this would check inventory or product configuration
+        // For now, assume auto-reorder is enabled for all items
+        return true;
+    }
+
+    private void createReorderSuggestion(Inventory inventory) {
+        log.info("Creating reorder suggestion for inventory {}", inventory.getId());
+
+        // Calculate suggested reorder quantity
+        int suggestedQuantity = Math.max(
+            inventory.getMaximumStock() - inventory.getAvailableStock(),
+            inventory.getMinimumStock() * 2
+        );
+
+        // Log the reorder suggestion
+        auditService.logEntityModification("Inventory", inventory.getId(),
+            String.format("Reorder suggestion created: %d units (current stock: %d, minimum: %d)",
+                suggestedQuantity, inventory.getAvailableStock(), inventory.getMinimumStock()));
+
+        // In a real implementation, this would create a purchase order or notification
+        // For now, we just log it
+        log.info("Reorder suggestion: {} units of {} for shop {}",
+            suggestedQuantity, inventory.getProduct().getName(), inventory.getShop().getName());
+    }
+
+    private void updateReorderPoint(String inventoryId, int newReorderPoint) {
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+
+        int oldReorderPoint = inventory.getReorderPoint();
+        inventory.setReorderPoint(newReorderPoint);
+        inventoryRepository.save(inventory);
+
+        auditService.logEntityModification("Inventory", inventory.getId(),
+            String.format("Reorder point updated from %d to %d", oldReorderPoint, newReorderPoint));
+    }
+
+    @Transactional(readOnly = true)
+    public List<InventoryResponse> findInventoryBySpecification(Specification<Inventory> spec) {
+        return inventoryRepository.findAll(spec)
+            .stream()
+            .map(this::mapToResponse)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InventoryResponse> findLowStockItems(String shopId) {
+        return findInventoryBySpecification(
+            InventorySpecifications.forShop(shopId)
+                .and(InventorySpecifications.hasLowStock())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<InventoryResponse> findExpiringItems(String shopId, int daysThreshold) {
+        return findInventoryBySpecification(
+            InventorySpecifications.forShop(shopId)
+                .and(InventorySpecifications.expiresWithinDays(daysThreshold))
+        );
     }
 
     private void recordHistoryEntry(Inventory inventory, InventoryHistory.ChangeType changeType,
