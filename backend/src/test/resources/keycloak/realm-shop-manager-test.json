@@ -1,0 +1,69 @@
+{
+  "realm": "shop-manager",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 900,
+  "clients": [
+    {
+      "clientId": "shop-manager-backend",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "test-secret",
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "standardFlowEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "test-user",
+      "enabled": true,
+      "email": "test@shopmanager.com",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"],
+      "clientRoles": {
+        "shop-manager-backend": ["SHOP_OWNER", "SHOP_MANAGER"]
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "user"
+      }
+    ],
+    "client": {
+      "shop-manager-backend": [
+        {
+          "name": "SHOP_OWNER"
+        },
+        {
+          "name": "SHOP_MANAGER"
+        },
+        {
+          "name": "SHOP_ADMIN"
+        },
+        {
+          "name": "CASHIER"
+        }
+      ]
+    }
+  }
+}

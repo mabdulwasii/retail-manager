@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: shop
+          POSTGRES_PASSWORD: shop
+          POSTGRES_DB: shopdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shop" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build and run unit tests
+        run: ./mvnw -DskipTests=false test
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository_owner }}/shop-manager:latest ./backend
+      - name: Run integration tests (Testcontainers)
+        run: ./mvnw -DskipTests=false verify -Pintegration-tests
