@@ -67,6 +67,7 @@ public class ShopCreateRequest {
 
     @Schema(description = "Contact phone number", example = "+1-555-123-4567")
     @Size(max = MAX_PHONE_LENGTH, message = "Phone number must not exceed " + MAX_PHONE_LENGTH + " characters")
+    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
     private String phoneNumber;
 
     @Schema(description = "Contact email address", example = "contact@downtownelectronics.com", required = true)
