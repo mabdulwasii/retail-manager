@@ -328,8 +328,601 @@ backend/
 **Next Steps**: Frontend development, CI/CD pipeline, and production deployment.
 
 
+## Java Development Best Practices
+
+### Code Style and Standards
+- **Naming Conventions**: Follow Java naming conventions strictly
+  - Classes: PascalCase (`UserService`, `ProductRepository`)
+  - Methods/Variables: camelCase (`getUserById`, `totalAmount`)
+  - Constants: UPPER_SNAKE_CASE (`MAX_RETRY_ATTEMPTS`, `DEFAULT_TIMEOUT`)
+  - Packages: lowercase with dots (`com.princely.shopmanager.core`)
+
+- **Method Design**:
+  - Keep methods short and focused (max 20-30 lines)
+  - Use descriptive method names that explain intent
+  - Prefer composition over inheritance
+  - Follow Single Responsibility Principle (SRP)
+
+```java
+// Good - descriptive and focused
+public boolean isEligibleForDiscount(Customer customer, Order order) {
+    return customer.isPremium() && order.getTotal().compareTo(MIN_ORDER_AMOUNT) >= 0;
+}
+
+// Avoid - vague naming and multiple responsibilities
+public boolean check(Customer c, Order o) { /* ... */ }
+```
+
+### Modern Java Features (Java 21)
+- **Records**: Use for immutable data transfer objects
+```java
+public record ShopSummary(String id, String name, BigDecimal revenue, int productCount) {}
+```
+
+- **Pattern Matching**: Leverage switch expressions and pattern matching
+```java
+public String getStatusMessage(OrderStatus status) {
+    return switch (status) {
+        case PENDING -> "Order is being processed";
+        case CONFIRMED -> "Order confirmed and ready";
+        case SHIPPED -> "Order is on the way";
+        case DELIVERED -> "Order delivered successfully";
+        case CANCELLED -> "Order has been cancelled";
+    };
+}
+```
+
+- **Optional**: Use properly to handle null values
+```java
+// Good - clear intent and proper handling
+public Optional<User> findUserByEmail(String email) {
+    return userRepository.findByEmail(email);
+}
+
+// Usage with proper handling
+userService.findUserByEmail(email)
+    .ifPresentOrElse(
+        user -> processUser(user),
+        () -> handleUserNotFound(email)
+    );
+```
+
+### Exception Handling
+- Create domain-specific exceptions with meaningful messages
+- Use exception hierarchy to categorize errors
+- Include context information in exceptions
+
+```java
+// Domain-specific exceptions
+public abstract class ShopManagerException extends RuntimeException {
+    private final String errorCode;
+    
+    protected ShopManagerException(String errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+    
+    public String getErrorCode() { return errorCode; }
+}
+
+public class InsufficientInventoryException extends ShopManagerException {
+    public InsufficientInventoryException(String productId, int requested, int available) {
+        super("INSUFFICIENT_INVENTORY", 
+              String.format("Product %s: requested %d, available %d", productId, requested, available));
+    }
+}
+```
+
+### Immutability and Thread Safety
+- Prefer immutable objects when possible
+- Use `final` for fields that shouldn't change
+- Consider thread safety in shared components
+
+```java
+// Immutable value object
+public final class Money {
+    private final BigDecimal amount;
+    private final Currency currency;
+    
+    public Money(BigDecimal amount, Currency currency) {
+        this.amount = Objects.requireNonNull(amount);
+        this.currency = Objects.requireNonNull(currency);
+    }
+    
+    // Only getters, no setters
+    public BigDecimal getAmount() { return amount; }
+    public Currency getCurrency() { return currency; }
+}
+```
+
+## Spring Boot Best Practices
+
+### Configuration Management
+- Use `@ConfigurationProperties` for structured configuration
+- Leverage profiles for different environments
+- Externalize all environment-specific values
+
+```java
+@ConfigurationProperties(prefix = "app.business")
+@Data
+@Validated
+public class BusinessConfiguration {
+    @NotNull
+    @DecimalMin("0.0")
+    private BigDecimal defaultTaxRate = BigDecimal.valueOf(0.08);
+    
+    @NotEmpty
+    private Map<String, BigDecimal> categoryTaxRates = new HashMap<>();
+    
+    @Min(1)
+    private int maxRetryAttempts = 3;
+}
+```
+
+### Dependency Injection Best Practices
+- Prefer constructor injection over field injection
+- Use `@RequiredArgsConstructor` with Lombok for cleaner code
+- Keep dependencies minimal and focused
+
+```java
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class OrderService {
+    private final OrderRepository orderRepository;
+    private final InventoryService inventoryService;
+    private final PaymentService paymentService;
+    private final ApplicationEventPublisher eventPublisher;
+    
+    // Clean constructor injection with Lombok
+}
+```
+
+### REST API Design
+- Follow RESTful principles and HTTP status codes
+- Use proper HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- Implement consistent error responses
+- Version your APIs properly
+
+```java
+@RestController
+@RequestMapping("/api/v1/shops/{shopId}/products")
+@RequiredArgsConstructor
+@Validated
+public class ProductController {
+    
+    @GetMapping
+    public ResponseEntity<PagedResponse<ProductResponse>> getProducts(
+            @PathVariable @NotBlank String shopId,
+            @Valid ProductSearchRequest request,
+            Pageable pageable) {
+        // Implementation
+    }
+    
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(
+            @PathVariable @NotBlank String shopId,
+            @Valid @RequestBody CreateProductRequest request) {
+        // Implementation
+    }
+}
+```
+
+### Service Layer Architecture
+- Keep services focused on business logic
+- Use transactions appropriately
+- Implement proper error handling and logging
+
+```java
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+@Slf4j
+public class ShopService {
+    
+    @Transactional
+    public ShopResponse createShop(CreateShopRequest request) {
+        log.info("Creating shop: {}", request.getName());
+        
+        try {
+            // Validate business rules
+            validateShopCreation(request);
+            
+            // Create and save entity
+            Shop shop = shopMapper.toEntity(request);
+            shop = shopRepository.save(shop);
+            
+            // Publish domain event
+            eventPublisher.publishEvent(new ShopCreatedEvent(shop.getId(), shop.getName()));
+            
+            log.info("Shop created successfully: {}", shop.getId());
+            return shopMapper.toResponse(shop);
+            
+        } catch (Exception e) {
+            log.error("Failed to create shop: {}", request.getName(), e);
+            throw new ShopCreationException("Failed to create shop", e);
+        }
+    }
+}
+```
+
+### Data Access Patterns
+- Use repository pattern effectively
+- Implement specifications for complex queries
+- Optimize database queries with proper indexing
+
+```java
+@Repository
+public interface ShopRepository extends JpaRepository<Shop, String>, JpaSpecificationExecutor<Shop> {
+    
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.products WHERE s.id = :id")
+    Optional<Shop> findByIdWithProducts(@Param("id") String id);
+    
+    @Query(value = "SELECT * FROM shops WHERE tenant_id = :tenantId AND status = 'ACTIVE'", 
+           nativeQuery = true)
+    List<Shop> findActiveShopsByTenant(@Param("tenantId") String tenantId);
+}
+
+// Specifications for complex queries
+public class ShopSpecifications {
+    public static Specification<Shop> hasStatus(ShopStatus status) {
+        return (root, query, cb) -> cb.equal(root.get("status"), status);
+    }
+    
+    public static Specification<Shop> belongsToTenant(String tenantId) {
+        return (root, query, cb) -> cb.equal(root.get("tenantId"), tenantId);
+    }
+}
+```
+
+### Caching Strategy
+- Use Spring Cache abstraction
+- Implement proper cache eviction strategies
+- Monitor cache hit rates and performance
+
+```java
+@Service
+@CacheConfig(cacheNames = "shops")
+@RequiredArgsConstructor
+public class ShopCacheService {
+    
+    @Cacheable(key = "#shopId", unless = "#result == null")
+    public Optional<ShopResponse> getShop(String shopId) {
+        return shopService.findById(shopId);
+    }
+    
+    @CacheEvict(key = "#shopId")
+    public void evictShop(String shopId) {
+        // Cache eviction handled automatically
+    }
+    
+    @CacheEvict(allEntries = true)
+    public void evictAllShops() {
+        // Clear entire cache
+    }
+}
+```
+
+## React/TypeScript Frontend Best Practices
+
+### Component Architecture
+- Use functional components with hooks
+- Keep components small and focused
+- Implement proper prop types with TypeScript
+
+```typescript
+// Strong typing for props
+interface ProductCardProps {
+  product: Product;
+  onAddToCart: (productId: string, quantity: number) => void;
+  showActions?: boolean;
+  className?: string;
+}
+
+export const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  onAddToCart,
+  showActions = true,
+  className
+}) => {
+  const [quantity, setQuantity] = useState(1);
+  
+  const handleAddToCart = useCallback(() => {
+    onAddToCart(product.id, quantity);
+  }, [product.id, quantity, onAddToCart]);
+  
+  return (
+    <div className={cn("product-card", className)}>
+      {/* Component implementation */}
+    </div>
+  );
+};
+```
+
+### State Management
+- Use React Context for global state
+- Implement custom hooks for business logic
+- Consider state management libraries (Redux Toolkit, Zustand) for complex state
+
+```typescript
+// Context for authentication
+interface AuthContextType {
+  user: User | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Custom hook for business logic
+export const useShopData = (shopId: string) => {
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchShop = async () => {
+      try {
+        setIsLoading(true);
+        const response = await shopService.getShop(shopId);
+        setShop(response);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchShop();
+  }, [shopId]);
+  
+  return { shop, isLoading, error, refetch: () => fetchShop() };
+};
+```
+
+### TypeScript Best Practices
+- Define comprehensive interfaces for all data structures
+- Use strict TypeScript configuration
+- Leverage utility types and generics
+
+```typescript
+// Domain types
+export interface Shop {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address: Address;
+  status: ShopStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// API response types
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+}
+
+export interface PagedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    size: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Generic service types
+export interface CrudService<T, K = string> {
+  getAll: () => Promise<T[]>;
+  getById: (id: K) => Promise<T>;
+  create: (data: Omit<T, 'id'>) => Promise<T>;
+  update: (id: K, data: Partial<T>) => Promise<T>;
+  delete: (id: K) => Promise<void>;
+}
+```
+
+### Performance Optimization
+- Use React.memo for component memoization
+- Implement proper key props for lists
+- Optimize bundle size with code splitting
+
+```typescript
+// Memoized component
+export const ProductList = React.memo<ProductListProps>(({
+  products,
+  onProductClick
+}) => {
+  return (
+    <div className="product-list">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onClick={onProductClick}
+        />
+      ))}
+    </div>
+  );
+});
+
+// Code splitting with lazy loading
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard'));
+
+export const App: React.FC = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/analytics" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <AnalyticsDashboard />
+          </Suspense>
+        } />
+      </Routes>
+    </Router>
+  );
+};
+```
+
+## Code Quality and Maintainability
+
+### Testing Strategies
+- Write tests that describe behavior, not implementation
+- Use the testing pyramid (unit > integration > e2e)
+- Maintain high test coverage for critical business logic
+
+```java
+// Good test - describes behavior
+@DisplayName("Shop Service - Business Logic Tests")
+class ShopServiceTest {
+    
+    @Test
+    @DisplayName("Should create shop successfully with valid data")
+    void shouldCreateShopWithValidData() {
+        // Given
+        CreateShopRequest request = CreateShopRequest.builder()
+            .name("Test Shop")
+            .email("test@shop.com")
+            .build();
+        
+        // When
+        ShopResponse response = shopService.createShop(request);
+        
+        // Then
+        assertThat(response)
+            .satisfies(shop -> {
+                assertThat(shop.getName()).isEqualTo("Test Shop");
+                assertThat(shop.getEmail()).isEqualTo("test@shop.com");
+                assertThat(shop.getStatus()).isEqualTo(ShopStatus.ACTIVE);
+            });
+    }
+    
+    @Test
+    @DisplayName("Should throw exception when creating shop with duplicate email")
+    void shouldThrowExceptionWhenDuplicateEmail() {
+        // Given
+        String duplicateEmail = "duplicate@shop.com";
+        when(shopRepository.existsByEmail(duplicateEmail)).thenReturn(true);
+        
+        CreateShopRequest request = CreateShopRequest.builder()
+            .email(duplicateEmail)
+            .build();
+        
+        // When & Then
+        assertThatThrownBy(() -> shopService.createShop(request))
+            .isInstanceOf(DuplicateShopException.class)
+            .hasMessageContaining("Shop with email already exists");
+    }
+}
+```
+
+### Documentation Standards
+- Use JavaDoc for public APIs
+- Maintain up-to-date README files
+- Document architectural decisions (ADRs)
+
+```java
+/**
+ * Service for managing shop operations including creation, updates, and status management.
+ * 
+ * <p>This service handles all business logic related to shops including:
+ * <ul>
+ *   <li>Shop lifecycle management (create, update, deactivate)</li>
+ *   <li>Business rule validation</li>
+ *   <li>Event publishing for shop-related changes</li>
+ * </ul>
+ * 
+ * @author Shop Manager Team
+ * @since 1.0.0
+ */
+@Service
+@RequiredArgsConstructor
+public class ShopService {
+    
+    /**
+     * Creates a new shop with the provided details.
+     * 
+     * @param request the shop creation request containing shop details
+     * @return the created shop response with assigned ID and timestamps
+     * @throws DuplicateShopException if a shop with the same email already exists
+     * @throws ValidationException if the request contains invalid data
+     */
+    public ShopResponse createShop(CreateShopRequest request) {
+        // Implementation
+    }
+}
+```
+
+### Performance Guidelines
+- Profile application performance regularly
+- Optimize database queries and implement proper indexing
+- Use async processing for long-running operations
+- Implement proper caching strategies
+
+### Security Best Practices
+- Validate all inputs at multiple layers
+- Use parameterized queries to prevent SQL injection
+- Implement proper authentication and authorization
+- Log security events for audit trails
+- Never log sensitive information (passwords, tokens, PII)
+
+```java
+// Input validation example
+@PostMapping("/shops")
+public ResponseEntity<ShopResponse> createShop(
+        @Valid @RequestBody CreateShopRequest request,
+        Authentication authentication) {
+    
+    // Additional security validation
+    securityValidator.validateTenantAccess(request.getTenantId(), authentication);
+    
+    // Sanitize inputs
+    String sanitizedName = inputSanitizer.sanitize(request.getName());
+    request.setName(sanitizedName);
+    
+    // Audit log (without sensitive data)
+    auditLogger.logShopCreation(authentication.getName(), request.getTenantId());
+    
+    return ResponseEntity.ok(shopService.createShop(request));
+}
+```
+
+## Development Workflow
+
+### Git Workflow
+- Use conventional commits for clear history
+- Create feature branches for all changes
+- Require PR reviews for main branch
+- Run all tests before merging
+
+```bash
+# Conventional commit examples
+git commit -m "feat(shop): add shop status management endpoint"
+git commit -m "fix(inventory): resolve stock calculation bug"
+git commit -m "docs(api): update shop API documentation"
+git commit -m "test(service): add unit tests for shop validation"
+```
+
 ### Code Review Guidelines
-For every successful task completed, commit the changes to the current branch and add a suitable commit message.
-For every code-breaking change made, prompt me
-For every code change made, update the test cases and run the tests.
-Prefer static imports over fully qualified names.
+- For every successful task completed, commit the changes to the current branch and add a suitable commit message
+- For every code-breaking change made, prompt me
+- For every code change made, update the test cases and run the tests
+- Prefer static imports over fully qualified names
+- Make the commit message clear and concise, and avoid adding unnecessary comments like 'Co-authored-by'
+- Focus on business logic correctness and security implications
+- Ensure proper error handling and logging
+- Verify test coverage for new functionality
+- Check for potential performance impacts
+- Validate adherence to established patterns and conventions
