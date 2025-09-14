@@ -89,12 +89,12 @@ class AnalyticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(testShopId, result.getShopId());
-        assertEquals(startDate, result.getPeriodStart());
-        assertEquals(endDate, result.getPeriodEnd());
-        assertEquals(totalRevenue, result.getTotalRevenue());
-        assertEquals(totalTransactions, result.getTotalTransactions());
-        assertEquals(BigDecimal.valueOf(200.0).setScale(2), result.getAverageTransactionValue()); // 100000/500
+        assertEquals(testShopId, result.shopId());
+        assertEquals(startDate, result.periodStart());
+        assertEquals(endDate, result.periodEnd());
+        assertEquals(totalRevenue, result.totalRevenue());
+        assertEquals(totalTransactions, result.totalTransactions());
+        assertEquals(BigDecimal.valueOf(200.0).setScale(2), result.averageTransactionValue()); // 100000/500
 
         verify(analyticsCacheRepository).save(any(AnalyticsCache.class));
     }
@@ -102,15 +102,15 @@ class AnalyticsServiceTest {
     @Test
     void testGetSalesSummary_CachedData() throws Exception {
         // Given
-        SalesSummaryDto cachedData = SalesSummaryDto.builder()
-            .shopId(testShopId)
-            .periodStart(startDate)
-            .periodEnd(endDate)
-            .totalRevenue(BigDecimal.valueOf(100000))
-            .totalTransactions(500)
-            .averageTransactionValue(BigDecimal.valueOf(200))
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        SalesSummaryDto cachedData = new SalesSummaryDto(
+            testShopId,
+            startDate,
+            endDate,
+            BigDecimal.valueOf(100000),
+            500,
+            BigDecimal.valueOf(200),
+            LocalDateTime.now()
+        );
 
         AnalyticsCache cache = AnalyticsCache.builder()
             .cacheData("{\"shopId\":\"shop-1\",\"totalRevenue\":100000}")
@@ -129,9 +129,9 @@ class AnalyticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(cachedData.getShopId(), result.getShopId());
-        assertEquals(cachedData.getTotalRevenue(), result.getTotalRevenue());
-        assertEquals(cachedData.getTotalTransactions(), result.getTotalTransactions());
+        assertEquals(cachedData.shopId(), result.shopId());
+        assertEquals(cachedData.totalRevenue(), result.totalRevenue());
+        assertEquals(cachedData.totalTransactions(), result.totalTransactions());
 
         // Verify no fresh calculation was done
         verify(salesTransactionRepository, never()).getTotalRevenueByShopAndPeriod(anyString(), any(), any());
@@ -172,10 +172,10 @@ class AnalyticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(testShopId, result.getShopId());
-        assertEquals(totalInvestmentAmount, result.getTotalInvestmentAmount());
-        assertEquals(totalDistributions, result.getTotalDistributions());
-        assertEquals(0, BigDecimal.valueOf(20.0).compareTo(result.getRoiPercentage())); // (10000/50000)*100
+        assertEquals(testShopId, result.shopId());
+        assertEquals(totalInvestmentAmount, result.totalInvestmentAmount());
+        assertEquals(totalDistributions, result.totalDistributions());
+        assertEquals(0, BigDecimal.valueOf(20.0).compareTo(result.roiPercentage())); // (10000/50000)*100
     }
 
     @Test
@@ -217,11 +217,11 @@ class AnalyticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(testShopId, result.getShopId());
-        assertEquals(185L, result.getTotalAssessments()); // 100+50+30+5
-        assertEquals(totalHighRisk, result.getHighRiskCount());
-        assertEquals(totalCriticalRisk, result.getCriticalRiskCount());
-        assertEquals(0, BigDecimal.valueOf(18.92).compareTo(result.getRiskRate().setScale(2, java.math.RoundingMode.HALF_UP))); // (30+5)/185 * 100 rounded to 2 decimals
+        assertEquals(testShopId, result.shopId());
+        assertEquals(185L, result.totalAssessments()); // 100+50+30+5
+        assertEquals(totalHighRisk, result.highRiskCount());
+        assertEquals(totalCriticalRisk, result.criticalRiskCount());
+        assertEquals(0, BigDecimal.valueOf(18.92).compareTo(result.riskRate().setScale(2, java.math.RoundingMode.HALF_UP))); // (30+5)/185 * 100 rounded to 2 decimals
     }
 
     @Test
@@ -273,8 +273,8 @@ class AnalyticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(BigDecimal.ZERO, result.getTotalRevenue());
-        assertEquals(0L, result.getTotalTransactions());
-        assertEquals(BigDecimal.ZERO, result.getAverageTransactionValue());
+        assertEquals(BigDecimal.ZERO, result.totalRevenue());
+        assertEquals(0L, result.totalTransactions());
+        assertEquals(BigDecimal.ZERO, result.averageTransactionValue());
     }
 }

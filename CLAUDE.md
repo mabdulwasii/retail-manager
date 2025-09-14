@@ -48,13 +48,16 @@ Shop Manager is a modular retail management platform for managing shops, investm
 ### Local Development
 ```bash
 # Start all infrastructure services
-docker-compose -f architecture/05_docker_compose.yml up -d
+docker-compose up -d
+
+# Start infrastructure with SonarQube for code quality
+docker-compose --profile sonar up -d
 
 # Run the backend application
 ./mvnw spring-boot:run
 
 # Stop infrastructure services
-docker-compose -f architecture/05_docker_compose.yml down
+docker-compose down
 ```
 
 ### Docker Operations
@@ -63,7 +66,10 @@ docker-compose -f architecture/05_docker_compose.yml down
 docker build -t shop-manager:latest ./backend
 
 # Run with docker-compose (includes all dependencies)
-docker-compose -f architecture/05_docker_compose.yml up
+docker-compose up
+
+# Run with SonarQube profile for code analysis
+docker-compose --profile sonar up
 ```
 
 ## Key Configuration
@@ -75,17 +81,21 @@ The system uses feature flags for modular functionality:
 - `fraud.enabled` - Fraud detection module
 
 ### Multi-Tenancy
-- Each shop is a tenant with isolated data
-- TenantContext resolves tenant per request
-- Permission matrix supports different roles per tenant
+- **Tenant-Shop Hierarchy**: Tenant is a company/organization that owns multiple shops
+- **Data Isolation**: Complete tenant-level data isolation with TenantContext
+- **Feature Flags**: Hierarchical feature flags scoped to tenant level
+- **Permission matrix**: Different roles per tenant with RBAC/ABAC authorization
+- **Users belong to tenants**: Multi-shop access within tenant boundaries
 
 ### Database Schema
 Key tables managed by Flyway:
-- `shops` (tenants)
-- `products`, `sales_transactions`
-- `investments`, `investor_shares`
-- `audit_logs`, `feature_flags`
-- `users`, `roles`, `permissions`
+- `tenants` (companies/organizations)
+- `shops` (tenant-owned retail locations)
+- `users`, `roles`, `permissions` (tenant-scoped)
+- `products`, `sales_transactions`, `inventory`
+- `investments`, `investor_shares`, `product_returns`
+- `audit_logs`, `feature_flags`, `expenses`
+- **V6 Migration**: Tenant-shop refactoring with comprehensive inventory system
 
 ## Important Use Cases
 
@@ -220,6 +230,10 @@ The Shop Manager backend is now feature-complete with comprehensive testing infr
 - **Fraud Detection**: ML-based transaction analysis with configurable rules
 - **Investment Profit Sharing**: Automated profit distribution with multiple models
 - **Advanced Analytics**: Sales summaries, ROI tracking, revenue analytics with caching
+- **Comprehensive Inventory Management**: Stock tracking, reservations, history, and alerts
+- **Product Return System**: Return processing with fraud validation and restocking
+- **Expense Tracking**: Multi-category expense management for accurate P&L
+- **Data Backup System**: Encrypted backup with configurable retention policies
 
 ### ✅ REST API & Documentation
 - **Complete REST Controllers**: Shop, Receipt, Analytics, Investment management
@@ -238,9 +252,11 @@ The Shop Manager backend is now feature-complete with comprehensive testing infr
 - **Database Tests**: @DataJpaTest for repository and persistence validation
 
 ### ✅ Production Infrastructure
-- **Database Schema**: Complete Flyway migrations with rollback support
-- **Docker Integration**: Multi-service docker-compose with all dependencies
-- **Configuration Management**: Environment-specific configs with feature flags
+- **Database Schema**: Complete Flyway migrations with rollback support (V6 latest)
+- **Docker Integration**: Unified docker-compose with service profiles (SonarQube optional)
+- **Configuration Management**: Environment variable-driven with ConfigMaps/Secrets support
+- **Helm Charts**: Production-ready Kubernetes deployment with inline defaults
+- **Code Quality**: SonarQube integration with quality gates and analysis profiles
 - **Logging & Monitoring**: Structured logging with audit trails
 - **Error Handling**: Global exception handling with proper HTTP status codes
 
@@ -267,30 +283,46 @@ The Shop Manager backend is now feature-complete with comprehensive testing infr
 ```
 backend/
 ├── src/main/java/com/princely/shopmanager/
-│   ├── core/           # Shop, User, Role entities and services
+│   ├── core/           # Tenant, Shop, User, Role entities and services
 │   ├── sales/          # Sales, Receipt management
+│   ├── inventory/      # Inventory management with stock tracking
+│   ├── returns/        # Product return processing
 │   ├── investment/     # Investment tracking and profit sharing
-│   ├── analytics/      # Analytics engine with caching
-│   ├── auth/           # Authentication and authorization
-│   ├── shared/         # Cross-cutting concerns, utilities
+│   ├── analytics/      # Analytics engine with caching (Java records)
+│   ├── auth/           # Authentication, authorization, JWT principal
+│   ├── shared/         # Cross-cutting concerns, utilities, configuration
 │   └── ShopManagerApplication.java
 ├── src/test/java/      # Comprehensive test suites
 │   ├── unit/           # Pure unit tests
 │   ├── integration/    # Component integration tests
 │   └── testcontainers/ # End-to-end integration tests
-└── src/main/resources/
-    ├── db/migration/   # Flyway database migrations
-    ├── application.yml # Configuration with feature flags
-    └── static/docs/    # Generated API documentation
+├── src/main/resources/
+│   ├── db/migration/   # Flyway database migrations (V6 latest)
+│   ├── application.yml # Environment-driven configuration
+│   └── static/docs/    # Generated API documentation
+├── docker-compose.yml  # Unified compose with SonarQube profile
+└── helm-chart/         # Kubernetes deployment charts
 ```
 
 ### 🎯 Achievement Summary
 - **Code Coverage**: JaCoCo configured with 90%+ target for business logic
-- **API Endpoints**: 15+ REST endpoints with comprehensive Swagger documentation
-- **Test Coverage**: 25+ test classes with unit, integration, and E2E tests
-- **Security**: Multi-layer security with JWT, RBAC, and tenant isolation
+- **API Endpoints**: 20+ REST endpoints with comprehensive Swagger documentation
+- **Test Coverage**: 30+ test classes with unit, integration, and E2E tests
+- **Security**: Multi-layer security with JWT principal, RBAC, and tenant isolation
 - **Business Rules**: 100% coverage of financial calculations and audit requirements
-- **Production Ready**: Docker, monitoring, error handling, and configuration management
+- **Production Ready**: Docker, Helm charts, SonarQube, and environment-driven configuration
+- **Code Quality**: Java records for DTOs, @Builder.Default patterns, and clean architecture
+- **Multi-Tenancy**: Complete tenant-shop hierarchy with comprehensive data isolation
 
-**Current Status**: Production-ready backend with comprehensive testing achieving 90%+ code coverage.
+### 🆕 Latest Updates (January 2025)
+- **Tenant-Shop Refactoring**: Separated tenant as organization owning multiple shops
+- **Inventory Management**: Comprehensive stock tracking, reservations, and history
+- **Product Returns**: Full return processing with fraud detection integration
+- **Environment Configuration**: Preference for environment variables and ConfigMaps
+- **Docker Compose Unification**: Single compose file with SonarQube profile
+- **Helm Chart Enhancement**: Inline defaults for seamless Kubernetes deployment
+- **Java Records Migration**: Converted analytics DTOs to immutable Java records
+- **Builder Pattern Compliance**: All @Builder classes properly use @Builder.Default
+
+**Current Status**: Production-ready backend with enhanced multi-tenancy and comprehensive business features.
 **Next Steps**: Frontend development, CI/CD pipeline, and production deployment.

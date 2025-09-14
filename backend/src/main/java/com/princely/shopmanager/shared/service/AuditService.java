@@ -53,13 +53,11 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFinancialTransaction(Shop shop, String userId, String username,
-                                       String actionType, String entityId,
+                                       AuditLog.ActionType actionType, String entityId,
                                        String description, boolean success) {
         try {
             AuditLog auditLog = AuditLog.createFinancialTransaction(
-                shop, userId, username,
-                AuditLog.ActionType.valueOf(actionType.toUpperCase()),
-                entityId, description, success
+                shop, userId, username, actionType, entityId, description, success
             );
             auditLogRepository.save(auditLog);
             log.debug("Financial transaction logged: {} for entity {}", actionType, entityId);
@@ -67,6 +65,7 @@ public class AuditService {
             log.error("Failed to log financial transaction: {} for entity {}", actionType, entityId, e);
         }
     }
+
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logCustomEvent(Shop shop, String userId, String username,

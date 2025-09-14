@@ -2,6 +2,7 @@ package com.princely.shopmanager.core;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.ShopConfiguration;
+import com.princely.shopmanager.core.domain.Tenant;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,6 +11,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Simple unit tests for Shop domain objects without Spring context
  */
 class ShopDomainTest {
+
+    private Tenant createTestTenant(String tenantId) {
+        return Tenant.builder()
+            .id(tenantId)
+            .name("Test Tenant " + tenantId)
+            .contactEmail("test@tenant.com")
+            .status(Tenant.TenantStatus.ACTIVE)
+            .build();
+    }
 
     @Test
     void testCreateShopWithConfiguration() {
@@ -22,7 +32,7 @@ class ShopDomainTest {
 
         Shop shop = Shop.builder()
             .name("Test Shop")
-            .tenantId("tenant-001")
+            .tenant(createTestTenant("tenant-001"))
             .description("A test shop")
             .address("123 Test Street")
             .city("Test City")
@@ -35,7 +45,7 @@ class ShopDomainTest {
 
         // Then
         assertThat(shop.getName()).isEqualTo("Test Shop");
-        assertThat(shop.getTenantId()).isEqualTo("tenant-001");
+        assertThat(shop.getTenant().getId()).isEqualTo("tenant-001");
         assertThat(shop.getConfiguration()).isNotNull();
         assertThat(shop.getConfiguration().getCurrency()).isEqualTo("USD");
         assertThat(shop.getConfiguration().getTaxRate()).isEqualTo(10.0);
@@ -49,7 +59,7 @@ class ShopDomainTest {
         // Given
         Shop shop = Shop.builder()
             .name("Simple Shop")
-            .tenantId("tenant-002")
+            .tenant(createTestTenant("tenant-002"))
             .address("456 Simple Street")
             .email("simple@shop.com")
             .status(Shop.ShopStatus.ACTIVE)
@@ -57,7 +67,7 @@ class ShopDomainTest {
 
         // Then
         assertThat(shop.getName()).isEqualTo("Simple Shop");
-        assertThat(shop.getTenantId()).isEqualTo("tenant-002");
+        assertThat(shop.getTenant().getId()).isEqualTo("tenant-002");
         assertThat(shop.getEmail()).isEqualTo("simple@shop.com");
         assertThat(shop.getStatus()).isEqualTo(Shop.ShopStatus.ACTIVE);
     }
@@ -73,7 +83,7 @@ class ShopDomainTest {
         // Test status setting
         Shop shop = Shop.builder()
             .name("Status Test Shop")
-            .tenantId("tenant-status")
+            .tenant(createTestTenant("tenant-status"))
             .address("Status Street")
             .email("status@shop.com")
             .status(Shop.ShopStatus.SUSPENDED)

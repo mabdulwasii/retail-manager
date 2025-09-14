@@ -80,9 +80,9 @@ class AnalyticsServiceEdgeCasesTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(BigDecimal.ZERO, result.getTotalRevenue());
-        assertEquals(0L, result.getTotalTransactions());
-        assertEquals(BigDecimal.ZERO, result.getAverageTransactionValue());
+        assertEquals(BigDecimal.ZERO, result.totalRevenue());
+        assertEquals(0L, result.totalTransactions());
+        assertEquals(BigDecimal.ZERO, result.averageTransactionValue());
     }
 
     @Test
@@ -101,9 +101,9 @@ class AnalyticsServiceEdgeCasesTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(0, BigDecimal.ZERO.compareTo(result.getTotalRevenue()));
-        assertEquals(10L, result.getTotalTransactions());
-        assertEquals(0, BigDecimal.ZERO.compareTo(result.getAverageTransactionValue()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.totalRevenue()));
+        assertEquals(10L, result.totalTransactions());
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.averageTransactionValue()));
     }
 
     @Test
@@ -122,9 +122,9 @@ class AnalyticsServiceEdgeCasesTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(BigDecimal.ZERO, result.getTotalInvestmentAmount());
-        assertEquals(BigDecimal.ZERO, result.getTotalDistributions());
-        assertEquals(BigDecimal.ZERO, result.getRoiPercentage());
+        assertEquals(BigDecimal.ZERO, result.totalInvestmentAmount());
+        assertEquals(BigDecimal.ZERO, result.totalDistributions());
+        assertEquals(BigDecimal.ZERO, result.roiPercentage());
     }
 
     @Test
@@ -141,10 +141,10 @@ class AnalyticsServiceEdgeCasesTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(0L, result.getTotalAssessments());
-        assertEquals(0L, result.getHighRiskCount());
-        assertEquals(0L, result.getCriticalRiskCount());
-        assertEquals(BigDecimal.ZERO, result.getRiskRate());
+        assertEquals(0L, result.totalAssessments());
+        assertEquals(0L, result.highRiskCount());
+        assertEquals(0L, result.criticalRiskCount());
+        assertEquals(BigDecimal.ZERO, result.riskRate());
     }
 
     @Test
@@ -175,12 +175,12 @@ class AnalyticsServiceEdgeCasesTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(0, new BigDecimal("1000.00").compareTo(result.getCurrentRevenue()));
-        assertEquals(0, BigDecimal.ZERO.compareTo(result.getPreviousRevenue()));
+        assertEquals(0, new BigDecimal("1000.00").compareTo(result.currentRevenue()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.previousRevenue()));
         // The growth rate should be zero when dividing by zero
-        assertEquals(0, BigDecimal.ZERO.compareTo(result.getGrowthRate()));
-        assertEquals(10L, result.getCurrentTransactions());
-        assertEquals(0L, result.getPreviousTransactions());
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.growthRate()));
+        assertEquals(10L, result.currentTransactions());
+        assertEquals(0L, result.previousTransactions());
     }
 
     @Test
@@ -232,6 +232,6 @@ class AnalyticsServiceEdgeCasesTest {
         assertNotNull(result);
         verify(objectMapper).readValue(anyString(), eq(SalesSummaryDto.class));
         // Should fall back to calculating fresh data
-        assertEquals(0, new BigDecimal("100.00").compareTo(result.getTotalRevenue()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(result.totalRevenue()));
     }
 }

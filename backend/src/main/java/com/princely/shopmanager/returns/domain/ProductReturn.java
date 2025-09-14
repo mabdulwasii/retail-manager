@@ -22,6 +22,14 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "salesTransaction", "product", "processedBy"})
 public class ProductReturn extends BaseEntity {
 
+    public static final int DECIMAL_PRECISION = 10;
+    public static final int DECIMAL_SCALE = 2;
+    public static final int MAX_CONDITION_ASSESSMENT_LENGTH = 500;
+    public static final int MAX_FRAUD_CHECK_RESULT_LENGTH = 1000;
+    public static final int MAX_CUSTOMER_NOTES_LENGTH = 1000;
+    public static final int MAX_INTERNAL_NOTES_LENGTH = 1000;
+    public static final int MAX_DAMAGE_ASSESSMENT_LENGTH = 500;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -50,7 +58,7 @@ public class ProductReturn extends BaseEntity {
     @Column(name = "return_type", nullable = false)
     private ReturnType returnType = ReturnType.FULL;
 
-    @Column(name = "refund_amount", precision = 10, scale = 2)
+    @Column(name = "refund_amount", precision = DECIMAL_PRECISION, scale = DECIMAL_SCALE)
     private BigDecimal refundAmount;
 
     @Builder.Default
@@ -58,7 +66,7 @@ public class ProductReturn extends BaseEntity {
     @Column(name = "refund_type")
     private RefundType refundType = RefundType.CASH;
 
-    @Column(name = "condition_assessment", length = 500)
+    @Column(name = "condition_assessment", length = MAX_CONDITION_ASSESSMENT_LENGTH)
     private String conditionAssessment;
 
     @Builder.Default
@@ -66,7 +74,7 @@ public class ProductReturn extends BaseEntity {
     @Column(name = "fraud_check_status")
     private FraudCheckStatus fraudCheckStatus = FraudCheckStatus.PENDING;
 
-    @Column(name = "fraud_check_result", length = 1000)
+    @Column(name = "fraud_check_result", length = MAX_FRAUD_CHECK_RESULT_LENGTH)
     private String fraudCheckResult;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -85,13 +93,13 @@ public class ProductReturn extends BaseEntity {
     @Column(nullable = false)
     private ReturnStatus status = ReturnStatus.PENDING;
 
-    @Column(name = "customer_notes", length = 1000)
+    @Column(name = "customer_notes", length = MAX_CUSTOMER_NOTES_LENGTH)
     private String customerNotes;
 
-    @Column(name = "internal_notes", length = 1000)
+    @Column(name = "internal_notes", length = MAX_INTERNAL_NOTES_LENGTH)
     private String internalNotes;
 
-    @Column(name = "damage_assessment", length = 500)
+    @Column(name = "damage_assessment", length = MAX_DAMAGE_ASSESSMENT_LENGTH)
     private String damageAssessment;
 
     @Builder.Default

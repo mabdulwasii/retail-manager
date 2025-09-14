@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface ShopRepository extends JpaRepository<Shop, String> {
 
-    Optional<Shop> findByTenantId(String tenantId);
+    List<Shop> findByTenant_Id(String tenantId);
 
     Optional<Shop> findByName(String name);
 
@@ -26,12 +26,12 @@ public interface ShopRepository extends JpaRepository<Shop, String> {
     @Query("SELECT s FROM Shop s WHERE s.city = :city AND s.status = :status")
     List<Shop> findByCityAndStatus(@Param("city") String city, @Param("status") Shop.ShopStatus status);
 
-    boolean existsByTenantId(String tenantId);
+    boolean existsByTenant_Id(String tenantId);
 
     boolean existsByName(String name);
 
     // Paginated queries for ShopService
-    Page<Shop> findByTenantId(String tenantId, Pageable pageable);
+    Page<Shop> findByTenant_Id(String tenantId, Pageable pageable);
 
-    List<Shop> findByTenantIdAndStatus(String tenantId, Shop.ShopStatus status);
+    List<Shop> findByTenant_IdAndStatus(String tenantId, Shop.ShopStatus status);
 }

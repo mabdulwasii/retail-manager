@@ -66,48 +66,48 @@ class AnalyticsControllerTest {
 
     @BeforeEach
     void setUp() {
-        sampleSalesSummary = SalesSummaryDto.builder()
-            .shopId("shop-123")
-            .totalRevenue(new BigDecimal("10000.00"))
-            .totalTransactions(150L)
-            .averageTransactionValue(new BigDecimal("66.67"))
-            .periodStart(LocalDateTime.of(2024, 1, 1, 0, 0))
-            .periodEnd(LocalDateTime.of(2024, 1, 31, 23, 59))
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        sampleSalesSummary = new SalesSummaryDto(
+            "shop-123",
+            LocalDateTime.of(2024, 1, 1, 0, 0),
+            LocalDateTime.of(2024, 1, 31, 23, 59),
+            new BigDecimal("10000.00"),
+            150L,
+            new BigDecimal("66.67"),
+            LocalDateTime.now()
+        );
 
-        sampleInvestmentRoi = InvestmentRoiDto.builder()
-            .shopId("shop-123")
-            .totalInvestmentAmount(new BigDecimal("50000.00"))
-            .totalDistributions(new BigDecimal("7500.00"))
-            .roiPercentage(new BigDecimal("15.00"))
-            .periodStart(LocalDateTime.of(2024, 1, 1, 0, 0))
-            .periodEnd(LocalDateTime.of(2024, 1, 31, 23, 59))
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        sampleInvestmentRoi = new InvestmentRoiDto(
+            "shop-123",
+            LocalDateTime.of(2024, 1, 1, 0, 0),
+            LocalDateTime.of(2024, 1, 31, 23, 59),
+            new BigDecimal("50000.00"),
+            new BigDecimal("7500.00"),
+            new BigDecimal("15.00"),
+            LocalDateTime.now()
+        );
 
-        sampleFraudStats = FraudStatisticsDto.builder()
-            .shopId("shop-123")
-            .totalAssessments(1000L)
-            .highRiskCount(25L)
-            .criticalRiskCount(3L)
-            .riskRate(new BigDecimal("0.30"))
-            .periodStart(LocalDateTime.of(2024, 1, 1, 0, 0))
-            .periodEnd(LocalDateTime.of(2024, 1, 31, 23, 59))
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        sampleFraudStats = new FraudStatisticsDto(
+            "shop-123",
+            LocalDateTime.of(2024, 1, 1, 0, 0),
+            LocalDateTime.of(2024, 1, 31, 23, 59),
+            1000L,
+            25L,
+            3L,
+            new BigDecimal("0.30"),
+            LocalDateTime.now()
+        );
 
-        sampleRevenueAnalytics = RevenueAnalyticsDto.builder()
-            .shopId("shop-123")
-            .currentRevenue(new BigDecimal("25000.00"))
-            .previousRevenue(new BigDecimal("22000.00"))
-            .growthRate(new BigDecimal("12.50"))
-            .currentTransactions(150L)
-            .previousTransactions(130L)
-            .periodStart(LocalDateTime.of(2024, 1, 1, 0, 0))
-            .periodEnd(LocalDateTime.of(2024, 1, 31, 23, 59))
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        sampleRevenueAnalytics = new RevenueAnalyticsDto(
+            "shop-123",
+            LocalDateTime.of(2024, 1, 1, 0, 0),
+            LocalDateTime.of(2024, 1, 31, 23, 59),
+            new BigDecimal("25000.00"),
+            new BigDecimal("22000.00"),
+            new BigDecimal("12.50"),
+            150L,
+            130L,
+            LocalDateTime.now()
+        );
     }
 
     @Nested

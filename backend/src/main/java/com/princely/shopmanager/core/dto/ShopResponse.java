@@ -81,7 +81,7 @@ public class ShopResponse {
         return ShopResponse.builder()
             .id(shop.getId())
             .name(shop.getName())
-            .tenantId(shop.getTenantId())
+            .tenantId(shop.getTenant().getId())
             .description(shop.getDescription())
             .address(shop.getAddress())
             .city(shop.getCity())

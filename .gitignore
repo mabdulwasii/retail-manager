@@ -23,6 +23,11 @@
 hs_err_pid*
 replay_pid*
 
+# SonarQube credentials and environment files
+.env.sonar
+sonar-analysis.sh
+.mvn/maven.config
+
 # Maven
 target/
 pom.xml.tag

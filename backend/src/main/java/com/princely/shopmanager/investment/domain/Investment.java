@@ -12,6 +12,29 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Investment entity representing an investment made by a user in a shop or specific products.
+ *
+ * <p>This entity tracks investment details including:
+ * <ul>
+ *   <li>Investment amount and type (shop-wide or product-specific)</li>
+ *   <li>Expected and actual returns</li>
+ *   <li>Investment duration and maturity dates</li>
+ *   <li>Profit distribution preferences</li>
+ *   <li>Risk assessment and status tracking</li>
+ * </ul>
+ *
+ * <p>Investments can be either:
+ * <ul>
+ *   <li><b>SHOP_WIDE:</b> Investment in the entire shop's performance</li>
+ *   <li><b>PRODUCT_SPECIFIC:</b> Investment targeting specific products</li>
+ *   <li><b>CATEGORY_BASED:</b> Investment in product categories</li>
+ * </ul>
+ *
+ * @author Shop Manager Development Team
+ * @version 1.0
+ * @since 1.0
+ */
 @Entity
 @Table(name = "investments", indexes = {
     @Index(name = "idx_investment_investor", columnList = "investor_id"),

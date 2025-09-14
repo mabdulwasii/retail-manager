@@ -10,6 +10,7 @@ import com.princely.shopmanager.inventory.domain.InventoryHistory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
+import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.shared.service.AuditService;
@@ -68,7 +69,7 @@ public class InventoryService {
             request.getCurrentStock(), 0, request.getCurrentStock(),
             null, InventoryHistory.ReferenceType.PROCUREMENT, "Initial stock");
 
-        auditService.logEvent("INVENTORY_CREATED", "inventory", inventory.getId(),
+        auditService.logEntityCreation("Inventory", inventory.getId(),
             "Created inventory for product: " + product.getName() + " with stock: " + request.getCurrentStock());
 
         return mapToResponse(inventory);
@@ -102,25 +103,36 @@ public class InventoryService {
             quantityChange, previousStock, newStock,
             null, InventoryHistory.ReferenceType.ADJUSTMENT, request.getReason());
 
-        auditService.logEvent("INVENTORY_ADJUSTED", "inventory", inventory.getId(),
+        auditService.logEntityModification("Inventory", inventory.getId(),
             String.format("Stock adjusted from %d to %d. Reason: %s", previousStock, newStock, request.getReason()));
 
         return mapToResponse(inventory);
     }
 
     public void reserveStock(String inventoryId, int quantity, String referenceId, InventoryHistory.ReferenceType referenceType) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
+        reserveStock(StockReservationRequest.builder()
+            .inventoryId(inventoryId)
+            .quantity(quantity)
+            .referenceId(referenceId)
+            .referenceType(referenceType)
+            .reason("Stock reserved")
+            .build());
+    }
+
+    public void reserveStock(StockReservationRequest request) {
+        Inventory inventory = inventoryRepository.findById(request.getInventoryId())
             .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
 
         int previousReserved = inventory.getReservedStock();
-        inventory.reserveStock(quantity);
+        inventory.reserveStock(request.getQuantity());
         inventory = inventoryRepository.save(inventory);
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.RESERVATION,
-            quantity, inventory.getCurrentStock(), inventory.getCurrentStock(),
-            referenceId, referenceType, "Stock reserved");
+            request.getQuantity(), inventory.getCurrentStock(), inventory.getCurrentStock(),
+            request.getReferenceId(), request.getReferenceType(),
+            request.getReason() != null ? request.getReason() : "Stock reserved");
 
-        log.debug("Reserved {} units for inventory {}", quantity, inventoryId);
+        log.debug("Reserved {} units for inventory {}", request.getQuantity(), request.getInventoryId());
     }
 
     public void releaseReservedStock(String inventoryId, int quantity, String referenceId) {
@@ -154,7 +166,7 @@ public class InventoryService {
             -quantity, previousStock, inventory.getCurrentStock(),
             saleId, InventoryHistory.ReferenceType.SALE, "Stock sold");
 
-        auditService.logEvent("INVENTORY_SOLD", "inventory", inventory.getId(),
+        auditService.logEntityModification("Inventory", inventory.getId(),
             String.format("Sold %d units, remaining stock: %d", quantity, inventory.getCurrentStock()));
     }
 
@@ -170,7 +182,7 @@ public class InventoryService {
             quantity, previousStock, inventory.getCurrentStock(),
             returnId, InventoryHistory.ReferenceType.RETURN, "Stock returned");
 
-        auditService.logEvent("INVENTORY_RETURNED", "inventory", inventory.getId(),
+        auditService.logEntityModification("Inventory", inventory.getId(),
             String.format("Returned %d units, new stock: %d", quantity, inventory.getCurrentStock()));
     }
 
@@ -210,7 +222,7 @@ public class InventoryService {
         inventory.setStatus(status);
         inventory = inventoryRepository.save(inventory);
 
-        auditService.logEvent("INVENTORY_STATUS_CHANGED", "inventory", inventory.getId(),
+        auditService.logEntityModification("Inventory", inventory.getId(),
             String.format("Status changed from %s to %s", previousStatus, status));
 
         return mapToResponse(inventory);

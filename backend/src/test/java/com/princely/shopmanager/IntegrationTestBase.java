@@ -3,6 +3,7 @@ package com.princely.shopmanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
@@ -531,6 +532,15 @@ public abstract class IntegrationTestBase {
      * @param tenantId Tenant ID
      * @return Created shop entity
      */
+    protected Tenant createTenant(String tenantId) {
+        return Tenant.builder()
+            .id(tenantId)
+            .name("Test Tenant " + tenantId)
+            .contactEmail("test@" + tenantId.replace("-", "") + ".com")
+            .status(Tenant.TenantStatus.ACTIVE)
+            .build();
+    }
+
     protected Shop createTestShop(String name, String tenantId) {
         if (shopRepository == null) {
             throw new IllegalStateException("ShopRepository not available - ensure proper test context");
@@ -539,7 +549,7 @@ public abstract class IntegrationTestBase {
         Shop shop = Shop.builder()
             .id("shop-" + UUID.randomUUID().toString())
             .name(name + "-" + UUID.randomUUID().toString().substring(0, 8))
-            .tenantId(tenantId)
+            .tenant(createTenant(tenantId))
             .description("Test shop for integration testing")
             .address("123 Test Street")
             .city("Test City")

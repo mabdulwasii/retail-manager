@@ -2,6 +2,7 @@ package com.princely.shopmanager.core;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.ShopConfiguration;
+import com.princely.shopmanager.core.domain.Tenant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Disabled;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -41,9 +42,19 @@ class ShopEntityTest {
     @Autowired
     private TestEntityManager entityManager;
 
+    private Tenant createTestTenant(String tenantSuffix) {
+        Tenant tenant = Tenant.builder()
+            .name("Test Tenant " + tenantSuffix)
+            .contactEmail("test@tenant" + tenantSuffix + ".com")
+            .status(Tenant.TenantStatus.ACTIVE)
+            .build();
+        return entityManager.persistAndFlush(tenant);
+    }
+
     @Test
     void testCreateShopWithConfiguration() {
         // Given
+        Tenant tenant = createTestTenant("001");
         ShopConfiguration config = new ShopConfiguration();
         config.setCurrency("USD");
         config.setInvestmentEnabled(true);
@@ -52,7 +63,7 @@ class ShopEntityTest {
 
         Shop shop = Shop.builder()
             .name("Test Shop")
-            .tenantId("tenant-001")
+            .tenant(tenant)
             .description("A test shop")
             .address("123 Test Street")
             .city("Test City")
@@ -69,7 +80,7 @@ class ShopEntityTest {
         // Then
         assertThat(savedShop.getId()).isNotNull();
         assertThat(savedShop.getName()).isEqualTo("Test Shop");
-        assertThat(savedShop.getTenantId()).isEqualTo("tenant-001");
+        assertThat(savedShop.getTenant().getId()).isEqualTo(tenant.getId());
         assertThat(savedShop.getConfiguration()).isNotNull();
         assertThat(savedShop.getConfiguration().getCurrency()).isEqualTo("USD");
         assertThat(savedShop.getConfiguration().getTaxRate()).isEqualTo(10.0);
@@ -80,9 +91,10 @@ class ShopEntityTest {
     @Test
     void testShopWithDefaultConfiguration() {
         // Given
+        Tenant tenant = createTestTenant("002");
         Shop shop = Shop.builder()
             .name("Simple Shop")
-            .tenantId("tenant-002")
+            .tenant(tenant)
             .address("456 Simple Street")
             .email("simple@shop.com")
             .status(Shop.ShopStatus.ACTIVE)
@@ -94,19 +106,20 @@ class ShopEntityTest {
         // Then
         assertThat(savedShop.getId()).isNotNull();
         assertThat(savedShop.getName()).isEqualTo("Simple Shop");
-        assertThat(savedShop.getTenantId()).isEqualTo("tenant-002");
+        assertThat(savedShop.getTenant().getId()).isEqualTo(tenant.getId());
         assertThat(savedShop.getProducts()).isNotNull();
         assertThat(savedShop.getProducts()).isEmpty();
-        assertThat(savedShop.getUsers()).isNotNull();
-        assertThat(savedShop.getUsers()).isEmpty();
     }
 
     @Test
     void testShopStatusEnum() {
         // Given
+        Tenant activeTenant = createTestTenant("active");
+        Tenant inactiveTenant = createTestTenant("inactive");
+
         Shop activeShop = Shop.builder()
             .name("Active Shop")
-            .tenantId("tenant-active")
+            .tenant(activeTenant)
             .address("123 Active Street")
             .email("active@shop.com")
             .status(Shop.ShopStatus.ACTIVE)
@@ -114,7 +127,7 @@ class ShopEntityTest {
 
         Shop inactiveShop = Shop.builder()
             .name("Inactive Shop")
-            .tenantId("tenant-inactive")
+            .tenant(inactiveTenant)
             .address("456 Inactive Street")
             .email("inactive@shop.com")
             .status(Shop.ShopStatus.INACTIVE)

@@ -1,10 +1,12 @@
 package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.service.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ import java.util.UUID;
 public class ShopService {
 
     private final ShopRepository shopRepository;
+    private final TenantRepository tenantRepository;
     private final AuditService auditService;
 
     /**
@@ -61,13 +64,13 @@ public class ShopService {
             throw new IllegalArgumentException("Shop with name '" + request.getName() + "' already exists");
         }
 
-        // Generate unique tenant ID
-        String tenantId = generateTenantId(request.getName());
+        // Create or get tenant
+        Tenant tenant = getOrCreateTenant(request.getName());
 
         // Create shop entity
         Shop shop = Shop.builder()
             .name(request.getName())
-            .tenantId(tenantId)
+            .tenant(tenant)
             .description(request.getDescription())
             .address(request.getAddress())
             .city(request.getCity())
@@ -85,9 +88,9 @@ public class ShopService {
 
         // Audit the creation
         auditService.logEntityCreation("Shop", shop.getId(),
-            "Shop created: " + shop.getName() + " with tenant ID: " + tenantId);
+            "Shop created: " + shop.getName() + " with tenant ID: " + tenant.getId());
 
-        log.info("Successfully created shop with ID: {} and tenant ID: {}", shop.getId(), tenantId);
+        log.info("Successfully created shop with ID: {} and tenant ID: {}", shop.getId(), tenant.getId());
         return ShopResponse.fromEntity(shop);
     }
 
@@ -114,7 +117,7 @@ public class ShopService {
 
         // Verify tenant access
         String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenantId())) {
+        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
             throw new IllegalArgumentException("Access denied to shop: " + shopId);
         }
 
@@ -155,7 +158,7 @@ public class ShopService {
 
         // Verify tenant access
         String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenantId())) {
+        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
             throw new IllegalArgumentException("Access denied to shop: " + shopId);
         }
 
@@ -182,7 +185,7 @@ public class ShopService {
             log.debug("Retrieved {} shops for system admin", shops.getContent().size());
         } else {
             // Tenant user - can only see shops in their tenant
-            shops = shopRepository.findByTenantId(currentTenantId, pageable);
+            shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
             log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
         }
 
@@ -202,7 +205,7 @@ public class ShopService {
         if (currentTenantId == null) {
             shops = shopRepository.findByStatus(Shop.ShopStatus.ACTIVE);
         } else {
-            shops = shopRepository.findByTenantIdAndStatus(currentTenantId, Shop.ShopStatus.ACTIVE);
+            shops = shopRepository.findByTenant_IdAndStatus(currentTenantId, Shop.ShopStatus.ACTIVE);
         }
 
         return shops.stream()
@@ -233,7 +236,7 @@ public class ShopService {
 
         // Verify tenant access
         String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenantId())) {
+        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
             throw new IllegalArgumentException("Access denied to shop: " + shopId);
         }
 
@@ -271,7 +274,7 @@ public class ShopService {
 
         // Verify tenant access
         String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenantId())) {
+        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
             throw new IllegalArgumentException("Access denied to shop: " + shopId);
         }
 
@@ -287,12 +290,12 @@ public class ShopService {
     }
 
     /**
-     * Generates a unique tenant ID based on shop name.
+     * Creates or retrieves a tenant based on shop name.
      *
      * @param shopName Name of the shop
-     * @return Unique tenant identifier
+     * @return Tenant entity
      */
-    private String generateTenantId(String shopName) {
+    private Tenant getOrCreateTenant(String shopName) {
         String baseTenantId = shopName.toLowerCase()
             .replaceAll("[^a-z0-9]", "-")
             .replaceAll("-+", "-")
@@ -300,11 +303,17 @@ public class ShopService {
 
         // Ensure uniqueness by appending UUID suffix if needed
         String tenantId = "tenant-" + baseTenantId;
-        if (shopRepository.findByTenantId(tenantId).isPresent()) {
+        if (tenantRepository.existsById(tenantId)) {
             tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
         }
 
-        return tenantId;
+        // Create new tenant
+        return tenantRepository.save(Tenant.builder()
+            .id(tenantId)
+            .name(shopName + " Organization")
+            .contactEmail("admin@" + baseTenantId.replaceAll("-", "") + ".com")
+            .status(Tenant.TenantStatus.ACTIVE)
+            .build());
     }
 
     /**

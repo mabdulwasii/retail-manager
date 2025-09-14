@@ -41,7 +41,7 @@ public class ProductReturnService {
 
         productReturn = returnRepository.save(productReturn);
 
-        auditService.logEvent("RETURN_CREATED", "product_return", productReturn.getId(),
+        auditService.logEntityCreation("ProductReturn", productReturn.getId(),
             "Product return created for quantity: " + request.getQuantityReturned());
 
         return mapToResponse(productReturn);
@@ -66,7 +66,7 @@ public class ProductReturnService {
         productReturn.complete();
         productReturn = returnRepository.save(productReturn);
 
-        auditService.logEvent("RETURN_PROCESSED", "product_return", productReturn.getId(),
+        auditService.logEntityModification("ProductReturn", productReturn.getId(),
             "Product return processed successfully");
 
         return mapToResponse(productReturn);

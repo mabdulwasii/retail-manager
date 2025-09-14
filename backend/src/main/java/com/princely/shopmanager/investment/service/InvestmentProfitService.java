@@ -5,9 +5,9 @@ import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.service.AuditService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +17,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +71,7 @@ public class InvestmentProfitService {
             .multiply(investorSharePercentage)
             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-        // Create distribution record
+        // Create a distribution record
         InvestorDistribution distribution = InvestorDistribution.builder()
             .investment(investment)
             .periodStart(periodStart)
@@ -98,7 +101,7 @@ public class InvestmentProfitService {
             investment.getShop(),
             "SYSTEM",
             "system",
-            "PROFIT_CALCULATED",
+            AuditLog.ActionType.PROFIT_CALCULATED,
             distribution.getId(),
             String.format("Profit distribution calculated for investment %s - Amount: %s",
                 investment.getInvestmentNumber(), investorProfitAmount),
@@ -169,6 +172,7 @@ public class InvestmentProfitService {
                     yield investment.getProfitPercentage();
                 }
             }
+            default -> throw new IllegalArgumentException("Unsupported profit sharing model: " + investment.getProfitSharingModel());
         };
     }
 
@@ -202,7 +206,7 @@ public class InvestmentProfitService {
             distribution.getInvestment().getShop(),
             approvedBy,
             approvedBy,
-            "DISTRIBUTION_APPROVED",
+            AuditLog.ActionType.DISTRIBUTION_APPROVED,
             distributionId,
             String.format("Profit distribution approved - Amount: %s",
                 distribution.getDistributionAmount()),
@@ -235,7 +239,7 @@ public class InvestmentProfitService {
             investment.getShop(),
             paidBy,
             paidBy,
-            "DISTRIBUTION_PAID",
+            AuditLog.ActionType.DISTRIBUTION_PAID,
             distributionId,
             String.format("Profit distribution paid - Amount: %s, Reference: %s",
                 distribution.getDistributionAmount(), paymentReference),

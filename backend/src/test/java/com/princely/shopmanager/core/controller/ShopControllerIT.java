@@ -330,6 +330,6 @@ class ShopControllerIT extends IntegrationTestBase {
         // Verify the shop was actually persisted
         Shop savedShop = shopRepository.findById(response.getBody().getId()).orElse(null);
         assertThat(savedShop).isNotNull();
-        assertThat(savedShop.getTenantId()).isEqualTo(tenantId);
+        assertThat(savedShop.getTenant().getId()).isEqualTo(tenantId);
     }
 }

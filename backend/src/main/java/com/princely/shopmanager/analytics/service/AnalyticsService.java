@@ -60,15 +60,15 @@ public class AnalyticsService {
             totalRevenue.divide(BigDecimal.valueOf(totalTransactions), 2, RoundingMode.HALF_UP) :
             BigDecimal.ZERO;
 
-        SalesSummaryDto summary = SalesSummaryDto.builder()
-            .shopId(shopId)
-            .periodStart(startDate)
-            .periodEnd(endDate)
-            .totalRevenue(totalRevenue)
-            .totalTransactions(totalTransactions)
-            .averageTransactionValue(averageTransactionValue)
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        SalesSummaryDto summary = new SalesSummaryDto(
+            shopId,
+            startDate,
+            endDate,
+            totalRevenue,
+            totalTransactions,
+            averageTransactionValue,
+            LocalDateTime.now()
+        );
 
         // Cache the result
         cacheAnalytics(shopId, AnalyticsCache.AnalyticsType.SALES_SUMMARY, cacheKey, summary);
@@ -105,15 +105,15 @@ public class AnalyticsService {
                 .multiply(BigDecimal.valueOf(100)) :
             BigDecimal.ZERO;
 
-        InvestmentRoiDto roi = InvestmentRoiDto.builder()
-            .shopId(shopId)
-            .periodStart(startDate)
-            .periodEnd(endDate)
-            .totalInvestmentAmount(totalInvestmentAmount)
-            .totalDistributions(totalDistributions)
-            .roiPercentage(roiPercentage)
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        InvestmentRoiDto roi = new InvestmentRoiDto(
+            shopId,
+            startDate,
+            endDate,
+            totalInvestmentAmount,
+            totalDistributions,
+            roiPercentage,
+            LocalDateTime.now()
+        );
 
         // Cache the result
         cacheAnalytics(shopId, AnalyticsCache.AnalyticsType.INVESTMENT_ROI, cacheKey, roi);
@@ -156,16 +156,16 @@ public class AnalyticsService {
                 .multiply(BigDecimal.valueOf(100)) :
             BigDecimal.ZERO;
 
-        FraudStatisticsDto fraudStats = FraudStatisticsDto.builder()
-            .shopId(shopId)
-            .periodStart(startDate)
-            .periodEnd(endDate)
-            .totalAssessments(totalAssessments)
-            .highRiskCount(highRiskAssessments)
-            .criticalRiskCount(criticalRiskAssessments)
-            .riskRate(riskRate)
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        FraudStatisticsDto fraudStats = new FraudStatisticsDto(
+            shopId,
+            startDate,
+            endDate,
+            totalAssessments,
+            highRiskAssessments,
+            criticalRiskAssessments,
+            riskRate,
+            LocalDateTime.now()
+        );
 
         // Cache the result
         cacheAnalytics(shopId, AnalyticsCache.AnalyticsType.FRAUD_STATISTICS, cacheKey, fraudStats);
@@ -185,24 +185,24 @@ public class AnalyticsService {
 
         SalesSummaryDto previousPeriod = getSalesSummary(shopId, prevPeriodStart, prevPeriodEnd);
 
-        BigDecimal growthRate = previousPeriod.getTotalRevenue().compareTo(BigDecimal.ZERO) > 0 ?
-            currentPeriod.getTotalRevenue()
-                .subtract(previousPeriod.getTotalRevenue())
-                .divide(previousPeriod.getTotalRevenue(), 4, RoundingMode.HALF_UP)
+        BigDecimal growthRate = previousPeriod.totalRevenue().compareTo(BigDecimal.ZERO) > 0 ?
+            currentPeriod.totalRevenue()
+                .subtract(previousPeriod.totalRevenue())
+                .divide(previousPeriod.totalRevenue(), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)) :
             BigDecimal.ZERO;
 
-        return RevenueAnalyticsDto.builder()
-            .shopId(shopId)
-            .periodStart(startDate)
-            .periodEnd(endDate)
-            .currentRevenue(currentPeriod.getTotalRevenue())
-            .previousRevenue(previousPeriod.getTotalRevenue())
-            .growthRate(growthRate)
-            .currentTransactions(currentPeriod.getTotalTransactions())
-            .previousTransactions(previousPeriod.getTotalTransactions())
-            .calculatedAt(LocalDateTime.now())
-            .build();
+        return new RevenueAnalyticsDto(
+            shopId,
+            startDate,
+            endDate,
+            currentPeriod.totalRevenue(),
+            previousPeriod.totalRevenue(),
+            growthRate,
+            currentPeriod.totalTransactions(),
+            previousPeriod.totalTransactions(),
+            LocalDateTime.now()
+        );
     }
 
     private Optional<AnalyticsCache> getCachedAnalytics(String shopId, AnalyticsCache.AnalyticsType type, String cacheKey) {
