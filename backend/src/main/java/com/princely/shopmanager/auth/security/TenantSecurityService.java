@@ -1,12 +1,11 @@
 package com.princely.shopmanager.auth.security;
 
+import com.princely.shopmanager.auth.constants.SecurityRoles;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Shop;
-import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.service.AuditService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -126,8 +128,8 @@ public class TenantSecurityService {
     private boolean hasSystemRole(Authentication auth) {
         return auth.getAuthorities().stream()
             .anyMatch(authority ->
-                authority.getAuthority().equals("ROLE_SYSTEM_ADMIN") ||
-                authority.getAuthority().equals("ROLE_SUPER_ADMIN"));
+                authority.getAuthority().equals(SecurityRoles.ROLE_SYSTEM_ADMIN) ||
+                authority.getAuthority().equals(SecurityRoles.ROLE_SUPER_ADMIN));
     }
 
     /**
@@ -136,10 +138,8 @@ public class TenantSecurityService {
     public Shop validateAndGetShop(String shopId) {
         enforceShopAccess(shopId);
 
-        Shop shop = shopRepository.findById(shopId)
+        return shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
-
-        return shop;
     }
 
     /**
@@ -152,20 +152,20 @@ public class TenantSecurityService {
 
         // Define permission matrix based on roles and actions
         return switch (action.toUpperCase()) {
-            case "READ" -> hasRoleInCurrentTenant("CASHIER") ||
-                          hasRoleInCurrentTenant("MANAGER") ||
-                          hasRoleInCurrentTenant("OWNER");
+            case "READ" -> hasRoleInCurrentTenant(SecurityRoles.CASHIER) ||
+                          hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER) ||
+                          hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
 
-            case "WRITE", "UPDATE" -> hasRoleInCurrentTenant("MANAGER") ||
-                                     hasRoleInCurrentTenant("OWNER");
+            case "WRITE", "UPDATE" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER) ||
+                                     hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
 
-            case "DELETE" -> hasRoleInCurrentTenant("OWNER");
+            case "DELETE" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
 
             case "APPROVE" -> resourceType.equals("INVESTMENT") ?
-                            hasRoleInCurrentTenant("OWNER") :
-                            hasRoleInCurrentTenant("MANAGER");
+                            hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER) :
+                            hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER);
 
-            case "ADMIN" -> hasRoleInCurrentTenant("OWNER") || hasSystemRole(SecurityContextHolder.getContext().getAuthentication());
+            case "ADMIN" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER) || hasSystemRole(SecurityContextHolder.getContext().getAuthentication());
 
             default -> false;
         };

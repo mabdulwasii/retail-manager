@@ -33,7 +33,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         JwtPrincipal principal = JwtPrincipal.fromJwt(jwt);
         List<String> roleNames = extractResourceRoles(jwt).stream()
             .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList());
+            .toList();
         principal.setRoles(roleNames);
 
         return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));

@@ -2,6 +2,7 @@ package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.domain.ShopCustomization;
 import com.princely.shopmanager.core.repository.ShopCustomizationRepository;
+import com.princely.shopmanager.core.util.CustomizationFieldUpdater;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,28 +116,10 @@ public class ShopThemeService {
      * @param source The source customization with new values
      */
     public void updateCustomizationFields(ShopCustomization target, ShopCustomization source) {
-        if (source.getPrimaryColor() != null) target.setPrimaryColor(source.getPrimaryColor());
-        if (source.getSecondaryColor() != null) target.setSecondaryColor(source.getSecondaryColor());
-        if (source.getAccentColor() != null) target.setAccentColor(source.getAccentColor());
-        if (source.getBackgroundColor() != null) target.setBackgroundColor(source.getBackgroundColor());
-        if (source.getTextColor() != null) target.setTextColor(source.getTextColor());
-        if (source.getLogoUrl() != null) target.setLogoUrl(source.getLogoUrl());
-        if (source.getFaviconUrl() != null) target.setFaviconUrl(source.getFaviconUrl());
-        if (source.getBannerImageUrl() != null) target.setBannerImageUrl(source.getBannerImageUrl());
-        if (source.getBackgroundImageUrl() != null) target.setBackgroundImageUrl(source.getBackgroundImageUrl());
-        if (source.getWebsiteUrl() != null) target.setWebsiteUrl(source.getWebsiteUrl());
-        if (source.getSocialMediaLinks() != null) target.setSocialMediaLinks(source.getSocialMediaLinks());
-        if (source.getThemeVariant() != null) target.setThemeVariant(source.getThemeVariant());
-        if (source.getFontFamily() != null) target.setFontFamily(source.getFontFamily());
-        if (source.getFontSize() != null) target.setFontSize(source.getFontSize());
-        if (source.getBorderRadius() != null) target.setBorderRadius(source.getBorderRadius());
-        if (source.getCustomStyles() != null) target.setCustomStyles(source.getCustomStyles());
-        if (source.getDashboardLayout() != null) target.setDashboardLayout(source.getDashboardLayout());
-        if (source.getReceiptHeader() != null) target.setReceiptHeader(source.getReceiptHeader());
-        if (source.getReceiptFooter() != null) target.setReceiptFooter(source.getReceiptFooter());
-        if (source.getReceiptShowLogo() != null) target.setReceiptShowLogo(source.getReceiptShowLogo());
-        if (source.getShowBanner() != null) target.setShowBanner(source.getShowBanner());
-        if (source.getEnableAnimations() != null) target.setEnableAnimations(source.getEnableAnimations());
-        if (source.getShowAdvancedFeatures() != null) target.setShowAdvancedFeatures(source.getShowAdvancedFeatures());
+        CustomizationFieldUpdater.updateAllFields(target, source);
+        // Handle additional fields not covered by the utility
+        if (source.getShowAdvancedFeatures() != null) {
+            target.setShowAdvancedFeatures(source.getShowAdvancedFeatures());
+        }
     }
 }

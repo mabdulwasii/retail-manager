@@ -38,6 +38,10 @@ public class Tenant extends BaseEntity {
     @Column(nullable = false)
     private String contactEmail;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_user_id")
+    private User contactUser;
+
     @Column(name = "contact_phone")
     private String contactPhone;
 
@@ -72,5 +76,32 @@ public class Tenant extends BaseEntity {
         INACTIVE,
         SUSPENDED,
         TERMINATED
+    }
+
+    /**
+     * Get the contact email - either from the User entity or the legacy field
+     */
+    public String getEffectiveContactEmail() {
+        if (contactUser != null && contactUser.getEmail() != null) {
+            return contactUser.getEmail();
+        }
+        return contactEmail;
+    }
+
+    /**
+     * Get the contact user's full name if available
+     */
+    public String getContactUserFullName() {
+        if (contactUser != null) {
+            return contactUser.getFullName();
+        }
+        return null;
+    }
+
+    /**
+     * Check if this tenant has a proper User entity as contact
+     */
+    public boolean hasContactUser() {
+        return contactUser != null;
     }
 }

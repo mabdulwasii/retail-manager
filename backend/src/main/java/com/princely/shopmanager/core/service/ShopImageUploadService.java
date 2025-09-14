@@ -27,7 +27,7 @@ public class ShopImageUploadService {
 
     // Configuration for file uploads
     private static final String UPLOAD_DIR = "uploads/shop-assets/";
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024; // 5MB
     private static final String[] ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/svg+xml"};
 
     /**

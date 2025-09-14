@@ -40,10 +40,6 @@
         <!-- For local development - remove in production -->
         <sonar.login>${env.SONAR_LOGIN:-admin}</sonar.login>
         <sonar.password>${env.SONAR_PASSWORD:-Admin123}</sonar.password>
-        <!-- Uncomment for SonarCloud -->
-        <!-- <sonar.host.url>https://sonarcloud.io</sonar.host.url> -->
-        <!-- <sonar.organization>your-org</sonar.organization> -->
-        <!-- <sonar.projectKey>shop-manager</sonar.projectKey> -->
         <sonar.exclusions>
             **/config/**/*,
             **/dto/**/*,

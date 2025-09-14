@@ -1,6 +1,9 @@
 package com.princely.shopmanager.analytics.controller;
 
-import com.princely.shopmanager.analytics.dto.*;
+import com.princely.shopmanager.analytics.dto.SalesSummaryDto;
+import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
+import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
+import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

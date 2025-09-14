@@ -2,11 +2,13 @@ package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
+import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
+import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.service.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class ShopService {
 
     private final ShopRepository shopRepository;
     private final TenantRepository tenantRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
 
     /**
@@ -307,13 +310,29 @@ public class ShopService {
             tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
         }
 
-        // Create new tenant
-        return tenantRepository.save(Tenant.builder()
+        // Create new tenant first
+        Tenant tenant = tenantRepository.save(Tenant.builder()
             .id(tenantId)
             .name(shopName + " Organization")
             .contactEmail("admin@" + baseTenantId.replaceAll("-", "") + ".com")
             .status(Tenant.TenantStatus.ACTIVE)
             .build());
+
+        // Create contact user for the tenant
+        String contactEmail = "admin@" + baseTenantId.replaceAll("-", "") + ".com";
+        User contactUser = userRepository.save(User.builder()
+            .tenant(tenant)
+            .keycloakId("admin-" + tenantId)
+            .username("admin-" + shopName.toLowerCase().replaceAll("[^a-z0-9]", ""))
+            .email(contactEmail)
+            .firstName("Admin")
+            .lastName("User")
+            .status(User.UserStatus.ACTIVE)
+            .build());
+
+        // Update tenant with contact user reference
+        tenant.setContactUser(contactUser);
+        return tenantRepository.save(tenant);
     }
 
     /**

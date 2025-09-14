@@ -191,7 +191,7 @@ public class InventoryService {
         return inventoryRepository.findLowStockItems(shopId)
             .stream()
             .map(this::mapToResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -201,7 +201,7 @@ public class InventoryService {
         return inventoryRepository.findExpiringItems(shopId, startDate, endDate)
             .stream()
             .map(this::mapToResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Transactional(readOnly = true)

@@ -3,13 +3,7 @@ package com.princely.shopmanager.auth.filter;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.auth.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.FeatureFlagService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
@@ -19,6 +13,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Servlet filter that extracts and sets tenant context for multi-tenant operations.
@@ -113,7 +114,6 @@ public class TenantFilter extends OncePerRequestFilter {
 
     /**
      * Extracts tenant ID from the HTTP request.
-     *
      * The method tries multiple approaches to determine the tenant ID:
      * 1. First, checks for X-Tenant-ID header
      * 2. Falls back to extracting from JWT token's tenant_id claim

@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,21 +32,32 @@ public class InvestmentProfitService {
     private final SalesTransactionRepository salesTransactionRepository;
     private final AuditService auditService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<InvestorDistribution> calculateProfitDistributions(LocalDateTime periodStart, LocalDateTime periodEnd) {
         log.info("Calculating profit distributions for period {} to {}", periodStart, periodEnd);
 
         List<Investment> activeInvestments = investmentRepository.findActiveInvestments();
 
-        return activeInvestments.stream()
-            .map(investment -> calculateInvestmentDistribution(investment, periodStart, periodEnd))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .toList();
+        List<InvestorDistribution> distributions = new ArrayList<>();
+        for (Investment investment : activeInvestments) {
+            Optional<InvestorDistribution> distribution = performInvestmentDistributionCalculation(investment, periodStart, periodEnd);
+            distribution.ifPresent(distributions::add);
+        }
+        return distributions;
+    }
+
+    private Optional<InvestorDistribution> performInvestmentDistributionCalculation(Investment investment, LocalDateTime periodStart, LocalDateTime periodEnd) {
+        // Move the calculation logic here to avoid transactional method call issues
+        return calculateInvestmentDistributionInternal(investment, periodStart, periodEnd);
     }
 
     @Transactional
     public Optional<InvestorDistribution> calculateInvestmentDistribution(
+            Investment investment, LocalDateTime periodStart, LocalDateTime periodEnd) {
+        return calculateInvestmentDistributionInternal(investment, periodStart, periodEnd);
+    }
+
+    private Optional<InvestorDistribution> calculateInvestmentDistributionInternal(
             Investment investment, LocalDateTime periodStart, LocalDateTime periodEnd) {
 
         // Check if distribution already exists for this period
@@ -66,7 +78,7 @@ public class InvestmentProfitService {
         }
 
         // Calculate investor's share
-        BigDecimal investorSharePercentage = calculateInvestorSharePercentage(investment, result);
+        BigDecimal investorSharePercentage = calculateInvestorSharePercentage(investment);
         BigDecimal investorProfitAmount = result.totalProfit()
             .multiply(investorSharePercentage)
             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -117,12 +129,10 @@ public class InvestmentProfitService {
         BigDecimal totalRevenue;
 
         switch (investment.getInvestmentType()) {
-            case SHOP_WIDE -> {
-                totalRevenue = salesTransactionRepository
+            case SHOP_WIDE -> totalRevenue = salesTransactionRepository
                     .getTotalRevenueByShopAndPeriod(
                         investment.getShop().getId(), periodStart, periodEnd)
                     .orElse(BigDecimal.ZERO);
-            }
             case PRODUCT_SPECIFIC -> {
                 List<String> productIds = investment.getProducts().stream()
                     .map(product -> product.getId())
@@ -131,10 +141,7 @@ public class InvestmentProfitService {
                     .getTotalRevenueByProductsAndPeriod(productIds, periodStart, periodEnd)
                     .orElse(BigDecimal.ZERO);
             }
-            case CATEGORY_SPECIFIC -> {
-                // TODO: Implement category-specific calculation
-                totalRevenue = BigDecimal.ZERO;
-            }
+            case CATEGORY_SPECIFIC -> totalRevenue = BigDecimal.ZERO; // Category-specific calculation not yet implemented
             default -> totalRevenue = BigDecimal.ZERO;
         }
 
@@ -145,14 +152,10 @@ public class InvestmentProfitService {
         return new ProfitCalculationResult(totalRevenue, totalProfit);
     }
 
-    private BigDecimal calculateInvestorSharePercentage(Investment investment, ProfitCalculationResult result) {
+    private BigDecimal calculateInvestorSharePercentage(Investment investment) {
         return switch (investment.getProfitSharingModel()) {
             case PROPORTIONAL_BY_AMOUNT -> investment.getProfitPercentage();
-            case FIXED_SHARES -> {
-                // Calculate based on fixed shares
-                // For now, use the profit percentage as configured
-                yield investment.getProfitPercentage();
-            }
+            case FIXED_SHARES -> investment.getProfitPercentage(); // Calculate based on fixed shares
             case TIME_WEIGHTED -> {
                 // Calculate time-weighted percentage
                 long daysInvested = ChronoUnit.DAYS.between(

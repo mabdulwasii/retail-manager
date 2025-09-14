@@ -1,7 +1,10 @@
 package com.princely.shopmanager.analytics.service;
 
 import com.princely.shopmanager.analytics.domain.AnalyticsCache;
-import com.princely.shopmanager.analytics.dto.*;
+import com.princely.shopmanager.analytics.dto.SalesSummaryDto;
+import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
+import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
+import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
@@ -37,6 +40,10 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public SalesSummaryDto getSalesSummary(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
+        return calculateSalesSummaryInternal(shopId, startDate, endDate);
+    }
+
+    private SalesSummaryDto calculateSalesSummaryInternal(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
         String cacheKey = AnalyticsCache.generateCacheKey("sales_summary", shopId, startDate, endDate);
 
         Optional<AnalyticsCache> cached = getCachedAnalytics(shopId, AnalyticsCache.AnalyticsType.SALES_SUMMARY, cacheKey);
@@ -175,15 +182,14 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public RevenueAnalyticsDto getRevenueAnalytics(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
-        // This could include trend analysis, growth rates, etc.
-        SalesSummaryDto currentPeriod = getSalesSummary(shopId, startDate, endDate);
-
-        // Calculate previous period for comparison
+        // Calculate periods first
         long periodDays = startDate.until(endDate, java.time.temporal.ChronoUnit.DAYS);
         LocalDateTime prevPeriodStart = startDate.minusDays(periodDays);
         LocalDateTime prevPeriodEnd = startDate.minusDays(1);
 
-        SalesSummaryDto previousPeriod = getSalesSummary(shopId, prevPeriodStart, prevPeriodEnd);
+        // Get sales data for both periods - call internal methods to avoid transaction proxy issues
+        SalesSummaryDto currentPeriod = calculateSalesSummaryInternal(shopId, startDate, endDate);
+        SalesSummaryDto previousPeriod = calculateSalesSummaryInternal(shopId, prevPeriodStart, prevPeriodEnd);
 
         BigDecimal growthRate = previousPeriod.totalRevenue().compareTo(BigDecimal.ZERO) > 0 ?
             currentPeriod.totalRevenue()

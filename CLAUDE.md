@@ -326,3 +326,10 @@ backend/
 
 **Current Status**: Production-ready backend with enhanced multi-tenancy and comprehensive business features.
 **Next Steps**: Frontend development, CI/CD pipeline, and production deployment.
+
+
+### Code Review Guidelines
+For every successful task completed, commit the changes to the current branch and add a suitable commit message.
+For every code-breaking change made, prompt me
+For every code change made, update the test cases and run the tests.
+Prefer static imports over fully qualified names.
