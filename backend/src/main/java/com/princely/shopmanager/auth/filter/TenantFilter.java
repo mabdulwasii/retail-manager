@@ -1,6 +1,7 @@
 package com.princely.shopmanager.auth.filter;
 
 import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.auth.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.FeatureFlagService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -77,11 +78,19 @@ public class TenantFilter extends OncePerRequestFilter {
                 }
             }
 
-            // Extract and set user information from JWT token
+            // Extract and set user information from JWT token or Principal
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-                String userId = jwt.getClaimAsString("sub");
-                String userName = jwt.getClaimAsString("preferred_username");
+            if (authentication != null) {
+                String userId = null;
+                String userName = null;
+
+                if (authentication.getPrincipal() instanceof JwtPrincipal principal) {
+                    userId = principal.getSubject();
+                    userName = principal.getPreferredUsername();
+                } else if (authentication.getPrincipal() instanceof Jwt jwt) {
+                    userId = jwt.getClaimAsString("sub");
+                    userName = jwt.getClaimAsString("preferred_username");
+                }
 
                 if (userId != null && userName != null) {
                     TenantContext.setCurrentUser(userId, userName);
@@ -121,12 +130,17 @@ public class TenantFilter extends OncePerRequestFilter {
             return tenantId.trim();
         }
 
-        // Priority 2: Extract from JWT token
+        // Priority 2: Extract from JWT token or Principal
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            tenantId = jwt.getClaimAsString("tenant_id");
+        if (authentication != null) {
+            if (authentication.getPrincipal() instanceof JwtPrincipal principal) {
+                tenantId = principal.getTenantId();
+            } else if (authentication.getPrincipal() instanceof Jwt jwt) {
+                tenantId = jwt.getClaimAsString("tenant_id");
+            }
+
             if (tenantId != null && !tenantId.trim().isEmpty()) {
-                log.debug("Tenant ID extracted from JWT token: {}", tenantId);
+                log.debug("Tenant ID extracted from JWT token/principal: {}", tenantId);
                 return tenantId.trim();
             }
         }

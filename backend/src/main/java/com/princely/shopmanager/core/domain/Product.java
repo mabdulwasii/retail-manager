@@ -3,8 +3,11 @@ package com.princely.shopmanager.core.domain;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Entity
 @Table(name = "products", indexes = {
@@ -87,6 +90,19 @@ public class Product extends BaseEntity {
 
     @Column(name = "weight_in_grams")
     private Double weightInGrams;
+
+    private String location;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> metadata;
+
+    @Column(name = "supplier_name")
+    private String supplierName;
+
+    @Column(name = "supplier_contact")
+    private String supplierContact;
+
+    private String dimensions;
 
     public enum ProductStatus {
         ACTIVE,

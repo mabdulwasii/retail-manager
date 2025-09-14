@@ -1,0 +1,338 @@
+replicaCount: 1
+
+image:
+  repository: shop-manager
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+env:
+  springProfile: "prod"
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: shop-manager.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Environment variables
+env:
+  SPRING_PROFILES_ACTIVE: prod
+  SERVER_PORT: "8081"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+
+# ConfigMap and Secret
+configMap:
+  data: {}
+
+secrets:
+  data: {}
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: postgres
+    username: shop
+    password: shop
+    database: shopdb
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+  metrics:
+    enabled: true
+
+# Kafka configuration
+kafka:
+  enabled: true
+  auth:
+    clientProtocol: PLAINTEXT
+  listeners:
+    client:
+      protocol: PLAINTEXT
+  metrics:
+    kafka:
+      enabled: true
+
+# Keycloak configuration
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: admin
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: postgres
+      username: keycloak
+      password: keycloak
+      database: keycloak
+  ingress:
+    enabled: false
+
+# Application-specific comprehensive configuration
+config:
+  # Database settings
+  database:
+    showSql: false
+    formatSql: true
+    poolSize: 20
+    minIdle: 10
+    connectionTimeout: 30000
+
+  # Timezone and locale
+  timezone: "UTC"
+  locale: "en_US"
+
+  # Business rules
+  business:
+    defaultCurrency: "USD"
+    defaultTaxRate: "0.075"
+    maxReturnDays: 30
+    minReorderPoint: 10
+
+  # Inventory management
+  inventory:
+    lowStockThreshold: 10
+    expiryWarningDays: 30
+    autoReorderEnabled: false
+    stockCheckIntervalHours: 6
+
+  # Security settings
+  security:
+    tenantIsolation: true
+    permissionCaching: true
+    sessionTimeoutMinutes: 30
+    maxLoginAttempts: 5
+    accountLockDurationMinutes: 30
+    passwordMinLength: 8
+    jwtExpirationHours: 24
+
+  # Audit configuration
+  audit:
+    enabled: true
+    retentionDays: 90
+    logEntityChanges: true
+    logSecurityEvents: true
+    logApiRequests: false
+
+  # Backup configuration
+  backup:
+    path: "/var/shop-manager/backups"
+    retentionDays: 30
+    maxFileSizeMb: 500
+    compressionEnabled: true
+    encryptionAlgorithm: "AES256"
+    scheduleCron: "0 0 2 * * SUN"
+
+  # Cache settings
+  cache:
+    defaultTtlMinutes: 60
+    analyticsTtlHours: 1
+
+  # Notification settings
+  notification:
+    emailEnabled: true
+    smsEnabled: false
+    lowStockAlertEnabled: true
+
+  # Upload configuration
+  upload:
+    maxFileSizeMb: 10
+    allowedExtensions: "csv,xlsx,xls,pdf,jpg,jpeg,png"
+    tempDirectory: "/tmp/shop-manager/uploads"
+
+  # Performance tuning
+  performance:
+    connectionPoolSize: 10
+    queryTimeoutSeconds: 30
+    bulkBatchSize: 1000
+
+  # Report generation
+  reports:
+    defaultFormat: "PDF"
+    generationTimeoutMinutes: 5
+
+  # Integration settings
+  integration:
+    retryAttempts: 3
+    retryDelayMs: 1000
+    timeoutSeconds: 30
+
+  # Monitoring
+  monitoring:
+    exposedEndpoints: "health,info,metrics,prometheus"
+    showHealthDetails: "always"
+    prometheusEnabled: true
+
+  # Scheduler configuration
+  scheduler:
+    profitDistribution:
+      enabled: true
+      monthlyDay: 1
+      monthlyHour: 2
+    cacheCleanup:
+      enabled: true
+      intervalHours: 6
+    auditCleanup:
+      enabled: true
+      intervalDays: 7
+
+  # Logging configuration
+  logging:
+    rootLevel: "INFO"
+    appLevel: "INFO"
+    securityLevel: "WARN"
+    webLevel: "WARN"
+    pattern: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+  # Keycloak settings
+  keycloak:
+    realm: "shop-manager"
+    clientId: "shop-manager-backend"
+
+  # System flags
+  maintenanceMode: false
+  debugMode: false
+
+# Feature flags
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: false
+  multiCurrency: false
+  barcodeScanning: true
+  loyaltyProgram: false
+
+# Secrets configuration (values should be provided separately)
+secrets:
+  database:
+    url: ""  # Override in secrets
+    username: ""  # Override in secrets
+    password: ""  # Override in secrets
+
+  keycloak:
+    clientSecret: ""  # Override in secrets
+    adminUsername: ""  # Override in secrets
+    adminPassword: ""  # Override in secrets
+
+  minio:
+    enabled: false
+    endpoint: ""
+    accessKey: ""
+    secretKey: ""
+    bucket: "shop-manager-backups"
+
+  email:
+    enabled: false
+    host: "smtp.gmail.com"
+    port: 587
+    username: ""  # Override in secrets
+    password: ""  # Override in secrets
+    smtpAuth: true
+    starttlsEnable: true
+
+  sms:
+    enabled: false
+    apiKey: ""  # Override in secrets
+    apiSecret: ""  # Override in secrets
+    fromNumber: ""  # Override in secrets
+
+  backup:
+    encryptionKey: ""  # Auto-generated if not provided
+    encryptionSalt: ""  # Auto-generated if not provided
+
+  jwt:
+    secret: ""  # Auto-generated if not provided
+    refreshSecret: ""  # Auto-generated if not provided
+
+  redis:
+    enabled: false
+    host: "redis"
+    port: 6379
+    password: ""
+
+  fraudDetection:
+    enabled: false
+    apiKey: ""
+    apiUrl: ""
+
+  paymentGateway:
+    enabled: false
+    apiKey: ""
+    secretKey: ""
+    merchantId: ""
+
+  monitoring:
+    enabled: false
+    datadogApiKey: ""
+    newRelicLicenseKey: ""
+    sentryDsn: ""
+
+  # Additional API keys
+  apiKeys: {}
+    # EXAMPLE_API_KEY: "your-api-key"
+
+# Service Monitor for Prometheus (if using Prometheus Operator)
+serviceMonitor:
+  enabled: false
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s

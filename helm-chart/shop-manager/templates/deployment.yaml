@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop-manager.fullname" . }}
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "shop-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.config.springProfile | default "prod" | quote }}
+            - name: SERVER_PORT
+              value: {{ .Values.service.targetPort | default "8081" | quote }}
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: {{ .Values.config.monitoring.exposedEndpoints | default "health,info,metrics,prometheus" | quote }}
+            {{- if .Values.postgresql.enabled }}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-postgresql
+                  key: password
+            {{- end }}
+            {{- if .Values.kafka.enabled }}
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "{{ include "shop-manager.fullname" . }}-kafka:9092"
+            {{- end }}
+            {{- if .Values.keycloak.enabled }}
+            - name: KEYCLOAK_ISSUER_URI
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/shop-manager"
+            - name: KEYCLOAK_JWK_SET_URI
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/shop-manager/protocol/openid-connect/certs"
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080"
+            {{- end }}
+            # Feature flags
+            - name: FEATURE_INVESTMENT_ENABLED
+              value: {{ .Values.features.investment.enabled | default "true" | quote }}
+            - name: FEATURE_ANALYTICS_ENABLED
+              value: {{ .Values.features.analytics.enabled | default "true" | quote }}
+            - name: FEATURE_FRAUD_ENABLED
+              value: {{ .Values.features.fraud.enabled | default "false" | quote }}
+            # Security settings
+            - name: SECURITY_TENANT_ISOLATION
+              value: {{ .Values.config.security.tenantIsolation | default "true" | quote }}
+            # Storage settings
+            - name: STORAGE_BACKUP_PATH
+              value: {{ .Values.config.backup.path | default "/var/shop-manager/backups" | quote }}
+            # Audit settings
+            - name: AUDIT_ENABLED
+              value: {{ .Values.config.audit.enabled | default "true" | quote }}
+            - name: AUDIT_RETENTION_DAYS
+              value: {{ .Values.config.audit.retentionDays | default "90" | quote }}
+          {{- with .Values.configMap.data }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "shop-manager.fullname" . }}-config
+          {{- end }}
+          {{- with .Values.secrets.data }}
+            - secretRef:
+                name: {{ include "shop-manager.fullname" . }}-secret
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: backup-storage
+              mountPath: {{ .Values.shopManager.storage.backupPath }}
+      volumes:
+        - name: backup-storage
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

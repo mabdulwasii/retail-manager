@@ -1,0 +1,12 @@
+dependencies:
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 12.12.10
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 26.8.5
+- name: keycloak
+  repository: https://charts.bitnami.com/bitnami
+  version: 17.3.6
+digest: sha256:ebd71d4e78f20accb3d22f2d76629a6d2d5d1a4bc84c7866360cdbf134f72a30
+generated: "2025-09-14T08:04:32.164109+01:00"

@@ -1,0 +1,74 @@
+# Production Profile Configuration
+# This file contains settings specific to production environment
+
+spring:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: ${HIBERNATE_BATCH_SIZE:25}
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_versioned_data: true
+
+  datasource:
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:10}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${DB_IDLE_TIMEOUT:600000}
+      max-lifetime: ${DB_MAX_LIFETIME:1800000}
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:WARN}
+    com.princely.shopmanager: ${LOGGING_LEVEL_APP:INFO}
+    org.springframework.security: ${LOGGING_LEVEL_SECURITY:WARN}
+    org.springframework.web: ${LOGGING_LEVEL_WEB:WARN}
+  pattern:
+    console: ${LOGGING_PATTERN_CONSOLE:%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n}
+  file:
+    name: ${LOG_FILE_NAME:/var/log/shop-manager/application.log}
+    max-size: ${LOG_FILE_MAX_SIZE:10MB}
+    max-history: ${LOG_FILE_MAX_HISTORY:30}
+
+server:
+  compression:
+    enabled: ${SERVER_COMPRESSION_ENABLED:true}
+    mime-types: ${SERVER_COMPRESSION_MIME_TYPES:text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json}
+    min-response-size: ${SERVER_COMPRESSION_MIN_SIZE:1024}
+  http2:
+    enabled: ${SERVER_HTTP2_ENABLED:true}
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:native}
+
+app:
+  security:
+    require-https: ${SECURITY_REQUIRE_HTTPS:true}
+    hsts-enabled: ${SECURITY_HSTS_ENABLED:true}
+    hsts-max-age: ${SECURITY_HSTS_MAX_AGE:31536000}
+    hsts-include-subdomains: ${SECURITY_HSTS_INCLUDE_SUBDOMAINS:true}
+
+  system:
+    debug-mode: ${APP_SYSTEM_DEBUG_MODE:false}
+
+  cache:
+    redis:
+      enabled: ${CACHE_REDIS_ENABLED:true}
+      ttl-minutes: ${CACHE_REDIS_TTL_MINUTES:60}
+
+  monitoring:
+    metrics-enabled: ${MONITORING_METRICS_ENABLED:true}
+    tracing-enabled: ${MONITORING_TRACING_ENABLED:true}
+
+# Production-specific security headers
+security:
+  headers:
+    frame-options: ${SECURITY_HEADERS_FRAME_OPTIONS:DENY}
+    xss-protection: ${SECURITY_HEADERS_XSS_PROTECTION:1; mode=block}
+    content-type-options: ${SECURITY_HEADERS_CONTENT_TYPE_OPTIONS:nosniff}
+    referrer-policy: ${SECURITY_HEADERS_REFERRER_POLICY:strict-origin-when-cross-origin}
+    content-security-policy: ${SECURITY_HEADERS_CSP:default-src 'self'}

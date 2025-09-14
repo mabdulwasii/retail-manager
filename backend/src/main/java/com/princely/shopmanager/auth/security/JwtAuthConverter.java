@@ -1,5 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
+import com.princely.shopmanager.auth.domain.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -29,7 +30,13 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             extractResourceRoles(jwt).stream()
         ).collect(Collectors.toSet());
 
-        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
+        JwtPrincipal principal = JwtPrincipal.fromJwt(jwt);
+        List<String> roleNames = extractResourceRoles(jwt).stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList());
+        principal.setRoles(roleNames);
+
+        return new JwtAuthenticationToken(jwt, authorities, principal);
     }
 
     private String getPrincipalClaimName(Jwt jwt) {

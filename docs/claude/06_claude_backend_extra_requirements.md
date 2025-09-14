@@ -1,9 +1,13 @@
 # Phase Extra Requirements
-Answer the following questions and prompt me before starting the phase:
-- What is the relationship between the tenant and the shop, and why are we extracting the tenant from the header in the internal filter?
-- What is the purpose of `TenantAwareRepository`?
-- Model the JWT token Principal into a Java class.
-- Does this project require a gateway as it is?
+
+- Make a Tenant different from a Shop. A tenant is a company/organization that owns a shop.
+- All feature flags should belong to a tenant and affect all shops under the tenant
+- Audit logs should be specific to a shop but can also be queried at the tenant level.
+- A shop should carry a name, address, contact details, and other relevant information.
+- A tenant can have multiple shops.
+- A user can only belong to a tenant, but not to a shop.
+- Keep the purpose of `TenantAwareRepository`?
+- Model the JWT token Principal into a Java class and update the code accordingly.
 
 ### Data Backup
 - Implement a data backup stored locally in encrypted form.

@@ -27,6 +27,36 @@
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <sonar.version>4.0.0.4121</sonar.version>
+
+        <!-- Sonar properties -->
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.jacoco.reportPath>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPath>
+        <sonar.jacoco.itReportPath>${project.build.directory}/jacoco-it.exec</sonar.jacoco.itReportPath>
+        <sonar.language>java</sonar.language>
+        <!-- Default to localhost port 9090 to avoid conflict with MinIO (9000 & 9001) -->
+        <sonar.host.url>http://localhost:9090</sonar.host.url>
+        <!-- Uncomment for SonarCloud -->
+        <!-- <sonar.host.url>https://sonarcloud.io</sonar.host.url> -->
+        <!-- <sonar.organization>your-org</sonar.organization> -->
+        <!-- <sonar.projectKey>shop-manager</sonar.projectKey> -->
+        <sonar.exclusions>
+            **/config/**/*,
+            **/dto/**/*,
+            **/*Config.java,
+            **/*Configuration.java,
+            **/*Application.java,
+            **/test/**/*
+        </sonar.exclusions>
+        <sonar.coverage.exclusions>
+            **/config/**/*,
+            **/dto/**/*,
+            **/*Config.java,
+            **/*Configuration.java,
+            **/*Application.java,
+            **/test/**/*
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -463,6 +493,13 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- SonarQube Maven Plugin -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar.version}</version>
+            </plugin>
         </plugins>
     </build>
 
@@ -496,6 +533,56 @@
                                 <spring.profiles.active>test</spring.profiles.active>
                             </systemPropertyVariables>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Coverage-only profile for when SonarQube server is not available -->
+        <profile>
+            <id>coverage-only</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>check-coverage</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <rule>
+                                            <element>BUNDLE</element>
+                                            <limits>
+                                                <limit>
+                                                    <counter>INSTRUCTION</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.20</minimum>
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

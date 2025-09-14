@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-config
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+data:
+  # Spring Configuration
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfile | default "prod" | quote }}
+  SERVER_PORT: {{ .Values.service.targetPort | default "8081" | quote }}
+  SPRING_APPLICATION_NAME: "shop-manager"
+
+  # Database Configuration
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_JPA_SHOW_SQL: {{ .Values.config.database.showSql | default "false" | quote }}
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: {{ .Values.config.database.formatSql | default "true" | quote }}
+  SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: {{ .Values.config.timezone | default "UTC" | quote }}
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: {{ .Values.config.database.poolSize | default "10" | quote }}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: {{ .Values.config.database.minIdle | default "5" | quote }}
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: {{ .Values.config.database.connectionTimeout | default "30000" | quote }}
+
+  # Flyway Configuration
+  SPRING_FLYWAY_ENABLED: "true"
+  SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+  SPRING_FLYWAY_LOCATIONS: "classpath:db/migration"
+
+  # Kafka Configuration
+  {{- if .Values.kafka.enabled }}
+  KAFKA_BOOTSTRAP_SERVERS: {{ include "shop-manager.fullname" . }}-kafka:9092
+  SPRING_KAFKA_CONSUMER_GROUP_ID: "shop-manager"
+  SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: "earliest"
+  SPRING_KAFKA_PRODUCER_KEY_SERIALIZER: "org.apache.kafka.common.serialization.StringSerializer"
+  SPRING_KAFKA_PRODUCER_VALUE_SERIALIZER: "org.springframework.kafka.support.serializer.JsonSerializer"
+  SPRING_KAFKA_CONSUMER_KEY_DESERIALIZER: "org.apache.kafka.common.serialization.StringDeserializer"
+  SPRING_KAFKA_CONSUMER_VALUE_DESERIALIZER: "org.springframework.kafka.support.serializer.JsonDeserializer"
+  SPRING_KAFKA_CONSUMER_PROPERTIES_SPRING_JSON_TRUSTED_PACKAGES: "com.princely.shopmanager.*"
+  {{- end }}
+
+  # Keycloak/Security Configuration
+  {{- if .Values.keycloak.enabled }}
+  KEYCLOAK_REALM: {{ .Values.config.keycloak.realm | default "shop-manager" | quote }}
+  KEYCLOAK_AUTH_SERVER_URL: http://{{ include "shop-manager.fullname" . }}-keycloak:8080
+  KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloak.clientId | default "shop-manager-backend" | quote }}
+  KEYCLOAK_ISSUER_URI: http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/{{ .Values.config.keycloak.realm | default "shop-manager" }}
+  KEYCLOAK_JWK_SET_URI: http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/{{ .Values.config.keycloak.realm | default "shop-manager" }}/protocol/openid-connect/certs
+  {{- end }}
+
+  # Application Features
+  FEATURE_INVESTMENT_ENABLED: {{ .Values.features.investment.enabled | default "true" | quote }}
+  FEATURE_ANALYTICS_ENABLED: {{ .Values.features.analytics.enabled | default "true" | quote }}
+  FEATURE_FRAUD_ENABLED: {{ .Values.features.fraud.enabled | default "false" | quote }}
+  FEATURE_MULTI_CURRENCY: {{ .Values.features.multiCurrency | default "false" | quote }}
+  FEATURE_BARCODE_SCANNING: {{ .Values.features.barcodeScanning | default "true" | quote }}
+  FEATURE_LOYALTY_PROGRAM: {{ .Values.features.loyaltyProgram | default "false" | quote }}
+
+  # Business Configuration
+  APP_BUSINESS_DEFAULT_CURRENCY: {{ .Values.config.business.defaultCurrency | default "USD" | quote }}
+  APP_BUSINESS_DEFAULT_TAX_RATE: {{ .Values.config.business.defaultTaxRate | default "0.075" | quote }}
+  APP_BUSINESS_MAX_RETURN_DAYS: {{ .Values.config.business.maxReturnDays | default "30" | quote }}
+  APP_BUSINESS_MIN_REORDER_POINT: {{ .Values.config.business.minReorderPoint | default "10" | quote }}
+
+  # Inventory Configuration
+  APP_INVENTORY_LOW_STOCK_THRESHOLD: {{ .Values.config.inventory.lowStockThreshold | default "10" | quote }}
+  APP_INVENTORY_EXPIRY_WARNING_DAYS: {{ .Values.config.inventory.expiryWarningDays | default "30" | quote }}
+  APP_INVENTORY_AUTO_REORDER_ENABLED: {{ .Values.config.inventory.autoReorderEnabled | default "false" | quote }}
+  APP_INVENTORY_STOCK_CHECK_INTERVAL_HOURS: {{ .Values.config.inventory.stockCheckIntervalHours | default "6" | quote }}
+
+  # Audit Configuration
+  AUDIT_ENABLED: {{ .Values.config.audit.enabled | default "true" | quote }}
+  AUDIT_RETENTION_DAYS: {{ .Values.config.audit.retentionDays | default "90" | quote }}
+  AUDIT_LOG_ENTITY_CHANGES: {{ .Values.config.audit.logEntityChanges | default "true" | quote }}
+  AUDIT_LOG_SECURITY_EVENTS: {{ .Values.config.audit.logSecurityEvents | default "true" | quote }}
+  AUDIT_LOG_API_REQUESTS: {{ .Values.config.audit.logApiRequests | default "false" | quote }}
+
+  # Backup Configuration
+  STORAGE_BACKUP_PATH: {{ .Values.config.backup.path | default "/var/shop-manager/backups" | quote }}
+  APP_BACKUP_RETENTION_DAYS: {{ .Values.config.backup.retentionDays | default "30" | quote }}
+  APP_BACKUP_MAX_FILE_SIZE_MB: {{ .Values.config.backup.maxFileSizeMb | default "500" | quote }}
+  APP_BACKUP_COMPRESSION_ENABLED: {{ .Values.config.backup.compressionEnabled | default "true" | quote }}
+  APP_BACKUP_ENCRYPTION_ALGORITHM: {{ .Values.config.backup.encryptionAlgorithm | default "AES256" | quote }}
+  APP_BACKUP_SCHEDULE_CRON: {{ .Values.config.backup.scheduleCron | default "0 0 2 * * SUN" | quote }}
+
+  # Cache Configuration
+  APP_CACHE_DEFAULT_TTL_MINUTES: {{ .Values.config.cache.defaultTtlMinutes | default "60" | quote }}
+  APP_CACHE_ANALYTICS_TTL_HOURS: {{ .Values.config.cache.analyticsTtlHours | default "1" | quote }}
+  ANALYTICS_CACHE_DURATION: {{ .Values.config.cache.analyticsTtlHours | default "1" | quote }}
+
+  # Security Configuration
+  SECURITY_TENANT_ISOLATION: {{ .Values.config.security.tenantIsolation | default "true" | quote }}
+  SECURITY_PERMISSION_CACHING: {{ .Values.config.security.permissionCaching | default "true" | quote }}
+  SECURITY_SESSION_TIMEOUT_MINUTES: {{ .Values.config.security.sessionTimeoutMinutes | default "30" | quote }}
+  APP_SECURITY_MAX_LOGIN_ATTEMPTS: {{ .Values.config.security.maxLoginAttempts | default "5" | quote }}
+  APP_SECURITY_ACCOUNT_LOCK_DURATION_MINUTES: {{ .Values.config.security.accountLockDurationMinutes | default "30" | quote }}
+  APP_SECURITY_PASSWORD_MIN_LENGTH: {{ .Values.config.security.passwordMinLength | default "8" | quote }}
+  APP_SECURITY_JWT_EXPIRATION_HOURS: {{ .Values.config.security.jwtExpirationHours | default "24" | quote }}
+
+  # Notification Configuration
+  APP_NOTIFICATION_EMAIL_ENABLED: {{ .Values.config.notification.emailEnabled | default "true" | quote }}
+  APP_NOTIFICATION_SMS_ENABLED: {{ .Values.config.notification.smsEnabled | default "false" | quote }}
+  APP_NOTIFICATION_LOW_STOCK_ALERT_ENABLED: {{ .Values.config.notification.lowStockAlertEnabled | default "true" | quote }}
+
+  # Upload Configuration
+  APP_UPLOAD_MAX_FILE_SIZE_MB: {{ .Values.config.upload.maxFileSizeMb | default "10" | quote }}
+  APP_UPLOAD_ALLOWED_EXTENSIONS: {{ .Values.config.upload.allowedExtensions | default "csv,xlsx,xls,pdf,jpg,jpeg,png" | quote }}
+  APP_UPLOAD_TEMP_DIRECTORY: {{ .Values.config.upload.tempDirectory | default "/tmp/shop-manager/uploads" | quote }}
+
+  # Performance Configuration
+  APP_PERFORMANCE_CONNECTION_POOL_SIZE: {{ .Values.config.performance.connectionPoolSize | default "10" | quote }}
+  APP_PERFORMANCE_QUERY_TIMEOUT_SECONDS: {{ .Values.config.performance.queryTimeoutSeconds | default "30" | quote }}
+  APP_PERFORMANCE_BULK_BATCH_SIZE: {{ .Values.config.performance.bulkBatchSize | default "1000" | quote }}
+
+  # Report Configuration
+  APP_REPORTS_DEFAULT_FORMAT: {{ .Values.config.reports.defaultFormat | default "PDF" | quote }}
+  APP_REPORTS_GENERATION_TIMEOUT_MINUTES: {{ .Values.config.reports.generationTimeoutMinutes | default "5" | quote }}
+
+  # Integration Configuration
+  APP_INTEGRATION_RETRY_ATTEMPTS: {{ .Values.config.integration.retryAttempts | default "3" | quote }}
+  APP_INTEGRATION_RETRY_DELAY_MS: {{ .Values.config.integration.retryDelayMs | default "1000" | quote }}
+  APP_INTEGRATION_TIMEOUT_SECONDS: {{ .Values.config.integration.timeoutSeconds | default "30" | quote }}
+
+  # System Configuration
+  APP_SYSTEM_DEFAULT_TIMEZONE: {{ .Values.config.timezone | default "UTC" | quote }}
+  APP_SYSTEM_DEFAULT_LOCALE: {{ .Values.config.locale | default "en_US" | quote }}
+  APP_SYSTEM_MAINTENANCE_MODE: {{ .Values.config.maintenanceMode | default "false" | quote }}
+  APP_SYSTEM_DEBUG_MODE: {{ .Values.config.debugMode | default "false" | quote }}
+
+  # Monitoring Configuration
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: {{ .Values.config.monitoring.exposedEndpoints | default "health,info,metrics,prometheus" | quote }}
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: {{ .Values.config.monitoring.showHealthDetails | default "always" | quote }}
+  MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: {{ .Values.config.monitoring.prometheusEnabled | default "true" | quote }}
+
+  # Scheduler Configuration
+  SCHEDULER_PROFIT_DISTRIBUTION: {{ .Values.config.scheduler.profitDistribution.enabled | default "true" | quote }}
+  SCHEDULER_MONTHLY_DAY: {{ .Values.config.scheduler.profitDistribution.monthlyDay | default "1" | quote }}
+  SCHEDULER_MONTHLY_HOUR: {{ .Values.config.scheduler.profitDistribution.monthlyHour | default "2" | quote }}
+  SCHEDULER_CACHE_CLEANUP: {{ .Values.config.scheduler.cacheCleanup.enabled | default "true" | quote }}
+  SCHEDULER_CACHE_CLEANUP_INTERVAL: {{ .Values.config.scheduler.cacheCleanup.intervalHours | default "6" | quote }}
+  SCHEDULER_AUDIT_CLEANUP: {{ .Values.config.scheduler.auditCleanup.enabled | default "true" | quote }}
+  SCHEDULER_AUDIT_CLEANUP_INTERVAL: {{ .Values.config.scheduler.auditCleanup.intervalDays | default "7" | quote }}
+
+  # Logging Configuration
+  LOGGING_LEVEL_ROOT: {{ .Values.config.logging.rootLevel | default "INFO" | quote }}
+  LOGGING_LEVEL_COM_PRINCELY_SHOPMANAGER: {{ .Values.config.logging.appLevel | default "DEBUG" | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: {{ .Values.config.logging.securityLevel | default "INFO" | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: {{ .Values.config.logging.webLevel | default "INFO" | quote }}
+  LOGGING_PATTERN_CONSOLE: {{ .Values.config.logging.pattern | default "%d{yyyy-MM-dd HH:mm:ss} - %msg%n" | quote }}

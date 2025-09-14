@@ -1,0 +1,31 @@
+apiVersion: v2
+name: shop-manager
+description: A Helm chart for Shop Manager - Multi-tenant retail management platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/shop-manager/shop-manager
+sources:
+  - https://github.com/shop-manager/shop-manager
+maintainers:
+  - name: Shop Manager Development Team
+    email: dev@shopmanager.com
+keywords:
+  - retail
+  - inventory
+  - sales
+  - multi-tenant
+  - spring-boot
+dependencies:
+  - name: postgresql
+    version: "12.12.10"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: kafka
+    version: "26.8.5"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled
+  - name: keycloak
+    version: "17.3.6"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: keycloak.enabled

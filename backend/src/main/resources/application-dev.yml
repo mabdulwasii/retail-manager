@@ -1,0 +1,43 @@
+# Development Profile Configuration
+# This file contains settings specific to development environment
+
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+
+  h2:
+    console:
+      enabled: ${H2_CONSOLE_ENABLED:true}
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:DEBUG}
+    com.princely.shopmanager: ${LOGGING_LEVEL_APP:DEBUG}
+    org.springframework.security: ${LOGGING_LEVEL_SECURITY:DEBUG}
+    org.springframework.web: ${LOGGING_LEVEL_WEB:DEBUG}
+    org.hibernate.SQL: ${LOGGING_LEVEL_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOGGING_LEVEL_SQL_PARAMS:TRACE}
+
+app:
+  system:
+    debug-mode: ${APP_SYSTEM_DEBUG_MODE:true}
+
+  features:
+    swagger-ui-enabled: ${SWAGGER_UI_ENABLED:true}
+
+  security:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+      allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+      allowed-headers: ${CORS_ALLOWED_HEADERS:*}
+      allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+
+# Dev tools configuration
+spring:
+  devtools:
+    restart:
+      enabled: ${DEVTOOLS_RESTART_ENABLED:true}
+    livereload:
+      enabled: ${DEVTOOLS_LIVERELOAD_ENABLED:true}

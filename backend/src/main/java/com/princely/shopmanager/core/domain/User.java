@@ -14,13 +14,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"shops", "roles"})
-@EqualsAndHashCode(callSuper = true, exclude = {"shops", "roles"})
+@ToString(exclude = {"tenant", "roles"})
+@EqualsAndHashCode(callSuper = true, exclude = {"tenant", "roles"})
 public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
@@ -45,9 +49,6 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Builder.Default
-    @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
-    private Set<Shop> shops = new HashSet<>();
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)

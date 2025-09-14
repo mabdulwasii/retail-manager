@@ -1,0 +1,140 @@
+package com.princely.shopmanager.inventory.domain;
+
+import com.princely.shopmanager.core.domain.Product;
+import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.shared.domain.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "inventory", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"shop_id", "product_id", "batch_number"})
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString(exclude = {"shop", "product"})
+@EqualsAndHashCode(callSuper = true, exclude = {"shop", "product"})
+public class Inventory extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "shop_id", nullable = false)
+    private Shop shop;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @Builder.Default
+    @Column(name = "current_stock", nullable = false)
+    private Integer currentStock = 0;
+
+    @Builder.Default
+    @Column(name = "reserved_stock", nullable = false)
+    private Integer reservedStock = 0;
+
+    @Builder.Default
+    @Column(name = "minimum_stock", nullable = false)
+    private Integer minimumStock = 0;
+
+    @Column(name = "maximum_stock")
+    private Integer maximumStock;
+
+    @Builder.Default
+    @Column(name = "reorder_point", nullable = false)
+    private Integer reorderPoint = 0;
+
+    @Column(name = "unit_cost", precision = 10, scale = 2)
+    private BigDecimal unitCost;
+
+    private String location;
+
+    @Column(name = "batch_number", length = 100)
+    private String batchNumber;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private InventoryStatus status = InventoryStatus.ACTIVE;
+
+    @Column(name = "last_stock_update")
+    private LocalDateTime lastStockUpdate;
+
+    public enum InventoryStatus {
+        ACTIVE,
+        INACTIVE,
+        DISCONTINUED,
+        QUARANTINED,
+        EXPIRED
+    }
+
+    public Integer getAvailableStock() {
+        return Math.max(0, currentStock - reservedStock);
+    }
+
+    public boolean isLowStock() {
+        return getAvailableStock() <= minimumStock;
+    }
+
+    public boolean isOutOfStock() {
+        return getAvailableStock() <= 0;
+    }
+
+    public boolean isExpired() {
+        return expiryDate != null && expiryDate.isBefore(LocalDate.now());
+    }
+
+    public boolean isExpiringSoon(int daysThreshold) {
+        return expiryDate != null &&
+               expiryDate.isAfter(LocalDate.now()) &&
+               expiryDate.isBefore(LocalDate.now().plusDays(daysThreshold));
+    }
+
+    public boolean canSell(int quantity) {
+        return status == InventoryStatus.ACTIVE &&
+               !isExpired() &&
+               getAvailableStock() >= quantity;
+    }
+
+    public void reserveStock(int quantity) {
+        if (canSell(quantity)) {
+            this.reservedStock += quantity;
+            this.lastStockUpdate = LocalDateTime.now();
+        } else {
+            throw new IllegalStateException("Cannot reserve " + quantity + " units. Available: " + getAvailableStock());
+        }
+    }
+
+    public void releaseReservedStock(int quantity) {
+        this.reservedStock = Math.max(0, this.reservedStock - quantity);
+        this.lastStockUpdate = LocalDateTime.now();
+    }
+
+    public void adjustStock(int newStock, String reason) {
+        this.currentStock = Math.max(0, newStock);
+        this.lastStockUpdate = LocalDateTime.now();
+    }
+
+    public void addStock(int quantity) {
+        this.currentStock += quantity;
+        this.lastStockUpdate = LocalDateTime.now();
+    }
+
+    public void removeStock(int quantity) {
+        this.currentStock = Math.max(0, this.currentStock - quantity);
+        this.lastStockUpdate = LocalDateTime.now();
+    }
+}

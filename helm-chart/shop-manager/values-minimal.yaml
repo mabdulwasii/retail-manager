@@ -1,0 +1,44 @@
+# Minimal Helm values for Shop Manager
+# All other values use defaults from templates
+
+replicaCount: 1
+
+image:
+  repository: shop-manager
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+# Enable dependencies with default settings
+postgresql:
+  enabled: true
+
+kafka:
+  enabled: true
+
+keycloak:
+  enabled: true
+
+# Basic configuration - all others use template defaults
+config:
+  springProfile: "prod"
+
+# Basic feature flags - all others use template defaults
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: false
+
+# Secrets - should be overridden in production
+secrets:
+  database:
+    password: "shop"  # Override in production
+  keycloak:
+    clientSecret: ""  # Override in production
