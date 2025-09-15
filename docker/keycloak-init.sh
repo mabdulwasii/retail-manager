@@ -21,7 +21,7 @@ ADMIN_TOKEN=$(curl -s -X POST \
   -d "password=admin" \
   -d "grant_type=password" \
   -d "client_id=admin-cli" | \
-  jq -r '.access_token')
+  sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
 
 if [ "$ADMIN_TOKEN" = "null" ] || [ -z "$ADMIN_TOKEN" ]; then
   echo "Failed to get admin token"

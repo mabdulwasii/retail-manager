@@ -3,7 +3,7 @@ import Keycloak from 'keycloak-js'
 let keycloak: Keycloak | null = null
 
 const initOptions = {
-  url: import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8081',
+  url: import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080',
   realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
 }

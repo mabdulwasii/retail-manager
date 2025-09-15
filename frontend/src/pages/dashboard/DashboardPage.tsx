@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Store, Package, ShoppingCart, TrendingUp, Users, AlertCircle } from 'lucide-react'
+import { Store, Package, ShoppingCart, TrendingUp, AlertCircle } from 'lucide-react'
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()

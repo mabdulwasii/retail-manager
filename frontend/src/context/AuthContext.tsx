@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { initKeycloak, getKeycloak, getUserInfo, login, logout } from '@/lib/keycloak'
-import { User } from '@/types/api'
 
 interface AuthContextType {
   isAuthenticated: boolean
