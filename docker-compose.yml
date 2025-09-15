@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     networks:
       - shop-network
     healthcheck:
@@ -146,33 +147,34 @@ services:
     networks:
       - shop-network
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        REACT_APP_API_BASE_URL: http://localhost:8081/api
-        REACT_APP_KEYCLOAK_URL: http://localhost:8080
-        REACT_APP_KEYCLOAK_REALM: shop-manager
-        REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
-    container_name: shop-manager-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      REACT_APP_API_BASE_URL: http://localhost:8081/api
-      REACT_APP_KEYCLOAK_URL: http://localhost:8080
-      REACT_APP_KEYCLOAK_REALM: shop-manager
-      REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
-      REACT_APP_VERSION: "1.0.0"
-      REACT_APP_ENVIRONMENT: development
-    depends_on:
-      backend:
-        condition: service_started
-      keycloak-init:
-        condition: service_completed_successfully
-    networks:
-      - shop-network
-    restart: unless-stopped
+  # Frontend service (disabled until frontend issues are resolved)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       REACT_APP_API_BASE_URL: http://localhost:8081/api
+  #       REACT_APP_KEYCLOAK_URL: http://localhost:8080
+  #       REACT_APP_KEYCLOAK_REALM: shop-manager
+  #       REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
+  #   container_name: shop-manager-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     REACT_APP_API_BASE_URL: http://localhost:8081/api
+  #     REACT_APP_KEYCLOAK_URL: http://localhost:8080
+  #     REACT_APP_KEYCLOAK_REALM: shop-manager
+  #     REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
+  #     REACT_APP_VERSION: "1.0.0"
+  #     REACT_APP_ENVIRONMENT: development
+  #   depends_on:
+  #     backend:
+  #       condition: service_started
+  #     keycloak-init:
+  #       condition: service_completed_successfully
+  #   networks:
+  #     - shop-network
+  #   restart: unless-stopped
 
   # SonarQube for code quality analysis
   sonarqube:
