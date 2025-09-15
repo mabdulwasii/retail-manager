@@ -1,0 +1,75 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-frontend
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.frontend.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "shop-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.frontend.service.targetPort | default 3000 }}
+          protocol: TCP
+        env:
+        - name: REACT_APP_API_BASE_URL
+          value: {{ .Values.frontend.config.apiBaseUrl | default "http://localhost:8081/api" | quote }}
+        - name: REACT_APP_KEYCLOAK_URL
+          value: {{ .Values.frontend.config.keycloakUrl | default "http://localhost:8080" | quote }}
+        - name: REACT_APP_KEYCLOAK_REALM
+          value: {{ .Values.frontend.config.keycloakRealm | default "shop-manager" | quote }}
+        - name: REACT_APP_KEYCLOAK_CLIENT_ID
+          value: {{ .Values.frontend.config.keycloakClientId | default "shop-manager-frontend" | quote }}
+        - name: REACT_APP_VERSION
+          value: {{ .Chart.AppVersion | quote }}
+        - name: REACT_APP_ENVIRONMENT
+          value: {{ .Values.frontend.config.environment | default "production" | quote }}
+        {{- if .Values.frontend.extraEnvVars }}
+        {{- toYaml .Values.frontend.extraEnvVars | nindent 8 }}
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+      {{- with .Values.frontend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

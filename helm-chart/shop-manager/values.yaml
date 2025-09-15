@@ -5,6 +5,34 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: shop-manager-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  config:
+    environment: production
+    keycloakRealm: shop-manager
+    keycloakClientId: shop-manager-frontend
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnvVars: []
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -123,6 +151,15 @@ keycloak:
       database: keycloak
   ingress:
     enabled: false
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  extraEnvVars:
+    - name: KC_HOSTNAME_PORT
+      value: "8080"
+    - name: KC_HTTP_PORT
+      value: "8080"
 
 # Application-specific comprehensive configuration
 config:
@@ -244,6 +281,9 @@ config:
   keycloak:
     realm: "shop-manager"
     clientId: "shop-manager-backend"
+    authServerUrl: "http://localhost:8080"
+    issuerUri: "http://localhost:8080/realms/shop-manager"
+    jwkSetUri: "http://localhost:8080/realms/shop-manager/protocol/openid-connect/certs"
 
   # System flags
   maintenanceMode: false

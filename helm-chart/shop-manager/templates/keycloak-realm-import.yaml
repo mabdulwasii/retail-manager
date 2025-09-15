@@ -1,0 +1,336 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-keycloak-realm
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+data:
+  shop-manager-realm.json: |
+    {
+      "realm": "shop-manager",
+      "enabled": true,
+      "displayName": "Shop Manager",
+      "displayNameHtml": "<div class=\"kc-logo-text\"><span>Shop Manager</span></div>",
+      "registrationAllowed": true,
+      "registrationEmailAsUsername": true,
+      "rememberMe": true,
+      "verifyEmail": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "permanentLockout": false,
+      "maxFailureWaitSeconds": 900,
+      "minimumQuickLoginWaitSeconds": 60,
+      "waitIncrementSeconds": 60,
+      "quickLoginCheckMilliSeconds": 1000,
+      "maxDeltaTimeSeconds": 43200,
+      "failureFactor": 30,
+      "roles": {
+        "realm": [
+          {
+            "name": "TENANT_ADMIN",
+            "description": "Tenant administrator with full access to tenant resources"
+          },
+          {
+            "name": "SHOP_MANAGER",
+            "description": "Shop manager with operational access"
+          },
+          {
+            "name": "SHOP_EMPLOYEE",
+            "description": "Shop employee with limited access"
+          },
+          {
+            "name": "INVESTOR",
+            "description": "Investor with access to investment data"
+          },
+          {
+            "name": "CUSTOMER",
+            "description": "Customer with basic access"
+          }
+        ]
+      },
+      "groups": [
+        {
+          "name": "tenant-admins",
+          "realmRoles": ["TENANT_ADMIN"]
+        },
+        {
+          "name": "shop-managers",
+          "realmRoles": ["SHOP_MANAGER"]
+        },
+        {
+          "name": "shop-employees",
+          "realmRoles": ["SHOP_EMPLOYEE"]
+        },
+        {
+          "name": "investors",
+          "realmRoles": ["INVESTOR"]
+        },
+        {
+          "name": "customers",
+          "realmRoles": ["CUSTOMER"]
+        }
+      ],
+      "users": [
+        {
+          "username": "admin@shopmanager.com",
+          "email": "admin@shopmanager.com",
+          "firstName": "System",
+          "lastName": "Administrator",
+          "enabled": true,
+          "emailVerified": true,
+          "credentials": [
+            {
+              "type": "password",
+              "value": "admin123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["TENANT_ADMIN"],
+          "groups": ["tenant-admins"],
+          "attributes": {
+            "tenant_id": ["default-tenant"],
+            "shop_ids": ["default-shop"]
+          }
+        },
+        {
+          "username": "manager@shopmanager.com",
+          "email": "manager@shopmanager.com",
+          "firstName": "Shop",
+          "lastName": "Manager",
+          "enabled": true,
+          "emailVerified": true,
+          "credentials": [
+            {
+              "type": "password",
+              "value": "manager123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["SHOP_MANAGER"],
+          "groups": ["shop-managers"],
+          "attributes": {
+            "tenant_id": ["default-tenant"],
+            "shop_ids": ["default-shop"]
+          }
+        },
+        {
+          "username": "employee@shopmanager.com",
+          "email": "employee@shopmanager.com",
+          "firstName": "Shop",
+          "lastName": "Employee",
+          "enabled": true,
+          "emailVerified": true,
+          "credentials": [
+            {
+              "type": "password",
+              "value": "employee123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["SHOP_EMPLOYEE"],
+          "groups": ["shop-employees"],
+          "attributes": {
+            "tenant_id": ["default-tenant"],
+            "shop_ids": ["default-shop"]
+          }
+        },
+        {
+          "username": "investor@shopmanager.com",
+          "email": "investor@shopmanager.com",
+          "firstName": "Sample",
+          "lastName": "Investor",
+          "enabled": true,
+          "emailVerified": true,
+          "credentials": [
+            {
+              "type": "password",
+              "value": "investor123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["INVESTOR"],
+          "groups": ["investors"],
+          "attributes": {
+            "tenant_id": ["default-tenant"]
+          }
+        },
+        {
+          "username": "customer@shopmanager.com",
+          "email": "customer@shopmanager.com",
+          "firstName": "Sample",
+          "lastName": "Customer",
+          "enabled": true,
+          "emailVerified": true,
+          "credentials": [
+            {
+              "type": "password",
+              "value": "customer123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["CUSTOMER"],
+          "groups": ["customers"],
+          "attributes": {
+            "tenant_id": ["default-tenant"]
+          }
+        }
+      ],
+      "clients": [
+        {
+          "clientId": "shop-manager-backend",
+          "name": "Shop Manager Backend Service",
+          "description": "Backend service client for Shop Manager",
+          "enabled": true,
+          "clientAuthenticatorType": "client-secret",
+          "secret": "shop-manager-backend-secret",
+          "bearerOnly": true,
+          "serviceAccountsEnabled": true,
+          "standardFlowEnabled": false,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": true,
+          "publicClient": false,
+          "protocol": "openid-connect",
+          "attributes": {
+            "access.token.lifespan": "3600"
+          }
+        },
+        {
+          "clientId": "shop-manager-frontend",
+          "name": "Shop Manager Frontend Application",
+          "description": "Frontend React application for Shop Manager",
+          "enabled": true,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": false,
+          "serviceAccountsEnabled": false,
+          "consentRequired": false,
+          "fullScopeAllowed": true,
+          "protocol": "openid-connect",
+          "redirectUris": [
+            "http://localhost:3000/*",
+            "http://localhost:3000/auth/callback",
+            "http://shop-manager.local/*",
+            "http://shop-manager.local/auth/callback",
+            "https://shop-manager.local/*",
+            "https://shop-manager.local/auth/callback"
+          ],
+          "webOrigins": [
+            "http://localhost:3000",
+            "http://shop-manager.local",
+            "https://shop-manager.local"
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "http://localhost:3000/##http://shop-manager.local/*##https://shop-manager.local/*"
+          },
+          "defaultClientScopes": [
+            "profile",
+            "email",
+            "roles"
+          ],
+          "optionalClientScopes": [
+            "address",
+            "phone",
+            "offline_access"
+          ]
+        },
+        {
+          "clientId": "shop-manager-admin",
+          "name": "Shop Manager Admin Console",
+          "description": "Admin console for Shop Manager",
+          "enabled": true,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": true,
+          "serviceAccountsEnabled": false,
+          "consentRequired": false,
+          "fullScopeAllowed": true,
+          "protocol": "openid-connect",
+          "redirectUris": [
+            "http://localhost:3001/*",
+            "http://admin.shop-manager.local/*",
+            "https://admin.shop-manager.local/*"
+          ],
+          "webOrigins": [
+            "http://localhost:3001",
+            "http://admin.shop-manager.local",
+            "https://admin.shop-manager.local"
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          }
+        }
+      ],
+      "clientScopes": [
+        {
+          "name": "tenant",
+          "description": "Tenant scope for multi-tenancy",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "display.on.consent.screen": "false"
+          },
+          "protocolMappers": [
+            {
+              "name": "tenant-id",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "tenant_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "tenant_id",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "shop-ids",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "shop_ids",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "shop_ids",
+                "jsonType.label": "JSON",
+                "multivalued": "true"
+              }
+            }
+          ]
+        }
+      ],
+      "defaultDefaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "tenant"
+      ],
+      "browserFlow": "browser",
+      "registrationFlow": "registration",
+      "directGrantFlow": "direct grant",
+      "resetCredentialsFlow": "reset credentials",
+      "clientAuthenticationFlow": "clients",
+      "dockerAuthenticationFlow": "docker auth",
+      "attributes": {
+        "bruteForceProtected": "true",
+        "permanentLockout": "false",
+        "maxFailureWaitSeconds": "900",
+        "minimumQuickLoginWaitSeconds": "60",
+        "waitIncrementSeconds": "60",
+        "quickLoginCheckMilliSeconds": "1000",
+        "maxDeltaTimeSeconds": "43200",
+        "failureFactor": "30"
+      },
+      "keycloakVersion": "24.0.1"
+    }
+{{- end }}

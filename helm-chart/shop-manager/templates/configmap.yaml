@@ -11,6 +11,9 @@ data:
   SPRING_APPLICATION_NAME: "shop-manager"
 
   # Database Configuration
+  {{- if .Values.postgresql.enabled }}
+  SPRING_DATASOURCE_URL: jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}
+  {{- end }}
   SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
   SPRING_JPA_SHOW_SQL: {{ .Values.config.database.showSql | default "false" | quote }}
   SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: {{ .Values.config.database.formatSql | default "true" | quote }}
@@ -39,10 +42,10 @@ data:
   # Keycloak/Security Configuration
   {{- if .Values.keycloak.enabled }}
   KEYCLOAK_REALM: {{ .Values.config.keycloak.realm | default "shop-manager" | quote }}
-  KEYCLOAK_AUTH_SERVER_URL: http://{{ include "shop-manager.fullname" . }}-keycloak:8080
+  KEYCLOAK_AUTH_SERVER_URL: {{ .Values.config.keycloak.authServerUrl | default "http://localhost:8080" | quote }}
   KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloak.clientId | default "shop-manager-backend" | quote }}
-  KEYCLOAK_ISSUER_URI: http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/{{ .Values.config.keycloak.realm | default "shop-manager" }}
-  KEYCLOAK_JWK_SET_URI: http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/{{ .Values.config.keycloak.realm | default "shop-manager" }}/protocol/openid-connect/certs
+  KEYCLOAK_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | default "http://localhost:8080/realms/shop-manager" | quote }}
+  KEYCLOAK_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | default "http://localhost:8080/realms/shop-manager/protocol/openid-connect/certs" | quote }}
   {{- end }}
 
   # Application Features

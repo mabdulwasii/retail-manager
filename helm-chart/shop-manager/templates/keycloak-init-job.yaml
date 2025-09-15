@@ -1,0 +1,89 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-keycloak-init
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-keycloak
+        image: curlimages/curl:8.5.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Keycloak to be ready..."
+          until curl -f http://{{ include "shop-manager.fullname" . }}-keycloak:8080/health/ready; do
+            echo "Keycloak is not ready yet. Sleeping for 10 seconds..."
+            sleep 10
+          done
+          echo "Keycloak is ready!"
+      containers:
+      - name: keycloak-realm-import
+        image: curlimages/curl:8.5.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Get admin access token
+          echo "Getting admin access token..."
+          ADMIN_TOKEN=$(curl -s -X POST \
+            "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/master/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "username={{ .Values.keycloak.auth.adminUser }}" \
+            -d "password={{ .Values.keycloak.auth.adminPassword }}" \
+            -d "grant_type=password" \
+            -d "client_id=admin-cli" | \
+            sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "Failed to get admin token"
+            exit 1
+          fi
+
+          echo "Admin token obtained successfully"
+
+          # Check if realm already exists
+          REALM_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/admin/realms/shop-manager")
+
+          if [ "$REALM_EXISTS" = "200" ]; then
+            echo "Realm 'shop-manager' already exists. Skipping import."
+            exit 0
+          fi
+
+          # Import realm
+          echo "Importing shop-manager realm..."
+          IMPORT_RESULT=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @/realm-config/shop-manager-realm.json \
+            "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/admin/realms")
+
+          if [ "$IMPORT_RESULT" = "201" ]; then
+            echo "Realm imported successfully"
+          else
+            echo "Failed to import realm. HTTP status: $IMPORT_RESULT"
+            exit 1
+          fi
+
+          echo "Keycloak realm setup completed successfully!"
+        volumeMounts:
+        - name: realm-config
+          mountPath: /realm-config
+          readOnly: true
+      volumes:
+      - name: realm-config
+        configMap:
+          name: {{ include "shop-manager.fullname" . }}-keycloak-realm
+{{- end }}

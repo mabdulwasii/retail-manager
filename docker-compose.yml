@@ -40,11 +40,32 @@ services:
     command: start-dev
     ports:
       - "8080:8080"
+    volumes:
+      - ./docker/keycloak-realm.json:/tmp/keycloak-realm.json:ro
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - shop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  keycloak-init:
+    image: curlimages/curl:8.5.0
+    container_name: shop-manager-keycloak-init
+    volumes:
+      - ./docker/keycloak-realm.json:/tmp/keycloak-realm.json:ro
+      - ./docker/keycloak-init.sh:/tmp/keycloak-init.sh:ro
+    command: ["/bin/sh", "/tmp/keycloak-init.sh"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - shop-network
+    restart: "no"
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -124,6 +145,34 @@ services:
         condition: service_started
     networks:
       - shop-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8081/api
+        REACT_APP_KEYCLOAK_URL: http://localhost:8080
+        REACT_APP_KEYCLOAK_REALM: shop-manager
+        REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
+    container_name: shop-manager-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:8081/api
+      REACT_APP_KEYCLOAK_URL: http://localhost:8080
+      REACT_APP_KEYCLOAK_REALM: shop-manager
+      REACT_APP_KEYCLOAK_CLIENT_ID: shop-manager-frontend
+      REACT_APP_VERSION: "1.0.0"
+      REACT_APP_ENVIRONMENT: development
+    depends_on:
+      backend:
+        condition: service_started
+      keycloak-init:
+        condition: service_completed_successfully
+    networks:
+      - shop-network
+    restart: unless-stopped
 
   # SonarQube for code quality analysis
   sonarqube:
