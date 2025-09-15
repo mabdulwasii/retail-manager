@@ -168,7 +168,7 @@ services:
         VITE_KEYCLOAK_CLIENT_ID: shop-manager-frontend
     container_name: shop-manager-frontend
     ports:
-      - "3000:3000"
+      - "3001:80"
     environment:
       VITE_API_BASE_URL: http://localhost:8081/api
       VITE_KEYCLOAK_URL: http://localhost:8080

@@ -7,11 +7,21 @@ This guide provides comprehensive testing instructions and credentials for the S
 ## 📋 Quick Reference
 
 ### System Status ✅
-- **Frontend**: http://localhost:3000 (React + Keycloak)
+
+#### Docker Compose Deployment
+- **Frontend**: http://localhost:3001 (React + Keycloak)
 - **Backend**: http://localhost:8081 (Spring Boot + JWT)
 - **Keycloak**: http://localhost:8080 (shop-manager realm)
 - **Database**: localhost:5432/shopdb (PostgreSQL)
-- **Last Updated**: January 2025
+- **Kafka**: localhost:9093 (KRaft mode)
+
+#### Kubernetes Deployment (Helm)
+- **Frontend**: Port forward to access: `kubectl port-forward svc/shop-manager-frontend 3000:3000 -n shop-manager`
+- **Backend**: Port forward to access: `kubectl port-forward svc/shop-manager 8081:8081 -n shop-manager`
+- **Keycloak**: Port forward to access: `kubectl port-forward svc/shop-manager-keycloak 8080:80 -n shop-manager`
+- **Database**: Port forward to access: `kubectl port-forward svc/shop-manager-postgresql 5432:5432 -n shop-manager`
+
+**Last Updated**: January 2025
 
 ---
 
@@ -115,6 +125,7 @@ Grant Types: Client Credentials, Service Account
 
 ### 1. Environment Setup
 
+#### Option A: Docker Compose (Recommended for Development)
 ```bash
 # Clone and start services
 git clone <repository-url>
@@ -129,6 +140,25 @@ docker ps | grep shop-manager
 # Check service health
 curl http://localhost:8081/actuator/health
 curl http://localhost:8080/realms/shop-manager/.well-known/openid-configuration
+```
+
+#### Option B: Kubernetes with Helm (Production-like)
+```bash
+# Create namespace
+kubectl create namespace shop-manager
+
+# Deploy with Helm
+helm install shop-manager ./helm-chart/shop-manager \
+  -f ./helm-chart/shop-manager/values-simple.yaml \
+  -n shop-manager --wait
+
+# Check pods are running
+kubectl get pods -n shop-manager
+
+# Port forward services for local access
+kubectl port-forward svc/shop-manager-keycloak 8080:80 -n shop-manager &
+kubectl port-forward svc/shop-manager 8081:8081 -n shop-manager &
+kubectl port-forward svc/shop-manager-frontend 3000:3000 -n shop-manager &
 ```
 
 ### 2. Frontend Authentication Testing

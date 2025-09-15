@@ -1,0 +1,62 @@
+replicaCount: 0
+
+frontend:
+  enabled: false
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: postgres
+    username: shop
+    password: shop
+    database: shopdb
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+
+# Kafka configuration
+kafka:
+  enabled: true
+  auth:
+    clientProtocol: PLAINTEXT
+  listeners:
+    client:
+      protocol: PLAINTEXT
+
+# Keycloak configuration
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: admin
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: postgres
+      username: keycloak
+      password: keycloak
+      database: keycloak
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  extraEnvVars:
+    - name: KC_HOSTNAME_PORT
+      value: "8080"
+    - name: KC_HTTP_PORT
+      value: "8080"
+
+# Minimal configuration
+config:
+  backup:
+    path: "/var/shop-manager/backups"
+
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: false

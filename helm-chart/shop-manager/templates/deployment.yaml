@@ -42,7 +42,7 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: {{ .Values.config.springProfile | default "prod" | quote }}
+              value: {{ .Values.env.SPRING_PROFILES_ACTIVE | default "prod" | quote }}
             - name: SERVER_PORT
               value: {{ .Values.service.targetPort | default "8081" | quote }}
             - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
@@ -101,7 +101,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: backup-storage
-              mountPath: {{ .Values.shopManager.storage.backupPath }}
+              mountPath: {{ .Values.config.backup.path | default "/var/shop-manager/backups" }}
       volumes:
         - name: backup-storage
           emptyDir: {}

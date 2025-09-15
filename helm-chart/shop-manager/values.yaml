@@ -16,11 +16,13 @@ frontend:
   service:
     type: ClusterIP
     port: 3000
-    targetPort: 3000
+    targetPort: 80
   config:
     environment: production
     keycloakRealm: shop-manager
     keycloakClientId: shop-manager-frontend
+    apiBaseUrl: "http://shop-manager:8081/api"
+    keycloakUrl: "http://shop-manager-keycloak:8080"
   resources:
     limits:
       cpu: 500m
@@ -281,9 +283,9 @@ config:
   keycloak:
     realm: "shop-manager"
     clientId: "shop-manager-backend"
-    authServerUrl: "http://localhost:8080"
-    issuerUri: "http://localhost:8080/realms/shop-manager"
-    jwkSetUri: "http://localhost:8080/realms/shop-manager/protocol/openid-connect/certs"
+    authServerUrl: "http://shop-manager-keycloak:8080"
+    issuerUri: "http://shop-manager-keycloak:8080/realms/shop-manager"
+    jwkSetUri: "http://shop-manager-keycloak:8080/realms/shop-manager/protocol/openid-connect/certs"
 
   # System flags
   maintenanceMode: false
