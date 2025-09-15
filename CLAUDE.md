@@ -327,6 +327,90 @@ backend/
 **Current Status**: Production-ready backend with enhanced multi-tenancy and comprehensive business features.
 **Next Steps**: Frontend development, CI/CD pipeline, and production deployment.
 
+## 🔐 Authentication & Testing Guide
+
+### ✅ Current Authentication Status (January 2025)
+
+**Full authentication system is deployed and working:**
+- **Keycloak SSO**: shop-manager realm configured with 5 test users
+- **Frontend**: React app with Keycloak integration at http://localhost:3000
+- **Backend**: Spring Security + JWT validation at http://localhost:8081
+- **Database**: All migrations applied including Spring Modulith event store
+
+### 🧪 Test Users & Credentials
+
+Use these pre-configured accounts to test authentication flows:
+
+```bash
+# System Administrator (Full Access)
+Username: admin@shopmanager.com
+Password: admin123
+Role: TENANT_ADMIN
+Tenant: default-tenant | Shop: default-shop
+
+# Shop Manager (Operations)
+Username: manager@shopmanager.com
+Password: manager123
+Role: SHOP_MANAGER
+Tenant: default-tenant | Shop: default-shop
+
+# Shop Employee (Limited Access)
+Username: employee@shopmanager.com
+Password: employee123
+Role: SHOP_EMPLOYEE
+Tenant: default-tenant | Shop: default-shop
+
+# Investor (Reports & Analytics)
+Username: investor@shopmanager.com
+Password: investor123
+Role: INVESTOR
+Tenant: default-tenant
+
+# Customer (Purchase History)
+Username: customer@shopmanager.com
+Password: customer123
+Role: CUSTOMER
+Tenant: default-tenant
+```
+
+### 🚀 Quick Authentication Testing
+
+```bash
+# 1. Start all services
+docker-compose up -d
+
+# 2. Verify Keycloak realm
+curl -s http://localhost:8080/realms/shop-manager/.well-known/openid-configuration | jq .authorization_endpoint
+
+# 3. Test frontend authentication
+open http://localhost:3000
+# Login with any test user above
+
+# 4. Test backend health
+curl http://localhost:8081/actuator/health
+
+# 5. Keycloak admin access
+open http://localhost:8080
+# Login: admin / admin
+```
+
+### 🔧 Authentication Endpoints
+
+| Endpoint | URL | Purpose |
+|----------|-----|---------|
+| **Frontend** | http://localhost:3000 | Main application with login |
+| **Authorization** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/auth | User login endpoint |
+| **Token Exchange** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/token | OAuth2 token endpoint |
+| **User Info** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/userinfo | User profile data |
+| **Admin Console** | http://localhost:8080 | Keycloak administration |
+
+### ⚠️ Development Configuration Notes
+
+- **SSL Disabled**: Keycloak realm configured for HTTP in development
+- **CORS Enabled**: Frontend (localhost:3000) can call backend (localhost:8081)
+- **Database**: Spring Modulith event store table added (V9 migration)
+- **Frontend Build**: TypeScript compilation errors resolved
+- **Port Changes**: Kafka moved to 9093 to avoid conflicts
 
 ## Java Development Best Practices
 

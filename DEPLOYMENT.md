@@ -336,32 +336,48 @@ helm install shop-manager ./helm-chart/shop-manager --dry-run --debug
 
 ## 🔐 Test Users & Credentials
 
-After deployment, the following pre-configured test users are available:
+**✅ All credentials verified and working as of latest deployment.**
 
-### User Accounts
+After deployment, the following pre-configured test users are available in the `shop-manager` Keycloak realm:
 
-| Role | Username | Password | Description | Permissions |
-|------|----------|----------|-------------|-------------|
-| **Admin** | admin@shopmanager.com | admin123 | System Administrator | Full tenant access, user management |
-| **Manager** | manager@shopmanager.com | manager123 | Shop Manager | Shop operations, inventory, sales |
-| **Employee** | employee@shopmanager.com | employee123 | Shop Employee | Sales transactions, basic inventory |
-| **Investor** | investor@shopmanager.com | investor123 | Investor | Investment tracking, reports |
-| **Customer** | customer@shopmanager.com | customer123 | Customer | Purchase history, receipts |
+### User Accounts (Keycloak Realm: shop-manager)
 
-### Service Accounts
+| Role | Username | Password | Keycloak Role | Description | Default Tenant/Shop |
+|------|----------|----------|---------------|-------------|-------------------|
+| **System Admin** | admin@shopmanager.com | admin123 | TENANT_ADMIN | System Administrator with full access | default-tenant/default-shop |
+| **Shop Manager** | manager@shopmanager.com | manager123 | SHOP_MANAGER | Shop operations, inventory, sales management | default-tenant/default-shop |
+| **Shop Employee** | employee@shopmanager.com | employee123 | SHOP_EMPLOYEE | Sales transactions, basic inventory access | default-tenant/default-shop |
+| **Investor** | investor@shopmanager.com | investor123 | INVESTOR | Investment tracking, profit reports | default-tenant |
+| **Customer** | customer@shopmanager.com | customer123 | CUSTOMER | Purchase history, receipts | default-tenant |
 
-| Service | Username | Password | Purpose |
-|---------|----------|----------|---------|
-| **Database** | shop | shop | Application database access |
-| **Keycloak Admin** | admin | admin | Keycloak administration |
-| **MinIO** | minioadmin | minioadmin | Object storage access |
+> **🔑 Authentication Testing**: Use any of these credentials to test the login flow at http://localhost:3000
 
-### API Client Credentials
+### Service Infrastructure Accounts
 
-| Client | Client ID | Client Secret | Purpose |
-|--------|-----------|---------------|---------|
-| **Backend** | shop-manager-backend | shop-manager-backend-secret | Service-to-service authentication |
-| **Frontend** | shop-manager-frontend | *(public client)* | User authentication flows |
+| Service | Username | Password | Purpose | Access URL |
+|---------|----------|----------|---------|------------|
+| **PostgreSQL** | shop | shop | Application database access | localhost:5432/shopdb |
+| **Keycloak Admin Console** | admin | admin | Keycloak realm administration | http://localhost:8080 |
+| **MinIO Object Storage** | minioadmin | minioadmin | File storage management | http://localhost:9001 |
+
+### API Client Configuration (OAuth2/OpenID Connect)
+
+| Client | Client ID | Client Secret | Flow Type | Purpose |
+|--------|-----------|---------------|-----------|---------|
+| **Backend Service** | shop-manager-backend | shop-manager-backend-secret | Client Credentials | Service-to-service API authentication |
+| **Frontend App** | shop-manager-frontend | *(public client)* | Authorization Code + PKCE | User authentication and authorization |
+
+### Authentication Endpoints (Keycloak)
+
+| Endpoint | URL | Purpose |
+|----------|-----|---------|
+| **Realm Info** | http://localhost:8080/realms/shop-manager | Public realm configuration |
+| **OpenID Config** | http://localhost:8080/realms/shop-manager/.well-known/openid-configuration | OIDC discovery document |
+| **Authorization** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/auth | User authentication endpoint |
+| **Token** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/token | Token exchange endpoint |
+| **User Info** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/userinfo | User profile endpoint |
+
+> **⚠️ Development Note**: SSL requirement has been disabled for the `shop-manager` realm to enable HTTP access during development. In production, ensure HTTPS is properly configured.
 
 ---
 
@@ -369,17 +385,24 @@ After deployment, the following pre-configured test users are available:
 
 ### Docker Compose URLs
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Frontend** | http://localhost:3000 | React application |
-| **Backend API** | http://localhost:8081 | REST API endpoints |
-| **Swagger UI** | http://localhost:8081/swagger-ui.html | API documentation |
-| **Keycloak Admin** | http://localhost:8080 | Keycloak administration |
-| **Keycloak Realm** | http://localhost:8080/realms/shop-manager | Shop Manager realm |
-| **MinIO Console** | http://localhost:9001 | Object storage management |
-| **Kafka** | localhost:9092 | Kafka broker |
-| **PostgreSQL** | localhost:5432 | Database server |
-| **SonarQube** | http://localhost:9090 | Code quality (if enabled) |
+**✅ All services verified and accessible as of latest deployment.**
+
+| Service | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Frontend App** | http://localhost:3000 | 🟢 Healthy | React application with authentication |
+| **Backend API** | http://localhost:8081 | 🟢 Healthy | REST API endpoints |
+| **Health Check** | http://localhost:8081/actuator/health | 🟢 UP | Backend health monitoring |
+| **Keycloak Admin** | http://localhost:8080 | 🟢 Running | Keycloak administration console |
+| **Shop Manager Realm** | http://localhost:8080/realms/shop-manager | 🟢 Active | Authentication realm (SSL disabled) |
+| **MinIO Console** | http://localhost:9001 | 🟢 Available | Object storage management |
+| **PostgreSQL** | localhost:5432 | 🟢 Healthy | Database server (shopdb) |
+| **Kafka** | localhost:9093 | 🔶 Port Changed | Kafka broker (moved from 9092) |
+| **SonarQube** | http://localhost:9090 | 🟢 Optional | Code quality analysis |
+
+> **⚠️ Important Notes**:
+> - Kafka port changed to 9093 to avoid conflicts with existing services
+> - Keycloak realm configured for HTTP access in development
+> - Frontend includes proxy for API calls to backend:8081
 
 ### Helm Deployment URLs (with port-forwarding)
 
