@@ -396,11 +396,12 @@ After deployment, the following pre-configured test users are available in the `
 | **Shop Manager Realm** | http://localhost:8080/realms/shop-manager | 🟢 Active | Authentication realm (SSL disabled) |
 | **MinIO Console** | http://localhost:9001 | 🟢 Available | Object storage management |
 | **PostgreSQL** | localhost:5432 | 🟢 Healthy | Database server (shopdb) |
-| **Kafka** | localhost:9093 | 🔶 Port Changed | Kafka broker (moved from 9092) |
+| **Kafka** | localhost:9093 | 🟢 Healthy | Kafka broker (KRaft mode, fixed permissions) |
 | **SonarQube** | http://localhost:9090 | 🟢 Optional | Code quality analysis |
 
 > **⚠️ Important Notes**:
 > - Kafka port changed to 9093 to avoid conflicts with existing services
+> - Kafka runs as root user to fix KRaft mode permission issues
 > - Keycloak realm configured for HTTP access in development
 > - Frontend includes proxy for API calls to backend:8081
 

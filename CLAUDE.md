@@ -410,7 +410,7 @@ open http://localhost:8080
 - **CORS Enabled**: Frontend (localhost:3000) can call backend (localhost:8081)
 - **Database**: Spring Modulith event store table added (V9 migration)
 - **Frontend Build**: TypeScript compilation errors resolved
-- **Port Changes**: Kafka moved to 9093 to avoid conflicts
+- **Kafka Fixed**: Port 9093, KRaft mode with root user permissions resolved
 
 ## Java Development Best Practices
 

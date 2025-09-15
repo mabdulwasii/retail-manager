@@ -71,6 +71,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: shop-manager-kafka
+    user: root  # Fix permission issues
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
@@ -86,15 +87,22 @@ services:
       KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9093'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'  # Use standard directory
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      # Format storage on startup
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     ports:
       - "9093:9093"
       - "9102:9101"
     networks:
       - shop-network
     volumes:
-      - kafka_data:/tmp/kraft-combined-logs
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9093"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   minio:
     image: minio/minio:RELEASE.2024-03-07T00-43-48Z

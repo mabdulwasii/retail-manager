@@ -84,6 +84,11 @@ Secret Key: minioadmin
 📊 SONARQUBE (Optional)
 URL: http://localhost:9090
 Default: admin/admin (first time setup required)
+
+📨 KAFKA MESSAGE BROKER
+URL: localhost:9093
+Port: 9093 (KRaft mode, no Zookeeper required)
+Health: Run `docker exec shop-manager-kafka kafka-broker-api-versions --bootstrap-server localhost:9093`
 ```
 
 ### OAuth2/OIDC Client Configuration
