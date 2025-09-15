@@ -214,6 +214,12 @@ data:
           "redirectUris": [
             "http://localhost:3000/*",
             "http://localhost:3000/auth/callback",
+            "http://localhost:3001/*",
+            "http://localhost:3001/auth/callback",
+            "http://localhost:3001/silent-check-sso.html",
+            "http://localhost:30081/*",
+            "http://localhost:30081/auth/callback",
+            "http://localhost:30081/silent-check-sso.html",
             "http://shop-manager.local/*",
             "http://shop-manager.local/auth/callback",
             "https://shop-manager.local/*",
@@ -221,12 +227,14 @@ data:
           ],
           "webOrigins": [
             "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:30081",
             "http://shop-manager.local",
             "https://shop-manager.local"
           ],
           "attributes": {
             "pkce.code.challenge.method": "S256",
-            "post.logout.redirect.uris": "http://localhost:3000/##http://shop-manager.local/*##https://shop-manager.local/*"
+            "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://localhost:30081/##http://shop-manager.local/*##https://shop-manager.local/*"
           },
           "defaultClientScopes": [
             "profile",

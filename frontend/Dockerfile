@@ -3,6 +3,18 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
+# Build args for environment variables
+ARG VITE_API_BASE_URL
+ARG VITE_KEYCLOAK_URL
+ARG VITE_KEYCLOAK_REALM
+ARG VITE_KEYCLOAK_CLIENT_ID
+
+# Set environment variables
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
+ENV VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
+ENV VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
+
 # Copy package files
 COPY package.json ./
 
@@ -11,6 +23,9 @@ RUN npm install
 
 # Copy source code
 COPY . .
+
+# Copy environment file for Kubernetes
+COPY .env.k8s .env
 
 # Build the application
 RUN npm run build
