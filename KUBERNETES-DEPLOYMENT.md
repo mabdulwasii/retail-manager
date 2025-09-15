@@ -59,37 +59,52 @@ kubectl get pods -n shop-manager
 
 ## Service Access
 
-### Local Access (Port Forwarding)
+### DNS-based Access (Recommended)
+
+First, set up local DNS entries by running:
+```bash
+./setup-dns.sh
+```
+
+Then access services via HTTPS:
+- **Frontend**: https://shop-manager.local
+- **Backend API**: https://api.shop-manager.local
+- **Keycloak**: https://auth.shop-manager.local
+- **Swagger UI**: https://api.shop-manager.local/swagger-ui.html
+
+**Note**: You'll need to accept self-signed certificates in your browser.
+
+### Alternative: Port Forwarding
 
 #### PostgreSQL Database
 ```bash
-kubectl port-forward svc/shop-manager-postgresql 5432:5432 -n shop-manager
+kubectl port-forward svc/shop-manager-postgresql 5432:5432 -n shop-manager-secure
 # Connection: postgresql://shop:shop@localhost:5432/shopdb
 ```
 
 #### Keycloak Admin Console
 ```bash
-kubectl port-forward svc/shop-manager-keycloak 8080:80 -n shop-manager
+kubectl port-forward svc/shop-manager-keycloak 8080:80 -n shop-manager-secure
 # Access: http://localhost:8080
 # Admin: admin / admin
 ```
 
 #### Kafka Broker
 ```bash
-kubectl port-forward svc/shop-manager-kafka 9092:9092 -n shop-manager
+kubectl port-forward svc/shop-manager-kafka 9092:9092 -n shop-manager-secure
 # Bootstrap server: localhost:9092
 ```
 
 #### Backend API (if deployed)
 ```bash
-kubectl port-forward svc/shop-manager 8081:8081 -n shop-manager
+kubectl port-forward svc/shop-manager 8081:8081 -n shop-manager-secure
 # API: http://localhost:8081
 # Swagger: http://localhost:8081/swagger-ui.html
 ```
 
 #### Frontend UI (if deployed)
 ```bash
-kubectl port-forward svc/shop-manager-frontend 3000:3000 -n shop-manager
+kubectl port-forward svc/shop-manager-frontend 3000:3000 -n shop-manager-secure
 # UI: http://localhost:3000
 ```
 

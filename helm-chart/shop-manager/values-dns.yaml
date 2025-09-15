@@ -1,0 +1,179 @@
+replicaCount: 1
+
+image:
+  repository: shop-manager
+  tag: latest
+  pullPolicy: IfNotPresent
+
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: shop-manager-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 80
+  config:
+    environment: production
+    keycloakRealm: shop-manager
+    keycloakClientId: shop-manager-frontend
+    apiBaseUrl: "https://api.shop-manager.local/api"
+    keycloakUrl: "https://auth.shop-manager.local"
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: shop-manager.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+# Backend API Ingress
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: api.shop-manager.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+env:
+  SPRING_PROFILES_ACTIVE: prod
+  SERVER_PORT: "8081"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+
+configMap:
+  data: {}
+
+secrets:
+  data: {}
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: postgres
+    username: shop
+    password: shop
+    database: shopdb
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+
+# Kafka configuration
+kafka:
+  enabled: true
+  auth:
+    clientProtocol: PLAINTEXT
+  listeners:
+    client:
+      protocol: PLAINTEXT
+
+# Keycloak configuration
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: admin
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: postgres
+      username: keycloak
+      password: keycloak
+      database: keycloak
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  extraEnvVars:
+    - name: KC_HOSTNAME_PORT
+      value: "8080"
+    - name: KC_HTTP_PORT
+      value: "8080"
+    - name: KC_HOSTNAME
+      value: "auth.shop-manager.local"
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
+
+# Minimal configuration
+config:
+  backup:
+    path: "/var/shop-manager/backups"
+  monitoring:
+    exposedEndpoints: "health,info,metrics,prometheus"
+  audit:
+    enabled: true
+    retentionDays: 90
+  security:
+    tenantIsolation: true
+  keycloak:
+    realm: "shop-manager"
+    clientId: "shop-manager-backend"
+    authServerUrl: "https://auth.shop-manager.local"
+    issuerUri: "https://auth.shop-manager.local/realms/shop-manager"
+    jwkSetUri: "https://auth.shop-manager.local/realms/shop-manager/protocol/openid-connect/certs"
+
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: false
