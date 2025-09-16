@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/KeycloakAuthContext'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Layout } from '@/components/layout/Layout'

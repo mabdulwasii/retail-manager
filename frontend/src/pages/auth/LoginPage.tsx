@@ -1,49 +1,26 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import { loginWithCredentials } from '@/lib/keycloak'
+import { useAuth } from '@/context/KeycloakAuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Store, ShieldCheck, TrendingUp, ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { Store, ShieldCheck, TrendingUp, ArrowLeft } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
-  const { login, refreshAuth } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showKeycloakLogin, setShowKeycloakLogin] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-
-    if (!email || !password) {
-      setError('Please enter both email and password.')
-      setIsLoading(false)
-      return
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
     }
+  }, [isAuthenticated, navigate])
 
-    try {
-      const success = await loginWithCredentials(email, password, refreshAuth)
-      if (success) {
-        // Navigate to dashboard after successful login
-        navigate('/dashboard')
-      } else {
-        setError('Invalid email or password. Please try again.')
-      }
-    } catch (err) {
-      setError('Login failed. Please check your credentials and try again.')
-      console.error('Login error:', err)
-    } finally {
-      setIsLoading(false)
-    }
+  const handleLogin = async () => {
+    await login()
   }
 
   const features = [
@@ -97,115 +74,20 @@ export const LoginPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              {/* Keycloak SSO Login Button */}
+              <Button
+                onClick={handleLogin}
+                className="w-full"
+                size="lg"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Sign in with Keycloak SSO
+              </Button>
 
-              {!showKeycloakLogin ? (
-                <>
-                  {/* Custom Login Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          disabled={isLoading}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        <Link to="/forgot-password" className="text-blue-600 hover:text-blue-500">
-                          Forgot your password?
-                        </Link>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Signing in...' : 'Sign in'}
-                    </Button>
-                  </form>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-muted-foreground">Or</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowKeycloakLogin(true)}
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Sign in with SSO
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {/* Keycloak SSO Login */}
-                  <Button
-                    onClick={login}
-                    className="w-full"
-                    size="lg"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Redirecting...' : 'Continue with Keycloak SSO'}
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="w-full"
-                    onClick={() => setShowKeycloakLogin(false)}
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to login form
-                  </Button>
-                </>
-              )}
+              <p className="text-xs text-center text-gray-500">
+                You will be redirected to the secure Keycloak authentication page.
+                Use one of the test accounts above to sign in.
+              </p>
 
               <div className="text-center">
                 <p className="text-sm text-gray-600">
