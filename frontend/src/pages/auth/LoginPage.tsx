@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/KeycloakAuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Store, TrendingUp, ArrowLeft } from 'lucide-react'
+import {Store, TrendingUp, ArrowLeft, ShieldCheck} from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated } = useAuth()
@@ -74,20 +74,6 @@ export const LoginPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Test accounts info */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-700 mb-2">
-                  🔐 Test Accounts Available:
-                </p>
-                <div className="text-xs text-blue-600 space-y-1">
-                  <div>• admin@shopmanager.com / admin123 (Full Access)</div>
-                  <div>• manager@shopmanager.com / manager123 (Shop Manager)</div>
-                  <div>• employee@shopmanager.com / employee123 (Employee)</div>
-                  <div>• investor@shopmanager.com / investor123 (Investor)</div>
-                  <div>• customer@shopmanager.com / customer123 (Customer)</div>
-                </div>
-              </div>
-
               {/* Login Button */}
               <Button
                 onClick={handleLogin}
@@ -120,8 +106,8 @@ export const LoginPage: React.FC = () => {
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-900">Why Choose Shop Manager?</h3>
             <div className="space-y-4">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-3">
+              {features.map((feature) => (
+                <div key={feature.title} className="flex items-start space-x-3">
                   <feature.icon className="h-6 w-6 text-blue-600 mt-1" />
                   <div>
                     <h4 className="font-medium text-gray-900">{feature.title}</h4>

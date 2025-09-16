@@ -34,13 +34,19 @@ frontend:
   tolerations: []
   affinity: {}
   extraEnvVars: []
+  ingress:
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    hosts:
+      - host: shop-manager-frontend.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
 
 nameOverride: ""
 fullnameOverride: ""
-
-env:
-  springProfile: "prod"
-
 service:
   type: ClusterIP
   port: 8081
