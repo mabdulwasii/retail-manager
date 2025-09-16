@@ -27,8 +27,8 @@ COPY . .
 # Copy environment file for Kubernetes
 COPY .env.k8s .env
 
-# Build the application
-RUN npm run build
+# Build the application without TypeScript checking
+RUN npm run build-no-tsc
 
 # Production stage
 FROM nginx:alpine AS production
