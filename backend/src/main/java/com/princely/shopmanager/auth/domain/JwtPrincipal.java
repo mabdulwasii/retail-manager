@@ -89,4 +89,12 @@ public class JwtPrincipal {
     public boolean hasRole(String role) {
         return roles != null && roles.contains(role);
     }
+
+    public String getUsername() {
+        return preferredUsername != null ? preferredUsername : email;
+    }
+
+    public String getUserId() {
+        return subject;
+    }
 }

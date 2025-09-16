@@ -62,7 +62,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID>,
     /**
      * Find expenses by created user
      */
-    List<Expense> findByShopIdAndCreatedByOrderByExpenseDateDesc(UUID shopId, UUID createdBy);
+    List<Expense> findByShopIdAndExpenseCreatedByOrderByExpenseDateDesc(UUID shopId, UUID expenseCreatedBy);
 
     /**
      * Calculate total expenses for a shop within date range

@@ -54,7 +54,7 @@ public class ExpenseService {
 
         // Validate category exists and belongs to the shop
         ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), shopId)
-            .orElseThrow(() -> new BusinessException("Expense category not found or does not belong to this shop"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found or does not belong to this shop"));
 
         if (!category.getIsActive()) {
             throw new BusinessRuleViolationException("Cannot create expense for inactive category");
@@ -73,14 +73,14 @@ public class ExpenseService {
             .referenceNumber(request.referenceNumber())
             .tags(request.tags() != null ? cleanTags(request.tags()) : new HashSet<>())
             .notes(request.notes())
-            .createdBy(principal.getUserId())
+            .expenseCreatedBy(UUID.fromString(principal.getUserId()))
             .createdByName(principal.getFullName())
             .status(ExpenseStatus.DRAFT)
             .build();
 
         // Auto-approve if category allows it
         if (category.canAutoApprove(request.amount())) {
-            expense.approve(principal.getUserId(), principal.getFullName(), "Auto-approved based on category settings");
+            expense.approve(UUID.fromString(principal.getUserId()), principal.getFullName(), "Auto-approved based on category settings");
         } else if (Boolean.TRUE.equals(request.submitForApproval())) {
             expense.submitForApproval();
         }
@@ -88,7 +88,7 @@ public class ExpenseService {
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseCreation(expense.getId(), shopId, principal.getUserId(), expense.getAmount());
+        auditService.logExpenseCreation(expense.getId(), shopId, UUID.fromString(principal.getUserId()), expense.getAmount());
 
         log.info("Expense created successfully: {}", expense.getId());
         return mapToResponse(expense, category);
@@ -119,7 +119,7 @@ public class ExpenseService {
 
         if (request.categoryId() != null) {
             ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), expense.getShopId())
-                .orElseThrow(() -> new BusinessException("Expense category not found"));
+                .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found"));
 
             if (!category.getIsActive()) {
                 throw new BusinessRuleViolationException("Cannot assign expense to inactive category");
@@ -164,12 +164,12 @@ public class ExpenseService {
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseUpdate(expense.getId(), expense.getShopId(), principal.getUserId());
+        auditService.logExpenseUpdate(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()));
 
         log.info("Expense updated successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("Category not found"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
 
         return mapToResponse(expense, category);
     }
@@ -188,16 +188,16 @@ public class ExpenseService {
             throw new BusinessRuleViolationException("Expense cannot be approved in current status: " + expense.getStatus());
         }
 
-        expense.approve(principal.getUserId(), principal.getFullName(), request.notes());
+        expense.approve(UUID.fromString(principal.getUserId()), principal.getFullName(), request.notes());
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), principal.getUserId(), true);
+        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()), true);
 
         log.info("Expense approved successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("Category not found"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
 
         return mapToResponse(expense, category);
     }
@@ -216,16 +216,16 @@ public class ExpenseService {
             throw new BusinessRuleViolationException("Expense cannot be rejected in current status: " + expense.getStatus());
         }
 
-        expense.reject(principal.getUserId(), principal.getFullName(), request.notes());
+        expense.reject(UUID.fromString(principal.getUserId()), principal.getFullName(), request.notes());
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), principal.getUserId(), false);
+        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()), false);
 
         log.info("Expense rejected successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("Category not found"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
 
         return mapToResponse(expense, category);
     }
@@ -237,7 +237,7 @@ public class ExpenseService {
         Expense expense = findExpenseForUser(expenseId, principal);
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("Category not found"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
 
         return mapToResponse(expense, category);
     }
@@ -275,7 +275,7 @@ public class ExpenseService {
         expenseRepository.delete(expense);
 
         // Audit log
-        auditService.logExpenseDeletion(expense.getId(), expense.getShopId(), principal.getUserId());
+        auditService.logExpenseDeletion(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()));
 
         log.info("Expense deleted successfully: {}", expenseId);
     }
@@ -325,7 +325,7 @@ public class ExpenseService {
     private Expense findExpenseForUser(UUID expenseId, JwtPrincipal principal) {
         return expenseRepository.findById(expenseId)
             .filter(expense -> hasAccessToShop(expense.getShopId(), principal))
-            .orElseThrow(() -> new BusinessException("Expense not found or access denied"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense not found or access denied"));
     }
 
     private void validateShopAccess(UUID shopId, JwtPrincipal principal) {
@@ -371,7 +371,7 @@ public class ExpenseService {
             }
 
             if (criteria.getCreatedBy() != null) {
-                predicates.add(cb.equal(root.get("createdBy"), criteria.getCreatedBy()));
+                predicates.add(cb.equal(root.get("expenseCreatedBy"), criteria.getCreatedBy()));
             }
 
             if (criteria.getMinAmount() != null) {
@@ -397,7 +397,7 @@ public class ExpenseService {
 
     private ExpenseResponse mapToResponseWithCategory(Expense expense) {
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("Category not found"));
+            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
         return mapToResponse(expense, category);
     }
 
@@ -417,7 +417,7 @@ public class ExpenseService {
             .status(expense.getStatus())
             .tags(expense.getTags())
             .notes(expense.getNotes())
-            .createdBy(expense.getCreatedBy())
+            .createdBy(expense.getExpenseCreatedBy())
             .createdByName(expense.getCreatedByName())
             .approvedBy(expense.getApprovedBy())
             .approvedByName(expense.getApprovedByName())

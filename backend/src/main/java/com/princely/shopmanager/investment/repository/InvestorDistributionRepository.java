@@ -57,4 +57,12 @@ public interface InvestorDistributionRepository extends JpaRepository<InvestorDi
     boolean existsByInvestmentAndPeriodStartAndPeriodEnd(
         Investment investment, LocalDateTime periodStart, LocalDateTime periodEnd
     );
+
+    @Query("SELECT d FROM InvestorDistribution d WHERE d.investment.id = :investmentId " +
+           "ORDER BY d.periodStart DESC")
+    List<InvestorDistribution> findByInvestmentIdOrderByPeriodStartDesc(@Param("investmentId") String investmentId);
+
+    @Query("SELECT d FROM InvestorDistribution d WHERE d.investment.investor.id = :investorId " +
+           "ORDER BY d.periodStart DESC")
+    List<InvestorDistribution> findByInvestmentInvestorIdOrderByPeriodStartDesc(@Param("investorId") String investorId);
 }

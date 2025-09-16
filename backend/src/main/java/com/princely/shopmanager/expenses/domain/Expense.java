@@ -93,8 +93,8 @@ public class Expense extends BaseEntity {
     private String notes;
 
     @NotNull
-    @Column(name = "created_by", nullable = false)
-    private UUID createdBy;
+    @Column(name = "expense_created_by", nullable = false)
+    private UUID expenseCreatedBy;
 
     @Column(name = "created_by_name", length = 255)
     private String createdByName;

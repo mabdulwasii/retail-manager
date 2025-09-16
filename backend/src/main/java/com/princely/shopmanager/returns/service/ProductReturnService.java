@@ -2,7 +2,6 @@ package com.princely.shopmanager.returns.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.inventory.service.InventoryService;
-import com.princely.shopmanager.fraud.service.FraudDetectionService;
 import com.princely.shopmanager.returns.domain.ProductReturn;
 import com.princely.shopmanager.returns.dto.ProductReturnCreateRequest;
 import com.princely.shopmanager.returns.dto.ProductReturnResponse;
@@ -25,7 +24,6 @@ import java.math.BigDecimal;
 public class ProductReturnService {
 
     private final ProductReturnRepository returnRepository;
-    private final FraudDetectionService fraudDetectionService;
     private final InventoryService inventoryService;
     private final AuditService auditService;
 

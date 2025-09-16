@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/fraud")
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true")
 @Tag(name = "Fraud Detection", description = "Fraud detection and risk management operations")
 @SecurityRequirement(name = "bearerAuth")
 public class FraudDetectionController {

@@ -189,7 +189,7 @@ public class AuditService {
     public void logExpenseCreation(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, java.math.BigDecimal amount) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .shopId(shopId)
+                .shop(null) // TODO: fetch Shop entity by shopId
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.FINANCIAL_TRANSACTION)
                 .actionType(AuditLog.ActionType.CREATE)
@@ -212,7 +212,7 @@ public class AuditService {
     public void logExpenseUpdate(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .shopId(shopId)
+                .shop(null) // TODO: fetch Shop entity by shopId
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
@@ -235,7 +235,7 @@ public class AuditService {
     public void logExpenseApproval(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, boolean approved) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .shopId(shopId)
+                .shop(null) // TODO: fetch Shop entity by shopId
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.BUSINESS_PROCESS)
                 .actionType(approved ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT)
@@ -258,7 +258,7 @@ public class AuditService {
     public void logExpenseDeletion(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .shopId(shopId)
+                .shop(null) // TODO: fetch Shop entity by shopId
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)

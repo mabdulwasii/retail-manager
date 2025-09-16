@@ -76,4 +76,8 @@ public class User extends BaseEntity {
         }
         return username;
     }
+
+    public String getName() {
+        return getFullName();
+    }
 }

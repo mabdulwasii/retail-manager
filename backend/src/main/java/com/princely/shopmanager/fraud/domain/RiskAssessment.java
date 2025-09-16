@@ -158,4 +158,13 @@ public class RiskAssessment extends BaseEntity {
     public boolean isHighRisk() {
         return riskLevel == RiskLevel.HIGH || riskLevel == RiskLevel.CRITICAL;
     }
+
+    // Convenience methods for shop data
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
+    }
+
+    public String getShopName() {
+        return shop != null ? shop.getName() : null;
+    }
 }

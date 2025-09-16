@@ -138,7 +138,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopdb
       SPRING_DATASOURCE_USERNAME: shop
       SPRING_DATASOURCE_PASSWORD: shop
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_FLYWAY_ENABLED: false
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shop-manager
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/shop-manager/protocol/openid-connect/certs

@@ -211,7 +211,7 @@ public class InvestmentService {
             .map(product -> InvestmentResponse.ProductInfo.builder()
                 .id(product.getId())
                 .name(product.getName())
-                .category(product.getCategory())
+                .category(product.getCategory() != null ? product.getCategory().getName() : null)
                 .price(product.getPrice())
                 .build())
             .collect(Collectors.toSet());

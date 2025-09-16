@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface InvestmentRepository extends JpaRepository<Investment, String> {
@@ -48,4 +50,10 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
     List<Investment> findMaturedInvestments();
 
     boolean existsByInvestmentNumber(String investmentNumber);
+
+    @Query("SELECT i FROM Investment i WHERE i.shop.id = :shopId")
+    Page<Investment> findByShopId(@Param("shopId") String shopId, Pageable pageable);
+
+    @Query("SELECT i FROM Investment i WHERE i.investor.id = :investorId")
+    Page<Investment> findByInvestorId(@Param("investorId") String investorId, Pageable pageable);
 }

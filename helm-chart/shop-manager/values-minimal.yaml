@@ -23,6 +23,10 @@ kafka:
 keycloak:
   enabled: true
 
+# Frontend configuration
+frontend:
+  enabled: false  # Disable frontend for minimal deployment
+
 # Basic configuration - all others use template defaults
 config:
   springProfile: "prod"

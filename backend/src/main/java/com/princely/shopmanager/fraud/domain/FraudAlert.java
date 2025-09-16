@@ -185,4 +185,13 @@ public class FraudAlert {
         this.resolvedAt = LocalDateTime.now();
         this.resolutionNotes = reason;
     }
+
+    // Convenience methods for shop data
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
+    }
+
+    public String getShopName() {
+        return shop != null ? shop.getName() : null;
+    }
 }

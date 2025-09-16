@@ -406,7 +406,10 @@ public class InventoryService {
 
         // Group by category for breakdown
         Map<String, List<Inventory>> categoryGroups = allInventory.stream()
-            .collect(Collectors.groupingBy(inv -> inv.getProduct().getCategory()));
+            .collect(Collectors.groupingBy(inv ->
+                inv.getProduct().getCategory() != null ?
+                    inv.getProduct().getCategory().getName() :
+                    "Uncategorized"));
 
         List<InventorySummaryDto.CategoryBreakdown> categoryBreakdown = categoryGroups.entrySet().stream()
             .map(entry -> {
