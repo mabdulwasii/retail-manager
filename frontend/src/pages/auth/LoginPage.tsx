@@ -2,11 +2,8 @@ import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/KeycloakAuthContext'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Store, ShieldCheck, TrendingUp, ArrowLeft } from 'lucide-react'
+import { Store, TrendingUp, ArrowLeft } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated } = useAuth()
@@ -91,19 +88,17 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Keycloak Login Button */}
+              {/* Login Button */}
               <Button
                 onClick={handleLogin}
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 size="lg"
               >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Sign in with Keycloak
+                Sign In
               </Button>
 
               <p className="text-xs text-center text-gray-500">
-                Secure OAuth2 authentication with authorization code flow.
-                You'll be redirected to login and returned automatically.
+                Secure authentication with automatic redirect.
               </p>
 
               <div className="text-center">
