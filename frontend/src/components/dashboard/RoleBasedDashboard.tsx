@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { AdminDashboard } from './AdminDashboard'
 import { OwnerManagerDashboard } from './OwnerManagerDashboard'
 import { CashierDashboard } from './CashierDashboard'

@@ -12,8 +12,6 @@ import {
 import { useCurrency } from '@/hooks/useCurrency'
 
 interface DataPoint {
-  name: string
-  value: number
   [key: string]: any
 }
 

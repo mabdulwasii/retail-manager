@@ -12,8 +12,6 @@ import {
 import { useCurrency } from '@/hooks/useCurrency'
 
 interface DataPoint {
-  name: string
-  value: number
   [key: string]: any
 }
 
@@ -69,7 +67,7 @@ export const BarChart: React.FC<BarChartProps> = ({
         <RechartsBarChart
           data={data}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          layout={layout === 'vertical' ? 'vericalLayout' : undefined}
+          layout={layout === 'vertical' ? layout : undefined}
         >
           {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />}
           <XAxis
