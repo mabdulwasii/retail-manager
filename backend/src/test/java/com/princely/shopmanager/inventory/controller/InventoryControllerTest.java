@@ -56,7 +56,7 @@ class InventoryControllerTest {
     void setUp() {
         mockPrincipal = JwtPrincipal.builder()
             .subject("test-user")
-            .username("test@example.com")
+            .preferredUsername("test@example.com")
             .email("test@example.com")
             .build();
 
@@ -112,7 +112,7 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(createRequest))
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -134,7 +134,7 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest))
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isBadRequest());
     }
@@ -157,7 +157,7 @@ class InventoryControllerTest {
             .param("size", "20")
             .param("sortBy", "lastStockUpdate")
             .param("sortDir", "desc")
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value("inventory-1"))
@@ -175,7 +175,7 @@ class InventoryControllerTest {
             .thenReturn(inventoryResponse);
 
         ResultActions result = mockMvc.perform(get("/api/v1/inventory/inventory-1")
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -188,9 +188,28 @@ class InventoryControllerTest {
     @DisplayName("Should adjust stock successfully")
     @WithMockUser(roles = "SHOP_MANAGER")
     void shouldAdjustStockSuccessfully() throws Exception {
-        InventoryResponse adjustedResponse = inventoryResponse.toBuilder()
+        InventoryResponse adjustedResponse = InventoryResponse.builder()
+            .id(inventoryResponse.getId())
+            .shopId(inventoryResponse.getShopId())
+            .shopName(inventoryResponse.getShopName())
+            .productId(inventoryResponse.getProductId())
+            .productName(inventoryResponse.getProductName())
+            .productSku(inventoryResponse.getProductSku())
             .currentStock(150)
+            .reservedStock(inventoryResponse.getReservedStock())
             .availableStock(140)
+            .minimumStock(inventoryResponse.getMinimumStock())
+            .maximumStock(inventoryResponse.getMaximumStock())
+            .reorderPoint(inventoryResponse.getReorderPoint())
+            .unitCost(inventoryResponse.getUnitCost())
+            .location(inventoryResponse.getLocation())
+            .batchNumber(inventoryResponse.getBatchNumber())
+            .expiryDate(inventoryResponse.getExpiryDate())
+            .status(inventoryResponse.getStatus())
+            .lastStockUpdate(inventoryResponse.getLastStockUpdate())
+            .isLowStock(inventoryResponse.isLowStock())
+            .isExpired(inventoryResponse.isExpired())
+            .isExpiringSoon(inventoryResponse.isExpiringSoon())
             .build();
 
         when(inventoryService.adjustStock("inventory-1", adjustmentRequest))
@@ -199,7 +218,7 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(put("/api/v1/inventory/inventory-1/adjust-stock")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(adjustmentRequest))
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.currentStock").value(150))
@@ -232,7 +251,7 @@ class InventoryControllerTest {
             .thenReturn(summary);
 
         ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory/summary")
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.totalItems").value(50))
@@ -248,7 +267,7 @@ class InventoryControllerTest {
     @WithMockUser(roles = "CUSTOMER")
     void shouldDenyAccessForUnauthorizedUser() throws Exception {
         ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory")
-            .with(user(mockPrincipal)));
+            .with(user("test@example.com")));
 
         result.andExpect(status().isForbidden());
     }

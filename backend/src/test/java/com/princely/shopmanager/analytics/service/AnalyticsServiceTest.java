@@ -5,6 +5,7 @@ import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
 import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
 import com.princely.shopmanager.analytics.dto.SalesSummaryDto;
 import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
+import com.princely.shopmanager.fraud.domain.RiskAssessment;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
@@ -191,19 +192,19 @@ class AnalyticsServiceTest {
             .thenReturn(Optional.empty());
 
         when(riskAssessmentRepository.countByShopAndRiskLevelAndDateRange(
-            eq(testShopId), eq(com.princely.shopmanager.investment.domain.RiskAssessment.RiskLevel.LOW), any(), any()))
+            eq(testShopId), eq(RiskAssessment.RiskLevel.LOW), any(), any()))
             .thenReturn(totalLowRisk);
 
         when(riskAssessmentRepository.countByShopAndRiskLevelAndDateRange(
-            eq(testShopId), eq(com.princely.shopmanager.investment.domain.RiskAssessment.RiskLevel.MEDIUM), any(), any()))
+            eq(testShopId), eq(RiskAssessment.RiskLevel.MEDIUM), any(), any()))
             .thenReturn(totalMediumRisk);
 
         when(riskAssessmentRepository.countByShopAndRiskLevelAndDateRange(
-            eq(testShopId), eq(com.princely.shopmanager.investment.domain.RiskAssessment.RiskLevel.HIGH), any(), any()))
+            eq(testShopId), eq(RiskAssessment.RiskLevel.HIGH), any(), any()))
             .thenReturn(totalHighRisk);
 
         when(riskAssessmentRepository.countByShopAndRiskLevelAndDateRange(
-            eq(testShopId), eq(com.princely.shopmanager.investment.domain.RiskAssessment.RiskLevel.CRITICAL), any(), any()))
+            eq(testShopId), eq(RiskAssessment.RiskLevel.CRITICAL), any(), any()))
             .thenReturn(totalCriticalRisk);
 
         when(objectMapper.writeValueAsString(any(FraudStatisticsDto.class)))

@@ -3,8 +3,10 @@ package com.princely.shopmanager.inventory.service;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
@@ -44,17 +46,27 @@ class InventoryServiceIntegrationTest {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private TenantRepository tenantRepository;
+
     private Shop testShop;
     private Product testProduct;
 
     @BeforeEach
     void setUp() {
+        // Create and save tenant first
+        Tenant testTenant = Tenant.builder()
+            .id(UUID.randomUUID().toString())
+            .name("Test Tenant")
+            .contactEmail("test@tenant.com")
+            .build();
+        testTenant = tenantRepository.save(testTenant);
+
         testShop = Shop.builder()
             .id(UUID.randomUUID().toString())
             .name("Test Shop")
             .email("test@shop.com")
-            .tenantId("test-tenant")
-            .isActive(true)
+            .tenant(testTenant)
             .build();
         testShop = shopRepository.save(testShop);
 
@@ -63,9 +75,7 @@ class InventoryServiceIntegrationTest {
             .name("Test Product")
             .description("A test product")
             .price(BigDecimal.valueOf(100.00))
-            .category("Electronics")
             .sku("TEST-001")
-            .isActive(true)
             .build();
         testProduct = productRepository.save(testProduct);
 
@@ -149,10 +159,8 @@ class InventoryServiceIntegrationTest {
             Product product = Product.builder()
                 .id(UUID.randomUUID().toString())
                 .name("Product " + i)
-                .category("Electronics")
                 .price(BigDecimal.valueOf(100.00))
                 .sku("PROD-" + i)
-                .isActive(true)
                 .build();
             productRepository.save(product);
 
