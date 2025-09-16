@@ -172,6 +172,9 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     pkceMethod: 'S256',
     enableLogging: import.meta.env.DEV,
     silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+    // Enable response mode for authorization code flow
+    responseMode: 'fragment',
+    flow: 'standard',
   }
 
   const handleKeycloakEvent = (event: Keycloak.KeycloakEvent, error?: Keycloak.KeycloakError) => {

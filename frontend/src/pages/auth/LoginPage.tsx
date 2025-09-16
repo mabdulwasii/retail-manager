@@ -20,7 +20,10 @@ export const LoginPage: React.FC = () => {
   }, [isAuthenticated, navigate])
 
   const handleLogin = async () => {
-    await login()
+    // Configure seamless redirect back to dashboard
+    await login({
+      redirectUri: window.location.origin + '/dashboard'
+    })
   }
 
   const features = [
@@ -74,19 +77,33 @@ export const LoginPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Keycloak SSO Login Button */}
+              {/* Test accounts info */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-700 mb-2">
+                  🔐 Test Accounts Available:
+                </p>
+                <div className="text-xs text-blue-600 space-y-1">
+                  <div>• admin@shopmanager.com / admin123 (Full Access)</div>
+                  <div>• manager@shopmanager.com / manager123 (Shop Manager)</div>
+                  <div>• employee@shopmanager.com / employee123 (Employee)</div>
+                  <div>• investor@shopmanager.com / investor123 (Investor)</div>
+                  <div>• customer@shopmanager.com / customer123 (Customer)</div>
+                </div>
+              </div>
+
+              {/* Keycloak Login Button */}
               <Button
                 onClick={handleLogin}
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 size="lg"
               >
                 <ShieldCheck className="mr-2 h-4 w-4" />
-                Sign in with Keycloak SSO
+                Sign in with Keycloak
               </Button>
 
               <p className="text-xs text-center text-gray-500">
-                You will be redirected to the secure Keycloak authentication page.
-                Use one of the test accounts above to sign in.
+                Secure OAuth2 authentication with authorization code flow.
+                You'll be redirected to login and returned automatically.
               </p>
 
               <div className="text-center">

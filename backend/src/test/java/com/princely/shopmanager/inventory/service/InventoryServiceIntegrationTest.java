@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static com.princely.shopmanager.inventory.domain.InventoryHistory.ReferenceType.SALE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -54,12 +55,12 @@ class InventoryServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Create and save tenant first
+        // Create and save the tenant first
         Tenant testTenant = Tenant.builder()
             .id(UUID.randomUUID().toString())
             .name("Test Tenant")
             .contactEmail("test@tenant.com")
-            .build());
+            .build();
         testTenant = tenantRepository.save(testTenant);
 
         testShop = Shop.builder()
@@ -217,8 +218,7 @@ class InventoryServiceIntegrationTest {
         InventoryResponse inventory = inventoryService.createInventory(request);
 
         // Reserve stock
-        inventoryService.reserveStock(inventory.getId(), 30, "sale-123",
-            com.princely.shopmanager.inventory.domain.InventoryHistory.ReferenceType.SALE);
+        inventoryService.reserveStock(inventory.getId(), 30, "sale-123", SALE);
 
         InventoryResponse updated = inventoryService.getInventoryById(inventory.getId());
         assertThat(updated.getReservedStock()).isEqualTo(30);
@@ -228,7 +228,7 @@ class InventoryServiceIntegrationTest {
         inventoryService.releaseReservedStock(inventory.getId(), 30, "sale-123");
 
         InventoryResponse released = inventoryService.getInventoryById(inventory.getId());
-        assertThat(released.getReservedStock()).isEqualTo(0);
+        assertThat(released.getReservedStock()).isZero();
         assertThat(released.getAvailableStock()).isEqualTo(100);
     }
 
