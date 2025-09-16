@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useDashboardStats } from '@/hooks/useDashboard'
+import { useRevenueAnalytics } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -12,7 +12,6 @@ import {
   Calculator,
   FileText,
   PieChart,
-  Calendar,
   AlertCircle,
   CheckCircle
 } from 'lucide-react'
@@ -30,7 +29,8 @@ interface FinancialRecord {
 
 export const AccountantDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { stats, loading: statsLoading } = useDashboardStats()
+  const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics()
+  const statsLoading = analyticsLoading
 
   const financialStats = [
     {

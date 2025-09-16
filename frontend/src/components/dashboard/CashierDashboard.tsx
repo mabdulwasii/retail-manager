@@ -1,9 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useDashboardStats, useRecentActivities } from '@/hooks/useDashboard'
+import { useSalesSummary } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import {
   ShoppingCart,
   Receipt,
@@ -12,45 +11,66 @@ import {
   Clock,
   TrendingUp,
   Users,
-  Scan
+  Scan,
+  Loader2
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export const CashierDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { stats, loading: statsLoading } = useDashboardStats()
-  const { activities, loading: activitiesLoading } = useRecentActivities(5)
+  const { data: salesSummary, isLoading: salesLoading } = useSalesSummary(undefined, 'today')
 
   const todayStats = [
     {
       title: 'Sales Today',
-      value: stats?.totalSales ? `${stats.totalSales}` : '0',
+      value: salesSummary ? `${salesSummary.totalSales || 0}` : '0',
       description: 'Transactions completed',
       icon: ShoppingCart,
       color: 'text-blue-600'
     },
     {
       title: 'Revenue Today',
-      value: stats?.totalRevenue ? `$${stats.totalRevenue.toLocaleString()}` : '$0',
+      value: salesSummary ? `$${(salesSummary.totalRevenue || 0).toLocaleString()}` : '$0',
       description: 'Total earnings',
       icon: DollarSign,
       color: 'text-green-600'
     },
     {
-      title: 'Items Sold',
-      value: stats?.totalProducts ? `${stats.totalProducts}` : '0',
-      description: 'Products moved',
+      title: 'Top Products',
+      value: salesSummary?.topProducts ? `${salesSummary.topProducts.length}` : '0',
+      description: 'Product varieties',
       icon: Package,
       color: 'text-purple-600'
     },
     {
       title: 'Avg. Transaction',
-      value: stats?.totalRevenue && stats?.totalSales
-        ? `$${(stats.totalRevenue / stats.totalSales).toFixed(2)}`
-        : '$0.00',
+      value: salesSummary ? `$${(salesSummary.averageOrderValue || 0).toFixed(2)}` : '$0.00',
       description: 'Per sale',
       icon: TrendingUp,
       color: 'text-orange-600'
+    }
+  ]
+
+  const recentActivities = [
+    {
+      id: '1',
+      type: 'sale',
+      description: 'Completed sale #1234',
+      time: '2 minutes ago',
+      amount: '$45.99'
+    },
+    {
+      id: '2',
+      type: 'inventory',
+      description: 'Product scan completed',
+      time: '15 minutes ago'
+    },
+    {
+      id: '3',
+      type: 'sale',
+      description: 'Processed customer return',
+      time: '1 hour ago',
+      amount: '-$12.50'
     }
   ]
 
@@ -85,10 +105,20 @@ export const CashierDashboard: React.FC = () => {
     }
   ]
 
-  if (statsLoading) {
+  if (salesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold mb-2">Loading Your Dashboard</h3>
+              <p className="text-muted-foreground">
+                Fetching today's sales data...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -165,42 +195,38 @@ export const CashierDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {activitiesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activities.length > 0 ? (
-                  activities.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-4">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.type === 'sale' ? 'bg-green-500' :
-                        activity.type === 'inventory' ? 'bg-blue-500' :
-                        'bg-gray-500'
-                      }`}></div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {activity.description}
+            <div className="space-y-4">
+              {recentActivities.length > 0 ? (
+                recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-4">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.type === 'sale' ? 'bg-green-500' :
+                      activity.type === 'inventory' ? 'bg-blue-500' :
+                      'bg-gray-500'
+                    }`}></div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {activity.description}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {activity.time}
+                      </p>
+                      {activity.amount && (
+                        <p className={`text-sm font-semibold ${
+                          activity.amount.startsWith('-') ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {activity.amount}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {activity.time}
-                        </p>
-                        {activity.amount && (
-                          <p className="text-sm font-semibold text-green-600">
-                            {activity.amount}
-                          </p>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-4">
-                    No recent activity
-                  </p>
-                )}
-              </div>
-            )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-4">
+                  No recent activity
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 

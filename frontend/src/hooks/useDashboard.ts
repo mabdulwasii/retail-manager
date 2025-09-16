@@ -122,6 +122,36 @@ export const useFraudStatistics = (shopId?: string, period: 'today' | 'week' | '
   })
 }
 
+export const useAlerts = () => {
+  const { isAuthenticated, user } = useAuth()
+
+  return useQuery({
+    queryKey: ['alerts'],
+    queryFn: () => {
+      // Mock data for alerts since we don't have a backend endpoint yet
+      return Promise.resolve([
+        {
+          id: '1',
+          type: 'warning',
+          message: 'Unusual transaction pattern detected in Electronics department',
+          timestamp: new Date().toISOString(),
+          severity: 'medium'
+        },
+        {
+          id: '2',
+          type: 'error',
+          message: 'Failed payment processing attempt',
+          timestamp: new Date().toISOString(),
+          severity: 'high'
+        }
+      ])
+    },
+    enabled: isAuthenticated && (user?.roles?.includes('MANAGER') || user?.roles?.includes('OWNER') || user?.roles?.includes('SHOP_MANAGER') || user?.roles?.includes('TENANT_ADMIN')),
+    staleTime: 1 * 60 * 1000, // 1 minute
+    retry: 1
+  })
+}
+
 // Combined dashboard data hook for easy consumption
 export const useDashboardData = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
   const { user } = useAuth()

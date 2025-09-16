@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useDashboardStats } from '@/hooks/useDashboard'
+import { useInvestmentROI } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -9,9 +9,7 @@ import {
   DollarSign,
   PieChart,
   Target,
-  Calendar,
   ArrowUpRight,
-  ArrowDownRight,
   Coins,
   BarChart3
 } from 'lucide-react'
@@ -38,34 +36,35 @@ interface Distribution {
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { stats, loading: statsLoading } = useDashboardStats()
+  const { data: investmentROI, isLoading: roiLoading } = useInvestmentROI()
+  const statsLoading = roiLoading
 
-  // Mock data - would come from API
+  // Calculate portfolio stats from real data
   const portfolioStats = [
     {
       title: 'Total Invested',
-      value: '$125,000',
+      value: investmentROI ? `$${(investmentROI.totalInvestment || 0).toLocaleString()}` : '$0',
       description: 'Across all investments',
       icon: DollarSign,
       color: 'text-blue-600'
     },
     {
       title: 'Current Value',
-      value: '$156,750',
+      value: investmentROI ? `$${(investmentROI.totalReturn || 0).toLocaleString()}` : '$0',
       description: 'Portfolio worth',
       icon: TrendingUp,
       color: 'text-green-600'
     },
     {
       title: 'Total Returns',
-      value: '$31,750',
+      value: investmentROI ? `$${((investmentROI.totalReturn || 0) - (investmentROI.totalInvestment || 0)).toLocaleString()}` : '$0',
       description: 'Profit generated',
       icon: ArrowUpRight,
       color: 'text-emerald-600'
     },
     {
       title: 'ROI',
-      value: '25.4%',
+      value: investmentROI ? `${(investmentROI.roi || 0).toFixed(1)}%` : '0%',
       description: 'Return on investment',
       icon: Target,
       color: 'text-purple-600'

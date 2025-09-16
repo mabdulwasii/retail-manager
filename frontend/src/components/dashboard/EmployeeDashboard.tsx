@@ -1,6 +1,5 @@
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useDashboardStats, useRecentActivities } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -11,15 +10,36 @@ import {
   CheckCircle,
   AlertTriangle,
   Users,
-  ShoppingCart,
   Truck
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { stats, loading: statsLoading } = useDashboardStats()
-  const { activities, loading: activitiesLoading } = useRecentActivities(8)
+  // Mock stats for employee dashboard
+  const stats = {
+    totalTasks: 12,
+    completedTasks: 8,
+    pendingTasks: 4,
+    efficiency: 85
+  }
+  // Mock activities for employee dashboard
+  const activities = [
+    {
+      id: '1',
+      type: 'task',
+      description: 'Completed inventory check for electronics section',
+      time: '30 minutes ago'
+    },
+    {
+      id: '2',
+      type: 'task',
+      description: 'Updated product prices in fashion department',
+      time: '2 hours ago'
+    }
+  ]
+  const activitiesLoading = false
+  const statsLoading = false
 
   const taskStats = [
     {
