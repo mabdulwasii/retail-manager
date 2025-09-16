@@ -183,4 +183,97 @@ public class AuditService {
             log.error("Failed to log entity deletion: {} {}", entityType, entityId, e);
         }
     }
+
+    // Expense-specific audit methods
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logExpenseCreation(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, java.math.BigDecimal amount) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                .shopId(shopId)
+                .userId(userId.toString())
+                .category(AuditLog.AuditCategory.FINANCIAL_TRANSACTION)
+                .actionType(AuditLog.ActionType.CREATE)
+                .entityType("EXPENSE")
+                .entityId(expenseId.toString())
+                .actionDescription("Expense created with amount: " + amount)
+                .actionDate(LocalDateTime.now())
+                .severity(AuditLog.Severity.INFO)
+                .success(true)
+                .build();
+
+            auditLogRepository.save(auditLog);
+            log.debug("Expense creation logged: {}", expenseId);
+        } catch (Exception e) {
+            log.error("Failed to log expense creation: {}", expenseId, e);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logExpenseUpdate(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                .shopId(shopId)
+                .userId(userId.toString())
+                .category(AuditLog.AuditCategory.DATA_MODIFICATION)
+                .actionType(AuditLog.ActionType.UPDATE)
+                .entityType("EXPENSE")
+                .entityId(expenseId.toString())
+                .actionDescription("Expense updated")
+                .actionDate(LocalDateTime.now())
+                .severity(AuditLog.Severity.INFO)
+                .success(true)
+                .build();
+
+            auditLogRepository.save(auditLog);
+            log.debug("Expense update logged: {}", expenseId);
+        } catch (Exception e) {
+            log.error("Failed to log expense update: {}", expenseId, e);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logExpenseApproval(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, boolean approved) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                .shopId(shopId)
+                .userId(userId.toString())
+                .category(AuditLog.AuditCategory.BUSINESS_PROCESS)
+                .actionType(approved ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT)
+                .entityType("EXPENSE")
+                .entityId(expenseId.toString())
+                .actionDescription("Expense " + (approved ? "approved" : "rejected"))
+                .actionDate(LocalDateTime.now())
+                .severity(AuditLog.Severity.INFO)
+                .success(true)
+                .build();
+
+            auditLogRepository.save(auditLog);
+            log.debug("Expense approval logged: {} - {}", expenseId, approved ? "approved" : "rejected");
+        } catch (Exception e) {
+            log.error("Failed to log expense approval: {}", expenseId, e);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logExpenseDeletion(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                .shopId(shopId)
+                .userId(userId.toString())
+                .category(AuditLog.AuditCategory.DATA_MODIFICATION)
+                .actionType(AuditLog.ActionType.DELETE)
+                .entityType("EXPENSE")
+                .entityId(expenseId.toString())
+                .actionDescription("Expense deleted")
+                .actionDate(LocalDateTime.now())
+                .severity(AuditLog.Severity.WARNING)
+                .success(true)
+                .build();
+
+            auditLogRepository.save(auditLog);
+            log.debug("Expense deletion logged: {}", expenseId);
+        } catch (Exception e) {
+            log.error("Failed to log expense deletion: {}", expenseId, e);
+        }
+    }
 }

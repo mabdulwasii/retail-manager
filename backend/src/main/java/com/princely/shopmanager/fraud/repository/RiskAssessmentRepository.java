@@ -1,8 +1,10 @@
-package com.princely.shopmanager.investment.repository;
+package com.princely.shopmanager.fraud.repository;
 
 import com.princely.shopmanager.core.domain.Shop;
-import com.princely.shopmanager.investment.domain.RiskAssessment;
+import com.princely.shopmanager.fraud.domain.RiskAssessment;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -69,4 +71,26 @@ public interface RiskAssessmentRepository extends JpaRepository<RiskAssessment, 
     List<RiskAssessment> findByTransactionId(@Param("transactionId") String transactionId);
 
     boolean existsByTransactionAndAssessmentType(SalesTransaction transaction, RiskAssessment.AssessmentType assessmentType);
+
+    // Additional queries for enhanced fraud module
+    Page<RiskAssessment> findByShopOrderByAssessmentDateDesc(Shop shop, Pageable pageable);
+
+    @Query("SELECT ra FROM RiskAssessment ra WHERE ra.shop = :shop AND ra.status IN :statuses ORDER BY ra.assessmentDate DESC")
+    Page<RiskAssessment> findByShopAndStatusIn(
+        @Param("shop") Shop shop,
+        @Param("statuses") List<RiskAssessment.AssessmentStatus> statuses,
+        Pageable pageable
+    );
+
+    @Query("SELECT COUNT(ra) FROM RiskAssessment ra WHERE ra.status = :status")
+    long countByStatus(@Param("status") RiskAssessment.AssessmentStatus status);
+
+    @Query("SELECT ra.riskLevel, COUNT(ra) FROM RiskAssessment ra WHERE ra.assessmentDate >= :since GROUP BY ra.riskLevel")
+    List<Object[]> countByRiskLevelSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT ra FROM RiskAssessment ra WHERE ra.riskLevel IN :riskLevels AND ra.status = :status ORDER BY ra.assessmentDate DESC")
+    List<RiskAssessment> findByRiskLevelInAndStatus(
+        @Param("riskLevels") List<RiskAssessment.RiskLevel> riskLevels,
+        @Param("status") RiskAssessment.AssessmentStatus status
+    );
 }

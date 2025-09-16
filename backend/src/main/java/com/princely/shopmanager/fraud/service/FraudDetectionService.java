@@ -1,16 +1,21 @@
-package com.princely.shopmanager.investment.service;
+package com.princely.shopmanager.fraud.service;
 
-import com.princely.shopmanager.investment.domain.FraudRule;
-import com.princely.shopmanager.investment.domain.RiskAssessment;
-import com.princely.shopmanager.investment.repository.FraudRuleRepository;
-import com.princely.shopmanager.investment.repository.RiskAssessmentRepository;
+import com.princely.shopmanager.fraud.domain.FraudAlert;
+import com.princely.shopmanager.fraud.domain.FraudRule;
+import com.princely.shopmanager.fraud.domain.RiskAssessment;
+import com.princely.shopmanager.fraud.repository.FraudAlertRepository;
+import com.princely.shopmanager.fraud.repository.FraudRuleRepository;
+import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.fraud.event.FraudAlertCreatedEvent;
+import com.princely.shopmanager.fraud.event.RiskAssessmentCreatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
 import com.princely.shopmanager.shared.domain.AuditLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +24,10 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +37,10 @@ public class FraudDetectionService {
 
     private final FraudRuleRepository fraudRuleRepository;
     private final RiskAssessmentRepository riskAssessmentRepository;
+    private final FraudAlertRepository fraudAlertRepository;
     private final SalesTransactionRepository salesTransactionRepository;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public RiskAssessment assessTransactionRisk(SalesTransaction transaction) {
@@ -63,6 +72,16 @@ public class FraudDetectionService {
             .build();
 
         assessment = riskAssessmentRepository.save(assessment);
+
+        // Publish risk assessment created event
+        eventPublisher.publishEvent(new RiskAssessmentCreatedEvent(
+            this, assessment, getCurrentTenantId(), transaction.getShop().getId()));
+
+        // Create fraud alerts if high risk
+        if (result.riskLevel() == RiskAssessment.RiskLevel.HIGH ||
+            result.riskLevel() == RiskAssessment.RiskLevel.CRITICAL) {
+            createFraudAlert(transaction, assessment, result);
+        }
 
         // Update transaction with fraud information
         transaction.setFraudScore(result.riskScore());
@@ -101,6 +120,60 @@ public class FraudDetectionService {
         return assessment;
     }
 
+    private void createFraudAlert(SalesTransaction transaction, RiskAssessment assessment, FraudAssessmentResult result) {
+        FraudAlert alert = FraudAlert.builder()
+            .alertNumber(generateAlertNumber())
+            .alertType(FraudAlert.AlertType.SUSPICIOUS_TRANSACTION)
+            .severity(mapRiskLevelToAlertSeverity(result.riskLevel()))
+            .title(String.format("High Risk Transaction: %s", transaction.getTransactionNumber()))
+            .description(String.format(
+                "Transaction %s flagged for fraud with risk score %.2f. Flags: %s",
+                transaction.getTransactionNumber(),
+                result.riskScore(),
+                String.join(", ", result.flags())
+            ))
+            .shop(transaction.getShop())
+            .transactionId(transaction.getId())
+            .riskScore(result.riskScore())
+            .confidenceLevel(BigDecimal.valueOf(85.0)) // Default confidence
+            .evidence(createEvidenceMap(transaction, result))
+            .detectionRule(String.join(",", result.triggeredRules()))
+            .build();
+
+        alert = fraudAlertRepository.save(alert);
+
+        // Publish fraud alert created event
+        eventPublisher.publishEvent(new FraudAlertCreatedEvent(
+            this, alert, getCurrentTenantId(), transaction.getShop().getId()));
+
+        log.warn("Fraud alert {} created for transaction {}",
+            alert.getAlertNumber(), transaction.getTransactionNumber());
+    }
+
+    private Map<String, String> createEvidenceMap(SalesTransaction transaction, FraudAssessmentResult result) {
+        Map<String, String> evidence = new HashMap<>();
+        evidence.put("transaction_amount", transaction.getTotalAmount().toString());
+        evidence.put("transaction_time", transaction.getTransactionDate().toString());
+        evidence.put("cashier_id", transaction.getCashier().getId());
+        evidence.put("flags", String.join(",", result.flags()));
+        evidence.put("risk_score", result.riskScore().toString());
+        return evidence;
+    }
+
+    private FraudAlert.AlertSeverity mapRiskLevelToAlertSeverity(RiskAssessment.RiskLevel riskLevel) {
+        return switch (riskLevel) {
+            case LOW -> FraudAlert.AlertSeverity.LOW;
+            case MEDIUM -> FraudAlert.AlertSeverity.MEDIUM;
+            case HIGH -> FraudAlert.AlertSeverity.HIGH;
+            case CRITICAL -> FraudAlert.AlertSeverity.CRITICAL;
+        };
+    }
+
+    private String generateAlertNumber() {
+        return "ALERT-" + System.currentTimeMillis() + "-" +
+               UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
     private List<FraudRule> getApplicableFraudRules(SalesTransaction transaction) {
         // Get both global and shop-specific rules
         List<FraudRule> globalRules = fraudRuleRepository.findGlobalEnabledRules();
@@ -115,6 +188,7 @@ public class FraudDetectionService {
     private FraudAssessmentResult calculateRiskScore(SalesTransaction transaction, List<FraudRule> rules) {
         BigDecimal totalRiskScore = BigDecimal.ZERO;
         List<String> flags = new ArrayList<>();
+        List<String> triggeredRules = new ArrayList<>();
         StringBuilder details = new StringBuilder();
         boolean shouldAutoBlock = false;
 
@@ -125,6 +199,7 @@ public class FraudDetectionService {
                 BigDecimal ruleScore = rule.getRiskScoreWeight().multiply(BigDecimal.valueOf(10));
                 totalRiskScore = totalRiskScore.add(ruleScore);
                 flags.add(rule.getFlag());
+                triggeredRules.add(rule.getRuleName());
                 details.append(String.format("Rule '%s' triggered. ", rule.getRuleName()));
 
                 if (rule.isAutoBlock()) {
@@ -147,7 +222,8 @@ public class FraudDetectionService {
             riskLevel,
             flags,
             details.toString(),
-            shouldAutoBlock
+            shouldAutoBlock,
+            triggeredRules
         );
     }
 
@@ -288,6 +364,13 @@ public class FraudDetectionService {
         return salesTransactionRepository.findHighRiskTransactions();
     }
 
+    public List<FraudAlert> getActiveFraudAlerts() {
+        return fraudAlertRepository.findByTenantIdAndStatusIn(
+            com.princely.shopmanager.auth.context.TenantContext.getCurrentTenant(),
+            List.of(FraudAlert.AlertStatus.ACTIVE, FraudAlert.AlertStatus.ACKNOWLEDGED)
+        );
+    }
+
     @Transactional
     public void approveRiskAssessment(String assessmentId, String reviewedBy, String reviewNotes) {
         RiskAssessment assessment = riskAssessmentRepository.findById(assessmentId)
@@ -311,11 +394,43 @@ public class FraudDetectionService {
         log.info("Risk assessment {} rejected by {} with action {}", assessmentId, reviewedBy, action);
     }
 
+    @Transactional
+    public void acknowledgeFraudAlert(String alertId, String acknowledgedBy) {
+        FraudAlert alert = fraudAlertRepository.findById(alertId)
+            .orElseThrow(() -> new IllegalArgumentException("Fraud alert not found: " + alertId));
+
+        alert.acknowledge(acknowledgedBy);
+        fraudAlertRepository.save(alert);
+
+        log.info("Fraud alert {} acknowledged by {}", alertId, acknowledgedBy);
+    }
+
+    @Transactional
+    public void resolveFraudAlert(String alertId, String resolvedBy, String resolutionNotes) {
+        FraudAlert alert = fraudAlertRepository.findById(alertId)
+            .orElseThrow(() -> new IllegalArgumentException("Fraud alert not found: " + alertId));
+
+        alert.resolve(resolvedBy, resolutionNotes);
+        fraudAlertRepository.save(alert);
+
+        log.info("Fraud alert {} resolved by {}", alertId, resolvedBy);
+    }
+
+    private String getCurrentTenantId() {
+        try {
+            return com.princely.shopmanager.auth.context.TenantContext.getCurrentTenant();
+        } catch (Exception e) {
+            log.warn("Unable to get current tenant, using default: {}", e.getMessage());
+            return "default-tenant";
+        }
+    }
+
     private record FraudAssessmentResult(
         BigDecimal riskScore,
         RiskAssessment.RiskLevel riskLevel,
         List<String> flags,
         String details,
-        boolean shouldAutoBlock
+        boolean shouldAutoBlock,
+        List<String> triggeredRules
     ) {}
 }

@@ -10,6 +10,7 @@ import com.princely.shopmanager.inventory.domain.InventoryHistory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
+import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
@@ -33,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -377,6 +379,67 @@ public class InventoryService {
             .build();
 
         historyRepository.save(history);
+    }
+
+    @Transactional(readOnly = true)
+    public InventorySummaryDto getInventorySummary(String shopId) {
+        List<Inventory> allInventory = inventoryRepository.findAll(
+            InventorySpecifications.forShop(shopId)
+        );
+
+        BigDecimal totalValue = allInventory.stream()
+            .filter(inv -> inv.getUnitCost() != null)
+            .map(inv -> inv.getUnitCost().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int lowStockCount = (int) allInventory.stream()
+            .filter(Inventory::isLowStock)
+            .count();
+
+        int expiredCount = (int) allInventory.stream()
+            .filter(Inventory::isExpired)
+            .count();
+
+        int expiringSoonCount = (int) allInventory.stream()
+            .filter(inv -> inv.isExpiringSoon(30))
+            .count();
+
+        // Group by category for breakdown
+        Map<String, List<Inventory>> categoryGroups = allInventory.stream()
+            .collect(Collectors.groupingBy(inv -> inv.getProduct().getCategory()));
+
+        List<InventorySummaryDto.CategoryBreakdown> categoryBreakdown = categoryGroups.entrySet().stream()
+            .map(entry -> {
+                String category = entry.getKey();
+                List<Inventory> categoryItems = entry.getValue();
+
+                BigDecimal categoryValue = categoryItems.stream()
+                    .filter(inv -> inv.getUnitCost() != null)
+                    .map(inv -> inv.getUnitCost().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                int categoryLowStockCount = (int) categoryItems.stream()
+                    .filter(Inventory::isLowStock)
+                    .count();
+
+                return InventorySummaryDto.CategoryBreakdown.builder()
+                    .category(category)
+                    .itemCount(categoryItems.size())
+                    .totalValue(categoryValue)
+                    .lowStockCount(categoryLowStockCount)
+                    .build();
+            })
+            .sorted((a, b) -> b.getItemCount().compareTo(a.getItemCount()))
+            .collect(Collectors.toList());
+
+        return InventorySummaryDto.builder()
+            .totalItems(allInventory.size())
+            .totalValue(totalValue)
+            .lowStockItems(lowStockCount)
+            .expiredItems(expiredCount)
+            .expiringSoonItems(expiringSoonCount)
+            .categoryBreakdown(categoryBreakdown)
+            .build();
     }
 
     private InventoryResponse mapToResponse(Inventory inventory) {

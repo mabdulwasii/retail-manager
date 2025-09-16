@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { CurrencySelector } from '@/components/ui/currency-selector'
 import { Moon, Sun, User, LogOut, Settings } from 'lucide-react'
 
 export const Navbar: React.FC = () => {
@@ -41,6 +42,9 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Currency Selector */}
+            <CurrencySelector variant="ghost" size="sm" />
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"

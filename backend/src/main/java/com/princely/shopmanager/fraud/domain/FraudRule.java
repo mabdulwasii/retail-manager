@@ -1,4 +1,4 @@
-package com.princely.shopmanager.investment.domain;
+package com.princely.shopmanager.fraud.domain;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.shared.domain.BaseEntity;

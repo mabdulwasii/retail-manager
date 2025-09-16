@@ -3,7 +3,9 @@ import { useAuth } from '@/context/AuthContext'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Layout } from '@/components/layout/Layout'
+import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
+import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { ShopsPage } from '@/pages/shops/ShopsPage'
 import { ShopDetailPage } from '@/pages/shops/ShopDetailPage'
@@ -28,111 +30,135 @@ function App() {
     )
   }
 
-  if (!isAuthenticated) {
-    return <LoginPage />
-  }
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={isAuthenticated ? <Layout><DashboardPage /></Layout> : <LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
-        {/* Shop Management */}
-        <Route
-          path="/shops"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
-              <ShopsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/shops/create"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER']}>
-              <CreateShopPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/shops/:shopId"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
-              <ShopDetailPage />
-            </ProtectedRoute>
-          }
-        />
+      {/* Protected Routes - Wrapped in Layout */}
+      {isAuthenticated && (
+        <>
+          <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
 
-        {/* Products & Inventory */}
-        <Route
-          path="/products"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
-              <ProductsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/inventory"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
-              <InventoryPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Shop Management */}
+          <Route
+            path="/shops"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+                  <ShopsPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/shops/create"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER']}>
+                  <CreateShopPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/shops/:shopId"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+                  <ShopDetailPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
-        {/* Sales & Receipts */}
-        <Route
-          path="/sales"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER']}>
-              <SalesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/receipts"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER']}>
-              <ReceiptsPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Products & Inventory */}
+          <Route
+            path="/products"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+                  <ProductsPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'INVENTORY_MANAGER']}>
+                  <InventoryPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
-        {/* Investments */}
-        <Route
-          path="/investments"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'INVESTOR']}>
-              <InvestmentsPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Sales & Receipts */}
+          <Route
+            path="/sales"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER', 'SALES_MANAGER']}>
+                  <SalesPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/receipts"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER']}>
+                  <ReceiptsPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
-        {/* Analytics */}
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
-              <AnalyticsPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Investments */}
+          <Route
+            path="/investments"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'INVESTOR']}>
+                  <InvestmentsPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
-        {/* Audit Logs */}
-        <Route
-          path="/audit"
-          element={
-            <ProtectedRoute roles={['SHOP_OWNER', 'SYSTEM_ADMIN']}>
-              <AuditPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Analytics */}
+          <Route
+            path="/analytics"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT']}>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
-        {/* 404 Page */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Layout>
+          {/* Audit Logs */}
+          <Route
+            path="/audit"
+            element={
+              <Layout>
+                <ProtectedRoute roles={['SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR']}>
+                  <AuditPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+        </>
+      )}
+
+      {/* 404 Page */}
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   )
 }
 

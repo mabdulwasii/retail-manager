@@ -128,7 +128,8 @@ public class AuditLog extends BaseEntity {
         SECURITY_EVENT,
         CONFIGURATION_CHANGE,
         REPORT_ACCESS,
-        ADMIN_ACTION
+        ADMIN_ACTION,
+        BUSINESS_PROCESS
     }
 
     public enum ActionType {
