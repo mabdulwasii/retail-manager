@@ -141,7 +141,7 @@ export const loginWithCredentials = async (username: string, password: string): 
       // Start the timer
       resetInactivityTimer()
 
-      // Redirect to dashboard - this will cause a page refresh and AuthProvider will detect the authenticated state
+      // Redirect to dashboard after successful authentication
       window.location.href = '/dashboard'
 
       return true

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -21,6 +22,13 @@ import {
 } from 'lucide-react'
 
 export const LandingPage: React.FC = () => {
+  const { isAuthenticated, logout } = useAuth()
+
+  const handleLogout = async () => {
+    await logout()
+    window.location.href = '/'
+  }
+
   const features = [
     {
       icon: Store,
@@ -138,10 +146,22 @@ export const LandingPage: React.FC = () => {
               <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors">Pricing</a>
               <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
               <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">Login</Link>
-              <Button asChild>
-                <Link to="/register">Get Started</Link>
-              </Button>
+
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" className="text-blue-600 hover:text-blue-700 font-medium">Dashboard</Link>
+                  <Button variant="outline" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">Login</Link>
+                  <Button asChild>
+                    <Link to="/register">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

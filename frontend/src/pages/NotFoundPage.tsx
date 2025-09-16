@@ -19,7 +19,7 @@ export const NotFoundPage: React.FC = () => {
           <Link to="/">
             <Button>
               <Home className="mr-2 h-4 w-4" />
-              Back to Dashboard
+              Back to Home
             </Button>
           </Link>
         </CardContent>

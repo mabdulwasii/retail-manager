@@ -37,10 +37,18 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
+      {/* Dashboard Route - Always available but shows different content based on auth */}
+      <Route path="/dashboard" element={
+        isAuthenticated ? (
+          <Layout><DashboardPage /></Layout>
+        ) : (
+          <LoginPage />
+        )
+      } />
+
       {/* Protected Routes - Wrapped in Layout */}
       {isAuthenticated && (
         <>
-          <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
 
           {/* Shop Management */}
           <Route

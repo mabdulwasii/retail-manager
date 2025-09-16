@@ -9,6 +9,7 @@ interface AuthContextType {
   logout: () => Promise<void>
   hasRole: (role: string) => boolean
   hasAnyRole: (roles: string[]) => boolean
+  refreshAuth: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -61,6 +62,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return roles.some(role => hasRole(role))
   }
 
+  const refreshAuth = async () => {
+    try {
+      const keycloak = getKeycloak()
+      if (keycloak && keycloak.authenticated) {
+        setIsAuthenticated(true)
+        const userInfo = getUserInfo()
+        setUser(userInfo)
+      } else {
+        setIsAuthenticated(false)
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Auth refresh failed:', error)
+      setIsAuthenticated(false)
+      setUser(null)
+    }
+  }
+
   const value: AuthContextType = {
     isAuthenticated,
     isLoading,
@@ -69,6 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout: handleLogout,
     hasRole,
     hasAnyRole,
+    refreshAuth,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
