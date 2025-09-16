@@ -17,7 +17,7 @@ export const initKeycloak = async (): Promise<Keycloak> => {
 
   try {
     const authenticated = await keycloak.init({
-      onLoad: 'login-required',
+      onLoad: 'check-sso',
       checkLoginIframe: false,
       enableLogging: true,
       pkceMethod: 'S256',
@@ -48,7 +48,9 @@ export const getKeycloak = (): Keycloak | null => {
 export const login = async (): Promise<void> => {
   const kc = getKeycloak()
   if (kc) {
-    await kc.login()
+    await kc.login({
+      redirectUri: window.location.origin + '/dashboard'
+    })
   }
 }
 
