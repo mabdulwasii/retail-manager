@@ -8,7 +8,7 @@ import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
-import com.princely.shopmanager.investment.repository.RiskAssessmentRepository;
+import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

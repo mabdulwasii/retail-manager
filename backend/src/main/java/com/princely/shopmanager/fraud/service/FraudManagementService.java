@@ -388,7 +388,7 @@ public class FraudManagementService {
             .shopId(alert.getShop() != null ? alert.getShop().getId() : null)
             .shopName(alert.getShop() != null ? alert.getShop().getName() : null)
             .userId(alert.getUser() != null ? alert.getUser().getId() : null)
-            .userName(alert.getUser() != null ? alert.getUser().getName() : null)
+            .userName(alert.getUser() != null ? alert.getUser().getFullName() : null)
             .transactionId(alert.getTransactionId())
             .investmentId(alert.getInvestmentId())
             .riskScore(alert.getRiskScore())
