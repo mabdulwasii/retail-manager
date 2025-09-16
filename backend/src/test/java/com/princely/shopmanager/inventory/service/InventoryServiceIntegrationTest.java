@@ -56,7 +56,7 @@ class InventoryServiceIntegrationTest {
     void setUp() {
         // Create and save tenant first
         Tenant testTenant = Tenant.builder()
-            .id(UUID.randomUUID().toString())
+            .id(UUID.randomUUID().toString()
             .name("Test Tenant")
             .contactEmail("test@tenant.com")
             .build();

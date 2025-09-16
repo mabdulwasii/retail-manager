@@ -32,10 +32,12 @@ export const LoginPage: React.FC = () => {
 
     try {
       const success = await loginWithCredentials(email, password, refreshAuth)
-      if (!success) {
+      if (success) {
+        // Navigate to dashboard after successful login
+        navigate('/dashboard')
+      } else {
         setError('Invalid email or password. Please try again.')
       }
-      // If successful, loginWithCredentials handles the redirect
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.')
       console.error('Login error:', err)
@@ -235,15 +237,6 @@ export const LoginPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Demo Users Info */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Demo Users</h4>
-              <div className="text-sm text-blue-800 space-y-1">
-                <div><strong>Admin:</strong> admin@shopmanager.com / admin123</div>
-                <div><strong>Manager:</strong> manager@shopmanager.com / manager123</div>
-                <div><strong>Employee:</strong> employee@shopmanager.com / employee123</div>
-              </div>
-            </div>
           </div>
         </div>
 
