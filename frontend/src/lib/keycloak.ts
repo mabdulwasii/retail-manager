@@ -25,13 +25,35 @@ export const initKeycloak = async (): Promise<Keycloak> => {
 
     if (authenticated) {
       console.log('User is authenticated')
-      // Set up token refresh
-      setInterval(() => {
-        keycloak?.updateToken(70).catch(() => {
-          console.error('Failed to refresh token')
+      // Set up token refresh - check every minute
+      // Token expires after 5 minutes (300 seconds), refresh at 4 minutes (240 seconds)
+      const refreshInterval = setInterval(() => {
+        keycloak?.updateToken(240).catch(() => {
+          console.error('Failed to refresh token - logging out')
+          clearInterval(refreshInterval)
           keycloak?.logout()
         })
       }, 60000) // Check every minute
+
+      // Set up inactivity timer for 5 minutes
+      let inactivityTimer: NodeJS.Timeout
+      const resetInactivityTimer = () => {
+        clearTimeout(inactivityTimer)
+        inactivityTimer = setTimeout(() => {
+          console.log('User inactive for 5 minutes - logging out')
+          clearInterval(refreshInterval)
+          keycloak?.logout()
+        }, 300000) // 5 minutes
+      }
+
+      // Reset timer on user activity
+      document.addEventListener('mousedown', resetInactivityTimer)
+      document.addEventListener('keydown', resetInactivityTimer)
+      document.addEventListener('scroll', resetInactivityTimer)
+      document.addEventListener('touchstart', resetInactivityTimer)
+
+      // Start the timer
+      resetInactivityTimer()
     }
 
     return keycloak
@@ -51,6 +73,85 @@ export const login = async (): Promise<void> => {
     await kc.login({
       redirectUri: window.location.origin + '/dashboard'
     })
+  }
+}
+
+export const loginWithCredentials = async (username: string, password: string): Promise<boolean> => {
+  try {
+    const tokenUrl = `${initOptions.url}/realms/${initOptions.realm}/protocol/openid-connect/token`
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'password',
+        client_id: initOptions.clientId,
+        username,
+        password,
+      }),
+    })
+
+    if (response.ok) {
+      const tokenData = await response.json()
+
+      // Initialize Keycloak with the token
+      if (!keycloak) {
+        keycloak = new Keycloak(initOptions)
+      }
+
+      // Set the token manually
+      keycloak.token = tokenData.access_token
+      keycloak.refreshToken = tokenData.refresh_token
+      keycloak.idToken = tokenData.id_token
+      keycloak.authenticated = true
+
+      // Parse token to get user info
+      keycloak.tokenParsed = JSON.parse(atob(tokenData.access_token.split('.')[1]))
+
+      console.log('User authenticated with credentials')
+
+      // Set up token refresh timer like in initKeycloak
+      const refreshInterval = setInterval(() => {
+        keycloak?.updateToken(240).catch(() => {
+          console.error('Failed to refresh token - logging out')
+          clearInterval(refreshInterval)
+          keycloak?.logout()
+        })
+      }, 60000)
+
+      // Set up inactivity timer
+      let inactivityTimer: NodeJS.Timeout
+      const resetInactivityTimer = () => {
+        clearTimeout(inactivityTimer)
+        inactivityTimer = setTimeout(() => {
+          console.log('User inactive for 5 minutes - logging out')
+          clearInterval(refreshInterval)
+          keycloak?.logout()
+        }, 300000)
+      }
+
+      // Reset timer on user activity
+      document.addEventListener('mousedown', resetInactivityTimer)
+      document.addEventListener('keydown', resetInactivityTimer)
+      document.addEventListener('scroll', resetInactivityTimer)
+      document.addEventListener('touchstart', resetInactivityTimer)
+
+      // Start the timer
+      resetInactivityTimer()
+
+      // Redirect to dashboard - this will cause a page refresh and AuthProvider will detect the authenticated state
+      window.location.href = '/dashboard'
+
+      return true
+    } else {
+      console.error('Login failed:', response.statusText)
+      return false
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+    return false
   }
 }
 

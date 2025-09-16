@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { loginWithCredentials } from '@/lib/keycloak'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,10 +24,18 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true)
     setError('')
 
+    if (!email || !password) {
+      setError('Please enter both email and password.')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      // For now, redirect to Keycloak since we're using SSO
-      // In a real implementation, you might validate credentials first
-      await login()
+      const success = await loginWithCredentials(email, password)
+      if (!success) {
+        setError('Invalid email or password. Please try again.')
+      }
+      // If successful, loginWithCredentials handles the redirect
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.')
       console.error('Login error:', err)

@@ -19,6 +19,10 @@
   "quickLoginCheckMilliSeconds": 1000,
   "maxDeltaTimeSeconds": 43200,
   "failureFactor": 30,
+  "ssoSessionIdleTimeout": 300,
+  "ssoSessionMaxLifespan": 300,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 300,
   "roles": {
     "realm": [
       {
@@ -197,7 +201,7 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "consentRequired": false,
       "fullScopeAllowed": true,
@@ -221,7 +225,10 @@
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://shop-manager.local/*##https://shop-manager.local/*"
+        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://shop-manager.local/*##https://shop-manager.local/*",
+        "access.token.lifespan": "300",
+        "sso.session.idle.timeout": "300",
+        "sso.session.max.lifespan": "300"
       },
       "defaultClientScopes": [
         "profile",
