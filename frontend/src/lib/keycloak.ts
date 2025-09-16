@@ -76,7 +76,7 @@ export const login = async (): Promise<void> => {
   }
 }
 
-export const loginWithCredentials = async (username: string, password: string): Promise<boolean> => {
+export const loginWithCredentials = async (username: string, password: string, onAuthUpdate?: () => void): Promise<boolean> => {
   try {
     const tokenUrl = `${initOptions.url}/realms/${initOptions.realm}/protocol/openid-connect/token`
 
@@ -140,6 +140,11 @@ export const loginWithCredentials = async (username: string, password: string): 
 
       // Start the timer
       resetInactivityTimer()
+
+      // Call auth update callback if provided
+      if (onAuthUpdate) {
+        onAuthUpdate()
+      }
 
       // Redirect to dashboard after successful authentication
       window.location.href = '/dashboard'

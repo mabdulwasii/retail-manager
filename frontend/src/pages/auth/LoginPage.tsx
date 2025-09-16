@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Store, ShieldCheck, TrendingUp, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth()
+  const { login, refreshAuth } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,7 +31,7 @@ export const LoginPage: React.FC = () => {
     }
 
     try {
-      const success = await loginWithCredentials(email, password)
+      const success = await loginWithCredentials(email, password, refreshAuth)
       if (!success) {
         setError('Invalid email or password. Please try again.')
       }

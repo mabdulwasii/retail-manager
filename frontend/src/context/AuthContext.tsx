@@ -41,7 +41,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     initAuth()
-  }, [])
+
+    // Set up periodic check for authentication state changes
+    const authCheckInterval = setInterval(() => {
+      const kc = getKeycloak()
+      if (kc) {
+        const currentAuth = kc.authenticated || false
+        if (currentAuth !== isAuthenticated) {
+          setIsAuthenticated(currentAuth)
+          if (currentAuth) {
+            const userInfo = getUserInfo()
+            setUser(userInfo)
+          } else {
+            setUser(null)
+          }
+        }
+      }
+    }, 1000) // Check every second
+
+    return () => clearInterval(authCheckInterval)
+  }, [isAuthenticated])
 
   const handleLogin = async () => {
     await login()
