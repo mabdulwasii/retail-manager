@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { AnalyticsSummaryCards } from '@/components/analytics/AnalyticsSummaryCards'
 import { AnalyticsCharts } from '@/components/analytics/AnalyticsCharts'
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilters'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { useAnalytics, DateRange } from '@/hooks/useAnalytics'
 import {
   BarChart3Icon,

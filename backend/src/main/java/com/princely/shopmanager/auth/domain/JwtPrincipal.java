@@ -38,6 +38,7 @@ public class JwtPrincipal {
             .email(jwt.getClaimAsString("email"))
             .firstName(jwt.getClaimAsString("given_name"))
             .lastName(jwt.getClaimAsString("family_name"))
+            .roles(jwt.getClaimAsStringList("roles"))
             .claims(jwt.getClaims())
             .issuedAt(jwt.getIssuedAt())
             .expiresAt(jwt.getExpiresAt())

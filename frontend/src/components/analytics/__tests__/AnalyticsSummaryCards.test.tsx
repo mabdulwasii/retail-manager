@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { AnalyticsSummaryCards } from '../AnalyticsSummaryCards'
-import { CurrencyProvider } from '@/contexts/CurrencyContext'
+import { CurrencyProvider } from '@/context/CurrencyContext'
 
 // Mock the currency hook
 jest.mock('@/hooks/useCurrency', () => ({
