@@ -31,10 +31,10 @@ services:
       KC_DB_USERNAME: shop
       KC_DB_PASSWORD: shop
       KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_PORT: 8443
       KC_HOSTNAME_STRICT_BACKCHANNEL: false
-      KC_HTTP_ENABLED: true
-      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/localhost.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/localhost.key
       KC_HEALTH_ENABLED: true
       KC_HTTP_RELATIVE_PATH: /
       KC_PROXY: edge
@@ -42,9 +42,12 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     command: start-dev
     ports:
+      - "8443:8443"
       - "8080:8080"
     volumes:
       - ./docker/keycloak-realm.json:/tmp/keycloak-realm.json:ro
+      - ./docker/certs/localhost.crt:/opt/keycloak/conf/localhost.crt:ro
+      - ./docker/certs/localhost.key:/opt/keycloak/conf/localhost.key:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -140,9 +143,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: shop
       SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
       SPRING_FLYWAY_ENABLED: false
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shop-manager
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/shop-manager/protocol/openid-connect/certs
+      KEYCLOAK_AUTH_SERVER_URL: https://keycloak:8443
+      KEYCLOAK_ISSUER_URI: https://keycloak:8443/realms/shop-manager
+      KEYCLOAK_JWK_SET_URI: https://keycloak:8443/realms/shop-manager/protocol/openid-connect/certs
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
@@ -166,7 +169,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:8081/api
-        VITE_KEYCLOAK_URL: http://localhost:8080
+        VITE_KEYCLOAK_URL: https://localhost:8443
         VITE_KEYCLOAK_REALM: shop-manager
         VITE_KEYCLOAK_CLIENT_ID: shop-manager-frontend
     container_name: shop-manager-frontend
@@ -174,7 +177,7 @@ services:
       - "3001:80"
     environment:
       VITE_API_BASE_URL: http://localhost:8081/api
-      VITE_KEYCLOAK_URL: http://localhost:8080
+      VITE_KEYCLOAK_URL: https://localhost:8443
       VITE_KEYCLOAK_REALM: shop-manager
       VITE_KEYCLOAK_CLIENT_ID: shop-manager-frontend
       VITE_APP_VERSION: "1.0.0"
