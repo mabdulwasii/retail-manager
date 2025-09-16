@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Building,
   Users,
@@ -14,37 +15,55 @@ import {
   Globe,
   Server,
   Activity,
-  Eye
+  Eye,
+  Loader2,
+  DollarSign,
+  ShoppingCart
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useAllShops, useDashboardData } from '@/hooks/useDashboard'
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth()
+  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month')
 
-  // Mock data - would come from API
+  const { data: shopsData, isLoading: shopsLoading, error: shopsError } = useAllShops()
+  const {
+    shops,
+    salesSummary,
+    revenueAnalytics,
+    isLoading: dashboardLoading,
+    hasError: dashboardError,
+    refetch
+  } = useDashboardData(period)
+
+  const isLoading = shopsLoading || dashboardLoading
+  const hasError = shopsError || dashboardError
+
+  // Calculate system stats from real data
   const systemStats = [
     {
-      title: 'Total Tenants',
-      value: '127',
-      description: 'Active organizations',
+      title: 'Total Shops',
+      value: shopsLoading ? '...' : (shopsData?.totalElements?.toString() || '0'),
+      description: 'Across all tenants',
       icon: Building,
-      trend: '+8 this month',
+      trend: `+${shops.length} active`,
       color: 'text-blue-600'
     },
     {
-      title: 'Total Shops',
-      value: '1,543',
-      description: 'Across all tenants',
-      icon: Globe,
-      trend: '+45 this week',
+      title: 'Total Revenue',
+      value: salesSummary ? `$${(salesSummary.totalRevenue || 0).toLocaleString()}` : '$0',
+      description: `This ${period}`,
+      icon: DollarSign,
+      trend: revenueAnalytics ? `${revenueAnalytics.revenueGrowth > 0 ? '+' : ''}${revenueAnalytics.revenueGrowth?.toFixed(1) || 0}%` : '0%',
       color: 'text-green-600'
     },
     {
-      title: 'Active Users',
-      value: '12,847',
-      description: 'System-wide users',
-      icon: Users,
-      trend: '+234 today',
+      title: 'Total Sales',
+      value: salesSummary ? (salesSummary.totalSales?.toString() || '0') : '0',
+      description: `Transactions this ${period}`,
+      icon: ShoppingCart,
+      trend: salesSummary ? `Avg: $${salesSummary.averageOrderValue?.toFixed(2) || '0.00'}` : 'Avg: $0.00',
       color: 'text-purple-600'
     },
     {
@@ -105,6 +124,26 @@ export const AdminDashboard: React.FC = () => {
     }
   ]
 
+  // Handle errors
+  if (hasError) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Error Loading Dashboard</h3>
+              <p className="text-muted-foreground mb-4">
+                Unable to load dashboard data. Please check your connection.
+              </p>
+              <Button onClick={() => refetch()}>Try Again</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -118,6 +157,25 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Activity className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/audit">
               <Eye className="mr-2 h-4 w-4" />

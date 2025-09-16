@@ -113,6 +113,92 @@ class ApiService {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
   }
+
+  // Analytics API endpoints
+  async getSalesSummary(shopId: string, startDate: string, endDate: string) {
+    return this.get<{
+      totalSales: number
+      totalRevenue: number
+      averageOrderValue: number
+      topProducts: Array<{ name: string; sales: number }>
+    }>(`/analytics/sales-summary?shopId=${shopId}&startDate=${startDate}&endDate=${endDate}`)
+  }
+
+  async getInvestmentROI(shopId: string, startDate: string, endDate: string) {
+    return this.get<{
+      totalInvestment: number
+      totalReturn: number
+      roi: number
+      profitMargin: number
+    }>(`/analytics/investment-roi?shopId=${shopId}&startDate=${startDate}&endDate=${endDate}`)
+  }
+
+  async getRevenueAnalytics(shopId: string, startDate: string, endDate: string) {
+    return this.get<{
+      totalRevenue: number
+      monthlyRevenue: Array<{ month: string; revenue: number }>
+      revenueGrowth: number
+    }>(`/analytics/revenue-analytics?shopId=${shopId}&startDate=${startDate}&endDate=${endDate}`)
+  }
+
+  async getFraudStatistics(shopId: string, startDate: string, endDate: string) {
+    return this.get<{
+      totalTransactions: number
+      flaggedTransactions: number
+      fraudRate: number
+      suspiciousActivities: Array<{ type: string; count: number }>
+    }>(`/analytics/fraud-statistics?shopId=${shopId}&startDate=${startDate}&endDate=${endDate}`)
+  }
+
+  // Shop API endpoints
+  async getShops(page = 0, size = 20) {
+    return this.get<{
+      content: Array<{
+        id: string
+        name: string
+        email: string
+        phone?: string
+        status: string
+        createdAt: string
+      }>
+      totalElements: number
+      totalPages: number
+      number: number
+      size: number
+    }>(`/shops?page=${page}&size=${size}`)
+  }
+
+  async getActiveShops() {
+    return this.get<Array<{
+      id: string
+      name: string
+      email: string
+      status: string
+    }>>('/shops/active')
+  }
+
+  async getShop(shopId: string) {
+    return this.get<{
+      id: string
+      name: string
+      email: string
+      phone?: string
+      address?: any
+      status: string
+      createdAt: string
+      updatedAt: string
+    }>(`/shops/${shopId}`)
+  }
+
+  // Health check endpoint
+  async getHealth() {
+    return this.get<{ status: string }>('/actuator/health')
+  }
+
+  // Clear analytics cache
+  async clearAnalyticsCache(shopId: string) {
+    return this.post<void>(`/analytics/clear-cache/${shopId}`)
+  }
 }
 
 export const apiService = new ApiService()

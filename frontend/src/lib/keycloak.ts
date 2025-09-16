@@ -16,21 +16,87 @@ export const initKeycloak = async (): Promise<Keycloak> => {
   keycloak = new Keycloak(initOptions)
 
   try {
-    const authenticated = await keycloak.init({
-      onLoad: 'check-sso',
-      checkLoginIframe: false,
-      enableLogging: true,
-      pkceMethod: 'S256',
-    })
+    // Check for persisted tokens first
+    const persistedAccessToken = localStorage.getItem('keycloak_access_token')
+    const persistedRefreshToken = localStorage.getItem('keycloak_refresh_token')
+    const persistedIdToken = localStorage.getItem('keycloak_id_token')
+
+    let authenticated = false
+
+    if (persistedAccessToken && persistedRefreshToken) {
+      // Try to restore authentication from persisted tokens
+      try {
+        keycloak.token = persistedAccessToken
+        keycloak.refreshToken = persistedRefreshToken
+        keycloak.idToken = persistedIdToken
+        keycloak.authenticated = true
+
+        // Parse token to get user info
+        const tokenPayload = JSON.parse(atob(persistedAccessToken.split('.')[1]))
+        keycloak.tokenParsed = tokenPayload
+
+        // Check if token is still valid (not expired)
+        const currentTime = Date.now() / 1000
+        if (tokenPayload.exp > currentTime) {
+          authenticated = true
+          console.log('User restored from persisted tokens')
+        } else {
+          console.log('Persisted token expired, trying to refresh...')
+          // Try to refresh token
+          try {
+            await keycloak.updateToken(5)
+            authenticated = keycloak.authenticated || false
+            console.log('Token refreshed successfully')
+          } catch (refreshError) {
+            console.error('Token refresh failed, clearing persisted tokens')
+            localStorage.removeItem('keycloak_access_token')
+            localStorage.removeItem('keycloak_refresh_token')
+            localStorage.removeItem('keycloak_id_token')
+            keycloak.authenticated = false
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore from persisted tokens:', error)
+        localStorage.removeItem('keycloak_access_token')
+        localStorage.removeItem('keycloak_refresh_token')
+        localStorage.removeItem('keycloak_id_token')
+        keycloak.authenticated = false
+      }
+    }
+
+    // If no persisted tokens or restoration failed, use normal Keycloak init
+    if (!authenticated) {
+      authenticated = await keycloak.init({
+        onLoad: 'check-sso',
+        checkLoginIframe: false,
+        enableLogging: true,
+        pkceMethod: 'S256',
+      })
+    }
 
     if (authenticated) {
       console.log('User is authenticated')
       // Set up token refresh - check every minute
       // Token expires after 5 minutes (300 seconds), refresh at 4 minutes (240 seconds)
       const refreshInterval = setInterval(() => {
-        keycloak?.updateToken(240).catch(() => {
+        keycloak?.updateToken(240).then(() => {
+          // Update persisted tokens when refreshed
+          if (keycloak?.token) {
+            localStorage.setItem('keycloak_access_token', keycloak.token)
+          }
+          if (keycloak?.refreshToken) {
+            localStorage.setItem('keycloak_refresh_token', keycloak.refreshToken)
+          }
+          if (keycloak?.idToken) {
+            localStorage.setItem('keycloak_id_token', keycloak.idToken)
+          }
+        }).catch(() => {
           console.error('Failed to refresh token - logging out')
           clearInterval(refreshInterval)
+          // Clear persisted tokens on logout
+          localStorage.removeItem('keycloak_access_token')
+          localStorage.removeItem('keycloak_refresh_token')
+          localStorage.removeItem('keycloak_id_token')
           keycloak?.logout()
         })
       }, 60000) // Check every minute
@@ -42,6 +108,10 @@ export const initKeycloak = async (): Promise<Keycloak> => {
         inactivityTimer = setTimeout(() => {
           console.log('User inactive for 5 minutes - logging out')
           clearInterval(refreshInterval)
+          // Clear persisted tokens on logout
+          localStorage.removeItem('keycloak_access_token')
+          localStorage.removeItem('keycloak_refresh_token')
+          localStorage.removeItem('keycloak_id_token')
           keycloak?.logout()
         }, 300000) // 5 minutes
       }
@@ -107,6 +177,11 @@ export const loginWithCredentials = async (username: string, password: string, o
       keycloak.idToken = tokenData.id_token
       keycloak.authenticated = true
 
+      // Persist tokens in localStorage for authentication persistence
+      localStorage.setItem('keycloak_access_token', tokenData.access_token)
+      localStorage.setItem('keycloak_refresh_token', tokenData.refresh_token)
+      localStorage.setItem('keycloak_id_token', tokenData.id_token)
+
       // Parse token to get user info
       keycloak.tokenParsed = JSON.parse(atob(tokenData.access_token.split('.')[1]))
 
@@ -117,6 +192,10 @@ export const loginWithCredentials = async (username: string, password: string, o
         keycloak?.updateToken(240).catch(() => {
           console.error('Failed to refresh token - logging out')
           clearInterval(refreshInterval)
+          // Clear persisted tokens on logout
+          localStorage.removeItem('keycloak_access_token')
+          localStorage.removeItem('keycloak_refresh_token')
+          localStorage.removeItem('keycloak_id_token')
           keycloak?.logout()
         })
       }, 60000)
@@ -128,6 +207,10 @@ export const loginWithCredentials = async (username: string, password: string, o
         inactivityTimer = setTimeout(() => {
           console.log('User inactive for 5 minutes - logging out')
           clearInterval(refreshInterval)
+          // Clear persisted tokens on logout
+          localStorage.removeItem('keycloak_access_token')
+          localStorage.removeItem('keycloak_refresh_token')
+          localStorage.removeItem('keycloak_id_token')
           keycloak?.logout()
         }, 300000)
       }
@@ -160,6 +243,11 @@ export const loginWithCredentials = async (username: string, password: string, o
 }
 
 export const logout = async (): Promise<void> => {
+  // Clear persisted tokens
+  localStorage.removeItem('keycloak_access_token')
+  localStorage.removeItem('keycloak_refresh_token')
+  localStorage.removeItem('keycloak_id_token')
+
   const kc = getKeycloak()
   if (kc) {
     await kc.logout()

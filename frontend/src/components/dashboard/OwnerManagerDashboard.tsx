@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useCurrency } from '@/hooks/useCurrency'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Store,
   Package,
@@ -15,45 +15,61 @@ import {
   BarChart3,
   Receipt,
   Coins,
-  Shield
+  Shield,
+  Loader2,
+  Activity
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useDashboardData, useFraudStatistics } from '@/hooks/useDashboard'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
+  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month')
 
-  // Mock data - would come from API
+  const {
+    shops,
+    salesSummary,
+    investmentROI,
+    revenueAnalytics,
+    isLoading,
+    hasError,
+    refetch
+  } = useDashboardData(period)
+
+  const { data: fraudStats } = useFraudStatistics(undefined, period)
+
+  // Calculate business stats from real data
   const businessStats = [
     {
       title: 'Total Revenue',
-      value: '$45,231',
-      description: 'This month',
+      value: revenueAnalytics ? `$${(revenueAnalytics.totalRevenue || 0).toLocaleString()}` : '$0',
+      description: `This ${period}`,
       icon: DollarSign,
-      trend: '+12.5% from last month',
+      trend: revenueAnalytics ? `${revenueAnalytics.revenueGrowth > 0 ? '+' : ''}${revenueAnalytics.revenueGrowth?.toFixed(1) || 0}%` : '0%',
       color: 'text-green-600'
     },
     {
       title: 'Active Shops',
-      value: '8',
+      value: shops.length.toString(),
       description: 'Across locations',
       icon: Store,
-      trend: '+2 new this quarter',
+      trend: `${shops.filter(s => s.status === 'ACTIVE').length} operational`,
       color: 'text-blue-600'
     },
     {
       title: 'Products Sold',
-      value: '2,847',
-      description: 'This month',
+      value: salesSummary ? (salesSummary.totalSales?.toString() || '0') : '0',
+      description: `This ${period}`,
       icon: Package,
-      trend: '+18% from last month',
+      trend: salesSummary ? `Avg: $${salesSummary.averageOrderValue?.toFixed(2) || '0.00'}` : 'No sales',
       color: 'text-purple-600'
     },
     {
       title: 'Investment ROI',
-      value: '24.5%',
-      description: 'Annual return',
+      value: investmentROI ? `${investmentROI.roi?.toFixed(1) || 0}%` : '0%',
+      description: `${period} return`,
       icon: TrendingUp,
-      trend: '+3.2% this quarter',
+      trend: investmentROI ? `$${investmentROI.totalReturn?.toLocaleString() || '0'} earned` : 'No returns',
       color: 'text-emerald-600'
     }
   ]
@@ -144,6 +160,25 @@ export const OwnerManagerDashboard: React.FC = () => {
     }
   ]
 
+  // Handle loading state
+  if (isLoading && !salesSummary && !revenueAnalytics && !investmentROI) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold mb-2">Loading Dashboard</h3>
+              <p className="text-muted-foreground">
+                Fetching your business analytics...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -157,6 +192,25 @@ export const OwnerManagerDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Activity className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/analytics">
               <BarChart3 className="mr-2 h-4 w-4" />
