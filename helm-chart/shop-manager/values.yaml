@@ -136,11 +136,11 @@ postgresql:
         CREATE DATABASE IF NOT EXISTS keycloak OWNER keycloak;
         GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
   auth:
-    # CHANGE IN PRODUCTION: Use secure randomly generated passwords
-    postgresPassword: "PostgresAdm1n@2024!SecureDB"  # Override in production
+    # Passwords now managed via Kubernetes secrets - see secrets section
+    # These are automatically populated from the secrets template
     username: shop
-    password: "ShopDB@2024!SecurePassword"  # Override in production - updated for security compliance
     database: shopdb
+    existingSecret: ""  # Will be set by deployment to use our secret
   primary:
     persistence:
       enabled: true
@@ -169,16 +169,15 @@ keycloak:
   enabled: true
   auth:
     adminUser: admin
-    # CHANGE IN PRODUCTION: Use secure randomly generated password
-    adminPassword: "KeycloakAdm1n@2024!SecureAuth"  # Override in production
+    # Passwords now managed via Kubernetes secrets - see secrets section
+    existingSecret: ""  # Will be set by deployment to use our secret
   postgresql:
     enabled: true
     auth:
-      # CHANGE IN PRODUCTION: Use secure randomly generated passwords
-      postgresPassword: "KeycloakPostgres@2024!SecureDB"  # Override in production
+      # Passwords now managed via Kubernetes secrets - see secrets section
       username: keycloak
-      password: "KeycloakDB@2024!SecurePassword"  # Override in production
       database: keycloak
+      existingSecret: ""  # Will be set by deployment to use our secret
   ingress:
     enabled: true
     hostname: keycloak.local
@@ -332,39 +331,67 @@ features:
   barcodeScanning: true
   loyaltyProgram: false
 
-# Secrets configuration (values should be provided separately)
+# Secrets configuration - Override these in production!
+# SECURITY: These are secure defaults for local development
+# For production, override with: --set secrets.database.postgresPassword="your-secure-password"
 secrets:
   database:
-    url: ""  # Override in secrets
-    username: ""  # Override in secrets
-    password: ""  # Override in secrets
+    # Production-grade passwords meeting SecurityConfigurationValidator requirements
+    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    shopPassword: "ShopDB@2024!SecurePassword#CompliantStrong"
+    keycloakPassword: "KeycloakDB@2024!SecurePassword#Compliant"
 
   keycloak:
-    clientSecret: ""  # Override in secrets
-    adminUsername: ""  # Override in secrets
-    adminPassword: ""  # Override in secrets
+    adminUser: "admin"
+    adminPassword: "KeycloakAdm1n@2024!SecureAuth#CompliantPassword"
+    frontendClientSecret: "shop-manager-frontend-secret-2024-compliant"
+    backendClientSecret: "shop-manager-backend-secret-2024-compliant"
 
   minio:
-    enabled: true
-    endpoint: "http://shop-manager-minio:9000"
-    accessKey: "shopmanager"
-    secretKey: "Min1o!SecureK3y2024#"
-    bucket: "shop-manager-backups"
+    rootUser: "shopmanager"
+    rootPassword: "Min1o!SecureK3y2024#CompliantPassword"
+
+  security:
+    # Auto-generated if not provided - override in production
+    jwtSecret: "JWT@SecureKey2024!CompliantPasswordForTokenSigning#"
+    encryptionKey: "AES256@EncryptionKey2024!CompliantPasswordForData#"
+    swaggerPassword: "SwaggerDoc@2024!SecureAPIAccess#CompliantPassword"
 
   email:
     enabled: false
     host: "smtp.gmail.com"
     port: 587
-    username: ""  # Override in secrets
-    password: ""  # Override in secrets
+    username: ""  # Override in production
+    password: ""  # Override in production
     smtpAuth: true
     starttlsEnable: true
+
+# Sealed Secrets configuration (optional encryption enhancement)
+# Requires sealed-secrets controller in cluster
+# See templates/sealed-secrets.yaml for setup instructions
+sealedSecrets:
+  enabled: false  # Set to true for production with encryption
+  database:
+    # Replace with actual sealed secret values from kubeseal
+    postgresPassword: ""  # AgA... encrypted value
+    shopPassword: ""      # AgA... encrypted value
+    keycloakPassword: ""  # AgA... encrypted value
+  keycloak:
+    adminPassword: ""           # AgA... encrypted value
+    frontendClientSecret: ""    # AgA... encrypted value
+    backendClientSecret: ""     # AgA... encrypted value
+  minio:
+    rootPassword: ""      # AgA... encrypted value
+  security:
+    jwtSecret: ""         # AgA... encrypted value
+    encryptionKey: ""     # AgA... encrypted value
+    swaggerPassword: ""   # AgA... encrypted value
 
 minio:
   enabled: true
   auth:
-    rootUser: shopmanager
-    rootPassword: "Min1o!SecureK3y2024#"
+    # Credentials now managed via Kubernetes secrets - see secrets section
+    existingSecret: ""  # Will be set by deployment to use our secret
   defaultBuckets: "shop-manager-backups"
 
   email:

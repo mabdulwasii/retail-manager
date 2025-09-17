@@ -90,14 +90,38 @@ spec:
               value: {{ .Values.config.audit.enabled | default "true" | quote }}
             - name: AUDIT_RETENTION_DAYS
               value: {{ .Values.config.audit.retentionDays | default "90" | quote }}
+            # Security secrets from Kubernetes secrets
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-secrets
+                  key: encryption-key
+            - name: APP_SWAGGER_SECURITY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-secrets
+                  key: swagger-password
+            {{- if .Values.secrets.email.enabled }}
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-secrets
+                  key: smtp-username
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shop-manager.fullname" . }}-secrets
+                  key: smtp-password
+            {{- end }}
           {{- with .Values.configMap.data }}
           envFrom:
             - configMapRef:
                 name: {{ include "shop-manager.fullname" . }}-config
-          {{- end }}
-          {{- with .Values.secrets.data }}
-            - secretRef:
-                name: {{ include "shop-manager.fullname" . }}-secret
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
