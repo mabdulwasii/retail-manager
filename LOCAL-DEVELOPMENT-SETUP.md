@@ -267,3 +267,114 @@ helm uninstall shop-manager -n shop-manager-fixed
 4. **Production Configuration**: Prepare for production deployment
 
 For production deployment, see `PRODUCTION-DEPLOYMENT.md`.
+
+
+My local commands
+
+
+Deploy Commands
+
+Full Deployment
+
+# Navigate to helm chart directory
+cd helm-chart/shop-manager
+
+# Deploy with Helm (creates namespace if it doesn't exist)
+helm upgrade --install shop-manager . \
+--namespace shop-manager-fixed \
+--create-namespace \
+--wait \
+--timeout=10m
+
+Deploy with Custom Values
+
+# Deploy with specific configuration
+helm upgrade --install shop-manager . \
+--namespace shop-manager-fixed \
+--create-namespace \
+--values values.yaml \
+--wait \
+--timeout=10m
+
+Deploy Prerequisites (if needed)
+
+# Install nginx ingress controller first
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for ingress controller to be ready
+kubectl wait --namespace ingress-nginx \
+--for=condition=ready pod \
+--selector=app.kubernetes.io/component=controller \
+--timeout=90s
+
+Undeploy Commands
+
+Remove Application Only
+
+# Uninstall the Helm release (keeps namespace and PVCs)
+helm uninstall shop-manager --namespace shop-manager-fixed
+
+Complete Cleanup
+
+# Uninstall Helm release
+helm uninstall shop-manager --namespace shop-manager-fixed
+
+# Delete persistent volume claims (WARNING: This deletes data!)
+kubectl delete pvc --all --namespace shop-manager-fixed
+
+# Delete the entire namespace
+kubectl delete namespace shop-manager-fixed
+
+Remove Ingress Controller (if needed)
+
+# Delete nginx ingress controller
+kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+
+Verification Commands
+
+Check Deployment Status
+
+# Check Helm release status
+helm status shop-manager --namespace shop-manager-fixed
+
+# List all releases
+helm list --namespace shop-manager-fixed
+
+# Check pods status
+kubectl get pods --namespace shop-manager-fixed
+
+# Check services and ingress
+kubectl get svc,ingress --namespace shop-manager-fixed
+
+Quick Setup Script
+
+You can also use the configuration script to verify setup:
+# Run the DNS configuration and connectivity test
+./configure-local-dns.sh
+
+Common Workflows
+
+Development Cycle
+
+# 1. Deploy
+helm upgrade --install shop-manager . --namespace shop-manager-fixed --create-namespace
+
+# 2. Make changes and redeploy
+helm upgrade shop-manager . --namespace shop-manager-fixed
+
+# 3. Check status
+kubectl get pods -n shop-manager-fixed
+
+# 4. Test connectivity
+./configure-local-dns.sh
+
+Clean Restart
+
+# 1. Undeploy
+helm uninstall shop-manager --namespace shop-manager-fixed
+
+# 2. Clean PVCs (optional - deletes data)
+kubectl delete pvc --all --namespace shop-manager-fixed
+
+# 3. Redeploy
+helm upgrade --install shop-manager . --namespace shop-manager-fixed --create-namespace
