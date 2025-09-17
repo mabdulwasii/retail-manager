@@ -180,16 +180,40 @@ keycloak:
       existingSecret: ""  # Will be set by deployment to use our secret
   ingress:
     enabled: true
-    hostname: keycloak.local
+    hostname: auth.shop-manager.local
+    tls: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      cert-manager.io/cluster-issuer: "selfsigned-issuer"
   service:
     type: ClusterIP
     port: 8080
     targetPort: 8080
   extraEnvVars:
-    - name: KC_HOSTNAME_PORT
-      value: "8080"
+    # Proper hostname configuration for HTTPS ingress
+    - name: KC_HOSTNAME
+      value: "auth.shop-manager.local"
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
+    - name: KC_HOSTNAME_STRICT_HTTPS
+      value: "false"
+    - name: KC_HTTP_ENABLED
+      value: "true"
     - name: KC_HTTP_PORT
       value: "8080"
+    # Proxy settings for ingress SSL termination
+    - name: KC_PROXY
+      value: "edge"
+    - name: KC_PROXY_ADDRESS_FORWARDING
+      value: "true"
+    # Disable HTTPS redirect since ingress handles SSL
+    - name: KC_HOSTNAME_ADMIN_URL
+      value: "https://auth.shop-manager.local"
+    - name: KC_FRONTEND_URL
+      value: "https://auth.shop-manager.local"
 
 # Application-specific comprehensive configuration
 config:
