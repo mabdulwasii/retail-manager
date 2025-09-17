@@ -61,18 +61,29 @@ kubectl get pods -n shop-manager
 
 ### DNS-based Access (Recommended)
 
-First, set up local DNS entries by running:
+**IMPORTANT**: Add these DNS entries to `/etc/hosts` for local development:
+
 ```bash
-./setup-dns.sh
+# Add to /etc/hosts (requires sudo)
+sudo tee -a /etc/hosts << EOF
+# Shop Manager Services - Kubernetes Deployment
+127.0.0.1 shop-manager.local
+127.0.0.1 api.shop-manager.local
+127.0.0.1 auth.shop-manager.local
+EOF
 ```
 
-Then access services via HTTPS:
+Then access services via HTTPS (all services use SSL/TLS):
 - **Frontend**: https://shop-manager.local
 - **Backend API**: https://api.shop-manager.local
-- **Keycloak**: https://auth.shop-manager.local
-- **Swagger UI**: https://api.shop-manager.local/swagger-ui.html
+- **Keycloak Auth**: https://auth.shop-manager.local
+- **Health Check**: https://api.shop-manager.local/actuator/health
+- **API Docs**: https://api.shop-manager.local/swagger-ui.html
 
-**Note**: You'll need to accept self-signed certificates in your browser.
+**Note**:
+- All services use HTTPS with cert-manager self-signed certificates
+- Accept self-signed certificates in your browser for local development
+- No port forwarding required - services accessible directly via ingress
 
 ### Alternative: Port Forwarding
 
@@ -222,6 +233,27 @@ All services are configured with:
 3. Set up monitoring with Prometheus/Grafana
 4. Configure backup strategies
 5. Implement CI/CD pipeline
+
+## Security Notes
+
+- **SecurityConfigurationValidator**: The backend includes security validation that checks for production-ready configurations
+- **Password Requirements**: Use passwords with 16+ characters, mixed case, numbers, and special characters
+- **Production Passwords**: Always override default passwords with secure, randomly generated ones in production
+- **SSL/TLS**: All services are configured with HTTPS and force SSL redirects
+- **Database Security**: PostgreSQL uses encrypted passwords and isolated schemas
+- **Keycloak Configuration**: Run `./configure-keycloak.sh` after deployment to set up the authentication realm
+
+## Final Status Check
+
+Run this comprehensive test to verify all services:
+
+```bash
+echo "=== Shop Manager Deployment Status ==="
+echo "1. Frontend: $(curl -k -H "Host: shop-manager.local" -s -o /dev/null -w "%{http_code}" "https://localhost")"
+echo "2. Backend API: $(curl -k -H "Host: api.shop-manager.local" -s -o /dev/null -w "%{http_code}" "https://localhost/actuator/health")"
+echo "3. Keycloak Auth: $(curl -k -H "Host: auth.shop-manager.local" -s -o /dev/null -w "%{http_code}" "https://localhost/realms/shop-manager/.well-known/openid-configuration")"
+echo "✓ All services should return 200"
+```
 
 ## Support
 

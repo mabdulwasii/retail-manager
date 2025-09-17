@@ -1,0 +1,63 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-keycloak-realm-setup
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-realm-setup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ include "shop-manager.fullname" . }}-keycloak-realm-setup
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak-realm-setup
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: keycloak-realm-setup
+        image: curlimages/curl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Install jq for JSON processing
+          apk add --no-cache jq
+
+          # Wait for Keycloak service to be available
+          until nc -z {{ include "shop-manager.fullname" . }}-keycloak 8080; do
+            echo "Waiting for Keycloak service to be available..."
+            sleep 10
+          done
+
+          echo "Keycloak service is available. Running realm setup..."
+
+          # Set environment variables
+          export KEYCLOAK_ADMIN_PASSWORD="$ADMIN_PASSWORD"
+
+          # Run the setup script
+          chmod +x /config/setup-realm.sh
+          /config/setup-realm.sh
+
+          echo "Keycloak realm setup completed successfully!"
+        env:
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "shop-manager.fullname" . }}-keycloak
+              key: admin-password
+        volumeMounts:
+        - name: realm-config
+          mountPath: /config
+          readOnly: true
+      volumes:
+      - name: realm-config
+        configMap:
+          name: {{ include "shop-manager.fullname" . }}-keycloak-realm-config
+          defaultMode: 0755
+{{- end }}

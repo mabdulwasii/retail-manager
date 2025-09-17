@@ -22,8 +22,8 @@ frontend:
     environment: production
     keycloakRealm: shop-manager
     keycloakClientId: shop-manager-frontend
-    apiBaseUrl: "http://shop-manager:8081/api"
-    keycloakUrl: "http://shop-manager-keycloak:8080"
+    apiBaseUrl: "https://api.shop-manager.local/api"
+    keycloakUrl: "https://auth.shop-manager.local"
   resources:
     limits:
       cpu: 500m
@@ -139,7 +139,7 @@ postgresql:
     # CHANGE IN PRODUCTION: Use secure randomly generated passwords
     postgresPassword: "PostgresAdm1n@2024!SecureDB"  # Override in production
     username: shop
-    password: "KeycloakDB@2024!SecurePassword"  # Override in production - shared with keycloak
+    password: "ShopDB@2024!SecurePassword"  # Override in production - updated for security compliance
     database: shopdb
   primary:
     persistence:

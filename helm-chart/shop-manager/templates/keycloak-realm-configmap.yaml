@@ -1,0 +1,322 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-keycloak-realm-config
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-config
+data:
+  shop-manager-realm.json: |
+    {
+      "realm": "shop-manager",
+      "enabled": true,
+      "displayName": "Shop Manager",
+      "displayNameHtml": "<div class=\"kc-logo-text\"><span>Shop Manager</span></div>",
+      "registrationAllowed": false,
+      "registrationEmailAsUsername": false,
+      "rememberMe": true,
+      "verifyEmail": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "permanentLockout": false,
+      "maxFailureWaitSeconds": 900,
+      "minimumQuickLoginWaitSeconds": 60,
+      "waitIncrementSeconds": 60,
+      "quickLoginCheckMilliSeconds": 1000,
+      "maxDeltaTimeSeconds": 43200,
+      "failureFactor": 30,
+      "defaultRoles": ["offline_access", "uma_authorization"],
+      "requiredCredentials": ["password"],
+      "passwordPolicy": "length(8) and digits(1) and lowerCase(1) and upperCase(1) and specialChars(1) and notUsername",
+      "otpPolicyType": "totp",
+      "otpPolicyAlgorithm": "HmacSHA1",
+      "otpPolicyInitialCounter": 0,
+      "otpPolicyDigits": 6,
+      "otpPolicyLookAheadWindow": 1,
+      "otpPolicyPeriod": 30,
+      "accessTokenLifespan": 3600,
+      "accessTokenLifespanForImplicitFlow": 900,
+      "ssoSessionIdleTimeout": 1800,
+      "ssoSessionMaxLifespan": 36000,
+      "ssoSessionIdleTimeoutRememberMe": 0,
+      "ssoSessionMaxLifespanRememberMe": 0,
+      "offlineSessionIdleTimeout": 2592000,
+      "offlineSessionMaxLifespanEnabled": false,
+      "offlineSessionMaxLifespan": 5184000,
+      "accessCodeLifespan": 60,
+      "accessCodeLifespanUserAction": 300,
+      "accessCodeLifespanLogin": 1800,
+      "actionTokenGeneratedByAdminLifespan": 43200,
+      "actionTokenGeneratedByUserLifespan": 300,
+      "enabled": true,
+      "sslRequired": "external",
+      "clients": [
+        {
+          "clientId": "shop-manager-frontend",
+          "name": "Shop Manager Frontend",
+          "description": "Shop Manager React Frontend Application",
+          "enabled": true,
+          "clientAuthenticatorType": "client-secret",
+          "secret": "shop-manager-frontend-secret",
+          "redirectUris": [
+            "https://shop-manager.local/*",
+            "http://shop-manager.local/*",
+            "https://localhost:3000/*",
+            "http://localhost:3000/*"
+          ],
+          "webOrigins": [
+            "https://shop-manager.local",
+            "http://shop-manager.local",
+            "https://localhost:3000",
+            "http://localhost:3000"
+          ],
+          "publicClient": true,
+          "protocol": "openid-connect",
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          },
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": true,
+          "serviceAccountsEnabled": false,
+          "authorizationServicesEnabled": false,
+          "fullScopeAllowed": true,
+          "nodeReRegistrationTimeout": -1,
+          "defaultClientScopes": [
+            "web-origins",
+            "role_list",
+            "profile",
+            "roles",
+            "email"
+          ],
+          "optionalClientScopes": [
+            "address",
+            "phone",
+            "offline_access",
+            "microprofile-jwt"
+          ]
+        },
+        {
+          "clientId": "shop-manager-backend",
+          "name": "Shop Manager Backend",
+          "description": "Shop Manager Spring Boot Backend Application",
+          "enabled": true,
+          "clientAuthenticatorType": "client-secret",
+          "secret": "shop-manager-backend-secret",
+          "publicClient": false,
+          "protocol": "openid-connect",
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": true,
+          "serviceAccountsEnabled": true,
+          "authorizationServicesEnabled": false,
+          "fullScopeAllowed": true,
+          "bearerOnly": true
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "TENANT_ADMIN",
+            "description": "Full administrative access to tenant",
+            "composite": false
+          },
+          {
+            "name": "SHOP_MANAGER",
+            "description": "Shop management and operations",
+            "composite": false
+          },
+          {
+            "name": "SHOP_EMPLOYEE",
+            "description": "Basic shop operations",
+            "composite": false
+          },
+          {
+            "name": "INVESTOR",
+            "description": "Investment tracking and analytics",
+            "composite": false
+          },
+          {
+            "name": "CUSTOMER",
+            "description": "Customer access",
+            "composite": false
+          }
+        ]
+      },
+      "users": [
+        {
+          "username": "admin@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "System",
+          "lastName": "Administrator",
+          "email": "admin@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "admin123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["TENANT_ADMIN"],
+          "attributes": {
+            "tenantId": ["default-tenant"],
+            "shopId": ["default-shop"]
+          }
+        },
+        {
+          "username": "manager@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Shop",
+          "lastName": "Manager",
+          "email": "manager@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "manager123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["SHOP_MANAGER"],
+          "attributes": {
+            "tenantId": ["default-tenant"],
+            "shopId": ["default-shop"]
+          }
+        },
+        {
+          "username": "employee@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Shop",
+          "lastName": "Employee",
+          "email": "employee@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "employee123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["SHOP_EMPLOYEE"],
+          "attributes": {
+            "tenantId": ["default-tenant"],
+            "shopId": ["default-shop"]
+          }
+        },
+        {
+          "username": "investor@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Shop",
+          "lastName": "Investor",
+          "email": "investor@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "investor123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["INVESTOR"],
+          "attributes": {
+            "tenantId": ["default-tenant"]
+          }
+        },
+        {
+          "username": "customer@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Shop",
+          "lastName": "Customer",
+          "email": "customer@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "customer123",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["CUSTOMER"],
+          "attributes": {
+            "tenantId": ["default-tenant"]
+          }
+        }
+      ]
+    }
+
+  setup-realm.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Starting Keycloak realm configuration..."
+
+    # Wait for Keycloak to be ready
+    until curl -f -s http://shop-manager-keycloak:8080/health/ready; do
+        echo "Waiting for Keycloak to be ready..."
+        sleep 10
+    done
+
+    echo "Keycloak is ready. Configuring realm..."
+
+    # Get admin access token
+    ADMIN_TOKEN=$(curl -s -X POST "http://shop-manager-keycloak:8080/realms/master/protocol/openid-connect/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "username=admin" \
+        -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+        -d "grant_type=password" \
+        -d "client_id=admin-cli" | jq -r '.access_token')
+
+    if [ "$ADMIN_TOKEN" == "null" ] || [ -z "$ADMIN_TOKEN" ]; then
+        echo "Failed to get admin token"
+        exit 1
+    fi
+
+    echo "Got admin token successfully"
+
+    # Check if shop-manager realm already exists
+    REALM_EXISTS=$(curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "http://shop-manager-keycloak:8080/admin/realms/shop-manager" \
+        -w "%{http_code}" -o /dev/null)
+
+    if [ "$REALM_EXISTS" = "200" ]; then
+        echo "Realm 'shop-manager' already exists, skipping creation"
+    else
+        echo "Creating shop-manager realm..."
+
+        # Create the realm from JSON
+        curl -s -X POST "http://shop-manager-keycloak:8080/admin/realms" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @/config/shop-manager-realm.json
+
+        if [ $? -eq 0 ]; then
+            echo "✓ Shop Manager realm created successfully"
+        else
+            echo "✗ Failed to create realm"
+            exit 1
+        fi
+    fi
+
+    # Verify realm is accessible
+    REALM_CHECK=$(curl -s "http://shop-manager-keycloak:8080/realms/shop-manager/.well-known/openid-configuration" | jq -r '.issuer')
+
+    if [[ "$REALM_CHECK" == *"shop-manager"* ]]; then
+        echo "✓ Realm configuration completed successfully"
+        echo "✓ Test users created with credentials:"
+        echo "  - admin@shopmanager.com / admin123 (TENANT_ADMIN)"
+        echo "  - manager@shopmanager.com / manager123 (SHOP_MANAGER)"
+        echo "  - employee@shopmanager.com / employee123 (SHOP_EMPLOYEE)"
+        echo "  - investor@shopmanager.com / investor123 (INVESTOR)"
+        echo "  - customer@shopmanager.com / customer123 (CUSTOMER)"
+    else
+        echo "✗ Realm verification failed"
+        exit 1
+    fi
+
+    echo "Keycloak realm configuration completed!"
+{{- end }}
