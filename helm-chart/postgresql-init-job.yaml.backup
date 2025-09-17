@@ -1,0 +1,75 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-postgresql-init
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ include "shop-manager.fullname" . }}-postgresql-init
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: postgresql-init
+        image: postgres:15.4
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Starting PostgreSQL database initialization..."
+
+          # Wait for PostgreSQL service to be available
+          until nc -z {{ include "shop-manager.fullname" . }}-postgresql 5432; do
+            echo "Waiting for PostgreSQL service to be available..."
+            sleep 5
+          done
+
+          echo "PostgreSQL service is available. Running initialization script..."
+
+          # Set environment variables for the init script
+          export PGPASSWORD="$POSTGRES_PASSWORD"
+          export KEYCLOAK_DB_PASSWORD="$KEYCLOAK_DATABASE_PASSWORD"
+
+          # Run the initialization script
+          /scripts/init-databases.sh
+
+          # Run the check script
+          export PGPASSWORD="$KEYCLOAK_DATABASE_PASSWORD"
+          /scripts/check-databases.sh
+
+          echo "PostgreSQL initialization completed successfully!"
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "shop-manager.fullname" . }}-postgresql
+              key: postgres-password
+        - name: KEYCLOAK_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "shop-manager.fullname" . }}-postgresql
+              key: password
+        - name: PGHOST
+          value: {{ include "shop-manager.fullname" . }}-postgresql
+        - name: PGPORT
+          value: "5432"
+        volumeMounts:
+        - name: init-scripts
+          mountPath: /scripts
+          readOnly: true
+      volumes:
+      - name: init-scripts
+        configMap:
+          name: {{ include "shop-manager.fullname" . }}-postgresql-init
+          defaultMode: 0755
+{{- end }}
