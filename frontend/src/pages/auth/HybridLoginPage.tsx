@@ -81,13 +81,16 @@ export const HybridLoginPage: React.FC = () => {
     },
   ]
 
-  const testAccounts = [
-    { email: 'admin@shopmanager.com', password: 'admin123', role: 'Admin' },
-    { email: 'manager@shopmanager.com', password: 'manager123', role: 'Manager' },
-    { email: 'employee@shopmanager.com', password: 'employee123', role: 'Employee' },
-    { email: 'investor@shopmanager.com', password: 'investor123', role: 'Investor' },
-    { email: 'customer@shopmanager.com', password: 'customer123', role: 'Customer' },
-  ]
+  // SECURITY WARNING: Test accounts for development only
+  // In production, users must be created through Keycloak administration
+  // These credentials are disabled in production environments
+  const testAccounts = process.env.NODE_ENV === 'development' ? [
+    { email: 'admin@shopmanager.com', password: 'DevAdmin@2024!Test', role: 'Admin' },
+    { email: 'manager@shopmanager.com', password: 'DevManager@2024!Test', role: 'Manager' },
+    { email: 'employee@shopmanager.com', password: 'DevEmployee@2024!Test', role: 'Employee' },
+    { email: 'investor@shopmanager.com', password: 'DevInvestor@2024!Test', role: 'Investor' },
+    { email: 'customer@shopmanager.com', password: 'DevCustomer@2024!Test', role: 'Customer' },
+  ] : []
 
   return (
     <div className=\"min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8\">

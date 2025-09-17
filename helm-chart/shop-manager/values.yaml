@@ -110,20 +110,22 @@ env:
   SERVER_PORT: "8081"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
 
-# ConfigMap and Secret
+# ConfigMap configuration
 configMap:
   data: {}
 
-secrets:
-  data: {}
-
 # Database configuration
+# SECURITY WARNING: Change these passwords in production!
+# Override using Helm values or environment variables:
+# --set postgresql.auth.postgresPassword="your-secure-password"
+# --set postgresql.auth.password="your-secure-password"
 postgresql:
   enabled: true
   auth:
-    postgresPassword: postgres
+    # CHANGE IN PRODUCTION: Use secure randomly generated passwords
+    postgresPassword: "PostgresAdm1n@2024!SecureDB"  # Override in production
     username: shop
-    password: shop
+    password: "ShopDB@2024!SecurePassword"  # Override in production
     database: shopdb
   primary:
     persistence:
@@ -145,17 +147,24 @@ kafka:
       enabled: true
 
 # Keycloak configuration
+# SECURITY WARNING: Change these passwords in production!
+# Override using Helm values or environment variables:
+# --set keycloak.auth.adminPassword="your-secure-admin-password"
+# --set keycloak.postgresql.auth.postgresPassword="your-secure-postgres-password"
+# --set keycloak.postgresql.auth.password="your-secure-keycloak-password"
 keycloak:
   enabled: true
   auth:
     adminUser: admin
-    adminPassword: admin
+    # CHANGE IN PRODUCTION: Use secure randomly generated password
+    adminPassword: "KeycloakAdm1n@2024!SecureAuth"  # Override in production
   postgresql:
     enabled: true
     auth:
-      postgresPassword: postgres
+      # CHANGE IN PRODUCTION: Use secure randomly generated passwords
+      postgresPassword: "KeycloakPostgres@2024!SecureDB"  # Override in production
       username: keycloak
-      password: keycloak
+      password: "KeycloakDB@2024!SecurePassword"  # Override in production
       database: keycloak
   ingress:
     enabled: false

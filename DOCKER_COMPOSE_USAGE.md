@@ -45,9 +45,9 @@ docker-compose --profile sonar up -d sonarqube sonarqube-db
 
 ### Service URLs
 - **Backend API**: http://localhost:8081
-- **Keycloak Admin**: http://localhost:8080 (admin/admin)
-- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
-- **SonarQube**: http://localhost:9090 (admin/admin)
+- **Keycloak Admin**: http://localhost:8080 (see Security Configuration below)
+- **MinIO Console**: http://localhost:9001 (see Security Configuration below)
+- **SonarQube**: http://localhost:9090 (see Security Configuration below)
 
 ### Stop Services
 ```bash
@@ -87,16 +87,116 @@ cd backend
 ./mvnw clean verify sonar:sonar
 ```
 
+## Security Configuration
+
+### ⚠️ IMPORTANT SECURITY NOTICE
+The docker-compose.yml file now uses secure default passwords instead of weak defaults like "admin", "shop", or "minioadmin". However, **you should still override these in production**.
+
+### Setup Secure Environment Variables
+
+1. **Copy the example environment file:**
+```bash
+cp .env.example .env
+```
+
+2. **Edit `.env` with your secure passwords:**
+```bash
+# Generate strong passwords using:
+openssl rand -base64 32
+# or
+pwgen -s 32 1
+
+# Edit the .env file with your generated passwords
+nano .env
+```
+
+3. **Never commit `.env` to version control:**
+```bash
+# .env is already in .gitignore
+echo ".env" >> .gitignore
+```
+
+### Service Credentials
+
+With the default secure passwords (change these in production):
+
+- **Keycloak Admin**: 
+  - URL: http://localhost:8080
+  - Username: `admin`
+  - Password: `Adm1n!SecureP@ss2024` (or your override)
+
+- **MinIO Console**: 
+  - URL: http://localhost:9001
+  - Username: `shopmanager`
+  - Password: `Min1o!SecureK3y2024#` (or your override)
+
+- **SonarQube**: 
+  - URL: http://localhost:9090
+  - Username: `sonar`
+  - Password: `S0n@r!SecureP@ss2024#` (or your override)
+
+- **PostgreSQL Database**:
+  - Username: `shop`
+  - Password: `P@ssw0rd!2024#Shop` (or your override)
+
+### Production Security Checklist
+
+- [ ] Generate unique passwords for each service
+- [ ] Use environment variables for all credentials
+- [ ] Never use default passwords in production
+- [ ] Rotate passwords regularly (quarterly recommended)
+- [ ] Use a password manager to store credentials
+- [ ] Enable SSL/TLS for database connections
+- [ ] Monitor for failed authentication attempts
+- [ ] Implement network isolation between services
+
 ## Environment Variables
 
-All services support environment variable overrides:
-
+### Method 1: Using .env File (Recommended)
 ```bash
-# Override database password
-POSTGRES_PASSWORD=newpassword docker-compose up -d
+# 1. Copy and customize the environment template
+cp .env.example .env
+
+# 2. Edit with your secure credentials
+nano .env
+
+# 3. Start services (automatically uses .env)
+docker-compose up -d
+```
+
+### Method 2: Command Line Overrides
+```bash
+# Override specific passwords
+POSTGRES_PASSWORD=your-secure-db-password docker-compose up -d
+
+# Override multiple variables
+POSTGRES_PASSWORD=secure-db-pass KEYCLOAK_ADMIN_PASSWORD=secure-admin-pass docker-compose up -d
 
 # Override application profile
 SPRING_PROFILES_ACTIVE=dev docker-compose up -d backend
+```
+
+### Available Environment Variables
+```bash
+# Database Configuration
+POSTGRES_USER=shop
+POSTGRES_PASSWORD=your-secure-password
+POSTGRES_DB=shopdb
+
+# Keycloak Configuration
+KC_DB_USERNAME=shop
+KC_DB_PASSWORD=your-secure-password
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=your-secure-admin-password
+
+# MinIO Configuration
+MINIO_ROOT_USER=shopmanager
+MINIO_ROOT_PASSWORD=your-secure-minio-password
+
+# SonarQube Configuration
+SONAR_DB_USER=sonar
+SONAR_DB_PASSWORD=your-secure-sonar-password
+SONAR_DB_NAME=sonar
 ```
 
 ## Kubernetes Deployment

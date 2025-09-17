@@ -125,17 +125,67 @@ docker-compose up -d frontend
 
 ### Configuration Customization
 
-Create a `.env` file to override default values:
+#### ⚠️ Security Requirements
+
+**IMPORTANT**: Never use weak or default passwords in production deployments!
+
+#### Step 1: Create Secure Environment Configuration
 
 ```bash
-# .env file
-POSTGRES_USER=custom_user
-POSTGRES_PASSWORD=custom_password
-POSTGRES_DB=custom_db
-KEYCLOAK_ADMIN=custom_admin
-KEYCLOAK_ADMIN_PASSWORD=custom_admin_password
+# 1. Copy the secure environment template
+cp .env.example .env
+
+# 2. Generate strong passwords (20+ characters recommended)
+openssl rand -base64 32  # Generate secure password
+pwgen -s 32 1           # Alternative password generator
+
+# 3. Edit .env with your secure credentials
+nano .env
+```
+
+#### Step 2: Example Secure Configuration
+
+```bash
+# .env file - USE STRONG PASSWORDS IN PRODUCTION!
+# Database Configuration
+POSTGRES_USER=shop
+POSTGRES_PASSWORD=xK9mP2$vL8qR7@nF5tW3zE6yU1bN4cA0  # Generate your own!
+POSTGRES_DB=shopdb
+
+# Keycloak Configuration  
+KC_DB_USERNAME=shop
+KC_DB_PASSWORD=xK9mP2$vL8qR7@nF5tW3zE6yU1bN4cA0  # Same as DB or different
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=B7@mQ4vK2$rP9wE6zF8xL3nT5cY1uA0s  # Generate your own!
+
+# MinIO Configuration
+MINIO_ROOT_USER=shopmanager
+MINIO_ROOT_PASSWORD=N5tR8@qW2vE7mP1kL4xF9zC6yB3uA0sG  # Generate your own!
+
+# SonarQube Configuration (if using sonar profile)
+SONAR_DB_USER=sonar
+SONAR_DB_PASSWORD=F3xL8@tP5qW2vE9mK7zR4nY6uC1bA0sG  # Generate your own!
+
+# Application Profile
 SPRING_PROFILES_ACTIVE=production
 ```
+
+#### Security Best Practices
+
+- **Password Requirements**: Minimum 16 characters, mix of uppercase, lowercase, numbers, and symbols
+- **Unique Passwords**: Use different passwords for each service
+- **Password Storage**: Use a password manager to generate and store credentials
+- **Environment Isolation**: Use different passwords for staging/production environments
+- **Regular Rotation**: Change passwords quarterly or when team members leave
+- **Never Commit**: Ensure `.env` is in `.gitignore` (already configured)
+
+#### Quick Security Checklist
+
+- [ ] Generated unique passwords for each service (16+ characters)
+- [ ] Different passwords for staging vs production
+- [ ] Passwords stored in secure password manager
+- [ ] `.env` file not committed to version control
+- [ ] Team members have separate admin accounts (not shared)
 
 ### Docker Compose Commands Reference
 

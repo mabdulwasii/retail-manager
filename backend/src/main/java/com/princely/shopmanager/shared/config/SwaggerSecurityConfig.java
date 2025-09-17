@@ -34,7 +34,9 @@ public class SwaggerSecurityConfig {
     @Value("${app.swagger.security.username:swagger-admin}")
     private String swaggerUsername;
 
-    @Value("${app.swagger.security.password:swagger-secure-2024}")
+    // SECURITY: Use secure password - override in production environments
+    // This must match the default in application.yml
+    @Value("${app.swagger.security.password:Sw@gg3r!SecureP@ss2024#}")
     private String swaggerPassword;
 
     @Value("${app.swagger.security.enabled:true}")

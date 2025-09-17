@@ -5,7 +5,8 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shopdb}
     username: ${SPRING_DATASOURCE_USERNAME:shop}
-    password: ${SPRING_DATASOURCE_PASSWORD:shop}
+    # SECURITY: Use secure password - override in production environments
+    password: ${SPRING_DATASOURCE_PASSWORD:P@ssw0rd!2024#Shop}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -113,8 +114,9 @@ app:
     backup-path: ${STORAGE_BACKUP_PATH:/var/shop-manager/backups}
     minio:
       endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-      access-key: ${MINIO_ACCESS_KEY:minioadmin}
-      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      # SECURITY: Use secure credentials - override in production environments
+      access-key: ${MINIO_ACCESS_KEY:shopmanager}
+      secret-key: ${MINIO_SECRET_KEY:Min1o!SecureK3y2024#}
       bucket: ${MINIO_BUCKET:shop-manager}
 
   audit:
@@ -152,7 +154,8 @@ app:
     security:
       enabled: ${SWAGGER_SECURITY_ENABLED:true}
       username: ${SWAGGER_SECURITY_USERNAME:swagger-admin}
-      password: ${SWAGGER_SECURITY_PASSWORD:swagger-secure-2024}
+      # SECURITY: Use secure password - override in production environments
+      password: ${SWAGGER_SECURITY_PASSWORD:Sw@gg3r!SecureP@ss2024#}
 
 # SpringDoc OpenAPI Configuration
 springdoc:

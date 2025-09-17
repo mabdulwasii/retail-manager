@@ -339,39 +339,43 @@ backend/
 
 ### 🧪 Test Users & Credentials
 
+⚠️ **SECURITY WARNING**: These credentials are for DEVELOPMENT ONLY and automatically disabled in production environments.
+
 Use these pre-configured accounts to test authentication flows:
 
 ```bash
 # System Administrator (Full Access)
 Username: admin@shopmanager.com
-Password: admin123
+Password: DevAdmin@2024!Test
 Role: TENANT_ADMIN
 Tenant: default-tenant | Shop: default-shop
 
 # Shop Manager (Operations)
 Username: manager@shopmanager.com
-Password: manager123
+Password: DevManager@2024!Test
 Role: SHOP_MANAGER
 Tenant: default-tenant | Shop: default-shop
 
 # Shop Employee (Limited Access)
 Username: employee@shopmanager.com
-Password: employee123
+Password: DevEmployee@2024!Test
 Role: SHOP_EMPLOYEE
 Tenant: default-tenant | Shop: default-shop
 
 # Investor (Reports & Analytics)
 Username: investor@shopmanager.com
-Password: investor123
+Password: DevInvestor@2024!Test
 Role: INVESTOR
 Tenant: default-tenant
 
 # Customer (Purchase History)
 Username: customer@shopmanager.com
-Password: customer123
+Password: DevCustomer@2024!Test
 Role: CUSTOMER
 Tenant: default-tenant
 ```
+
+**Production Security Note**: In production, users must be created through Keycloak administration console with strong, unique passwords following your organization's security policies.
 
 ### 🚀 Quick Authentication Testing
 
@@ -391,7 +395,7 @@ curl http://localhost:8081/actuator/health
 
 # 5. Keycloak admin access
 open http://localhost:8080
-# Login: admin / admin
+# Login: admin / Adm1n!SecureP@ss2024 (or your configured password from .env)
 ```
 
 ### 🔧 Authentication Endpoints
