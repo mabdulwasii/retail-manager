@@ -5,15 +5,14 @@ spring:
   jpa:
     show-sql: false
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:create-drop}
     properties:
       hibernate:
         jdbc:
           batch_size: ${HIBERNATE_BATCH_SIZE:25}
+          batch_versioned_data: true
         order_inserts: true
         order_updates: true
-        jdbc:
-          batch_versioned_data: true
 
   datasource:
     hikari:
@@ -22,6 +21,9 @@ spring:
       connection-timeout: ${DB_CONNECTION_TIMEOUT:30000}
       idle-timeout: ${DB_IDLE_TIMEOUT:600000}
       max-lifetime: ${DB_MAX_LIFETIME:1800000}
+
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
 
 logging:
   level:

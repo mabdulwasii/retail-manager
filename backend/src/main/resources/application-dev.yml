@@ -11,6 +11,12 @@ spring:
     console:
       enabled: ${H2_CONSOLE_ENABLED:true}
 
+  # Dev tools configuration
+  devtools:
+    restart:
+      enabled: ${DEVTOOLS_RESTART_ENABLED:true}
+    livereload:
+      enabled: ${DEVTOOLS_LIVERELOAD_ENABLED:true}
 logging:
   level:
     root: ${LOGGING_LEVEL_ROOT:DEBUG}
@@ -35,9 +41,3 @@ app:
       allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
 
 # Dev tools configuration
-spring:
-  devtools:
-    restart:
-      enabled: ${DEVTOOLS_RESTART_ENABLED:true}
-    livereload:
-      enabled: ${DEVTOOLS_LIVERELOAD_ENABLED:true}

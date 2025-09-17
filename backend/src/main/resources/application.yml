@@ -152,7 +152,7 @@ app:
       email: ${SWAGGER_CONTACT_EMAIL:dev@shopmanager.com}
       url: ${SWAGGER_CONTACT_URL:https://shopmanager.com}
     security:
-      enabled: ${SWAGGER_SECURITY_ENABLED:true}
+      enabled: ${SWAGGER_SECURITY_ENABLED:false}
       username: ${SWAGGER_SECURITY_USERNAME:swagger-admin}
       # SECURITY: Use secure password - override in production environments
       password: ${SWAGGER_SECURITY_PASSWORD:Sw@gg3r!SecureP@ss2024#}
@@ -166,36 +166,7 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
     display-request-duration: true
-    groups-order: ASC
     operations-sorter: method
-    disable-swagger-default-url: true
-  show-actuator: true
-  group-configs:
-    - group: 'shop-management'
-      display-name: 'Shop Management APIs'
-      paths-to-match: '/api/shops/**'
-    - group: 'product-management'
-      display-name: 'Product Management APIs'
-      paths-to-match: '/api/products/**'
-    - group: 'sales-management'
-      display-name: 'Sales Management APIs'
-      paths-to-match:
-        - '/api/sales/**'
-        - '/api/receipts/**'
-    - group: 'investment-management'
-      display-name: 'Investment Management APIs'
-      paths-to-match: '/api/investments/**'
-    - group: 'analytics'
-      display-name: 'Analytics & Reporting APIs'
-      paths-to-match: '/api/analytics/**'
-    - group: 'user-management'
-      display-name: 'User Management APIs'
-      paths-to-match:
-        - '/api/users/**'
-        - '/api/roles/**'
-    - group: 'admin'
-      display-name: 'Administration APIs'
-      paths-to-match:
-        - '/api/admin/**'
-        - '/api/feature-flags/**'
-        - '/api/audit/**'
+  show-actuator: false
+  packages-to-scan: com.princely.shopmanager
+  paths-to-match: /api/**

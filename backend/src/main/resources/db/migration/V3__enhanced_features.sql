@@ -87,31 +87,22 @@ CREATE INDEX idx_analytics_date ON analytics_cache(cache_date);
 CREATE INDEX idx_analytics_expiry ON analytics_cache(expires_at);
 CREATE UNIQUE INDEX uk_analytics_cache ON analytics_cache(shop_id, cache_key, analytics_type);
 
--- Audit Logs table
-CREATE TABLE audit_logs (
-    id VARCHAR(36) PRIMARY KEY,
-    shop_id VARCHAR(36),
-    user_id VARCHAR(255) NOT NULL,
-    username VARCHAR(255),
-    category VARCHAR(50) NOT NULL,
-    action_type VARCHAR(50) NOT NULL,
-    entity_type VARCHAR(100),
-    entity_id VARCHAR(36),
-    action_description VARCHAR(500) NOT NULL,
-    action_date TIMESTAMP NOT NULL,
-    ip_address VARCHAR(45),
-    user_agent VARCHAR(500),
-    session_id VARCHAR(255),
-    old_values TEXT,
-    new_values TEXT,
-    severity VARCHAR(20) DEFAULT 'INFO',
-    success BOOLEAN NOT NULL DEFAULT TRUE,
-    error_message VARCHAR(1000),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    version BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL
-);
+-- Enhance audit_logs table with additional columns from V1 to V3
+ALTER TABLE audit_logs ADD COLUMN shop_id VARCHAR(36);
+ALTER TABLE audit_logs ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'GENERAL';
+ALTER TABLE audit_logs RENAME COLUMN action TO action_type;
+ALTER TABLE audit_logs ADD COLUMN action_description VARCHAR(500);
+ALTER TABLE audit_logs ADD COLUMN action_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE audit_logs ADD COLUMN session_id VARCHAR(255);
+ALTER TABLE audit_logs RENAME COLUMN changes TO old_values;
+ALTER TABLE audit_logs ADD COLUMN new_values TEXT;
+ALTER TABLE audit_logs ADD COLUMN severity VARCHAR(20) DEFAULT 'INFO';
+ALTER TABLE audit_logs ADD COLUMN success BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE audit_logs ADD COLUMN error_message VARCHAR(1000);
+ALTER TABLE audit_logs ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE audit_logs ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_logs ADD CONSTRAINT fk_audit_logs_shop
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL;
 
 CREATE INDEX idx_audit_shop ON audit_logs(shop_id);
 CREATE INDEX idx_audit_user ON audit_logs(user_id);
