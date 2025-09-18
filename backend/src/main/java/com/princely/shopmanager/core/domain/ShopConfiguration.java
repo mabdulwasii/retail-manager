@@ -25,13 +25,13 @@ public class ShopConfiguration {
     private boolean autoBackupEnabled = true;
 
     @Column(name = "currency")
-    private String currency = "USD";
+    private String currency = "NGN";
 
     @Column(name = "tax_rate")
     private Double taxRate = 0.0;
 
     @Column(name = "max_discount_percentage")
-    private Double maxDiscountPercentage = 50.0;
+    private Double maxDiscountPercentage = 20.0;
 
     @Column(name = "receipt_footer")
     private String receiptFooter;

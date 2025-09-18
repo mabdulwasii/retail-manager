@@ -20,6 +20,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -43,29 +46,38 @@ public class Shop extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @NotNull(message = "Tenant is required")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
+    @NotEmpty(message = "Name is required")
     @Column(nullable = false)
     private String name;
 
+    @NotEmpty(message = "Description is required")
     @Column(length = 500)
     private String description;
 
+    @NotEmpty(message = "Address is required")
     @Column(nullable = false)
     private String address;
 
     private String city;
+
     private String state;
+
     private String country;
 
     @Column(name = "postal_code")
     private String postalCode;
 
-    @Column(name = "phone_number")
+    @NotEmpty(message = "Phone number is required")
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
+    @Email(message = "Email is not valid")
+    @NotEmpty(message = "Email is required")
     @Column(nullable = false)
     private String email;
 
@@ -75,7 +87,7 @@ public class Shop extends BaseEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ShopStatus status = ShopStatus.ACTIVE;
+    private ShopStatus status = ShopStatus.INACTIVE;
 
     @Column(name = "opening_date")
     private LocalDateTime openingDate;

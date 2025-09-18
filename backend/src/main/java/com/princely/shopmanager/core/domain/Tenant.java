@@ -2,6 +2,8 @@ package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -23,9 +25,11 @@ public class Tenant extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @NotEmpty(message = "Name is required")
     @Column(nullable = false, unique = true)
     private String name;
 
+    @NotEmpty(message = "Description is required")
     @Column(length = 1000)
     private String description;
 
@@ -38,6 +42,7 @@ public class Tenant extends BaseEntity {
     @Column(nullable = false)
     private String contactEmail;
 
+    @NotNull(message = "Contact user is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_user_id")
     private User contactUser;
@@ -45,11 +50,14 @@ public class Tenant extends BaseEntity {
     @Column(name = "contact_phone")
     private String contactPhone;
 
+    @NotEmpty(message = "Primary address is required")
     @Column(name = "primary_address")
     private String primaryAddress;
 
     private String city;
+
     private String state;
+
     private String country;
 
     @Column(name = "postal_code")
@@ -58,7 +66,7 @@ public class Tenant extends BaseEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TenantStatus status = TenantStatus.ACTIVE;
+    private TenantStatus status = TenantStatus.INACTIVE;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;

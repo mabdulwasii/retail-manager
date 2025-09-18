@@ -2,6 +2,7 @@ package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
 import java.util.HashSet;
@@ -22,9 +23,11 @@ public class Role extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @NotEmpty(message = "Name is required")
     @Column(unique = true, nullable = false)
     private String name;
 
+    @NotEmpty(message = "Description is required")
     @Column(length = 500)
     private String description;
 

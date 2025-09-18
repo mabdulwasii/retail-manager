@@ -2,6 +2,9 @@ package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.HashSet;
@@ -29,25 +32,32 @@ public class User extends BaseEntity {
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
 
+    @NotEmpty(message = "Username is required")
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Email(message = "Email is not valid")
+    @NotEmpty(message = "Email is required")
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotEmpty(message = "First name is required")
     @Column(name = "first_name")
     private String firstName;
 
+    @NotEmpty(message = "Last name is required")
     @Column(name = "last_name")
     private String lastName;
 
+    @NotEmpty(message = "Phone number is required")
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @NotNull(message = "User status is required")
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.INACTIVE;
 
 
     @Builder.Default
