@@ -1,0 +1,72 @@
+# TLS/DNS specific values for shop-manager
+# Use this file for certificate and DNS configuration
+
+# TLS Certificate configuration
+tls:
+  enabled: true
+  issuer: letsencrypt-prod  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer
+  email: admin@shop-manager.local
+
+# DNS Configuration for certificates
+dns:
+  # Main application domains
+  backend: api.shop-manager.local
+  frontend: shop-manager.local
+  keycloak: auth.shop-manager.local
+
+  # Alternative domains (if needed)
+  # backend: api.yourdomain.com
+  # frontend: yourdomain.com
+  # keycloak: auth.yourdomain.com
+
+# Override main ingress configuration with TLS settings
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.shop-manager.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: shop-manager-backend-tls
+      hosts:
+        - api.shop-manager.local
+
+# Frontend ingress with TLS
+frontend:
+  enabled: true
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: shop-manager.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: shop-manager-frontend-tls
+        hosts:
+          - shop-manager.local
+
+# Keycloak ingress with TLS
+keycloak:
+  ingress:
+    enabled: true
+    hostname: auth.shop-manager.local
+    tls: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      cert-manager.io/cluster-issuer: letsencrypt-prod

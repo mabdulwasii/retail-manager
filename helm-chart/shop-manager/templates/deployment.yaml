@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "shop-manager.fullname" . }}
+  name: {{ include "shop-manager.fullname" . }}-backend
   labels:
     {{- include "shop-manager.labels" . | nindent 4 }}
 spec:
@@ -49,6 +49,8 @@ spec:
               value: {{ .Values.service.targetPort | default "8081" | quote }}
             - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
               value: {{ .Values.config.monitoring.exposedEndpoints | default "health,info,metrics,prometheus" | quote }}
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: {{ .Values.env.SPRING_JPA_HIBERNATE_DDL_AUTO | default "validate" | quote }}
             {{- if .Values.postgresql.enabled }}
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"

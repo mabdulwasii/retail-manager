@@ -3,6 +3,7 @@
 
 spring:
   jpa:
+    open-in-view: false
     show-sql: true
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}

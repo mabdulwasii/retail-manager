@@ -6,10 +6,9 @@ metadata:
   labels:
     {{- include "shop-manager.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+    cert-manager.io/cluster-issuer: {{ .Values.tls.issuer | default "letsencrypt-prod" | quote }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -41,10 +40,9 @@ metadata:
     {{- include "shop-manager.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+    cert-manager.io/cluster-issuer: {{ .Values.tls.issuer | default "letsencrypt-prod" | quote }}
     {{- with .Values.frontend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

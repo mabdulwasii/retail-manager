@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: shop-manager-backend
-  tag: fixed-v3
+  tag: final-fixed
   pullPolicy: IfNotPresent
 
 # Frontend configuration
@@ -40,12 +40,17 @@ frontend:
     className: "nginx"
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     hosts:
-      - host: shop-manager-frontend.local
+      - host: shop-manager.local
         paths:
           - path: /
             pathType: Prefix
-    tls: []
+    tls:
+      - secretName: shop-manager-frontend-tls
+        hosts:
+          - shop-manager.local
 
 nameOverride: ""
 fullnameOverride: ""
@@ -60,12 +65,17 @@ ingress:
   className: "nginx"
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   hosts:
-    - host: shop-manager.local
+    - host: api.shop-manager.local
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  tls:
+    - secretName: shop-manager-backend-tls
+      hosts:
+        - api.shop-manager.local
 
 resources:
   limits:
@@ -81,6 +91,12 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
+
+# TLS Certificate configuration
+tls:
+  enabled: true
+  issuer: letsencrypt-prod  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer
+  email: admin@shop-manager.local
 
 nodeSelector: {}
 tolerations: []
@@ -113,34 +129,22 @@ env:
   SPRING_PROFILES_ACTIVE: prod
   SERVER_PORT: "8081"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
 # ConfigMap configuration
 configMap:
   data: {}
 
-# Database configuration
+# Database configuration for shop-manager backend
 # SECURITY WARNING: Change these passwords in production!
-# Override using Helm values or environment variables:
-# --set postgresql.auth.postgresPassword="your-secure-password"
-# --set postgresql.auth.password="your-secure-password"
 postgresql:
   enabled: true
-  # Automated database initialization
-  initdb:
-    enabled: true
-    # Creates all required databases and users automatically
-    scripts:
-      keycloak-init.sql: |
-        -- Create keycloak user and database
-        CREATE USER IF NOT EXISTS keycloak WITH PASSWORD 'KeycloakDB@2024!SecurePassword';
-        CREATE DATABASE IF NOT EXISTS keycloak OWNER keycloak;
-        GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+  fullnameOverride: "shop-manager-postgresql"
   auth:
-    # Passwords now managed via Kubernetes secrets - see secrets section
-    # These are automatically populated from the secrets template
-    username: shop
-    database: shopdb
-    existingSecret: ""  # Will be set by deployment to use our secret
+    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    username: "shop"
+    password: "ShopDB@2024!SecurePassword#CompliantStrong"
+    database: "shopdb"
   primary:
     persistence:
       enabled: true
@@ -154,6 +158,27 @@ postgresql:
         cpu: "500m"
   metrics:
     enabled: true
+
+# Separate PostgreSQL for Keycloak
+keycloakPostgresql:
+  enabled: true
+  fullnameOverride: "shop-manager-keycloak-postgresql"
+  auth:
+    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    username: "keycloak"
+    password: "KeycloakDB@2024!SecurePassword#Compliant"
+    database: "keycloak"
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
 
 # Kafka configuration
 kafka:
@@ -169,15 +194,15 @@ keycloak:
   enabled: true
   auth:
     adminUser: admin
-    # Passwords now managed via Kubernetes secrets - see secrets section
-    existingSecret: ""  # Will be set by deployment to use our secret
+    adminPassword: "KeycloakAdm1n@2024!SecureAuth#CompliantPassword"
   postgresql:
-    enabled: true
-    auth:
-      # Passwords now managed via Kubernetes secrets - see secrets section
-      username: keycloak
-      database: keycloak
-      existingSecret: ""  # Will be set by deployment to use our secret
+    enabled: false  # Disable built-in PostgreSQL, use our separate one
+  externalDatabase:
+    host: "shop-manager-keycloak-postgresql"
+    port: 5432
+    user: "keycloak"
+    database: "keycloak"
+    password: "KeycloakDB@2024!SecurePassword#Compliant"
   ingress:
     enabled: true
     hostname: auth.shop-manager.local
@@ -187,7 +212,7 @@ keycloak:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-      cert-manager.io/cluster-issuer: "selfsigned-issuer"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
   service:
     type: ClusterIP
     port: 8080
@@ -231,7 +256,7 @@ config:
 
   # Business rules
   business:
-    defaultCurrency: "USD"
+    defaultCurrency: "NGN"
     defaultTaxRate: "0.075"
     maxReturnDays: 30
     minReorderPoint: 10
@@ -385,8 +410,8 @@ secrets:
     enabled: false
     host: "smtp.gmail.com"
     port: 587
-    username: ""  # Override in production
-    password: ""  # Override in production
+    username: "tunjimoronkola0@gmail.com"  # Override in production
+    password: "Greatness##"  # Override in production
     smtpAuth: true
     starttlsEnable: true
 
@@ -415,15 +440,15 @@ minio:
   enabled: true
   auth:
     # Credentials now managed via Kubernetes secrets - see secrets section
-    existingSecret: ""  # Will be set by deployment to use our secret
+    existingSecret: ""
   defaultBuckets: "shop-manager-backups"
 
   email:
     enabled: false
     host: "smtp.gmail.com"
     port: 587
-    username: ""  # Override in secrets
-    password: ""  # Override in secrets
+    username: "tunjimoronkola0@gmail.com"  # Override in secrets
+    password: "Greatness##"  # Override in secrets
     smtpAuth: true
     starttlsEnable: true
 
@@ -470,7 +495,7 @@ minio:
 
 # Service Monitor for Prometheus (if using Prometheus Operator)
 serviceMonitor:
-  enabled: false
+  enabled: true
   namespace: monitoring
   interval: 30s
   scrapeTimeout: 10s
