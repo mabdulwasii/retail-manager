@@ -87,7 +87,7 @@ CREATE INDEX idx_analytics_date ON analytics_cache(cache_date);
 CREATE INDEX idx_analytics_expiry ON analytics_cache(expires_at);
 CREATE UNIQUE INDEX uk_analytics_cache ON analytics_cache(shop_id, cache_key, analytics_type);
 
--- Enhance audit_logs table with additional columns from V1 to V3
+-- Enhance audit_logs table with additional columns
 ALTER TABLE audit_logs ADD COLUMN shop_id VARCHAR(36);
 ALTER TABLE audit_logs ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'GENERAL';
 ALTER TABLE audit_logs RENAME COLUMN action TO action_type;
@@ -106,9 +106,9 @@ ALTER TABLE audit_logs ADD CONSTRAINT fk_audit_logs_shop
 
 CREATE INDEX idx_audit_shop ON audit_logs(shop_id);
 CREATE INDEX idx_audit_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
+-- idx_audit_entity already exists from V1
 CREATE INDEX idx_audit_action ON audit_logs(action_type);
-CREATE INDEX idx_audit_date ON audit_logs(action_date);
+-- idx_audit_date already exists from V1 (on created_at)
 CREATE INDEX idx_audit_category ON audit_logs(category);
 
 -- Audit Log Details junction table
@@ -121,22 +121,16 @@ CREATE TABLE audit_log_details (
 
 CREATE INDEX idx_audit_details_log ON audit_log_details(audit_log_id);
 
--- Feature Flags table
-CREATE TABLE feature_flags (
-    id VARCHAR(36) PRIMARY KEY,
-    shop_id VARCHAR(36),
-    feature_name VARCHAR(255) NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    description VARCHAR(500),
-    effective_from TIMESTAMP,
-    effective_until TIMESTAMP,
-    created_by VARCHAR(255),
-    last_modified_by VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    version BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
-);
+-- Enhance existing feature_flags table with additional columns
+ALTER TABLE feature_flags ADD COLUMN effective_from TIMESTAMP;
+ALTER TABLE feature_flags ADD COLUMN effective_until TIMESTAMP;
+ALTER TABLE feature_flags ADD COLUMN created_by VARCHAR(255);
+ALTER TABLE feature_flags ADD COLUMN last_modified_by VARCHAR(255);
+-- updated_at already exists from V1
+ALTER TABLE feature_flags ADD COLUMN version BIGINT DEFAULT 0;
+
+-- Rename existing column name to feature_name for consistency
+ALTER TABLE feature_flags RENAME COLUMN name TO feature_name;
 
 CREATE INDEX idx_feature_shop ON feature_flags(shop_id);
 CREATE INDEX idx_feature_name ON feature_flags(feature_name);
