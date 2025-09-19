@@ -1,6 +1,5 @@
 package com.princely.shopmanager.inventory.service;
 
-import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.repository.ProductRepository;
@@ -14,6 +13,8 @@ import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.auth.context.TenantContext;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +56,9 @@ class InventoryServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private InventoryService inventoryService;
@@ -106,17 +109,21 @@ class InventoryServiceTest {
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
 
-        // Act
-        InventoryResponse result = inventoryService.createInventory(createRequest);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo("inventory-1");
-        assertThat(result.getCurrentStock()).isEqualTo(100);
+            // Act
+            InventoryResponse result = inventoryService.createInventory(createRequest);
 
-        verify(inventoryRepository).save(any(Inventory.class));
-        verify(historyRepository).save(any(InventoryHistory.class));
-        verify(auditService).logEntityCreation(eq("Inventory"), eq("inventory-1"), anyString());
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo("inventory-1");
+            assertThat(result.getCurrentStock()).isEqualTo(100);
+
+            verify(inventoryRepository).save(any(Inventory.class));
+            verify(historyRepository).save(any(InventoryHistory.class));
+            verify(auditService).logEntityCreation(eq("Inventory"), eq("inventory-1"), anyString());
+        }
     }
 
     @Test
@@ -124,12 +131,16 @@ class InventoryServiceTest {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessageContaining("Shop not found");
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
-        verify(inventoryRepository, never()).save(any());
+            // Act & Assert
+            assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Shop not found");
+
+            verify(inventoryRepository, never()).save(any());
+        }
     }
 
     @Test
@@ -138,12 +149,16 @@ class InventoryServiceTest {
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(productRepository.findById("product-1")).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessageContaining("Product not found");
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
-        verify(inventoryRepository, never()).save(any());
+            // Act & Assert
+            assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Product not found");
+
+            verify(inventoryRepository, never()).save(any());
+        }
     }
 
     @Test
@@ -151,7 +166,7 @@ class InventoryServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         Page<Inventory> mockPage = new PageImpl<>(List.of(testInventory));
-        when(inventoryRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(mockPage);
+        when(inventoryRepository.findAll(isNull(Specification.class), eq(pageable))).thenReturn(mockPage);
 
         // Act
         Page<InventoryResponse> result = inventoryService.getInventory("shop-1", null, pageable);

@@ -1,14 +1,14 @@
 package com.princely.shopmanager.investment.service;
 
+import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.investment.config.ProfitCalculationConfig;
 import com.princely.shopmanager.investment.domain.Investment;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
-import com.princely.shopmanager.sales.domain.LineItem;
-import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +42,9 @@ class InvestmentProfitServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private ProfitCalculationConfig profitConfig;
+
     @InjectMocks
     private InvestmentProfitService investmentProfitService;
 
@@ -60,9 +63,14 @@ class InvestmentProfitServiceTest {
         testInvestor.setId("investor-1");
         testInvestor.setUsername("test-investor");
 
+        Category testCategory = new Category();
+        testCategory.setId("category-1");
+        testCategory.setName("Test Category");
+
         testProduct = new Product();
         testProduct.setId("product-1");
         testProduct.setName("Test Product");
+        testProduct.setCategory(testCategory);
 
         testInvestment = Investment.builder()
             .id("investment-1")
@@ -76,6 +84,11 @@ class InvestmentProfitServiceTest {
             .status(Investment.InvestmentStatus.ACTIVE)
             .totalProfitEarned(BigDecimal.ZERO)
             .build();
+
+        // Setup ProfitCalculationConfig mocks with lenient stubbing
+        lenient().when(profitConfig.getOperationalCostPercentage()).thenReturn(BigDecimal.valueOf(0.70)); // 70% of revenue
+        lenient().when(profitConfig.getDefaultProfitMargin()).thenReturn(BigDecimal.valueOf(0.30)); // 30% profit margin
+        lenient().when(profitConfig.getProfitMarginForCategory(anyString())).thenReturn(BigDecimal.valueOf(0.30));
     }
 
     @Test
@@ -103,9 +116,9 @@ class InvestmentProfitServiceTest {
         InvestorDistribution distribution = result.get();
 
         assertEquals(totalRevenue, distribution.getTotalSalesRevenue());
-        assertEquals(0, BigDecimal.valueOf(15000).compareTo(distribution.getTotalProfit())); // 30% of 50000
+        assertEquals(0, BigDecimal.valueOf(4500).compareTo(distribution.getTotalProfit())); // Net profit: (50000 - 35000) * 0.30 = 4500
         assertEquals(0, BigDecimal.valueOf(20).compareTo(distribution.getInvestorSharePercentage()));
-        assertEquals(0, BigDecimal.valueOf(3000).compareTo(distribution.getInvestorProfitAmount())); // 20% of 15000
+        assertEquals(0, BigDecimal.valueOf(900).compareTo(distribution.getInvestorProfitAmount())); // 20% of 4500
         assertEquals(InvestorDistribution.DistributionStatus.CALCULATED, distribution.getStatus());
 
         verify(distributionRepository).save(any(InvestorDistribution.class));
@@ -141,9 +154,9 @@ class InvestmentProfitServiceTest {
         InvestorDistribution distribution = result.get();
 
         assertEquals(productRevenue, distribution.getTotalSalesRevenue());
-        assertEquals(0, BigDecimal.valueOf(6000).compareTo(distribution.getTotalProfit())); // 30% of 20000
+        assertEquals(0, BigDecimal.valueOf(1800).compareTo(distribution.getTotalProfit())); // Net profit: (20000 - 14000) * 0.30 = 1800
         assertEquals(0, BigDecimal.valueOf(20).compareTo(distribution.getInvestorSharePercentage()));
-        assertEquals(0, BigDecimal.valueOf(1200).compareTo(distribution.getInvestorProfitAmount())); // 20% of 6000
+        assertEquals(0, BigDecimal.valueOf(360).compareTo(distribution.getInvestorProfitAmount())); // 20% of 1800
     }
 
     @Test
@@ -281,6 +294,6 @@ class InvestmentProfitServiceTest {
         assertEquals(1, result.size());
         InvestorDistribution distribution = result.get(0);
         assertEquals(testInvestment, distribution.getInvestment());
-        assertEquals(0, BigDecimal.valueOf(3000).compareTo(distribution.getInvestorProfitAmount()));
+        assertEquals(0, BigDecimal.valueOf(900).compareTo(distribution.getInvestorProfitAmount()));
     }
 }
