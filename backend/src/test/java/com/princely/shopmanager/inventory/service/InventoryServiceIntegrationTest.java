@@ -46,6 +46,9 @@ class InventoryServiceIntegrationTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
+        // Clear tenant context before each test
+        TenantContext.clear();
+
         // Create and save the tenant first
         Tenant testTenant = Tenant.builder()
             .id(UUID.randomUUID().toString())

@@ -18,6 +18,15 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  main:
+    allow-bean-definition-overriding: true
+
+  modulith:
+    events:
+      enabled: false
+    detection:
+      enabled: false
+
   security:
     oauth2:
       resourceserver:

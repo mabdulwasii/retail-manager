@@ -129,6 +129,12 @@ public abstract class IntegrationTestBase {
         registry.add("spring.flyway.clean-disabled", () -> "false");
         registry.add("spring.flyway.clean-on-validation-error", () -> "true");
 
+        // Spring Modulith compatibility - disable event store to avoid EntityManagerFactory conflicts
+        registry.add("spring.jpa.show-sql", () -> "false");
+        registry.add("spring.jpa.generate-ddl", () -> "false");
+        registry.add("spring.modulith.events.enabled", () -> "false");
+        registry.add("spring.modulith.detection.enabled", () -> "false");
+
         // Kafka configuration
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
         registry.add("spring.kafka.consumer.group-id", () -> "shop-manager-test");
@@ -147,7 +153,8 @@ public abstract class IntegrationTestBase {
         registry.add("app.test.auth.bypass-security", () -> "true");
 
         // Test-specific configurations
-        registry.add("spring.profiles.active", () -> "test");
+        registry.add("spring.profiles.active", () -> "integration");
+        registry.add("spring.main.allow-bean-definition-overriding", () -> "true");
         registry.add("logging.level.com.princely.shopmanager", () -> "DEBUG");
         registry.add("logging.level.org.springframework.security", () -> "DEBUG");
 
