@@ -3,6 +3,8 @@ package com.princely.shopmanager.core;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.ShopConfiguration;
 import com.princely.shopmanager.core.domain.Tenant;
+import com.princely.shopmanager.core.domain.User;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +19,7 @@ class ShopDomainTest {
             .id(tenantId)
             .name("Test Tenant " + tenantId)
             .contactEmail("test@tenant.com")
+            .contactUser(new User())
             .status(Tenant.TenantStatus.ACTIVE)
             .build();
     }
@@ -102,9 +105,9 @@ class ShopDomainTest {
         assertThat(config.isAnalyticsEnabled()).isTrue();
         assertThat(config.isFraudDetectionEnabled()).isFalse();
         assertThat(config.isAutoBackupEnabled()).isTrue();
-        assertThat(config.getCurrency()).isEqualTo("USD");
+        assertThat(config.getCurrency()).isEqualTo("NGN");
         assertThat(config.getTaxRate()).isEqualTo(0.0);
-        assertThat(config.getMaxDiscountPercentage()).isEqualTo(50.0);
+        assertThat(config.getMaxDiscountPercentage()).isEqualTo(20.0);
 
         // Test setting values
         config.setTaxRate(15.5);

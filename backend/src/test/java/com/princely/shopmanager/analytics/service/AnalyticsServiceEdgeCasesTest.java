@@ -133,8 +133,6 @@ class AnalyticsServiceEdgeCasesTest {
         // Given
         when(analyticsCacheRepository.findByShopIdAndTypeAndKey(anyString(), any(), anyString()))
             .thenReturn(Optional.empty());
-        when(riskAssessmentRepository.countByShopAndRiskLevelAndDateRange(anyString(), any(), any(), any()))
-            .thenReturn(0L);
 
         // When
         FraudStatisticsDto result = analyticsService.getFraudStatistics("shop-123", startDate, endDate);

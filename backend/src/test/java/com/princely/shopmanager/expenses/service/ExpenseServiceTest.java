@@ -1,5 +1,6 @@
 package com.princely.shopmanager.expenses.service;
 
+import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
@@ -60,9 +61,9 @@ class ExpenseServiceTest {
         userId = UUID.randomUUID().toString();
 
         principal = mock(JwtPrincipal.class);
-        when(principal.getUserId()).thenReturn(userId);
-        when(principal.getFullName()).thenReturn("Test User");
-        when(principal.getUsername()).thenReturn("testuser");
+        lenient().when(principal.getUserId()).thenReturn(userId);
+        lenient().when(principal.getFullName()).thenReturn("Test User");
+        lenient().when(principal.getUsername()).thenReturn("testuser");
 
         category = ExpenseCategory.builder()
             .id(categoryId)
@@ -101,22 +102,30 @@ class ExpenseServiceTest {
         when(categoryRepository.findByIdAndShopId(categoryId, shopId))
             .thenReturn(Optional.of(category));
 
-        Expense savedExpense = createExpenseFromRequest();
-        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
+        when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
+            Expense expense = invocation.getArgument(0);
+            // Simulate database setting the ID
+            expense.setId(UUID.randomUUID());
+            return expense;
+        });
 
-        // When
-        ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        // Then
-        assertThat(response).isNotNull();
-        assertThat(response.title()).isEqualTo("Test Expense");
-        assertThat(response.amount()).isEqualTo(BigDecimal.valueOf(500));
-        assertThat(response.status()).isEqualTo(ExpenseStatus.APPROVED); // Auto-approved
-        assertThat(response.createdBy()).isEqualTo(UUID.fromString(userId));
-        assertThat(response.createdByName()).isEqualTo("Test User");
+            // When
+            ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
 
-        verify(expenseRepository).save(any(Expense.class));
-        verify(auditService).logExpenseCreation(any(UUID.class), eq(shopId), eq(UUID.fromString(userId)), eq(BigDecimal.valueOf(500)));
+            // Then
+            assertThat(response).isNotNull();
+            assertThat(response.title()).isEqualTo("Test Expense");
+            assertThat(response.amount()).isEqualTo(BigDecimal.valueOf(500));
+            assertThat(response.status()).isEqualTo(ExpenseStatus.APPROVED); // Auto-approved
+            assertThat(response.createdBy()).isEqualTo(UUID.fromString(userId));
+            assertThat(response.createdByName()).isEqualTo("Test User");
+
+            verify(expenseRepository).save(any(Expense.class));
+            verify(auditService).logExpenseCreation(any(UUID.class), eq(shopId), eq(UUID.fromString(userId)), eq(BigDecimal.valueOf(500)));
+        }
     }
 
     @Test
@@ -133,11 +142,15 @@ class ExpenseServiceTest {
         savedExpense.setStatus(ExpenseStatus.DRAFT);
         when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
 
-        // When
-        ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        // Then
-        assertThat(response.status()).isEqualTo(ExpenseStatus.DRAFT);
+            // When
+            ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+
+            // Then
+            assertThat(response.status()).isEqualTo(ExpenseStatus.DRAFT);
+        }
     }
 
     @Test
@@ -161,11 +174,15 @@ class ExpenseServiceTest {
         savedExpense.setStatus(ExpenseStatus.PENDING_APPROVAL);
         when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
 
-        // When
-        ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        // Then
-        assertThat(response.status()).isEqualTo(ExpenseStatus.PENDING_APPROVAL);
+            // When
+            ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+
+            // Then
+            assertThat(response.status()).isEqualTo(ExpenseStatus.PENDING_APPROVAL);
+        }
     }
 
     @Test
@@ -175,12 +192,16 @@ class ExpenseServiceTest {
         when(categoryRepository.findByIdAndShopId(categoryId, shopId))
             .thenReturn(Optional.empty());
 
-        // When & Then
-        assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
-            .hasMessageContaining("Expense category not found");
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        verify(expenseRepository, never()).save(any(Expense.class));
-        verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
+            // When & Then
+            assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
+                .hasMessageContaining("Expense category not found");
+
+            verify(expenseRepository, never()).save(any(Expense.class));
+            verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
+        }
     }
 
     @Test
@@ -191,12 +212,16 @@ class ExpenseServiceTest {
         when(categoryRepository.findByIdAndShopId(categoryId, shopId))
             .thenReturn(Optional.of(category));
 
-        // When & Then
-        assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
-            .hasMessageContaining("Cannot create expense for inactive category");
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        verify(expenseRepository, never()).save(any(Expense.class));
-        verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
+            // When & Then
+            assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
+                .hasMessageContaining("Cannot create expense for inactive category");
+
+            verify(expenseRepository, never()).save(any(Expense.class));
+            verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
+        }
     }
 
     @Test
@@ -220,30 +245,27 @@ class ExpenseServiceTest {
         when(categoryRepository.findByIdAndShopId(categoryId, shopId))
             .thenReturn(Optional.of(category));
 
-        Expense savedExpense = createExpenseFromRequest();
-        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
+        when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
+            Expense expense = invocation.getArgument(0);
+            // Simulate database setting the ID
+            expense.setId(UUID.randomUUID());
+            return expense;
+        });
 
-        // When
-        ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-123");
 
-        // Then
-        assertThat(response.tags()).containsExactlyInAnyOrder("urgent", "maintenance");
+            // When
+            ExpenseResponse response = expenseService.createExpense(shopId, createRequest, principal);
+
+            // Then
+            assertThat(response.tags()).containsExactlyInAnyOrder("urgent", "maintenance");
+        }
     }
 
     @Test
     @DisplayName("Should validate expense amount is positive")
     void shouldValidateExpenseAmountIsPositive() {
-        // Given
-        createRequest = ExpenseCreateRequest.builder()
-            .title("Test Expense")
-            .categoryId(categoryId)
-            .amount(BigDecimal.ZERO)
-            .expenseDate(LocalDate.now())
-            .build();
-
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
-            .thenReturn(Optional.of(category));
-
         // When & Then
         // This validation should happen at the entity level via @PrePersist
         assertThatThrownBy(() -> {
@@ -261,17 +283,6 @@ class ExpenseServiceTest {
     @Test
     @DisplayName("Should validate expense date is not in future")
     void shouldValidateExpenseDateIsNotInFuture() {
-        // Given
-        createRequest = ExpenseCreateRequest.builder()
-            .title("Test Expense")
-            .categoryId(categoryId)
-            .amount(BigDecimal.valueOf(500))
-            .expenseDate(LocalDate.now().plusDays(1))
-            .build();
-
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
-            .thenReturn(Optional.of(category));
-
         // When & Then
         // This validation should happen at the entity level via @PrePersist
         assertThatThrownBy(() -> {
@@ -301,7 +312,7 @@ class ExpenseServiceTest {
             .notes(createRequest.notes())
             .expenseCreatedBy(UUID.fromString(userId))
             .createdByName("Test User")
-            .status(category.canAutoApprove(createRequest.amount()) ? ExpenseStatus.APPROVED : ExpenseStatus.DRAFT)
+            .status(ExpenseStatus.APPROVED) // Will be set to APPROVED after auto-approval process
             .build();
     }
 }

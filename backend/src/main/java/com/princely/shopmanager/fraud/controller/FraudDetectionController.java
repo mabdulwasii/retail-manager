@@ -36,7 +36,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/fraud")
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true", matchIfMissing = false)
 @Tag(name = "Fraud Detection", description = "Fraud detection and risk management operations")
 @SecurityRequirement(name = "bearerAuth")
 public class FraudDetectionController {

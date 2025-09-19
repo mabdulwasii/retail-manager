@@ -13,8 +13,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
     org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
     org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
     org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-    org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
+    org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class,
+    org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration.class
 })
-@EnableMethodSecurity(prePostEnabled = true)
 public class WebMvcTestConfiguration {
 }

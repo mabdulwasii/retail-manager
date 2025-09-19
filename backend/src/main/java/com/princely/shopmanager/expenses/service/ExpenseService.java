@@ -60,8 +60,16 @@ public class ExpenseService {
             throw new BusinessRuleViolationException("Cannot create expense for inactive category");
         }
 
+        // Determine initial status based on auto-approval
+        ExpenseStatus initialStatus = ExpenseStatus.DRAFT;
+        if (category.canAutoApprove(request.amount())) {
+            initialStatus = ExpenseStatus.APPROVED;
+        } else if (Boolean.TRUE.equals(request.submitForApproval())) {
+            initialStatus = ExpenseStatus.PENDING_APPROVAL;
+        }
+
         // Create expense entity
-        Expense expense = Expense.builder()
+        Expense.ExpenseBuilder expenseBuilder = Expense.builder()
             .shopId(shopId)
             .title(request.title().trim())
             .description(request.description() != null ? request.description().trim() : null)
@@ -75,15 +83,18 @@ public class ExpenseService {
             .notes(request.notes())
             .expenseCreatedBy(UUID.fromString(principal.getUserId()))
             .createdByName(principal.getFullName())
-            .status(ExpenseStatus.DRAFT)
-            .build();
+            .status(initialStatus);
 
-        // Auto-approve if category allows it
+        // Add approval details if auto-approved
         if (category.canAutoApprove(request.amount())) {
-            expense.approve(UUID.fromString(principal.getUserId()), principal.getFullName(), "Auto-approved based on category settings");
-        } else if (Boolean.TRUE.equals(request.submitForApproval())) {
-            expense.submitForApproval();
+            expenseBuilder
+                .approvedBy(UUID.fromString(principal.getUserId()))
+                .approvedByName(principal.getFullName())
+                .approvalDate(LocalDate.now())
+                .approvalNotes("Auto-approved based on category settings");
         }
+
+        Expense expense = expenseBuilder.build();
 
         expense = expenseRepository.save(expense);
 

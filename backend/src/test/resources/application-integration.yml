@@ -9,7 +9,7 @@ spring:
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         globally_quoted_identifiers: true
@@ -28,6 +28,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9999
 
+# Explicitly disable all optional features for integration tests
 app:
   features:
     analytics:
@@ -35,6 +36,15 @@ app:
     investment:
       enabled: false
     fraud:
+      enabled: false
+  security:
+    tenant-isolation: false
+  scheduler:
+    profit-distribution:
+      enabled: false
+    cache-cleanup:
+      enabled: false
+    audit-cleanup:
       enabled: false
 
 logging:

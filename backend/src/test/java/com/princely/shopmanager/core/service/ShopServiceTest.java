@@ -11,6 +11,7 @@ import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.service.AuditService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +48,12 @@ class ShopServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ShopStatusStateMachine stateMachine;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ShopService shopService;
@@ -295,6 +302,7 @@ class ShopServiceTest {
         testShop.setStatus(Shop.ShopStatus.ACTIVE);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(shopRepository.save(any(Shop.class))).thenReturn(testShop);
+        doNothing().when(stateMachine).validateTransition(Shop.ShopStatus.ACTIVE, Shop.ShopStatus.SUSPENDED, "shop-1");
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
             mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
@@ -315,6 +323,8 @@ class ShopServiceTest {
         // Arrange
         testShop.setStatus(Shop.ShopStatus.CLOSED);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doThrow(new IllegalArgumentException("Cannot change status of closed shop"))
+            .when(stateMachine).validateTransition(Shop.ShopStatus.CLOSED, Shop.ShopStatus.ACTIVE, "shop-1");
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
             mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");

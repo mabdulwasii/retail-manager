@@ -27,7 +27,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.features.analytics.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.features.analytics.enabled", havingValue = "true", matchIfMissing = false)
 public class AnalyticsService {
 
     private final SalesTransactionRepository salesTransactionRepository;

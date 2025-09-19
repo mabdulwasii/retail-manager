@@ -29,7 +29,6 @@ public class Tenant extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @NotEmpty(message = "Description is required")
     @Column(length = 1000)
     private String description;
 

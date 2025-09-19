@@ -32,7 +32,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true", matchIfMissing = false)
 public class FraudDetectionService {
 
     private final FraudRuleRepository fraudRuleRepository;

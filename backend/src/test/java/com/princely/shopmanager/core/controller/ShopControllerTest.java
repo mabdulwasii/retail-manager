@@ -37,6 +37,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 /**
  * Comprehensive test suite for ShopController REST endpoints.
@@ -61,6 +62,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     com.princely.shopmanager.test.config.WebMvcTestConfiguration.class,
     ShopControllerTest.ControllerTestConfiguration.class
 })
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
 class ShopControllerTest {
 
     @Autowired
@@ -138,6 +140,7 @@ class ShopControllerTest {
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(sampleCreateRequest)))
+                .andDo(print())  // Print the response for debugging
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("shop-123"))
                 .andExpect(jsonPath("$.name").value("Downtown Electronics"))

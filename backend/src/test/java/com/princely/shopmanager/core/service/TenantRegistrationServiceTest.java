@@ -89,7 +89,7 @@ class TenantRegistrationServiceTest {
         assertThat(response.tenantName()).isEqualTo("Test Tenant");
 
         // Verify tenant creation
-        verify(tenantRepository, times(2)).save(any(Tenant.class));
+        verify(tenantRepository).save(any(Tenant.class));
 
         // Verify user creation
         verify(userRepository).save(any(User.class));

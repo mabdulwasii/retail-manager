@@ -1,11 +1,11 @@
 package com.princely.shopmanager.inventory.service;
 
+import com.princely.shopmanager.IntegrationTestBase;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.repository.ProductRepository;
-import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
@@ -17,9 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,20 +26,14 @@ import static com.princely.shopmanager.inventory.domain.InventoryHistory.Referen
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Transactional
 @DisplayName("Inventory Service Integration Tests")
-class InventoryServiceIntegrationTest {
+class InventoryServiceIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private InventoryService inventoryService;
 
     @Autowired
     private InventoryRepository inventoryRepository;
-
-    @Autowired
-    private ShopRepository shopRepository;
 
     @Autowired
     private ProductRepository productRepository;

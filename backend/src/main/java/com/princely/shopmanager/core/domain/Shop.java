@@ -55,7 +55,6 @@ public class Shop extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @NotEmpty(message = "Description is required")
     @Column(length = 500)
     private String description;
 

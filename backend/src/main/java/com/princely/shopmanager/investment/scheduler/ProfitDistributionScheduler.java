@@ -13,7 +13,7 @@ import java.time.temporal.TemporalAdjusters;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.features.investment.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.features.investment.enabled", havingValue = "true", matchIfMissing = false)
 public class ProfitDistributionScheduler {
 
     private final InvestmentProfitService investmentProfitService;
