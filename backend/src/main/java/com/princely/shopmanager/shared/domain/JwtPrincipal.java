@@ -1,4 +1,4 @@
-package com.princely.shopmanager.auth.domain;
+package com.princely.shopmanager.shared.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

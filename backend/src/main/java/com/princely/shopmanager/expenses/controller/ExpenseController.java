@@ -1,6 +1,6 @@
 package com.princely.shopmanager.expenses.controller;
 
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
 import com.princely.shopmanager.expenses.dto.*;
 import com.princely.shopmanager.expenses.service.ExpenseService;

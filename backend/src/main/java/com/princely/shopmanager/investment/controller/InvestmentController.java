@@ -1,6 +1,6 @@
 package com.princely.shopmanager.investment.controller;
 
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.investment.domain.Investment;
 import com.princely.shopmanager.investment.dto.*;
 import com.princely.shopmanager.investment.service.InvestmentService;

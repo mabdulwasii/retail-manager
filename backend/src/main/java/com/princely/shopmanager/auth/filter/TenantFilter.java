@@ -1,7 +1,7 @@
 package com.princely.shopmanager.auth.filter;
 
 import com.princely.shopmanager.auth.context.TenantContext;
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.FeatureFlagService;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,7 +1,7 @@
 package com.princely.shopmanager.inventory.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.domain.InventoryHistory;
 import com.princely.shopmanager.inventory.dto.*;

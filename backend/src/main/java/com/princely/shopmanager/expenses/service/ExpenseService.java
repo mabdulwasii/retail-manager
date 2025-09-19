@@ -1,7 +1,7 @@
 package com.princely.shopmanager.expenses.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;

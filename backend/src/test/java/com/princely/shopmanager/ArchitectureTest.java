@@ -61,7 +61,8 @@ class ArchitectureTest {
                 "jakarta..",
                 "org.springframework..",
                 "org.slf4j..",
-                "lombok.."
+                "lombok..",
+                "io.swagger.v3.oas.annotations.."
             );
 
     // Commented out until we have controllers/services/repositories implemented

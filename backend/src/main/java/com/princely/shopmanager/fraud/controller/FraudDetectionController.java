@@ -1,6 +1,6 @@
 package com.princely.shopmanager.fraud.controller;
 
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.fraud.domain.FraudAlert;
 import com.princely.shopmanager.fraud.domain.FraudRule;
 import com.princely.shopmanager.fraud.domain.RiskAssessment;

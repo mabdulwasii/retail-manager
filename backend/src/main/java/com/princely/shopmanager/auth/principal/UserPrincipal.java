@@ -1,6 +1,6 @@
 package com.princely.shopmanager.auth.principal;
 
-import com.princely.shopmanager.auth.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 
 import java.util.List;
 

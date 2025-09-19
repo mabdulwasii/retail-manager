@@ -1,4 +1,4 @@
-package com.princely.shopmanager.auth.domain;
+package com.princely.shopmanager.shared.domain;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
