@@ -3,6 +3,7 @@ package com.princely.shopmanager.core.event;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.context.ApplicationEvent;
 
@@ -14,9 +15,7 @@ import java.util.Map;
  * Event published when a new tenant registration is submitted
  */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public class TenantRegistrationEvent extends ApplicationEvent {
 
     private String tenantId;
@@ -26,8 +25,13 @@ public class TenantRegistrationEvent extends ApplicationEvent {
     private List<String> shopIds;
     private String ipAddress;
     private String userAgent;
-    private LocalDateTime timestamp;
+    private LocalDateTime eventTimestamp;
     private Map<String, Object> metadata;
+
+    public TenantRegistrationEvent() {
+        super(new Object());
+        this.eventTimestamp = LocalDateTime.now();
+    }
 
     public TenantRegistrationEvent(Object source, String tenantId, String tenantName,
                                    String contactUserId, String contactUserEmail,
@@ -42,6 +46,6 @@ public class TenantRegistrationEvent extends ApplicationEvent {
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.metadata = metadata;
-        this.timestamp = LocalDateTime.now();
+        this.eventTimestamp = LocalDateTime.now();
     }
 }

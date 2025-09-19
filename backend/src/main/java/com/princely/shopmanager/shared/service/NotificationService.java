@@ -1,9 +1,11 @@
 package com.princely.shopmanager.shared.service;
 
+import com.princely.shopmanager.core.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,6 +16,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
+
+    private final EmailService emailService;
 
     /**
      * Sends an in-app notification to a user.
@@ -90,5 +94,104 @@ public class NotificationService {
 
         content.append("========================");
         log.info(content.toString());
+    }
+
+    /**
+     * Send tenant registration confirmation to tenant contact user
+     */
+    public void sendTenantRegistrationConfirmation(String tenantName, String contactEmail, String contactName) {
+        log.info("Sending registration confirmation to tenant: {} at {}", tenantName, contactEmail);
+
+        try {
+            EmailTemplate template = EmailTemplate.builder()
+                .to(contactEmail)
+                .subject("Registration Submitted - " + tenantName)
+                .templateName("tenant-registration-confirmation")
+                .variables(Map.of(
+                    "tenantName", tenantName,
+                    "contactName", contactName,
+                    "supportEmail", "support@shopmanager.com"
+                ))
+                .build();
+
+            emailService.sendTemplatedEmail(template);
+            log.info("Registration confirmation sent successfully to: {}", contactEmail);
+
+        } catch (Exception e) {
+            log.error("Failed to send registration confirmation to: {}", contactEmail, e);
+            // Don't throw exception - notification failure shouldn't break registration
+        }
+    }
+
+    /**
+     * Send new tenant registration alert to all super admins
+     */
+    public void sendNewTenantRegistrationAlert(String tenantId, String tenantName, List<User> superAdmins) {
+        log.info("Sending new tenant registration alert for: {} to {} super admins", tenantName, superAdmins.size());
+
+        for (User admin : superAdmins) {
+            try {
+                EmailTemplate template = EmailTemplate.builder()
+                    .to(admin.getEmail())
+                    .subject("New Tenant Registration - " + tenantName)
+                    .templateName("super-admin-registration-alert")
+                    .variables(Map.of(
+                        "adminName", admin.getFullName(),
+                        "tenantId", tenantId,
+                        "tenantName", tenantName,
+                        "reviewUrl", generateReviewUrl(tenantId),
+                        "dashboardUrl", "https://admin.shopmanager.com"
+                    ))
+                    .build();
+
+                emailService.sendTemplatedEmail(template);
+                log.debug("Registration alert sent to super admin: {}", admin.getEmail());
+
+            } catch (Exception e) {
+                log.error("Failed to send registration alert to super admin: {}", admin.getEmail(), e);
+                // Continue sending to other admins even if one fails
+            }
+        }
+
+        log.info("Completed sending registration alerts for tenant: {}", tenantName);
+    }
+
+    /**
+     * Send tenant activation notification to tenant contact user
+     */
+    public void sendTenantActivationNotification(String tenantName, String contactEmail, String contactName,
+                                               boolean approved, String rejectionReason) {
+        log.info("Sending activation notification to tenant: {} (approved: {})", tenantName, approved);
+
+        try {
+            String subject = approved ? "Tenant Activated - " + tenantName : "Tenant Registration Update - " + tenantName;
+            String templateName = approved ? "tenant-activation-approved" : "tenant-activation-rejected";
+
+            Map<String, Object> variables = Map.of(
+                "tenantName", tenantName,
+                "contactName", contactName,
+                "approved", approved,
+                "rejectionReason", rejectionReason != null ? rejectionReason : "",
+                "loginUrl", "https://app.shopmanager.com/login",
+                "supportEmail", "support@shopmanager.com"
+            );
+
+            EmailTemplate template = EmailTemplate.builder()
+                .to(contactEmail)
+                .subject(subject)
+                .templateName(templateName)
+                .variables(variables)
+                .build();
+
+            emailService.sendTemplatedEmail(template);
+            log.info("Activation notification sent successfully to: {}", contactEmail);
+
+        } catch (Exception e) {
+            log.error("Failed to send activation notification to: {}", contactEmail, e);
+        }
+    }
+
+    private String generateReviewUrl(String tenantId) {
+        return String.format("https://admin.shopmanager.com/tenants/review/%s", tenantId);
     }
 }

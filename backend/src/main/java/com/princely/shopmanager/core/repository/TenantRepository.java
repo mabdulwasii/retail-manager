@@ -28,6 +28,8 @@ public interface TenantRepository extends JpaRepository<Tenant, String> {
 
     boolean existsByName(String name);
 
+    boolean existsByNameIgnoreCase(String name);
+
     boolean existsByContactEmail(String contactEmail);
 
     boolean existsByTaxId(String taxId);

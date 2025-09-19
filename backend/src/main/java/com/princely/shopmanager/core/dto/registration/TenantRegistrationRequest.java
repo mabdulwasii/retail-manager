@@ -16,7 +16,7 @@ import java.util.List;
  * for creating a new tenant, contact user, and initial shops
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class TenantRegistrationRequest {

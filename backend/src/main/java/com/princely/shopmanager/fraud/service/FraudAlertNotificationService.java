@@ -11,6 +11,7 @@ import com.princely.shopmanager.shared.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,7 @@ public class FraudAlertNotificationService {
     /**
      * Handles fraud alert creation events and sends notifications to relevant users.
      */
-    @EventListener
+    @ApplicationModuleListener
     @Async
     public void handleFraudAlertCreated(FraudAlertCreatedEvent event) {
         try {
@@ -69,7 +70,7 @@ public class FraudAlertNotificationService {
     /**
      * Handles risk assessment creation events and sends notifications for high-risk assessments.
      */
-    @EventListener
+    @ApplicationModuleListener
     @Async
     public void handleRiskAssessmentCreated(RiskAssessmentCreatedEvent event) {
         try {

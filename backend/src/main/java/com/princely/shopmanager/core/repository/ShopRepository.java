@@ -16,6 +16,8 @@ public interface ShopRepository extends JpaRepository<Shop, String> {
 
     List<Shop> findByTenant_Id(String tenantId);
 
+    List<Shop> findByTenantId(String tenantId); // Alias for convenience
+
     Optional<Shop> findByName(String name);
 
     List<Shop> findByStatus(Shop.ShopStatus status);

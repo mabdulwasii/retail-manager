@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.repository;
 
+import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -32,4 +33,14 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByUsername(String username);
 
     boolean existsByKeycloakId(String keycloakId);
+
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r = :role")
+    List<User> findByRolesContaining(@Param("role") Role role);
+
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r = :role")
+    long countByRolesContaining(@Param("role") Role role);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByUsernameIgnoreCase(String username);
 }

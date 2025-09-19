@@ -16,6 +16,21 @@ import java.util.Map;
 public class EmailService {
 
     /**
+     * Sends a templated email using EmailTemplate record
+     */
+    public void sendTemplatedEmail(EmailTemplate template) {
+        log.info("Sending templated email to: {} with subject: {} using template: {}",
+                template.to(), template.subject(), template.templateName());
+
+        // In a real implementation, this would integrate with email service providers
+        // like SendGrid, Amazon SES, or SMTP servers
+        log.debug("Email variables: {}", template.variables());
+
+        // Placeholder implementation - log the email content
+        logEmailContent(template.to(), template.subject(), template.templateName(), template.variables());
+    }
+
+    /**
      * Sends a templated email notification.
      *
      * @param to Email recipient

@@ -276,4 +276,26 @@ public class AuditService {
             log.error("Failed to log expense deletion: {}", expenseId, e);
         }
     }
+
+    /**
+     * Log a general event with metadata
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logEvent(String eventType, String description, Map<String, Object> metadata) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                .category(AuditLog.AuditCategory.SYSTEM_EVENT)
+                .actionType(AuditLog.ActionType.CREATE)
+                .actionDescription(eventType + ": " + description)
+                .actionDate(LocalDateTime.now())
+                .userId("SYSTEM")
+                .username("SYSTEM")
+                .build();
+
+            auditLogRepository.save(auditLog);
+            log.debug("Event logged: {} - {}", eventType, description);
+        } catch (Exception e) {
+            log.error("Failed to log event: {} - {}", eventType, description, e);
+        }
+    }
 }

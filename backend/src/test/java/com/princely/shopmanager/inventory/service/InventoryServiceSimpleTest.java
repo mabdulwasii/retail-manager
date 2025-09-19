@@ -9,6 +9,7 @@ import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.service.AuditService;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class InventoryServiceSimpleTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private InventoryService inventoryService;
