@@ -93,7 +93,7 @@ class ShopControllerTest {
             .state("NY")
             .country("United States")
             .postalCode("10001")
-            .phoneNumber("+1-555-123-4567")
+            .phoneNumber("+15551234567")
             .email("contact@downtownelectronics.com")
             .taxId("TAX123456789")
             .status("ACTIVE")
@@ -110,7 +110,7 @@ class ShopControllerTest {
             .state("NY")
             .country("United States")
             .postalCode("10001")
-            .phoneNumber("+1-555-123-4567")
+            .phoneNumber("+15551234567")
             .email("contact@downtownelectronics.com")
             .taxId("TAX123456789")
             .openingDate(LocalDateTime.of(2024, 1, 15, 9, 0))
@@ -119,7 +119,7 @@ class ShopControllerTest {
         sampleUpdateRequest = ShopUpdateRequest.builder()
             .name("Updated Electronics Store")
             .description("Updated description")
-            .phoneNumber("+1-555-987-6543")
+            .phoneNumber("+15559876543")
             .build();
     }
 
@@ -361,7 +361,7 @@ class ShopControllerTest {
                 .id("shop-123")
                 .name("Updated Electronics Store")
                 .description("Updated description")
-                .phoneNumber("+1-555-987-6543")
+                .phoneNumber("+15559876543")
                 .build();
             when(shopService.updateShop(eq("shop-123"), any(ShopUpdateRequest.class)))
                 .thenReturn(updatedResponse);
@@ -374,7 +374,7 @@ class ShopControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("shop-123"))
                 .andExpect(jsonPath("$.name").value("Updated Electronics Store"))
-                .andExpect(jsonPath("$.phoneNumber").value("+1-555-987-6543"));
+                .andExpect(jsonPath("$.phoneNumber").value("+15559876543"));
 
             verify(shopService).updateShop(eq("shop-123"), any(ShopUpdateRequest.class));
         }
@@ -473,9 +473,20 @@ class ShopControllerTest {
             mockMvc.perform(get("/api/shops")).andExpect(status().isUnauthorized());
             mockMvc.perform(get("/api/shops/shop-123")).andExpect(status().isUnauthorized());
             mockMvc.perform(get("/api/shops/active")).andExpect(status().isUnauthorized());
-            mockMvc.perform(post("/api/shops").with(csrf())).andExpect(status().isUnauthorized());
-            mockMvc.perform(put("/api/shops/shop-123").with(csrf())).andExpect(status().isUnauthorized());
-            mockMvc.perform(patch("/api/shops/shop-123/status").with(csrf())).andExpect(status().isUnauthorized());
+            mockMvc.perform(post("/api/shops")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(sampleCreateRequest)))
+                .andExpect(status().isUnauthorized());
+            mockMvc.perform(put("/api/shops/shop-123")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(sampleUpdateRequest)))
+                .andExpect(status().isUnauthorized());
+            mockMvc.perform(patch("/api/shops/shop-123/status")
+                    .with(csrf())
+                    .param("status", "INACTIVE"))
+                .andExpect(status().isUnauthorized());
             mockMvc.perform(delete("/api/shops/shop-123").with(csrf())).andExpect(status().isUnauthorized());
         }
 

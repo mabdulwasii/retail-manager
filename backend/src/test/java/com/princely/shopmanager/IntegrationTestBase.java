@@ -511,7 +511,7 @@ public abstract class IntegrationTestBase {
             .state("Test State")
             .country("Test Country")
             .postalCode("12345")
-            .phoneNumber("+1-555-123-4567")
+            .phoneNumber("+15551234567")
             .email("test-" + name.toLowerCase().replaceAll("[^a-z0-9]", "") + "@example.com")
             .taxId("TAX" + System.currentTimeMillis())
             .openingDate(LocalDateTime.now().plusDays(1))
@@ -528,7 +528,7 @@ public abstract class IntegrationTestBase {
         return ShopUpdateRequest.builder()
             .description(description)
             .city("Updated City")
-            .phoneNumber("+1-555-987-6543")
+            .phoneNumber("+15559876543")
             .build();
     }
 
@@ -563,7 +563,7 @@ public abstract class IntegrationTestBase {
             .state("Test State")
             .country("Test Country")
             .postalCode("12345")
-            .phoneNumber("+1-555-123-4567")
+            .phoneNumber("+15551234567")
             .email("test@example.com")
             .taxId("TAX" + System.currentTimeMillis())
             .status(Shop.ShopStatus.ACTIVE)
