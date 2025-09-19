@@ -113,24 +113,22 @@ class TenantRegistrationServiceTest {
     void shouldPublishNotificationEventAfterSuccessfulRegistration() {
         // Given
         setupSuccessfulRegistrationMocks();
-        ArgumentCaptor<TenantRegistrationNotificationEvent> eventCaptor =
-            ArgumentCaptor.forClass(TenantRegistrationNotificationEvent.class);
 
         // When
         tenantRegistrationService.registerTenant(validRequest, "192.168.1.1", "TestUserAgent");
 
         // Then
-        verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+        // Verify that publishEvent was called exactly 2 times (once for each event type)
+        verify(eventPublisher, times(2)).publishEvent(any());
 
-        List<Object> publishedEvents = eventCaptor.getAllValues().stream()
-            .map(Object.class::cast)
-            .toList();
+        // Verify specific TenantRegistrationNotificationEvent was published
+        ArgumentCaptor<TenantRegistrationNotificationEvent> notificationCaptor =
+            ArgumentCaptor.forClass(TenantRegistrationNotificationEvent.class);
+        verify(eventPublisher).publishEvent(notificationCaptor.capture());
 
-        assertThat(publishedEvents).anyMatch(event ->
-            event instanceof TenantRegistrationNotificationEvent notificationEvent &&
-            notificationEvent.getTenantName().equals("Test Tenant") &&
-            notificationEvent.getContactUserEmail().equals("admin@test.com")
-        );
+        TenantRegistrationNotificationEvent notificationEvent = notificationCaptor.getValue();
+        assertThat(notificationEvent.getTenantName()).isEqualTo("Test Tenant");
+        assertThat(notificationEvent.getContactUserEmail()).isEqualTo("admin@test.com");
     }
 
     @Test
