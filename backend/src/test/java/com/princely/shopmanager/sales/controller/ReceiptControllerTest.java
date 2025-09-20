@@ -2,7 +2,9 @@ package com.princely.shopmanager.sales.controller;
 
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
+import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 import com.princely.shopmanager.sales.service.ReceiptService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,8 +14,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,10 +23,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest
 @DisplayName("ReceiptController Tests")
@@ -46,7 +49,7 @@ class ReceiptControllerTest {
     private ReceiptService receiptService;
 
     @MockBean
-    private com.princely.shopmanager.sales.repository.SalesTransactionRepository salesTransactionRepository;
+    private SalesTransactionRepository salesTransactionRepository;
 
     @MockBean
     private com.princely.shopmanager.shared.service.FeatureFlagService featureFlagService;
@@ -112,9 +115,8 @@ class ReceiptControllerTest {
     static class ControllerTestConfiguration {
 
         @Bean
-        public ReceiptController receiptController(ReceiptService receiptService,
-                com.princely.shopmanager.sales.repository.SalesTransactionRepository salesTransactionRepository) {
-            return new ReceiptController(receiptService, salesTransactionRepository);
+        public ReceiptController receiptController(ReceiptService receiptService) {
+            return new ReceiptController(receiptService);
         }
     }
 }

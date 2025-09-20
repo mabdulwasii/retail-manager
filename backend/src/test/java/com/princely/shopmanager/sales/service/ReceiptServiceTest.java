@@ -7,6 +7,7 @@ import com.princely.shopmanager.sales.domain.LineItem;
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.ReceiptRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,15 +21,21 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ReceiptServiceTest {
 
     @Mock
     private ReceiptRepository receiptRepository;
+
+    @Mock
+    private SalesTransactionService salesTransactionService;
 
     @InjectMocks
     private ReceiptService receiptService;
@@ -107,9 +114,10 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
+        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction);
+        Receipt result = receiptService.generateReceipt(testTransaction.getId());
 
         // Assert
         assertThat(result).isNotNull();
@@ -133,9 +141,10 @@ class ReceiptServiceTest {
     void generateReceipt_WithExistingReceipt_ShouldReturnExisting() {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.of(testReceipt));
+        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction);
+        Receipt result = receiptService.generateReceipt(testTransaction.getId());
 
         // Assert
         assertThat(result).isEqualTo(testReceipt);
@@ -153,9 +162,10 @@ class ReceiptServiceTest {
 
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
+        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction);
+        Receipt result = receiptService.generateReceipt(testTransaction.getId());
 
         // Assert
         assertThat(result).isNotNull();
@@ -175,9 +185,10 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
+        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction);
+        receiptService.generateReceipt(testTransaction.getId());
 
         // Assert
         ArgumentCaptor<Receipt> receiptCaptor = ArgumentCaptor.forClass(Receipt.class);

@@ -1,24 +1,44 @@
 package com.princely.shopmanager.core.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.princely.shopmanager.core.dto.registration.*;
+import com.princely.shopmanager.core.dto.registration.ContactUserRequest;
+import com.princely.shopmanager.core.dto.registration.ShopInfoRequest;
+import com.princely.shopmanager.core.dto.registration.TenantInfoRequest;
+import com.princely.shopmanager.core.dto.registration.TenantRegistrationRequest;
+import com.princely.shopmanager.core.dto.registration.TenantRegistrationResponse;
 import com.princely.shopmanager.core.service.TenantRegistrationService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(TenantRegistrationController.class)
+@WebMvcTest
+@TestPropertySource(properties = {
+    "app.features.analytics.enabled=true",
+    "app.features.investment.enabled=true",
+    "app.features.fraud.enabled=true"
+})
+@ContextConfiguration(classes = {
+    com.princely.shopmanager.test.config.WebMvcTestConfiguration.class,
+    TenantRegistrationControllerTest.ControllerTestConfiguration.class
+})
 @DisplayName("Tenant Registration Controller Tests")
 class TenantRegistrationControllerTest {
 
@@ -52,12 +72,13 @@ class TenantRegistrationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.tenantId").value("tenant-123"))
                 .andExpect(jsonPath("$.tenantName").value("Test Tenant"))
                 .andExpect(jsonPath("$.contactUserId").value("user-123"))
                 .andExpect(jsonPath("$.contactUserEmail").value("admin@test.com"))
-                .andExpect(jsonPath("$.shopIds[0]").value("shop-123"));
+                .andExpect(jsonPath("$.shopIds[0]").value("shop-123"))
+                .andExpect(jsonPath("$.registrationStatus").value("PENDING_APPROVAL"))
+                .andExpect(jsonPath("$.requiresApproval").value(true));
     }
 
     @Test
@@ -158,7 +179,7 @@ class TenantRegistrationControllerTest {
             "12345",
             "REG123",
             "TAX123",
-            "555-0123"
+            "+15550123"
         );
 
         ContactUserRequest contactUser = new ContactUserRequest(
@@ -166,7 +187,7 @@ class TenantRegistrationControllerTest {
             "admin@test.com",
             "Test",
             "Admin",
-            "555-0124",
+            "+15550124",
             "123 Admin St",
             "Admin City",
             "Admin State",
@@ -183,7 +204,7 @@ class TenantRegistrationControllerTest {
             "Shop State",
             "Shop Country",
             "54321",
-            "555-0125",
+            "+15550125",
             "shop@test.com",
             "SHOP-TAX123"
         );
@@ -196,5 +217,14 @@ class TenantRegistrationControllerTest {
             .privacyPolicyAccepted(true)
             .agreementVersion("1.0")
             .build();
+    }
+
+    @Configuration
+    static class ControllerTestConfiguration {
+
+        @Bean
+        public TenantRegistrationController tenantRegistrationController(TenantRegistrationService tenantRegistrationService) {
+            return new TenantRegistrationController(tenantRegistrationService);
+        }
     }
 }

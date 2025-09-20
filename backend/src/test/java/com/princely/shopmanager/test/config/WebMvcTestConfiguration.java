@@ -40,6 +40,8 @@ public class WebMvcTestConfiguration {
         return http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exceptions -> exceptions
@@ -69,5 +71,20 @@ public class WebMvcTestConfiguration {
             response.setStatus(401);
             response.getWriter().write("Unauthorized");
         }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public void handleIllegalArgument(IllegalArgumentException ex, HttpServletResponse response) throws IOException {
+            response.setStatus(400);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"" + ex.getMessage() + "\"}");
+        }
+
+        @ExceptionHandler(RuntimeException.class)
+        public void handleRuntimeException(RuntimeException ex, HttpServletResponse response) throws IOException {
+            response.setStatus(500);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Internal server error\"}");
+        }
+
     }
 }

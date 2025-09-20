@@ -1,25 +1,31 @@
 package com.princely.shopmanager.inventory.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.inventory.domain.Inventory;
-import com.princely.shopmanager.inventory.domain.InventoryHistory;
-import com.princely.shopmanager.inventory.dto.*;
+import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
+import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
+import com.princely.shopmanager.inventory.dto.InventoryResponse;
+import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
 import com.princely.shopmanager.inventory.service.InventoryService;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -30,27 +36,28 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = InventoryController.class,
-    excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration.class
-    })
+@WebMvcTest
 @TestPropertySource(properties = {
     "app.security.tenant-isolation=false",
     "app.features.analytics.enabled=false",
     "app.features.investment.enabled=false",
     "app.features.fraud.enabled=false"
 })
+@ContextConfiguration(classes = {
+    com.princely.shopmanager.test.config.WebMvcTestConfiguration.class,
+    InventoryControllerTest.ControllerTestConfiguration.class
+})
 @DisplayName("Inventory Controller Tests")
-@org.junit.jupiter.api.Disabled("Temporarily disabled due to ApplicationContext issues - need to fix conditional properties")
 class InventoryControllerTest {
 
     @Autowired
@@ -119,7 +126,6 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should create inventory item successfully")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldCreateInventorySuccessfully() throws Exception {
         when(inventoryService.createInventory(any(InventoryCreateRequest.class)))
             .thenReturn(inventoryResponse);
@@ -127,7 +133,7 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(createRequest))
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -139,7 +145,6 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should return validation errors for invalid create request")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldReturnValidationErrorsForInvalidCreateRequest() throws Exception {
         InventoryCreateRequest invalidRequest = InventoryCreateRequest.builder()
             .currentStock(-5)
@@ -149,14 +154,13 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest))
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("Should get inventory items with pagination")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldGetInventoryWithPagination() throws Exception {
         Page<InventoryResponse> inventoryPage = new PageImpl<>(
             Arrays.asList(inventoryResponse),
@@ -172,7 +176,7 @@ class InventoryControllerTest {
             .param("size", "20")
             .param("sortBy", "lastStockUpdate")
             .param("sortDir", "desc")
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value("inventory-1"))
@@ -184,13 +188,12 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should get inventory item by ID")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldGetInventoryById() throws Exception {
         when(inventoryService.getInventoryById("inventory-1"))
             .thenReturn(inventoryResponse);
 
         ResultActions result = mockMvc.perform(get("/api/v1/inventory/inventory-1")
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -201,7 +204,6 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should adjust stock successfully")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldAdjustStockSuccessfully() throws Exception {
         InventoryResponse adjustedResponse = InventoryResponse.builder()
             .id(inventoryResponse.getId())
@@ -233,7 +235,7 @@ class InventoryControllerTest {
         ResultActions result = mockMvc.perform(put("/api/v1/inventory/inventory-1/adjust-stock")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(adjustmentRequest))
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.currentStock").value(150))
@@ -244,7 +246,6 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should get inventory summary successfully")
-    @WithMockUser(roles = "SHOP_MANAGER")
     void shouldGetInventorySummarySuccessfully() throws Exception {
         InventorySummaryDto summary = InventorySummaryDto.builder()
             .totalItems(50)
@@ -266,7 +267,7 @@ class InventoryControllerTest {
             .thenReturn(summary);
 
         ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory/summary")
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.totalItems").value(50))
@@ -282,8 +283,34 @@ class InventoryControllerTest {
     @WithMockUser(roles = "CUSTOMER")
     void shouldDenyAccessForUnauthorizedUser() throws Exception {
         ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory")
-            .with(user("test@example.com")));
+            .with(withJwtPrincipal("customer", "CUSTOMER")));
 
         result.andExpect(status().isForbidden());
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor withJwtPrincipal(String username, String... roles) {
+        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(
+            new UsernamePasswordAuthenticationToken(
+                JwtPrincipal.builder()
+                    .subject("test-user-id")
+                    .preferredUsername(username)
+                    .email(username + "@example.com")
+                    .firstName(username)
+                    .lastName("User")
+                    .roles(List.of(roles))
+                    .build(),
+                "password",
+                List.of(roles).stream().map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role)).toList()
+            )
+        );
+    }
+
+    @Configuration
+    static class ControllerTestConfiguration {
+
+        @Bean
+        public InventoryController inventoryController(InventoryService inventoryService) {
+            return new InventoryController(inventoryService);
+        }
     }
 }

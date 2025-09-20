@@ -4,14 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.princely.shopmanager.core.dto.registration.TenantActivationRequest;
 import com.princely.shopmanager.core.dto.registration.PendingTenantResponse;
 import com.princely.shopmanager.core.service.TenantRegistrationService;
+import com.princely.shopmanager.shared.service.FeatureFlagService;
+import com.princely.shopmanager.auth.principal.UserPrincipal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +35,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.hasSize;
 
-@WebMvcTest(TenantAdminController.class)
+@WebMvcTest(controllers = TenantAdminController.class)
+@TestPropertySource(properties = {
+    "app.features.analytics.enabled=true",
+    "app.features.investment.enabled=true",
+    "app.features.fraud.enabled=true"
+})
+@ContextConfiguration(classes = {
+    com.princely.shopmanager.test.config.WebMvcTestConfiguration.class,
+    TenantAdminControllerTest.ControllerTestConfiguration.class
+})
 @DisplayName("Tenant Admin Controller Tests")
 class TenantAdminControllerTest {
 
@@ -38,6 +56,9 @@ class TenantAdminControllerTest {
 
     @MockBean
     private TenantRegistrationService tenantRegistrationService;
+
+    @MockBean
+    private FeatureFlagService featureFlagService;
 
     @Test
     @DisplayName("Should return pending registrations for super admin")
@@ -90,7 +111,6 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should activate tenant successfully")
-    @WithMockUser(roles = "SUPER_ADMIN", username = "admin")
     void shouldActivateTenantSuccessfully() throws Exception {
         // Given
         String tenantId = "tenant-1";
@@ -105,6 +125,7 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
+                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -118,7 +139,6 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should reject tenant with reason")
-    @WithMockUser(roles = "SUPER_ADMIN", username = "admin")
     void shouldRejectTenantWithReason() throws Exception {
         // Given
         String tenantId = "tenant-1";
@@ -133,6 +153,7 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
+                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -146,7 +167,6 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should return 400 when tenant ID mismatch")
-    @WithMockUser(roles = "SUPER_ADMIN", username = "admin")
     void shouldReturn400WhenTenantIdMismatch() throws Exception {
         // Given
         String pathTenantId = "tenant-1";
@@ -161,6 +181,7 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", pathTenantId)
                 .with(csrf())
+                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
@@ -211,5 +232,29 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(get("/api/v1/admin/tenants/tenant-1"))
             .andExpect(status().isForbidden());
+    }
+
+    @Configuration
+    static class ControllerTestConfiguration {
+
+        @Bean
+        public TenantAdminController tenantAdminController(TenantRegistrationService tenantRegistrationService) {
+            return new TenantAdminController(tenantRegistrationService);
+        }
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor withUserPrincipal(String username, String... roles) {
+        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(
+            new UsernamePasswordAuthenticationToken(
+                UserPrincipal.of(
+                    "user-id",
+                    username + "@example.com",
+                    username,
+                    List.of(roles)
+                ),
+                "password",
+                List.of(roles).stream().map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role)).toList()
+            )
+        );
     }
 }

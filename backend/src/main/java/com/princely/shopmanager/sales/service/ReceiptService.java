@@ -3,8 +3,7 @@ package com.princely.shopmanager.sales.service;
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.ReceiptRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,17 +11,23 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ReceiptService {
 
     private final ReceiptRepository receiptRepository;
+    private final SalesTransactionService salesTransactionService;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional
-    public Receipt generateReceipt(SalesTransaction transaction) {
-        log.debug("Generating receipt for transaction {}", transaction.getTransactionNumber());
+    public Receipt generateReceipt(String transactionId) {
+        log.debug("Generating receipt for transaction with Id {}", transactionId);
+
+        SalesTransaction transaction = salesTransactionService.findById(transactionId);
 
         // Check if receipt already exists
         Optional<Receipt> existingReceipt = receiptRepository.findByTransaction(transaction);

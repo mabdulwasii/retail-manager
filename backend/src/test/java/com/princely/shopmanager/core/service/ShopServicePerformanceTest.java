@@ -2,12 +2,17 @@ package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.StopWatch;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -16,20 +21,41 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@SpringJUnitConfig
+@WebMvcTest
+@TestPropertySource(properties = {
+    "app.features.analytics.enabled=false",
+    "app.features.investment.enabled=false",
+    "app.features.fraud.enabled=false"
+})
+@ContextConfiguration(classes = {
+    com.princely.shopmanager.test.config.WebMvcTestConfiguration.class,
+    ShopServicePerformanceTest.ServiceTestConfiguration.class
+})
 @DisplayName("Shop Service - Performance Tests")
-public class ShopServicePerformanceTest {
+class ShopServicePerformanceTest {
 
     // Note: This test would need proper dependency injection and test containers
     // For now, it serves as a template for performance testing
+
+    @MockBean
+    private ShopService shopService;
 
     @Test
     @DisplayName("Should handle high volume shop creation within performance threshold")
     public void shouldHandleHighVolumeShopCreation() {
         // Given
+        when(shopService.createShop(any(ShopCreateRequest.class)))
+            .thenReturn(ShopResponse.builder()
+                .id("mock-shop-id")
+                .name("Mock Shop")
+                .email("mock@shop.com")
+                .address("Mock Address")
+                .build());
+
         int numberOfShops = 100; // Reduced for test environment
         ExecutorService executor = Executors.newFixedThreadPool(10);
 
@@ -64,6 +90,14 @@ public class ShopServicePerformanceTest {
     @DisplayName("Should handle concurrent shop retrievals efficiently")
     public void shouldHandleConcurrentShopRetrievals() {
         // Given
+        when(shopService.getShop(anyString()))
+            .thenReturn(ShopResponse.builder()
+                .id("test-shop-id")
+                .name("Mock Shop")
+                .email("mock@shop.com")
+                .address("Mock Address")
+                .build());
+
         int numberOfRetrievals = 200;
         ExecutorService executor = Executors.newFixedThreadPool(20);
 
@@ -103,7 +137,7 @@ public class ShopServicePerformanceTest {
                 .address("123 Test Street")
                 .build();
 
-            // shopService.createShop(request);
+             shopService.createShop(request);
             Thread.sleep(10); // Simulate processing time
         } catch (Exception e) {
             // Handle test exceptions
@@ -114,11 +148,16 @@ public class ShopServicePerformanceTest {
     private void retrieveTestShop(String shopId) {
         try {
             // Simulate shop retrieval - would need actual service injection
-            // ShopResponse response = shopService.getShop(shopId);
+             ShopResponse response = shopService.getShop(shopId);
             Thread.sleep(5); // Simulate processing time
         } catch (Exception e) {
             // Handle test exceptions in performance test context
             System.err.println("Failed to retrieve shop: " + shopId + " - " + e.getMessage());
         }
+    }
+
+    @Configuration
+    static class ServiceTestConfiguration {
+        // Remove this configuration and use @MockBean instead
     }
 }
