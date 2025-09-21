@@ -27,9 +27,10 @@ Use any of these pre-configured accounts:
 
 | Document | Purpose |
 |----------|---------|
+| **[KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md)** | ☸️ Complete Kubernetes deployment guide (Helm, SSL, Production) |
+| **[DOCKER_COMPOSE_USAGE.md](./DOCKER_COMPOSE_USAGE.md)** | 🐳 Docker Compose local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
-| **[DEPLOYMENT.md](./DEPLOYMENT.md)** | 🐳 Docker Compose and Helm deployment instructions |
-| **[PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md)** | ☁️ Production deployment for GKE, EKS, AKS |
+| **[LOCAL-DEVELOPMENT-SETUP.md](./LOCAL-DEVELOPMENT-SETUP.md)** | 💻 Local development environment setup |
 | **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
 
 ## 🏗️ Architecture
