@@ -6,7 +6,6 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AuthenticatedApp } from '@/components/AuthenticatedApp'
-import { OAuthCallback } from '@/components/auth/OAuthCallback'
 import { DirectLogin } from '@/components/auth/DirectLogin'
 
 function App() {
@@ -18,8 +17,6 @@ function App() {
       {/* Login route redirects directly to Keycloak */}
       <Route path="/login" element={<DirectLogin />} />
 
-      {/* OAuth callback route */}
-      <Route path="/auth/callback" element={<OAuthCallback />} />
 
       <Route
         path="/register"

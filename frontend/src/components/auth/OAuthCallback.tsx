@@ -10,10 +10,15 @@ export const OAuthCallback: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
     // Prevent duplicate token exchange
     if (isProcessing) return
 
     const handleCallback = async () => {
+      // Check if component is still mounted
+      if (!isMounted) return
+
       // Mark as processing immediately
       setIsProcessing(true)
 
@@ -43,12 +48,23 @@ export const OAuthCallback: React.FC = () => {
           return
         }
 
-        // Check if this code has already been processed
+        // Check if this code has already been processed (stronger validation)
         const processedCode = sessionStorage.getItem('processed_auth_code')
+        const processingFlag = sessionStorage.getItem('processing_token_exchange')
+
         if (processedCode === code) {
-          console.log('Code already processed, skipping token exchange')
+          console.log('Code already processed, redirecting to dashboard')
+          navigate('/dashboard', { replace: true })
           return
         }
+
+        if (processingFlag === 'true') {
+          console.log('Token exchange already in progress')
+          return
+        }
+
+        // Set processing flag to prevent concurrent requests
+        sessionStorage.setItem('processing_token_exchange', 'true')
 
         // Get stored PKCE code verifier (required for PKCE flow)
         const codeVerifier = sessionStorage.getItem('code_verifier')
@@ -88,6 +104,7 @@ export const OAuthCallback: React.FC = () => {
 
         // Mark this code as processed
         sessionStorage.setItem('processed_auth_code', code)
+        sessionStorage.removeItem('processing_token_exchange')
 
         // Store tokens
         localStorage.setItem('access_token', tokens.access_token)
@@ -107,10 +124,17 @@ export const OAuthCallback: React.FC = () => {
       } catch (err) {
         console.error('OAuth callback error:', err)
         setError('An unexpected error occurred during authentication.')
+        // Clean up processing flag on error
+        sessionStorage.removeItem('processing_token_exchange')
       }
     }
 
     handleCallback()
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false
+    }
   }, [location, navigate, isProcessing])
 
   if (error) {

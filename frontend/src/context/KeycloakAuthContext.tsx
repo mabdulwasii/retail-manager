@@ -3,14 +3,22 @@ import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web'
 import Keycloak from 'keycloak-js'
 import { Loader2 } from 'lucide-react'
 
-// Initialize Keycloak instance
+// Initialize Keycloak instance with singleton pattern
 const keycloakConfig = {
   url: import.meta.env.VITE_KEYCLOAK_URL || 'https://localhost:8443',
   realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
 }
 
-const keycloak = new Keycloak(keycloakConfig)
+// Create a singleton Keycloak instance
+let keycloakInstance: Keycloak | null = null
+
+const getKeycloakInstance = (): Keycloak => {
+  if (!keycloakInstance) {
+    keycloakInstance = new Keycloak(keycloakConfig)
+  }
+  return keycloakInstance
+}
 
 // User Profile Type
 interface UserProfile {
@@ -190,17 +198,14 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
 // Main provider component that wraps ReactKeycloakProvider
 export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const initOptions: Keycloak.KeycloakInitOptions = {
-    onLoad: 'check-sso',
-    checkLoginIframe: false,
+    onLoad: 'check-sso', // Check SSO but don't force login
+    checkLoginIframe: false, // Disable iframe check to prevent 3rd party timeout
+    checkLoginIframeInterval: 0, // Disable periodic iframe checks
     pkceMethod: 'S256',
-    enableLogging: import.meta.env.DEV,
-    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-    // Enable response mode for authorization code flow
+    enableLogging: import.meta.env.DEV, // Enable logging only in development
     responseMode: 'fragment',
     flow: 'standard',
-    // Add timeout configuration
-    timeoutInSeconds: 30,
-    // Don't fail immediately if Keycloak server is unreachable
+    timeoutInSeconds: 10, // Reduce timeout to fail faster
     skipLogout: true,
   }
 
@@ -238,6 +243,8 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       localStorage.setItem('keycloak_id_token', keycloak.idToken || '')
     }
   }
+
+  const keycloak = getKeycloakInstance()
 
   return (
     <ReactKeycloakProvider

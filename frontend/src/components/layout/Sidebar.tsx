@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/KeycloakAuthContext'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
