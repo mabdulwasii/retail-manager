@@ -7,9 +7,16 @@ export const OAuthCallback: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [error, setError] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
+    // Prevent duplicate token exchange
+    if (isProcessing) return
+
     const handleCallback = async () => {
+      // Mark as processing immediately
+      setIsProcessing(true)
+
       try {
         // Get parameters from query string (OAuth2 authorization code flow)
         const params = new URLSearchParams(location.search)
@@ -33,6 +40,13 @@ export const OAuthCallback: React.FC = () => {
 
         if (!code) {
           setError('No authorization code received.')
+          return
+        }
+
+        // Check if this code has already been processed
+        const processedCode = sessionStorage.getItem('processed_auth_code')
+        if (processedCode === code) {
+          console.log('Code already processed, skipping token exchange')
           return
         }
 
@@ -72,6 +86,9 @@ export const OAuthCallback: React.FC = () => {
 
         const tokens = await tokenResponse.json()
 
+        // Mark this code as processed
+        sessionStorage.setItem('processed_auth_code', code)
+
         // Store tokens
         localStorage.setItem('access_token', tokens.access_token)
         localStorage.setItem('refresh_token', tokens.refresh_token)
@@ -82,6 +99,7 @@ export const OAuthCallback: React.FC = () => {
         sessionStorage.removeItem('auth_state')
         sessionStorage.removeItem('auth_nonce')
         sessionStorage.removeItem('loginHint')
+        sessionStorage.removeItem('processed_auth_code')
 
         // Navigate to dashboard
         navigate('/dashboard', { replace: true })
@@ -93,7 +111,7 @@ export const OAuthCallback: React.FC = () => {
     }
 
     handleCallback()
-  }, [location, navigate])
+  }, [location, navigate, isProcessing])
 
   if (error) {
     return (
