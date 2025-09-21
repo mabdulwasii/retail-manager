@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: shop-manager-keycloak
+  namespace: shop-manager
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: theme-installer
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          echo "Installing Shop Manager theme..."
+
+          # Create theme directory structure
+          mkdir -p /bitnami/keycloak/themes/shop-manager/login/resources/css
+          mkdir -p /bitnami/keycloak/themes/shop-manager/login/resources/img
+          mkdir -p /bitnami/keycloak/themes/shop-manager/login/resources/js
+          mkdir -p /bitnami/keycloak/themes/shop-manager/login/messages
+
+          # Copy theme files from ConfigMap mount
+          if [ -d /theme-config/login ]; then
+            cp -r /theme-config/login/* /bitnami/keycloak/themes/shop-manager/login/ 2>/dev/null || true
+          fi
+
+          # Individual file copies as fallback
+          [ -f /theme-config/theme.properties ] && cp /theme-config/theme.properties /bitnami/keycloak/themes/shop-manager/login/
+          [ -f /theme-config/template.ftl ] && cp /theme-config/template.ftl /bitnami/keycloak/themes/shop-manager/login/
+          [ -f /theme-config/login.ftl ] && cp /theme-config/login.ftl /bitnami/keycloak/themes/shop-manager/login/
+          [ -f /theme-config/shop-manager.css ] && cp /theme-config/shop-manager.css /bitnami/keycloak/themes/shop-manager/login/resources/css/
+
+          # Set proper permissions
+          chmod -R 755 /bitnami/keycloak/themes/shop-manager
+          chown -R 1001:1001 /bitnami/keycloak/themes
+
+          # Verify installation
+          echo "Theme files installed:"
+          ls -la /bitnami/keycloak/themes/shop-manager/login/
+          echo "CSS files:"
+          ls -la /bitnami/keycloak/themes/shop-manager/login/resources/css/ || echo "No CSS directory"
+
+          echo "Theme installation complete!"
+        volumeMounts:
+        - name: theme-config
+          mountPath: /theme-config
+        - name: theme-volume
+          mountPath: /bitnami/keycloak/themes
+      containers:
+      - name: keycloak
+        volumeMounts:
+        - name: theme-volume
+          mountPath: /opt/bitnami/keycloak/themes
+          subPath: .
+      volumes:
+      - name: theme-config
+        configMap:
+          name: keycloak-theme-shop-manager
+      - name: theme-volume
+        emptyDir: {}

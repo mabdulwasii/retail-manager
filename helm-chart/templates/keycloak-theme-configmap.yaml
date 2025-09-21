@@ -1,0 +1,25 @@
+{{- if .Values.keycloak.customTheme.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-keycloak-theme
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    component: keycloak-theme
+data:
+  copy-theme.sh: |
+    #!/bin/sh
+    echo "Copying Shop Manager theme files..."
+    mkdir -p /opt/bitnami/keycloak/themes/shop-manager/login/resources/css
+    mkdir -p /opt/bitnami/keycloak/themes/shop-manager/login/resources/img
+    mkdir -p /opt/bitnami/keycloak/themes/shop-manager/login/resources/js
+
+    # Copy all theme files
+    cp -r /theme-data/* /opt/bitnami/keycloak/themes/shop-manager/ 2>/dev/null || true
+
+    # Fix permissions
+    chmod -R 755 /opt/bitnami/keycloak/themes/shop-manager
+
+    echo "Theme files copied successfully"
+    ls -la /opt/bitnami/keycloak/themes/shop-manager/login/
+{{- end }}
