@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Shop Manager",
+    "tagline": "Plateforme de gestion de commerce de détail multi-locataire",
+    "version": "v1.0.0"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "welcome": "Bon retour",
+    "signIn": "Connectez-vous pour accéder à votre plateforme de gestion de commerce de détail",
+    "continueToLogin": "Continuer vers la connexion",
+    "redirectingToKeycloak": "Redirection vers Keycloak...",
+    "email": "Adresse e-mail",
+    "emailOptional": "Adresse e-mail (Optionnel)",
+    "emailPlaceholder": "admin@shopmanager.com",
+    "emailHint": "Entrez votre adresse e-mail pour pré-remplir le formulaire Keycloak",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié?",
+    "noAccount": "Vous n'avez pas de compte?",
+    "signUp": "S'inscrire",
+    "backToHome": "Retour à l'accueil",
+    "secureLogin": "Connexion OAuth2 sécurisée:",
+    "loginSteps": {
+      "step1": "Cliquez sur \"Continuer vers la connexion\" ci-dessous",
+      "step2": "Vous serez redirigé vers notre page de connexion Keycloak personnalisée",
+      "step3": "Entrez vos identifiants sur le formulaire de connexion sécurisé",
+      "step4": "Retournez automatiquement au tableau de bord Shop Manager"
+    },
+    "testCredentials": "Identifiants de test pour Keycloak:",
+    "testCredentialsHint": "Cliquez pour pré-remplir l'e-mail, puis entrez le mot de passe sur la page de connexion Keycloak"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "shops": "Boutiques",
+    "products": "Produits",
+    "inventory": "Inventaire",
+    "sales": "Ventes",
+    "receipts": "Reçus",
+    "investments": "Investissements",
+    "analytics": "Analyses",
+    "audit": "Audit",
+    "settings": "Paramètres"
+  },
+  "features": {
+    "multiShopManagement": {
+      "title": "Gestion multi-boutiques",
+      "description": "Gérez plusieurs boutiques depuis une seule plateforme avec isolation des locataires"
+    },
+    "secureAuthentication": {
+      "title": "Authentification sécurisée",
+      "description": "Authentification OAuth2 avec Keycloak SSO"
+    },
+    "investmentTracking": {
+      "title": "Suivi des investissements",
+      "description": "Suivez les investissements, le ROI et le partage des bénéfices avec des analyses détaillées"
+    }
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "manager": "Gestionnaire",
+    "employee": "Employé",
+    "investor": "Investisseur",
+    "customer": "Client",
+    "adminDescription": "Accès complet au système",
+    "managerDescription": "Gestion des opérations de boutique",
+    "employeeDescription": "Ventes et inventaire",
+    "investorDescription": "Analyses d'investissement",
+    "customerDescription": "Historique d'achat"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "clear": "Effacer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "errors": {
+    "failedToInitializeLogin": "Échec de l'initialisation de la connexion. Veuillez réessayer.",
+    "authenticationFailed": "Échec de l'authentification",
+    "invalidStateParameter": "Paramètre d'état invalide. Possible attaque CSRF.",
+    "noAuthorizationCode": "Aucun code d'autorisation reçu.",
+    "missingCodeVerifier": "Vérificateur de code manquant. Veuillez réessayer de vous connecter.",
+    "tokenExchangeFailed": "Échec de l'échange de jetons",
+    "unexpectedError": "Une erreur inattendue s'est produite lors de l'authentification."
+  }
+}

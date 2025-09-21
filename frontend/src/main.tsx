@@ -8,6 +8,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext'
 import { Toaster } from 'sonner'
 import App from './App'
 import './index.css'
+import './i18n'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,12 +24,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
-          <KeycloakAuthProvider>
-            <ThemeProvider defaultTheme="light" storageKey="shop-manager-theme">
-              <App />
-              <Toaster />
-            </ThemeProvider>
-          </KeycloakAuthProvider>
+          <ThemeProvider defaultTheme="light" storageKey="shop-manager-theme">
+            <App />
+            <Toaster />
+          </ThemeProvider>
         </CurrencyProvider>
       </QueryClientProvider>
     </BrowserRouter>

@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Shop Manager",
+    "tagline": "Multi-tenant retail management platform",
+    "version": "v1.0.0"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "welcome": "Welcome back",
+    "signIn": "Sign in to access your retail management platform",
+    "continueToLogin": "Continue to Login",
+    "redirectingToKeycloak": "Redirecting to Keycloak...",
+    "email": "Email",
+    "emailOptional": "Email (Optional)",
+    "emailPlaceholder": "admin@shopmanager.com",
+    "emailHint": "Enter your email to pre-fill the Keycloak login form",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "backToHome": "Back to Home",
+    "secureLogin": "Secure OAuth2 Login:",
+    "loginSteps": {
+      "step1": "Click \"Continue to Login\" below",
+      "step2": "You'll be redirected to our custom Keycloak login page",
+      "step3": "Enter your credentials on the secure login form",
+      "step4": "Return to Shop Manager dashboard automatically"
+    },
+    "testCredentials": "Test Credentials for Keycloak:",
+    "testCredentialsHint": "Click to pre-fill email, then enter password on Keycloak login page"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "shops": "Shops",
+    "products": "Products",
+    "inventory": "Inventory",
+    "sales": "Sales",
+    "receipts": "Receipts",
+    "investments": "Investments",
+    "analytics": "Analytics",
+    "audit": "Audit",
+    "settings": "Settings"
+  },
+  "features": {
+    "multiShopManagement": {
+      "title": "Multi-Shop Management",
+      "description": "Manage multiple shops from a single platform with tenant isolation"
+    },
+    "secureAuthentication": {
+      "title": "Secure Authentication",
+      "description": "OAuth2 authentication with Keycloak SSO"
+    },
+    "investmentTracking": {
+      "title": "Investment Tracking",
+      "description": "Track investments, ROI, and profit sharing with detailed analytics"
+    }
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "employee": "Employee",
+    "investor": "Investor",
+    "customer": "Customer",
+    "adminDescription": "Full system access",
+    "managerDescription": "Shop operations management",
+    "employeeDescription": "Sales and inventory",
+    "investorDescription": "Investment analytics",
+    "customerDescription": "Purchase history"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "errors": {
+    "failedToInitializeLogin": "Failed to initialize login. Please try again.",
+    "authenticationFailed": "Authentication failed",
+    "invalidStateParameter": "Invalid state parameter. Possible CSRF attack.",
+    "noAuthorizationCode": "No authorization code received.",
+    "missingCodeVerifier": "Missing code verifier. Please try logging in again.",
+    "tokenExchangeFailed": "Token exchange failed",
+    "unexpectedError": "An unexpected error occurred during authentication."
+  }
+}

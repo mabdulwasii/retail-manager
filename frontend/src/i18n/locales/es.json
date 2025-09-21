@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Shop Manager",
+    "tagline": "Plataforma de gestión minorista multiinquilino",
+    "version": "v1.0.0"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "welcome": "Bienvenido de nuevo",
+    "signIn": "Inicie sesión para acceder a su plataforma de gestión minorista",
+    "continueToLogin": "Continuar al inicio de sesión",
+    "redirectingToKeycloak": "Redirigiendo a Keycloak...",
+    "email": "Correo electrónico",
+    "emailOptional": "Correo electrónico (Opcional)",
+    "emailPlaceholder": "admin@shopmanager.com",
+    "emailHint": "Ingrese su correo electrónico para precompletar el formulario de Keycloak",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "noAccount": "¿No tiene una cuenta?",
+    "signUp": "Registrarse",
+    "backToHome": "Volver al inicio",
+    "secureLogin": "Inicio de sesión OAuth2 seguro:",
+    "loginSteps": {
+      "step1": "Haga clic en \"Continuar al inicio de sesión\" a continuación",
+      "step2": "Será redirigido a nuestra página de inicio de sesión personalizada de Keycloak",
+      "step3": "Ingrese sus credenciales en el formulario de inicio de sesión seguro",
+      "step4": "Regrese al panel de Shop Manager automáticamente"
+    },
+    "testCredentials": "Credenciales de prueba para Keycloak:",
+    "testCredentialsHint": "Haga clic para precompletar el correo electrónico, luego ingrese la contraseña en la página de inicio de sesión de Keycloak"
+  },
+  "navigation": {
+    "dashboard": "Panel",
+    "shops": "Tiendas",
+    "products": "Productos",
+    "inventory": "Inventario",
+    "sales": "Ventas",
+    "receipts": "Recibos",
+    "investments": "Inversiones",
+    "analytics": "Análisis",
+    "audit": "Auditoría",
+    "settings": "Configuración"
+  },
+  "features": {
+    "multiShopManagement": {
+      "title": "Gestión multi-tienda",
+      "description": "Gestione múltiples tiendas desde una sola plataforma con aislamiento de inquilinos"
+    },
+    "secureAuthentication": {
+      "title": "Autenticación segura",
+      "description": "Autenticación OAuth2 con Keycloak SSO"
+    },
+    "investmentTracking": {
+      "title": "Seguimiento de inversiones",
+      "description": "Rastree inversiones, ROI y reparto de beneficios con análisis detallados"
+    }
+  },
+  "roles": {
+    "admin": "Administrador",
+    "manager": "Gerente",
+    "employee": "Empleado",
+    "investor": "Inversor",
+    "customer": "Cliente",
+    "adminDescription": "Acceso completo al sistema",
+    "managerDescription": "Gestión de operaciones de tienda",
+    "employeeDescription": "Ventas e inventario",
+    "investorDescription": "Análisis de inversiones",
+    "customerDescription": "Historial de compras"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "create": "Crear",
+    "update": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "errors": {
+    "failedToInitializeLogin": "Error al inicializar el inicio de sesión. Inténtelo de nuevo.",
+    "authenticationFailed": "Falló la autenticación",
+    "invalidStateParameter": "Parámetro de estado inválido. Posible ataque CSRF.",
+    "noAuthorizationCode": "No se recibió código de autorización.",
+    "missingCodeVerifier": "Falta el verificador de código. Intente iniciar sesión nuevamente.",
+    "tokenExchangeFailed": "Falló el intercambio de tokens",
+    "unexpectedError": "Ocurrió un error inesperado durante la autenticación."
+  }
+}

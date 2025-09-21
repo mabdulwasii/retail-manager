@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Shop Manager",
+    "tagline": "منصة إدارة التجارة متعددة المستأجرين",
+    "version": "v1.0.0"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "welcome": "أهلاً بعودتك",
+    "signIn": "قم بتسجيل الدخول للوصول إلى منصة إدارة التجارة الخاصة بك",
+    "continueToLogin": "الاستمرار إلى تسجيل الدخول",
+    "redirectingToKeycloak": "إعادة التوجيه إلى Keycloak...",
+    "email": "البريد الإلكتروني",
+    "emailOptional": "البريد الإلكتروني (اختياري)",
+    "emailPlaceholder": "admin@shopmanager.com",
+    "emailHint": "أدخل بريدك الإلكتروني لملء نموذج Keycloak مسبقاً",
+    "password": "كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "signUp": "التسجيل",
+    "backToHome": "العودة إلى الصفحة الرئيسية",
+    "secureLogin": "تسجيل دخول OAuth2 آمن:",
+    "loginSteps": {
+      "step1": "انقر على \"الاستمرار إلى تسجيل الدخول\" أدناه",
+      "step2": "ستتم إعادة توجيهك إلى صفحة تسجيل الدخول المخصصة في Keycloak",
+      "step3": "أدخل بياناتك في نموذج تسجيل الدخول الآمن",
+      "step4": "العودة إلى لوحة Shop Manager تلقائياً"
+    },
+    "testCredentials": "بيانات الاختبار لـ Keycloak:",
+    "testCredentialsHint": "انقر لملء البريد الإلكتروني مسبقاً، ثم أدخل كلمة المرور في صفحة تسجيل الدخول في Keycloak"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "shops": "المتاجر",
+    "products": "المنتجات",
+    "inventory": "المخزون",
+    "sales": "المبيعات",
+    "receipts": "الإيصالات",
+    "investments": "الاستثمارات",
+    "analytics": "التحليلات",
+    "audit": "المراجعة",
+    "settings": "الإعدادات"
+  },
+  "features": {
+    "multiShopManagement": {
+      "title": "إدارة متعددة المتاجر",
+      "description": "إدارة متاجر متعددة من منصة واحدة مع عزل المستأجرين"
+    },
+    "secureAuthentication": {
+      "title": "مصادقة آمنة",
+      "description": "مصادقة OAuth2 مع Keycloak SSO"
+    },
+    "investmentTracking": {
+      "title": "تتبع الاستثمارات",
+      "description": "تتبع الاستثمارات وعائد الاستثمار وتقاسم الأرباح مع تحليلات مفصلة"
+    }
+  },
+  "roles": {
+    "admin": "مدير",
+    "manager": "مدير متجر",
+    "employee": "موظف",
+    "investor": "مستثمر",
+    "customer": "عميل",
+    "adminDescription": "الوصول الكامل للنظام",
+    "managerDescription": "إدارة عمليات المتجر",
+    "employeeDescription": "المبيعات والمخزون",
+    "investorDescription": "تحليلات الاستثمار",
+    "customerDescription": "سجل المشتريات"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تحرير",
+    "view": "عرض",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "search": "بحث",
+    "filter": "تصفية",
+    "clear": "مسح",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا"
+  },
+  "errors": {
+    "failedToInitializeLogin": "فشل في تهيئة تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+    "authenticationFailed": "فشل في المصادقة",
+    "invalidStateParameter": "معامل حالة غير صالح. هجوم CSRF محتمل.",
+    "noAuthorizationCode": "لم يتم استلام رمز التفويض.",
+    "missingCodeVerifier": "مدقق الرمز مفقود. يرجى المحاولة مرة أخرى لتسجيل الدخول.",
+    "tokenExchangeFailed": "فشل في تبادل الرمز المميز",
+    "unexpectedError": "حدث خطأ غير متوقع أثناء المصادقة."
+  }
+}

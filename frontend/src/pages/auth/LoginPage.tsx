@@ -1,44 +1,89 @@
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {Store, TrendingUp, ArrowLeft, ShieldCheck} from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Store, TrendingUp, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
-  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
+  const [username, setUsername] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard')
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Build Keycloak authorization URL for OAuth flow
+      const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.shop-manager.local'
+      const clientId = 'shop-manager-frontend'
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')
+      const loginHint = username ? encodeURIComponent(username) : ''
+
+      // Generate state and nonce for security
+      const state = btoa(Math.random().toString()).substring(10, 25)
+      const nonce = btoa(Math.random().toString()).substring(10, 25)
+
+      // Store state for validation later
+      sessionStorage.setItem('auth_state', state)
+      sessionStorage.setItem('auth_nonce', nonce)
+      if (username) {
+        sessionStorage.setItem('loginHint', username)
+      }
+
+      // Build authorization URL for standard OAuth flow
+      let authUrl = `${keycloakUrl}/realms/shop-manager/protocol/openid-connect/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${redirectUri}&` +
+        `response_type=code&` +
+        `scope=openid%20profile%20email&` +
+        `state=${state}&` +
+        `nonce=${nonce}`
+
+      // Add login hint if provided
+      if (loginHint) {
+        authUrl += `&login_hint=${loginHint}`
+      }
+
+      // Redirect to Keycloak login page
+      window.location.href = authUrl
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError(t('errors.failedToInitializeLogin'))
+      setIsLoading(false)
     }
-  }, [isAuthenticated, navigate])
-
-  const handleLogin = async () => {
-    // Configure seamless redirect back to dashboard
-    await login({
-      redirectUri: window.location.origin + '/dashboard'
-    })
   }
 
   const features = [
     {
       icon: Store,
-      title: 'Multi-Shop Management',
-      description: 'Manage multiple shops from a single platform with tenant isolation',
+      title: t('features.multiShopManagement.title'),
+      description: t('features.multiShopManagement.description'),
     },
     {
       icon: ShieldCheck,
-      title: 'Secure Authentication',
-      description: 'Role-based access control with Keycloak SSO integration',
+      title: t('features.secureAuthentication.title'),
+      description: t('features.secureAuthentication.description'),
     },
     {
       icon: TrendingUp,
-      title: 'Investment Tracking',
-      description: 'Track investments, ROI, and profit sharing with detailed analytics',
+      title: t('features.investmentTracking.title'),
+      description: t('features.investmentTracking.description'),
     },
+  ]
+
+  // Test credentials info
+  const testCredentials = [
+    { role: 'Admin', username: 'admin@shopmanager.com', password: 'admin123' },
+    { role: 'Manager', username: 'manager@shopmanager.com', password: 'manager123' },
+    { role: 'Employee', username: 'employee@shopmanager.com', password: 'employee123' },
   ]
 
   return (
@@ -64,40 +109,84 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="grid md:grid-cols-2 gap-8 items-start">
           {/* Login Card */}
           <Card className="w-full">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Welcome back</CardTitle>
               <CardDescription>
-                Enter your credentials to access your account
+                Continue to secure login with Keycloak
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Login Button */}
-              <Button
-                onClick={handleLogin}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                size="lg"
-              >
-                Sign In
-              </Button>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-              <p className="text-xs text-center text-gray-500">
-                Secure authentication with automatic redirect.
-              </p>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Email (Optional)</Label>
+                  <Input
+                    id="username"
+                    type="email"
+                    placeholder="admin@shopmanager.com"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Enter your email to pre-fill the Keycloak login form
+                  </p>
+                </div>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
-                    Sign up
-                  </Link>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Redirecting to Keycloak...
+                    </>
+                  ) : (
+                    'Continue to Login'
+                  )}
+                </Button>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    Don't have an account?{' '}
+                    <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+                      Sign up
+                    </Link>
+                  </p>
+                </div>
+              </form>
+
+              {/* Test Credentials Info */}
+              <div className="mt-6 pt-6 border-t">
+                <p className="text-xs text-gray-500 mb-2 font-semibold">Test Credentials for Keycloak:</p>
+                <div className="space-y-1">
+                  {testCredentials.map((cred) => (
+                    <button
+                      key={cred.username}
+                      type="button"
+                      onClick={() => {
+                        setUsername(cred.username)
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-500 block w-full text-left hover:bg-blue-50 p-1 rounded"
+                    >
+                      <span className="font-weight: 500">{cred.role}:</span> {cred.username} / {cred.password}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Click to pre-fill email, then enter password on Keycloak login page
                 </p>
-              </div>
-
-              <div className="text-xs text-center text-gray-500">
-                Secure authentication with enterprise-grade security
               </div>
             </CardContent>
           </Card>
@@ -117,6 +206,26 @@ export const LoginPage: React.FC = () => {
               ))}
             </div>
 
+            <div className="bg-blue-50 rounded-lg p-4 mt-6">
+              <h4 className="text-sm font-semibold text-blue-900 mb-2">Available Roles:</h4>
+              <ul className="text-xs text-blue-800 space-y-1">
+                <li>• <strong>Admin:</strong> Full system access</li>
+                <li>• <strong>Manager:</strong> Shop operations management</li>
+                <li>• <strong>Employee:</strong> Sales and inventory</li>
+                <li>• <strong>Investor:</strong> Investment analytics</li>
+                <li>• <strong>Customer:</strong> Purchase history</li>
+              </ul>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4 mt-4 border border-green-200">
+              <h4 className="text-xs font-semibold text-green-900 mb-1">Secure OAuth2 Login:</h4>
+              <ol className="text-xs text-green-800 space-y-1">
+                <li>1. Click "Continue to Login" below</li>
+                <li>2. You'll be redirected to our custom Keycloak login page</li>
+                <li>3. Enter your credentials on the secure login form</li>
+                <li>4. Return to Shop Manager dashboard automatically</li>
+              </ol>
+            </div>
           </div>
         </div>
 

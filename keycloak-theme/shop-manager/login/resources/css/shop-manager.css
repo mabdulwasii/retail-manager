@@ -1,0 +1,285 @@
+/* Shop Manager Custom Login Theme */
+
+:root {
+  --shop-primary: #2563eb;
+  --shop-primary-hover: #1d4ed8;
+  --shop-secondary: #64748b;
+  --shop-success: #059669;
+  --shop-warning: #d97706;
+  --shop-error: #dc2626;
+  --shop-background: #f8fafc;
+  --shop-surface: #ffffff;
+  --shop-border: #e2e8f0;
+  --shop-text: #1e293b;
+  --shop-text-muted: #64748b;
+}
+
+/* Override Keycloak's default styling */
+.login-pf body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.login-pf .container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Main login card */
+.login-pf .card-pf {
+  background: var(--shop-surface);
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* Header styling */
+.login-pf .card-pf .card-pf-title {
+  background: linear-gradient(135deg, var(--shop-primary) 0%, var(--shop-primary-hover) 100%);
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  border-radius: 1rem 1rem 0 0;
+  margin: 0;
+}
+
+.login-pf .card-pf .card-pf-title h1 {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.login-pf .card-pf .card-pf-title h1::before {
+  content: "🏪";
+  font-size: 2rem;
+}
+
+/* Form container */
+.login-pf .card-pf .card-pf-body {
+  padding: 2rem;
+}
+
+/* Form styling */
+.login-pf form {
+  margin: 0;
+}
+
+.login-pf .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.login-pf label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--shop-text);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.login-pf .form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--shop-border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: var(--shop-surface);
+  color: var(--shop-text);
+}
+
+.login-pf .form-control:focus {
+  outline: none;
+  border-color: var(--shop-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Button styling */
+.login-pf .btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--shop-primary) 0%, var(--shop-primary-hover) 100%);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.login-pf .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
+}
+
+.login-pf .btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Alert styling */
+.login-pf .alert {
+  border-radius: 0.5rem;
+  border: none;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.login-pf .alert-error {
+  background: #fef2f2;
+  color: var(--shop-error);
+  border-left: 4px solid var(--shop-error);
+}
+
+.login-pf .alert-success {
+  background: #f0fdf4;
+  color: var(--shop-success);
+  border-left: 4px solid var(--shop-success);
+}
+
+.login-pf .alert-warning {
+  background: #fffbeb;
+  color: var(--shop-warning);
+  border-left: 4px solid var(--shop-warning);
+}
+
+/* Links */
+.login-pf a {
+  color: var(--shop-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-pf a:hover {
+  color: var(--shop-primary-hover);
+  text-decoration: underline;
+}
+
+/* Footer */
+.login-pf .card-pf-footer {
+  text-align: center;
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  border-radius: 0 0 1rem 1rem;
+  color: var(--shop-text-muted);
+  font-size: 0.875rem;
+}
+
+/* Remember me checkbox */
+.login-pf .checkbox {
+  margin: 1rem 0;
+}
+
+.login-pf .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.login-pf .checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Registration link */
+.login-pf .login-signup {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--shop-border);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .login-pf .container {
+    padding: 1rem;
+  }
+
+  .login-pf .card-pf {
+    max-width: 100%;
+  }
+
+  .login-pf .card-pf .card-pf-title {
+    padding: 1.5rem;
+  }
+
+  .login-pf .card-pf .card-pf-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .login-pf .card-pf .card-pf-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Loading state */
+.login-pf .btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Focus indicators for accessibility */
+.login-pf .form-control:focus,
+.login-pf .btn-primary:focus,
+.login-pf a:focus {
+  outline: 2px solid var(--shop-primary);
+  outline-offset: 2px;
+}
+
+/* Custom logo area */
+.kc-logo-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+/* Hide default Keycloak branding */
+.login-pf #kc-logo {
+  display: none;
+}
+
+.login-pf #kc-logo-wrapper {
+  display: none;
+}
+
+/* Custom header branding */
+.login-pf #kc-header {
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--shop-primary) 0%, var(--shop-primary-hover) 100%);
+  border-radius: 1rem 1rem 0 0;
+}
+
+.login-pf #kc-header-wrapper {
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.login-pf #kc-header-wrapper::before {
+  content: "🏪 ";
+  font-size: 2rem;
+  margin-right: 0.5rem;
+}
