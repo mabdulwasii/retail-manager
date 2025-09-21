@@ -64,15 +64,15 @@ data:
           "secret": "shop-manager-frontend-secret",
           "redirectUris": [
             "https://shop-manager.local/*",
-            "http://shop-manager.local/*",
-            "https://localhost:3000/*",
-            "http://localhost:3000/*"
+            "http://localhost:3000/*",
+            "http://localhost:3001/*",
+            "http://localhost:3002/*"
           ],
           "webOrigins": [
             "https://shop-manager.local",
-            "http://shop-manager.local",
-            "https://localhost:3000",
-            "http://localhost:3000"
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002"
           ],
           "publicClient": true,
           "protocol": "openid-connect",
@@ -144,6 +144,21 @@ data:
             "name": "CUSTOMER",
             "description": "Customer access",
             "composite": false
+          },
+          {
+            "name": "CASHIER",
+            "description": "Cashier operations and sales",
+            "composite": false
+          },
+          {
+            "name": "ACCOUNTANT",
+            "description": "Financial reports and accounting",
+            "composite": false
+          },
+          {
+            "name": "AUDITOR",
+            "description": "Audit logs and compliance",
+            "composite": false
           }
         ]
       },
@@ -158,7 +173,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "admin123",
+              "value": "DevAdmin@2024!Test",
               "temporary": false
             }
           ],
@@ -178,7 +193,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "manager123",
+              "value": "DevManager@2024!Test",
               "temporary": false
             }
           ],
@@ -198,7 +213,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "employee123",
+              "value": "DevEmployee@2024!Test",
               "temporary": false
             }
           ],
@@ -218,7 +233,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "investor123",
+              "value": "DevInvestor@2024!Test",
               "temporary": false
             }
           ],
@@ -237,11 +252,69 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "customer123",
+              "value": "DevCustomer@2024!Test",
               "temporary": false
             }
           ],
           "realmRoles": ["CUSTOMER"],
+          "attributes": {
+            "tenantId": ["default-tenant"]
+          }
+        },
+        {
+          "username": "cashier@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Cashier",
+          "lastName": "User",
+          "email": "cashier@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "DevCashier@2024!Test",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["CASHIER"],
+          "attributes": {
+            "tenantId": ["default-tenant"],
+            "shopId": ["default-shop"]
+          }
+        },
+        {
+          "username": "accountant@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Accountant",
+          "lastName": "User",
+          "email": "accountant@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "DevAccountant@2024!Test",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["ACCOUNTANT"],
+          "attributes": {
+            "tenantId": ["default-tenant"]
+          }
+        },
+        {
+          "username": "auditor@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Auditor",
+          "lastName": "User",
+          "email": "auditor@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "DevAuditor@2024!Test",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["AUDITOR"],
           "attributes": {
             "tenantId": ["default-tenant"]
           }
@@ -308,11 +381,14 @@ data:
     if [[ "$REALM_CHECK" == *"shop-manager"* ]]; then
         echo "✓ Realm configuration completed successfully"
         echo "✓ Test users created with credentials:"
-        echo "  - admin@shopmanager.com / admin123 (TENANT_ADMIN)"
-        echo "  - manager@shopmanager.com / manager123 (SHOP_MANAGER)"
-        echo "  - employee@shopmanager.com / employee123 (SHOP_EMPLOYEE)"
-        echo "  - investor@shopmanager.com / investor123 (INVESTOR)"
-        echo "  - customer@shopmanager.com / customer123 (CUSTOMER)"
+        echo "  - admin@shopmanager.com / DevAdmin@2024!Test (TENANT_ADMIN)"
+        echo "  - manager@shopmanager.com / DevManager@2024!Test (SHOP_MANAGER)"
+        echo "  - employee@shopmanager.com / DevEmployee@2024!Test (SHOP_EMPLOYEE)"
+        echo "  - investor@shopmanager.com / DevInvestor@2024!Test (INVESTOR)"
+        echo "  - customer@shopmanager.com / DevCustomer@2024!Test (CUSTOMER)"
+        echo "  - cashier@shopmanager.com / DevCashier@2024!Test (CASHIER)"
+        echo "  - accountant@shopmanager.com / DevAccountant@2024!Test (ACCOUNTANT)"
+        echo "  - auditor@shopmanager.com / DevAuditor@2024!Test (AUDITOR)"
     else
         echo "✗ Realm verification failed"
         exit 1

@@ -1,0 +1,166 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@shopmanager.com",
+    "firstName": "Admin",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["TENANT_ADMIN"],
+      "tenant_id": ["default-tenant"],
+      "shop_id": ["default-shop"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevAdmin@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["TENANT_ADMIN"]
+  },
+  {
+    "username": "manager",
+    "email": "manager@shopmanager.com",
+    "firstName": "Shop",
+    "lastName": "Manager",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["SHOP_MANAGER"],
+      "tenant_id": ["default-tenant"],
+      "shop_id": ["default-shop"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevManager@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["SHOP_MANAGER"]
+  },
+  {
+    "username": "employee",
+    "email": "employee@shopmanager.com",
+    "firstName": "Shop",
+    "lastName": "Employee",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["SHOP_EMPLOYEE"],
+      "tenant_id": ["default-tenant"],
+      "shop_id": ["default-shop"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevEmployee@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["SHOP_EMPLOYEE"]
+  },
+  {
+    "username": "investor",
+    "email": "investor@shopmanager.com",
+    "firstName": "Investor",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["INVESTOR"],
+      "tenant_id": ["default-tenant"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevInvestor@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["INVESTOR"]
+  },
+  {
+    "username": "customer",
+    "email": "customer@shopmanager.com",
+    "firstName": "Customer",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["CUSTOMER"],
+      "tenant_id": ["default-tenant"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevCustomer@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["CUSTOMER"]
+  },
+  {
+    "username": "cashier",
+    "email": "cashier@shopmanager.com",
+    "firstName": "Cashier",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["CASHIER"],
+      "tenant_id": ["default-tenant"],
+      "shop_id": ["default-shop"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevCashier@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["CASHIER"]
+  },
+  {
+    "username": "accountant",
+    "email": "accountant@shopmanager.com",
+    "firstName": "Accountant",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["ACCOUNTANT"],
+      "tenant_id": ["default-tenant"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevAccountant@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["ACCOUNTANT"]
+  },
+  {
+    "username": "auditor",
+    "email": "auditor@shopmanager.com",
+    "firstName": "Auditor",
+    "lastName": "User",
+    "enabled": true,
+    "emailVerified": true,
+    "attributes": {
+      "role": ["AUDITOR"],
+      "tenant_id": ["default-tenant"]
+    },
+    "credentials": [
+      {
+        "type": "password",
+        "value": "DevAuditor@2024!Test",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["AUDITOR"]
+  }
+]

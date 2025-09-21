@@ -1,0 +1,77 @@
+[
+  {
+    "clientId": "shop-manager-frontend",
+    "name": "Shop Manager Frontend",
+    "description": "Shop Manager frontend React application",
+    "enabled": true,
+    "publicClient": true,
+    "directAccessGrantsEnabled": false,
+    "standardFlowEnabled": true,
+    "implicitFlowEnabled": false,
+    "serviceAccountsEnabled": false,
+    "protocol": "openid-connect",
+    "rootUrl": "https://shop-manager.local",
+    "baseUrl": "/",
+    "redirectUris": [
+      "https://shop-manager.local/*",
+      "http://localhost:3000/*",
+      "http://localhost:3001/*",
+      "http://localhost:3002/*"
+    ],
+    "webOrigins": [
+      "https://shop-manager.local",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002"
+    ],
+    "attributes": {
+      "pkce.code.challenge.method": "S256",
+      "oidc.ciba.grant.enabled": "false",
+      "oauth2.device.authorization.grant.enabled": "false",
+      "backchannel.logout.session.required": "true",
+      "backchannel.logout.revoke.offline.tokens": "false"
+    },
+    "defaultClientScopes": [
+      "web-origins",
+      "acr",
+      "profile",
+      "roles",
+      "email"
+    ],
+    "optionalClientScopes": [
+      "address",
+      "phone",
+      "offline_access",
+      "microprofile-jwt"
+    ]
+  },
+  {
+    "clientId": "shop-manager-backend",
+    "name": "Shop Manager Backend",
+    "description": "Shop Manager backend Spring Boot application",
+    "enabled": true,
+    "publicClient": false,
+    "directAccessGrantsEnabled": false,
+    "standardFlowEnabled": false,
+    "implicitFlowEnabled": false,
+    "serviceAccountsEnabled": true,
+    "bearerOnly": true,
+    "protocol": "openid-connect",
+    "attributes": {
+      "use.refresh.tokens": "false"
+    },
+    "defaultClientScopes": [
+      "web-origins",
+      "acr",
+      "profile",
+      "roles",
+      "email"
+    ],
+    "optionalClientScopes": [
+      "address",
+      "phone",
+      "offline_access",
+      "microprofile-jwt"
+    ]
+  }
+]

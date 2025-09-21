@@ -225,6 +225,8 @@ keycloak:
       value: "false"
     - name: KC_HOSTNAME_STRICT_HTTPS
       value: "false"
+    - name: KC_HOSTNAME_STRICT_BACKCHANNEL
+      value: "false"
     - name: KC_HTTP_ENABLED
       value: "true"
     - name: KC_HTTP_PORT
@@ -239,6 +241,16 @@ keycloak:
       value: "https://auth.shop-manager.local"
     - name: KC_FRONTEND_URL
       value: "https://auth.shop-manager.local"
+    # Fix iframe timeout issues
+    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SUPPRESS_LOGOUT_CONFIRMATION_SCREEN
+      value: "true"
+    - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_DISABLE_TRUST_MANAGER
+      value: "true"
+    # Development mode settings to bypass iframe checks
+    - name: KEYCLOAK_PRODUCTION
+      value: "false"
+    - name: KC_LOG_LEVEL
+      value: "INFO"
 
 # Application-specific comprehensive configuration
 config:
