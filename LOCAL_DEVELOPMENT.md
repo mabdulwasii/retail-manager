@@ -16,10 +16,18 @@
 
 Shop Manager supports multiple local development approaches to accommodate different workflows and preferences:
 
-- **🐳 Docker Compose**: Fastest setup, all services containerized
-- **☸️ Local Kubernetes**: Kubernetes-native development with Docker Desktop
-- **💻 Hybrid**: Infrastructure in containers, code running locally
-- **🔧 Native**: Everything running locally (advanced setup)
+- **🐳 Docker Development**: Full containerized development with hot reload
+- **💻 Hybrid Development**: Infrastructure in containers, application code running locally (Recommended)
+- **🔧 Native Development**: Everything running locally (advanced setup)
+
+## Development Approach Comparison
+
+| Approach | Setup Time | Flexibility | Performance | Best For |
+|----------|------------|-------------|-------------|----------|
+| **Docker** | ⚡ Fast | 🔄 Medium | 🐌 Slower | Quick start, consistency |
+| **Hybrid** | ⚡ Fast | 🚀 High | ⚡ Fast | Active development |
+| **Kubernetes** | 🕐 Medium | 🔄 Medium | 🔄 Medium | K8s testing |
+| **Native** | 🕐 Slow | 🚀 High | ⚡ Fastest | Advanced users |
 
 ## Prerequisites
 
@@ -44,42 +52,128 @@ Shop Manager supports multiple local development approaches to accommodate diffe
 
 ## Quick Start Options
 
-### Option 1: Docker Compose (Recommended for Beginners)
+Choose your preferred development approach:
+
+### 🐳 Docker Development (Full Containerization)
 ```bash
-# Clone repository
-git clone <repository-url>
-cd shop-manager
-
-# Start all services
+git clone <repository-url> && cd shop-manager
 docker-compose up -d
-
-# Access application
 open http://localhost:3000
 ```
 
-### Option 2: Local Kubernetes
+### 💻 Hybrid Development (Recommended)
 ```bash
-# Enable Kubernetes in Docker Desktop
-# Then deploy using Helm
-helm install shop-manager ./helm-chart \
-  --namespace shop-manager \
-  --create-namespace
-```
-
-### Option 3: Hybrid Development
-```bash
-# Start infrastructure only
+# Infrastructure only
 docker-compose up -d postgres keycloak kafka minio
 
-# Run frontend locally
-cd frontend
-npm install
-npm run dev
-
-# Run backend locally (in another terminal)
-cd backend
-./mvnw spring-boot:run
+# Local development
+cd frontend && npm install && npm run dev &
+cd backend && ./mvnw spring-boot:run &
 ```
+
+### 🔧 Native Development (Advanced)
+```bash
+# Install PostgreSQL, Kafka, MinIO locally
+# Configure application-native.yml
+./mvnw spring-boot:run -Dspring-boot.run.profiles=native &
+cd frontend && npm run dev &
+```
+
+## 🐳 Docker Development Approach
+
+**Best for**: Quick start, environment consistency, team onboarding
+
+### Full Stack Setup
+```bash
+# Complete environment
+docker-compose up -d
+
+# With code quality tools
+docker-compose --profile sonar up -d
+
+# Infrastructure only (for hybrid)
+docker-compose up -d postgres keycloak kafka minio
+```
+
+### Development Workflow
+```bash
+# Hot reload development
+docker-compose up -d --build  # Rebuild with changes
+
+# View logs
+docker-compose logs -f backend frontend
+
+# Database operations
+docker-compose exec postgres psql -U postgres -d shopmanager
+
+# Reset environment
+docker-compose down -v && docker-compose up -d
+```
+
+### Volume Mounting for Development
+Edit `docker-compose.yml` for live code updates:
+```yaml
+backend:
+  volumes:
+    - ./backend:/app
+    - /app/target  # Preserve built artifacts
+
+frontend:
+  volumes:
+    - ./frontend:/app
+    - /app/node_modules  # Preserve dependencies
+```
+
+## 💻 Hybrid Development Approach
+
+**Best for**: Active development, debugging, fast iteration
+
+### Infrastructure Setup
+```bash
+# Start only required services
+docker-compose up -d postgres keycloak kafka minio
+
+# Verify services
+docker-compose ps
+curl http://localhost:8080/realms/shop-manager
+```
+
+### Frontend Development
+```bash
+cd frontend
+
+# Environment setup
+cat > .env.local << EOF
+VITE_API_BASE_URL=http://localhost:8081
+VITE_KEYCLOAK_URL=http://localhost:8080
+VITE_KEYCLOAK_REALM=shop-manager
+VITE_KEYCLOAK_CLIENT_ID=shop-manager-frontend
+EOF
+
+# Development server
+npm install && npm run dev
+```
+
+### Backend Development
+```bash
+cd backend
+
+# Profile configuration
+export SPRING_PROFILES_ACTIVE=local,debug
+
+# Development server with live reload
+./mvnw spring-boot:run
+
+# Or with debug port
+./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+```
+
+### Hybrid Development Benefits
+- **Fast builds**: No container rebuilding
+- **IDE integration**: Full debugging, intellisense
+- **Hot reload**: Instant code changes
+- **Resource efficient**: Lower memory usage
+- **Easy testing**: Direct access to running code
 
 ## Docker Compose Setup
 
@@ -247,7 +341,7 @@ kubectl create namespace shop-manager
 kubectl config set-context --current --namespace=shop-manager
 
 # Deploy using Helm
-helm install shop-manager ./helm-chart \
+helm install shop-manager ./helm-chart/shop-manager \
   --namespace shop-manager \
   --values helm-chart/values/development.yaml \
   --wait \

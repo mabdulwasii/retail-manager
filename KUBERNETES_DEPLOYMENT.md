@@ -57,12 +57,12 @@ kubectl config set-context --current --namespace=shop-manager
 ### 3. Deploy with Helm (Recommended)
 ```bash
 # Install with default values
-helm install shop-manager ./helm-chart --namespace shop-manager
+helm install shop-manager ./helm-chart/shop-manager --namespace shop-manager
 
 # Or with custom values
-helm install shop-manager ./helm-chart \
+helm install shop-manager ./helm-chart/shop-manager \
   --namespace shop-manager \
-  --values production-values.yaml
+  --values ./helm-chart/shop-manager/values-tls.yaml
 ```
 
 ### 4. Verify Deployment
@@ -216,9 +216,18 @@ kubectl set image deployment/shop-manager-frontend \
 
 ### Chart Structure
 ```
-helm-chart/
+helm-chart/shop-manager/
 ├── Chart.yaml
+├── Chart.lock
 ├── values.yaml
+├── charts/
+│   ├── kafka/
+│   ├── keycloak/
+│   ├── minio/
+│   └── postgresql/
+├── config/
+│   ├── keycloak-realm.json
+│   └── shop-manager-realm-config.yaml
 ├── templates/
 │   ├── backend-deployment.yaml
 │   ├── backend-service.yaml
@@ -227,11 +236,16 @@ helm-chart/
 │   ├── ingress.yaml
 │   ├── configmap.yaml
 │   ├── secrets.yaml
-│   └── keycloak-theme-configmap.yaml
-└── values/
-    ├── development.yaml
-    ├── staging.yaml
-    └── production.yaml
+│   ├── keycloak-theme-configmap.yaml
+│   ├── keycloak-init-job.yaml
+│   └── NOTES.txt
+└── values files:
+    ├── values-dns.yaml
+    ├── values-infra.yaml
+    ├── values-minimal.yaml
+    ├── values-nodeport.yaml
+    ├── values-simple.yaml
+    └── values-tls.yaml
 ```
 
 ### Configuration Examples
@@ -341,20 +355,23 @@ monitoring:
 
 ```bash
 # Install with environment-specific values
-helm install shop-manager ./helm-chart \
+helm install shop-manager ./helm-chart/shop-manager \
   --namespace shop-manager \
-  --values helm-chart/values/production.yaml
+  --values ./helm-chart/shop-manager/values-tls.yaml
 
 # Upgrade deployment
-helm upgrade shop-manager ./helm-chart \
+helm upgrade shop-manager ./helm-chart/shop-manager \
   --namespace shop-manager \
-  --values helm-chart/values/production.yaml
+  --values ./helm-chart/shop-manager/values-tls.yaml
 
 # Rollback if needed
 helm rollback shop-manager 1 --namespace shop-manager
 
 # Uninstall
 helm uninstall shop-manager --namespace shop-manager
+
+# Clean up namespace (optional)
+kubectl delete namespace shop-manager
 ```
 
 ## Custom Keycloak Theme
@@ -683,8 +700,13 @@ kubectl logs postgresql-0 -n shop-manager
 # Check Keycloak logs
 kubectl logs shop-manager-keycloak-0 -n shop-manager
 
-# Access Keycloak admin console
+# Access Keycloak admin console via ingress
+open https://auth.shop-manager.local/admin/master/console/
+# Credentials: admin / KeycloakAdm1n@2024!SecureAuth#CompliantPassword
+
+# Port forward if ingress not working
 kubectl port-forward service/shop-manager-keycloak 8080:80 -n shop-manager
+open http://localhost:8080/admin/
 
 # Reset admin password if needed
 kubectl exec -n shop-manager shop-manager-keycloak-0 -- \
@@ -693,6 +715,23 @@ kubectl exec -n shop-manager shop-manager-keycloak-0 -- \
   --new-password NewPassword123! \
   --server http://localhost:8080 \
   --realm master
+```
+
+#### Keycloak Admin Console Iframe Timeout
+If the admin console shows "Loading the Admin UI" or iframe timeout errors:
+
+```bash
+# Fix hostname configuration
+kubectl patch configmap shop-manager-keycloak-env-vars -n shop-manager --patch '{"data":{"KC_HOSTNAME":"auth.shop-manager.local","KC_HOSTNAME_STRICT_BACKCHANNEL":"false","KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SUPPRESS_LOGOUT_CONFIRMATION_SCREEN":"true"}}'
+
+# Restart Keycloak
+kubectl rollout restart statefulset/shop-manager-keycloak -n shop-manager
+
+# Wait for restart
+kubectl wait --for=condition=ready pod/shop-manager-keycloak-0 -n shop-manager --timeout=120s
+
+# Verify access
+curl -I https://auth.shop-manager.local/admin/master/console/ -k
 ```
 
 #### Theme Not Appearing
