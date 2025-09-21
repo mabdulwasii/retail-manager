@@ -36,8 +36,12 @@ export const OAuthCallback: React.FC = () => {
           return
         }
 
-        // Get stored PKCE code verifier (optional for public clients)
-        const codeVerifier = sessionStorage.getItem('code_verifier') || ''
+        // Get stored PKCE code verifier (required for PKCE flow)
+        const codeVerifier = sessionStorage.getItem('code_verifier')
+        if (!codeVerifier) {
+          setError('Missing code verifier. Please try logging in again.')
+          return
+        }
 
         // Exchange code for tokens
         const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.shop-manager.local'
@@ -49,11 +53,7 @@ export const OAuthCallback: React.FC = () => {
           client_id: clientId,
           code: code,
           redirect_uri: redirectUri,
-        }
-
-        // Only add code_verifier if it exists (PKCE is optional)
-        if (codeVerifier) {
-          tokenParams.code_verifier = codeVerifier
+          code_verifier: codeVerifier,
         }
 
         const tokenResponse = await fetch(`${keycloakUrl}/realms/shop-manager/protocol/openid-connect/token`, {

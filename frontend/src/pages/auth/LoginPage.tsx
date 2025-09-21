@@ -31,21 +31,38 @@ export const LoginPage: React.FC = () => {
       const state = btoa(Math.random().toString()).substring(10, 25)
       const nonce = btoa(Math.random().toString()).substring(10, 25)
 
-      // Store state for validation later
+      // Generate PKCE code verifier and challenge
+      const codeVerifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '')
+
+      const encoder = new TextEncoder()
+      const data = encoder.encode(codeVerifier)
+      const digest = await crypto.subtle.digest('SHA-256', data)
+      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '')
+
+      // Store values for validation later
       sessionStorage.setItem('auth_state', state)
       sessionStorage.setItem('auth_nonce', nonce)
+      sessionStorage.setItem('code_verifier', codeVerifier)
       if (username) {
         sessionStorage.setItem('loginHint', username)
       }
 
-      // Build authorization URL for standard OAuth flow
+      // Build authorization URL for standard OAuth flow with PKCE
       let authUrl = `${keycloakUrl}/realms/shop-manager/protocol/openid-connect/auth?` +
         `client_id=${clientId}&` +
         `redirect_uri=${redirectUri}&` +
         `response_type=code&` +
         `scope=openid%20profile%20email&` +
         `state=${state}&` +
-        `nonce=${nonce}`
+        `nonce=${nonce}&` +
+        `code_challenge=${codeChallenge}&` +
+        `code_challenge_method=S256`
 
       // Add login hint if provided
       if (loginHint) {

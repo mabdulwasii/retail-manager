@@ -6,6 +6,8 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AuthenticatedApp } from '@/components/AuthenticatedApp'
+import { OAuthCallback } from '@/components/auth/OAuthCallback'
+import { DirectLogin } from '@/components/auth/DirectLogin'
 
 function App() {
   return (
@@ -13,8 +15,11 @@ function App() {
       {/* Public Routes - No authentication required */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Login route without KeycloakAuthProvider */}
-      <Route path="/login" element={<LoginPage />} />
+      {/* Login route redirects directly to Keycloak */}
+      <Route path="/login" element={<DirectLogin />} />
+
+      {/* OAuth callback route */}
+      <Route path="/auth/callback" element={<OAuthCallback />} />
 
       <Route
         path="/register"
