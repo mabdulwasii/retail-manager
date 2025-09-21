@@ -15,7 +15,14 @@ function App() {
       <Route path="/" element={<LandingPage />} />
 
       {/* Login route redirects directly to Keycloak */}
-      <Route path="/login" element={<DirectLogin />} />
+      <Route
+        path="/login"
+        element={
+          <KeycloakAuthProvider>
+            <DirectLogin />
+          </KeycloakAuthProvider>
+        }
+      />
 
 
       <Route
