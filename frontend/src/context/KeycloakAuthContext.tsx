@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react'
 
 // Initialize Keycloak instance with singleton pattern
 const keycloakConfig = {
-  url: import.meta.env.VITE_KEYCLOAK_URL || 'https://localhost:8443',
+  url: import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080',
   realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
 }
