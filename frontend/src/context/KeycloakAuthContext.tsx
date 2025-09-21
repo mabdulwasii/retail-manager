@@ -59,6 +59,8 @@ const LoadingFallback: React.FC = () => (
 const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { keycloak, initialized } = useKeycloak()
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [initError, setInitError] = useState<string | null>(null)
+  const [initTimeout, setInitTimeout] = useState(false)
 
   // Extract user profile from token
   const getUserProfile = (): UserProfile | null => {
@@ -80,6 +82,22 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
       shopId: token.shop_id,
     }
   }
+
+  // Timeout for Keycloak initialization
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!initialized) {
+        console.warn('Keycloak initialization timed out after 10 seconds')
+        setInitTimeout(true)
+      }
+    }, 10000) // 10 second timeout
+
+    if (initialized) {
+      clearTimeout(timeout)
+    }
+
+    return () => clearTimeout(timeout)
+  }, [initialized])
 
   // Update user profile when authentication state changes
   useEffect(() => {
@@ -138,7 +156,7 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const contextValue: AuthContextType = {
     isAuthenticated: keycloak.authenticated || false,
-    isLoading: !initialized,
+    isLoading: !initialized && !initTimeout,
     user,
     keycloak,
     login: async (options) => {
@@ -157,8 +175,13 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshAuth,
   }
 
-  if (!initialized) {
+  if (!initialized && !initTimeout) {
     return <LoadingFallback />
+  }
+
+  // If initialization timed out, render children with unauthenticated state
+  if (initTimeout && !initialized) {
+    console.warn('Proceeding without Keycloak authentication due to timeout')
   }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
@@ -175,6 +198,10 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Enable response mode for authorization code flow
     responseMode: 'fragment',
     flow: 'standard',
+    // Add timeout configuration
+    timeoutInSeconds: 30,
+    // Don't fail immediately if Keycloak server is unreachable
+    skipLogout: true,
   }
 
   const handleKeycloakEvent = (event: Keycloak.KeycloakEvent, error?: Keycloak.KeycloakError) => {

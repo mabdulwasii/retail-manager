@@ -332,10 +332,11 @@ backend/
 ### ✅ Current Authentication Status (January 2025)
 
 **Full authentication system is deployed and working:**
-- **Keycloak SSO**: shop-manager realm configured with 5 test users
-- **Frontend**: React app with Keycloak integration at http://localhost:3000
+- **Keycloak SSO**: shop-manager realm configured with enhanced custom theme
+- **Frontend**: React app with Keycloak integration at http://localhost:3001
 - **Backend**: Spring Security + JWT validation at http://localhost:8081
 - **Database**: All migrations applied including Spring Modulith event store
+- **Enhanced Theme**: Custom Shop Manager login theme with password visibility, remember me, and animations
 
 ### 🧪 Test Users & Credentials
 
@@ -346,34 +347,43 @@ Use these pre-configured accounts to test authentication flows:
 ```bash
 # System Administrator (Full Access)
 Username: admin@shopmanager.com
-Password: DevAdmin@2024!Test
+Password: admin123
 Role: TENANT_ADMIN
 Tenant: default-tenant | Shop: default-shop
 
 # Shop Manager (Operations)
 Username: manager@shopmanager.com
-Password: DevManager@2024!Test
+Password: manager123
 Role: SHOP_MANAGER
 Tenant: default-tenant | Shop: default-shop
 
 # Shop Employee (Limited Access)
 Username: employee@shopmanager.com
-Password: DevEmployee@2024!Test
+Password: employee123
 Role: SHOP_EMPLOYEE
 Tenant: default-tenant | Shop: default-shop
-
-# Investor (Reports & Analytics)
-Username: investor@shopmanager.com
-Password: DevInvestor@2024!Test
-Role: INVESTOR
-Tenant: default-tenant
-
-# Customer (Purchase History)
-Username: customer@shopmanager.com
-Password: DevCustomer@2024!Test
-Role: CUSTOMER
-Tenant: default-tenant
 ```
+
+### 🎨 Enhanced Custom Login Theme Features
+
+**Visual Enhancements:**
+- Modern dark gradient background with animated floating elements
+- Glassmorphism card design with blur effects and shadows
+- Custom Shop Manager branding with animated logo
+- Responsive design optimized for all screen sizes
+
+**Interactive Features:**
+- Password visibility toggle (👁️/🙈 icons) with accessibility support
+- Enhanced remember me checkbox with custom styling
+- Development mode quick-access credential buttons
+- Hover animations and feedback on interactive elements
+- Keyboard shortcuts (Ctrl+Enter to submit)
+
+**Security & Accessibility:**
+- PKCE OAuth2 flow with proper code challenge implementation
+- ARIA labels and focus indicators for accessibility
+- Secure credential auto-fill for development testing only
+- Auto-disabled production security warnings
 
 **Production Security Note**: In production, users must be created through Keycloak administration console with strong, unique passwords following your organization's security policies.
 
@@ -386,9 +396,9 @@ docker-compose up -d
 # 2. Verify Keycloak realm
 curl -s http://localhost:8080/realms/shop-manager/.well-known/openid-configuration | jq .authorization_endpoint
 
-# 3. Test frontend authentication
-open http://localhost:3000
-# Login with any test user above
+# 3. Test frontend authentication with enhanced theme
+open http://localhost:3001
+# Login with any test user above - try the credential auto-fill buttons!
 
 # 4. Test backend health
 curl http://localhost:8081/actuator/health
@@ -402,7 +412,7 @@ open http://localhost:8080
 
 | Endpoint | URL | Purpose |
 |----------|-----|---------|
-| **Frontend** | http://localhost:3000 | Main application with login |
+| **Frontend** | http://localhost:3001 | Main application with enhanced login theme |
 | **Authorization** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/auth | User login endpoint |
 | **Token Exchange** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/token | OAuth2 token endpoint |
 | **User Info** | http://localhost:8080/realms/shop-manager/protocol/openid-connect/userinfo | User profile data |
@@ -411,7 +421,8 @@ open http://localhost:8080
 ### ⚠️ Development Configuration Notes
 
 - **SSL Disabled**: Keycloak realm configured for HTTP in development
-- **CORS Enabled**: Frontend (localhost:3000) can call backend (localhost:8081)
+- **CORS Enabled**: Frontend (localhost:3001) can call backend (localhost:8081)
+- **Custom Theme**: Enhanced Shop Manager login theme with animations and modern design
 - **Database**: Spring Modulith event store table added (V9 migration)
 - **Frontend Build**: TypeScript compilation errors resolved
 - **Kafka Fixed**: Port 9093, KRaft mode with root user permissions resolved

@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -22,10 +21,11 @@ import {
 } from 'lucide-react'
 
 export const LandingPage: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth()
+  // For now, assume user is not authenticated on landing page
+  const isAuthenticated = false
 
   const handleLogout = async () => {
-    await logout()
+    // Redirect to logout or home
     window.location.href = '/'
   }
 

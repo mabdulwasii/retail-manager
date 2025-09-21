@@ -4,7 +4,7 @@
 # TLS Certificate configuration
 tls:
   enabled: true
-  issuer: letsencrypt-prod  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer
+  issuer: selfsigned-issuer  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer
   email: admin@shop-manager.local
 
 # DNS Configuration for certificates
@@ -27,7 +27,7 @@ ingress:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: selfsigned-issuer
   hosts:
     - host: api.shop-manager.local
       paths:
@@ -47,7 +47,7 @@ frontend:
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      cert-manager.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer: selfsigned-issuer
     hosts:
       - host: shop-manager.local
         paths:
@@ -69,4 +69,4 @@ keycloak:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-      cert-manager.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer: selfsigned-issuer

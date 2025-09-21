@@ -1,0 +1,12 @@
+spec:
+  template:
+    spec:
+      volumes:
+      - name: theme-volume
+        configMap:
+          name: shop-manager-keycloak-theme
+      containers:
+      - name: keycloak
+        volumeMounts:
+        - name: theme-volume
+          mountPath: /opt/keycloak/themes/shop-manager
