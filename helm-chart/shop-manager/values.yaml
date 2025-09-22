@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: shop-manager-backend
-  tag: final-fixed
+  tag: latest
   pullPolicy: IfNotPresent
 
 # Frontend configuration
@@ -110,26 +110,26 @@ livenessProbe:
   httpGet:
     path: /actuator/health/liveness
     port: http
-  initialDelaySeconds: 60
+  initialDelaySeconds: 120
   periodSeconds: 10
   timeoutSeconds: 5
-  failureThreshold: 3
+  failureThreshold: 5
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
     port: http
-  initialDelaySeconds: 30
+  initialDelaySeconds: 90
   periodSeconds: 5
   timeoutSeconds: 3
-  failureThreshold: 3
+  failureThreshold: 5
 
 # Environment variables
 env:
   SPRING_PROFILES_ACTIVE: prod
   SERVER_PORT: "8081"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
-  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  SPRING_JPA_HIBERNATE_DDL_AUTO: none
 
 # ConfigMap configuration
 configMap:
@@ -145,6 +145,7 @@ postgresql:
     username: "shop"
     password: "ShopDB@2024!SecurePassword#CompliantStrong"
     database: "shopdb"
+    existingSecret: "shop-manager-postgresql"
   primary:
     persistence:
       enabled: true

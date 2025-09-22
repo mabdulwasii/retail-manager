@@ -28,6 +28,33 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:14
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h {{ include "shop-manager.fullname" . }}-postgresql -p 5432; do
+                echo "PostgreSQL is not ready yet..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+        {{- if .Values.keycloak.enabled }}
+        - name: wait-for-keycloak
+          image: busybox:1.35
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Keycloak to be ready..."
+              until wget -q --spider http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/master; do
+                echo "Keycloak is not ready yet..."
+                sleep 5
+              done
+              echo "Keycloak is ready!"
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -39,9 +66,21 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           livenessProbe:
-            {{- toYaml .Values.livenessProbe | nindent 12 }}
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 180 }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 5 }}
           readinessProbe:
-            {{- toYaml .Values.readinessProbe | nindent 12 }}
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 120 }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 3 }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold | default 5 }}
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.env.SPRING_PROFILES_ACTIVE | default "prod" | quote }}
@@ -50,7 +89,13 @@ spec:
             - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
               value: {{ .Values.config.monitoring.exposedEndpoints | default "health,info,metrics,prometheus" | quote }}
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: {{ .Values.env.SPRING_JPA_HIBERNATE_DDL_AUTO | default "validate" | quote }}
+              value: "none"
+            - name: SPRING_JPA_SHOW_SQL
+              value: "false"
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
+            - name: SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION
+              value: "true"
             {{- if .Values.postgresql.enabled }}
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
@@ -61,6 +106,18 @@ spec:
                 secretKeyRef:
                   name: {{ include "shop-manager.fullname" . }}-postgresql
                   key: password
+            - name: SPRING_DATASOURCE_HIKARI_CONNECTIONTIMEOUT
+              value: "30000"
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE
+              value: "10"
+            - name: SPRING_DATASOURCE_HIKARI_MINIMUMIDLE
+              value: "5"
+            - name: SPRING_DATASOURCE_HIKARI_IDLETIMEOUT
+              value: "600000"
+            - name: SPRING_DATASOURCE_HIKARI_MAXLIFETIME
+              value: "1800000"
+            - name: SPRING_DATASOURCE_HIKARI_VALIDATIONTIMEOUT
+              value: "3000"
             {{- end }}
             {{- if .Values.kafka.enabled }}
             - name: KAFKA_BOOTSTRAP_SERVERS
@@ -68,11 +125,11 @@ spec:
             {{- end }}
             {{- if .Values.keycloak.enabled }}
             - name: KEYCLOAK_ISSUER_URI
-              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/shop-manager"
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager"
             - name: KEYCLOAK_JWK_SET_URI
-              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/shop-manager/protocol/openid-connect/certs"
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
             - name: KEYCLOAK_AUTH_SERVER_URL
-              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:8080"
+              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80"
             {{- end }}
             # Feature flags
             - name: FEATURE_INVESTMENT_ENABLED

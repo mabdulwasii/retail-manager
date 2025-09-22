@@ -143,7 +143,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-shopdb}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-shop}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-P@ssw0rd!2024#Shop}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: false
       KEYCLOAK_AUTH_SERVER_URL: https://keycloak:8443
       KEYCLOAK_ISSUER_URI: https://keycloak:8443/realms/shop-manager

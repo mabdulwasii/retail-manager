@@ -1,7 +1,5 @@
 package com.princely.shopmanager.auth.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
@@ -12,11 +10,18 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.security.SecureRandom;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing users in Keycloak using the admin client
@@ -59,6 +64,7 @@ public class KeycloakUserService {
         if (request.shopId() != null) {
             attributes.put("shopId", List.of(request.shopId()));
         }
+
         attributes.put("phoneNumber", List.of(request.phoneNumber()));
         user.setAttributes(attributes);
 

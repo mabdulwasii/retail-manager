@@ -6,7 +6,7 @@ spring:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
 
   h2:
     console:

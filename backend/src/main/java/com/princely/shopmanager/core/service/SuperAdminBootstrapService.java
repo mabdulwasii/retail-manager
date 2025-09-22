@@ -7,8 +7,7 @@ import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.RoleRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.service.AuditService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -18,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service responsible for bootstrapping super admin user on application startup
@@ -38,7 +40,7 @@ public class SuperAdminBootstrapService {
     @Value("${app.bootstrap.superadmin.username:superadmin}")
     private String superAdminUsername;
 
-    @Value("${app.bootstrap.superadmin.email:admin@shopmanager.local}")
+    @Value("${app.bootstrap.superadmin.email:superAdmin@shopmanager.local}")
     private String superAdminEmail;
 
     @Value("${app.bootstrap.superadmin.firstname:Super}")
@@ -46,6 +48,9 @@ public class SuperAdminBootstrapService {
 
     @Value("${app.bootstrap.superadmin.lastname:Admin}")
     private String superAdminLastName;
+
+    @Value("${app.bootstrap.superadmin.phonenumber:+1-000-000-0000}")
+    private String superAdminPhoneNumber;
 
     @Value("${app.bootstrap.superadmin.password:}")
     private String superAdminPassword;
@@ -118,6 +123,7 @@ public class SuperAdminBootstrapService {
             .email(superAdminEmail)
             .firstName(superAdminFirstName)
             .lastName(superAdminLastName)
+            .phoneNumber(superAdminPhoneNumber)
             .keycloakId(keycloakId)
             .status(User.UserStatus.ACTIVE)
             .roles(Set.of(superAdminRole))
@@ -156,7 +162,7 @@ public class SuperAdminBootstrapService {
             superAdminEmail,
             superAdminFirstName,
             superAdminLastName,
-            null, // phoneNumber
+            superAdminPhoneNumber,
             password
         );
 

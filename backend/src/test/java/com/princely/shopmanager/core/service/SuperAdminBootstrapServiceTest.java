@@ -54,7 +54,7 @@ class SuperAdminBootstrapServiceTest {
         // Set default configuration values
         ReflectionTestUtils.setField(bootstrapService, "bootstrapEnabled", true);
         ReflectionTestUtils.setField(bootstrapService, "superAdminUsername", "superadmin");
-        ReflectionTestUtils.setField(bootstrapService, "superAdminEmail", "admin@shopmanager.local");
+        ReflectionTestUtils.setField(bootstrapService, "superAdminEmail", "superAdmin@shopmanager.local");
         ReflectionTestUtils.setField(bootstrapService, "superAdminFirstName", "Super");
         ReflectionTestUtils.setField(bootstrapService, "superAdminLastName", "Admin");
         ReflectionTestUtils.setField(bootstrapService, "superAdminPassword", "");
