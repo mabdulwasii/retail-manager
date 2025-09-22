@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "shop-manager.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default (.Chart.Name | default "shop-manager") (and .Values .Values.nameOverride) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -11,14 +11,25 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "shop-manager.fullname" -}}
-{{- if .Values.fullnameOverride }}
+{{- if and .Values .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- $chartName := "shop-manager" }}
+{{- if and .Chart .Chart.Name }}
+{{- $chartName = .Chart.Name }}
+{{- end }}
+{{- $name := $chartName }}
+{{- if and .Values .Values.nameOverride }}
+{{- $name = .Values.nameOverride }}
+{{- end }}
+{{- $releaseName := "shop-manager" }}
+{{- if and .Release .Release.Name }}
+{{- $releaseName = .Release.Name }}
+{{- end }}
+{{- if contains $name $releaseName }}
+{{- $releaseName | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}

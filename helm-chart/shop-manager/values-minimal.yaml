@@ -1,0 +1,68 @@
+replicaCount: 1
+
+image:
+  repository: shop-manager-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: NodePort
+  port: 8081
+  targetPort: 8081
+  nodePort: 30081
+
+configMap:
+  data:
+    APP_BOOTSTRAP_SUPERADMIN_ENABLED: "true"
+    APP_BOOTSTRAP_SUPERADMIN_USERNAME: "superadmin"
+    APP_BOOTSTRAP_SUPERADMIN_EMAIL: "superadmin@shopmanager.local"
+    APP_BOOTSTRAP_SUPERADMIN_FIRSTNAME: "Super"
+    APP_BOOTSTRAP_SUPERADMIN_LASTNAME: "Admin"
+    APP_BOOTSTRAP_SUPERADMIN_PHONENUMBER: "+1-555-000-0001"
+    APP_BOOTSTRAP_SUPERADMIN_PASSWORD: "SuperAdmin@2024!"
+
+env:
+  SPRING_PROFILES_ACTIVE: prod
+  SERVER_PORT: "8081"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: none
+
+postgresql:
+  enabled: true
+  fullnameOverride: "shop-manager-postgresql"
+  auth:
+    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    username: "shop"
+    password: "ShopDB@2024!SecurePassword#CompliantStrong"
+    database: "shopdb"
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: "KeycloakAdm1n@2024!SecureAuth#CompliantPassword"
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: "shop-manager-keycloak-postgresql"
+    port: 5432
+    user: "keycloak"
+    database: "keycloak"
+    password: "KeycloakDB@2024!SecurePassword#Compliant"
+
+keycloakPostgresql:
+  enabled: true
+  fullnameOverride: "shop-manager-keycloak-postgresql"
+  auth:
+    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    username: "keycloak"
+    password: "KeycloakDB@2024!SecurePassword#Compliant"
+    database: "keycloak"
+
+kafka:
+  enabled: false
+
+minio:
+  enabled: false

@@ -133,7 +133,15 @@ env:
 
 # ConfigMap configuration
 configMap:
-  data: {}
+  data:
+    # Super Admin Bootstrap Configuration (Spring Boot property format)
+    APP_BOOTSTRAP_SUPERADMIN_ENABLED: "true"
+    APP_BOOTSTRAP_SUPERADMIN_USERNAME: "superadmin"
+    APP_BOOTSTRAP_SUPERADMIN_EMAIL: "superadmin@shopmanager.local"
+    APP_BOOTSTRAP_SUPERADMIN_FIRSTNAME: "Super"
+    APP_BOOTSTRAP_SUPERADMIN_LASTNAME: "Admin"
+    APP_BOOTSTRAP_SUPERADMIN_PHONENUMBER: "+1-555-000-0001"
+    APP_BOOTSTRAP_SUPERADMIN_PASSWORD: "SuperAdmin@2024!"
 
 # Database configuration for shop-manager backend
 # SECURITY WARNING: Change these passwords in production!
@@ -183,7 +191,7 @@ keycloakPostgresql:
 
 # Kafka configuration
 kafka:
-  enabled: true
+  enabled: false
 
 # Keycloak configuration
 # SECURITY WARNING: Change these passwords in production!

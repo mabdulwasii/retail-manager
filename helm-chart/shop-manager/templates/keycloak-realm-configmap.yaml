@@ -329,7 +329,7 @@ data:
     echo "Starting Keycloak realm configuration..."
 
     # Wait for Keycloak to be ready
-    until curl -f -s http://shop-manager-keycloak:8080/health/ready; do
+    until curl -f -s http://shop-manager-keycloak:80/health/ready; do
         echo "Waiting for Keycloak to be ready..."
         sleep 10
     done
@@ -337,7 +337,7 @@ data:
     echo "Keycloak is ready. Configuring realm..."
 
     # Get admin access token
-    ADMIN_TOKEN=$(curl -s -X POST "http://shop-manager-keycloak:8080/realms/master/protocol/openid-connect/token" \
+    ADMIN_TOKEN=$(curl -s -X POST "http://shop-manager-keycloak:80/realms/master/protocol/openid-connect/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "username=admin" \
         -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
@@ -353,7 +353,7 @@ data:
 
     # Check if shop-manager realm already exists
     REALM_EXISTS=$(curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
-        "http://shop-manager-keycloak:8080/admin/realms/shop-manager" \
+        "http://shop-manager-keycloak:80/admin/realms/shop-manager" \
         -w "%{http_code}" -o /dev/null)
 
     if [ "$REALM_EXISTS" = "200" ]; then
@@ -362,7 +362,7 @@ data:
         echo "Creating shop-manager realm..."
 
         # Create the realm from JSON
-        curl -s -X POST "http://shop-manager-keycloak:8080/admin/realms" \
+        curl -s -X POST "http://shop-manager-keycloak:80/admin/realms" \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
             -H "Content-Type: application/json" \
             -d @/config/shop-manager-realm.json
@@ -376,7 +376,7 @@ data:
     fi
 
     # Verify realm is accessible
-    REALM_CHECK=$(curl -s "http://shop-manager-keycloak:8080/realms/shop-manager/.well-known/openid-configuration" | jq -r '.issuer')
+    REALM_CHECK=$(curl -s "http://shop-manager-keycloak:80/realms/shop-manager/.well-known/openid-configuration" | jq -r '.issuer')
 
     if [[ "$REALM_CHECK" == *"shop-manager"* ]]; then
         echo "✓ Realm configuration completed successfully"

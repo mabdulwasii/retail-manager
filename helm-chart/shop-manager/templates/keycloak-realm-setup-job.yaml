@@ -7,7 +7,7 @@ metadata:
     {{- include "shop-manager.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-realm-setup
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook": post-upgrade
     "helm.sh/hook-weight": "2"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
@@ -21,16 +21,16 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: keycloak-realm-setup
-        image: curlimages/curl:latest
+        image: alpine:latest
         command:
         - /bin/sh
         - -c
         - |
-          # Install jq for JSON processing
-          apk add --no-cache jq
+          # Install required packages
+          apk add --no-cache curl jq netcat-openbsd
 
           # Wait for Keycloak service to be available
-          until nc -z {{ include "shop-manager.fullname" . }}-keycloak 8080; do
+          until nc -z {{ include "shop-manager.fullname" . }}-keycloak 80; do
             echo "Waiting for Keycloak service to be available..."
             sleep 10
           done

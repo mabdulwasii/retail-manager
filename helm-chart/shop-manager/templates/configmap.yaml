@@ -147,3 +147,10 @@ data:
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: {{ .Values.config.logging.securityLevel | default "INFO" | quote }}
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: {{ .Values.config.logging.webLevel | default "INFO" | quote }}
   LOGGING_PATTERN_CONSOLE: {{ .Values.config.logging.pattern | default "%d{yyyy-MM-dd HH:mm:ss} - %msg%n" | quote }}
+
+  # Super Admin Bootstrap Configuration
+  {{- with .Values.configMap.data }}
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
