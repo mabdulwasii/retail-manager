@@ -27,7 +27,7 @@ spec:
         - -c
         - |
           echo "Waiting for Keycloak to be ready..."
-          until wget -q --spider http://{{ include "shop-manager.fullname" . }}-keycloak:8080/realms/master; do
+          until wget -q --spider http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/master; do
             echo "Keycloak not ready, waiting..."
             sleep 10
           done
@@ -112,7 +112,7 @@ spec:
           # Configure the theme in the realm
           kubectl exec $POD_NAME -- /opt/bitnami/keycloak/bin/kcadm.sh update realms/shop-manager \
             -s loginTheme={{ .Values.keycloak.customTheme.name }} \
-            --server http://localhost:8080 \
+            --server http://localhost:80 \
             --realm master \
             --user {{ .Values.keycloak.auth.adminUser }} \
             --password '{{ .Values.keycloak.auth.adminPassword }}' || echo "Theme configuration update failed (may already be set)"
