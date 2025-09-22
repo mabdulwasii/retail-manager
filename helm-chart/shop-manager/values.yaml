@@ -252,6 +252,12 @@ keycloak:
     - name: KC_LOG_LEVEL
       value: "INFO"
 
+  # Custom theme configuration
+  customTheme:
+    enabled: true
+    name: "shop-manager"
+    applyToRealm: true
+
 # Application-specific comprehensive configuration
 config:
   # Database settings

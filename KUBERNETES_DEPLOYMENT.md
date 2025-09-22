@@ -117,6 +117,8 @@ helm install minio bitnami/minio \
 
 ### Step 2: Deploy Keycloak with Custom Theme
 
+**Note**: When using the Helm chart deployment (recommended), Keycloak with custom theme is deployed automatically. This manual deployment is only needed for custom setups.
+
 #### Deploy Keycloak
 ```bash
 # Using Bitnami Helm chart
@@ -130,12 +132,16 @@ helm install keycloak bitnami/keycloak \
   --set externalDatabase.password=postgres
 ```
 
-#### Install Custom Theme
+#### Verify Custom Theme Installation
 ```bash
-# Deploy custom Shop Manager theme
-./scripts/deploy-keycloak-theme.sh
+# Theme is automatically deployed via Helm chart
+# Verify theme ConfigMap exists
+kubectl get configmap shop-manager-keycloak-theme -n shop-manager
 
-# Verify theme installation
+# Verify theme installation job completed
+kubectl get job shop-manager-keycloak-theme-init -n shop-manager
+
+# Check theme files in Keycloak pod
 kubectl exec -n shop-manager shop-manager-keycloak-0 -- \
   ls -la /opt/bitnami/keycloak/themes/shop-manager/login/
 ```
@@ -228,6 +234,14 @@ helm-chart/shop-manager/
 ├── config/
 │   ├── keycloak-realm.json
 │   └── shop-manager-realm-config.yaml
+├── keycloak-theme/               # ← NEW: Consolidated theme structure
+│   └── shop-manager/
+│       └── login/
+│           ├── theme.properties  # Theme configuration
+│           ├── template.ftl      # Base template
+│           ├── login.ftl         # Login page template
+│           └── resources/css/
+│               └── shop-manager.css  # Custom styles
 ├── templates/
 │   ├── backend-deployment.yaml
 │   ├── backend-service.yaml
@@ -236,7 +250,9 @@ helm-chart/shop-manager/
 │   ├── ingress.yaml
 │   ├── configmap.yaml
 │   ├── secrets.yaml
-│   ├── keycloak-theme-configmap.yaml
+│   ├── keycloak-theme-configmap.yaml    # ← NEW: Auto-deployed theme
+│   ├── keycloak-theme-init-job.yaml     # ← NEW: Theme installation job
+│   ├── keycloak-theme-rbac.yaml         # ← NEW: Theme installer permissions
 │   ├── keycloak-init-job.yaml
 │   └── NOTES.txt
 └── values files:
@@ -376,34 +392,73 @@ kubectl delete namespace shop-manager
 
 ## Custom Keycloak Theme
 
-### Automated Deployment
-```bash
-# Deploy theme using script
-./scripts/deploy-keycloak-theme.sh
+### Automated Deployment (Default)
 
-# Verify deployment
-kubectl get cm keycloak-theme-shop-manager -n shop-manager
+The custom Keycloak theme is **automatically deployed** with every Helm installation. No manual intervention required!
+
+```bash
+# Theme is deployed automatically when installing shop-manager
+helm install shop-manager ./helm-chart/shop-manager --namespace shop-manager
+
+# Verify theme deployment
+kubectl get configmap shop-manager-keycloak-theme -n shop-manager
+kubectl get job shop-manager-keycloak-theme-init -n shop-manager
 ```
 
-### Manual Theme Update
+### Theme Configuration
+
+The theme is configured via Helm values:
+
+```yaml
+keycloak:
+  enabled: true
+  customTheme:
+    enabled: true          # Enable custom theme (default: true)
+    name: "shop-manager"    # Theme name (default: "shop-manager")
+    applyToRealm: true      # Auto-apply to shop-manager realm (default: true)
+```
+
+### Theme Structure
+
+```
+helm-chart/shop-manager/keycloak-theme/
+└── shop-manager/
+    └── login/
+        ├── theme.properties      # Theme configuration
+        ├── template.ftl          # Base template with branding
+        ├── login.ftl             # Login form with enhancements
+        └── resources/css/
+            └── shop-manager.css  # Custom styles and animations
+```
+
+### Manual Theme Update (Advanced)
+
+To update theme files after deployment:
+
 ```bash
-# Update ConfigMap
-kubectl create configmap keycloak-theme-shop-manager \
-  --from-file=keycloak-theme/shop-manager/login \
+# Update theme files in helm-chart/shop-manager/keycloak-theme/
+# Then upgrade the Helm release
+helm upgrade shop-manager ./helm-chart/shop-manager --namespace shop-manager
+
+# Or manually update ConfigMap
+kubectl create configmap shop-manager-keycloak-theme \
+  --from-file=helm-chart/shop-manager/keycloak-theme/shop-manager/login \
   --namespace=shop-manager \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Restart Keycloak
+# Restart Keycloak to reload theme
 kubectl rollout restart statefulset/shop-manager-keycloak -n shop-manager
 ```
 
 ### Theme Features
-- Custom Shop Manager branding
-- Password visibility toggle
-- Remember me functionality
-- Development credential auto-fill
-- Animated backgrounds
-- Responsive design
+- **🎨 Custom Shop Manager branding** - Logo, colors, and layout
+- **👁️ Password visibility toggle** - Enhanced user experience
+- **☑️ Enhanced remember me** - Improved checkbox styling
+- **🧪 Development auto-fill** - Quick login buttons for testing
+- **✨ Animated backgrounds** - Floating retail-themed elements
+- **📱 Responsive design** - Mobile-optimized login experience
+- **♿ Accessibility** - ARIA labels and keyboard navigation
+- **🌙 High contrast support** - Better visibility for all users
 
 ## SSL/TLS Configuration
 

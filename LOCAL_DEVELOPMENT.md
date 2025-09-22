@@ -297,11 +297,45 @@ LOG_LEVEL=DEBUG
 |---------|-----|---------|-------------------|
 | **Frontend** | http://localhost:3000 | React application | N/A |
 | **Backend API** | http://localhost:8081 | REST API & Swagger | N/A |
-| **Keycloak** | http://localhost:8080 | Authentication server | admin / KeycloakAdm1n@2024!SecureAuth#CompliantPassword |
+| **Keycloak** | http://localhost:8080 | Authentication server with custom theme | admin / KeycloakAdm1n@2024!SecureAuth#CompliantPassword |
 | **MinIO Console** | http://localhost:9001 | Object storage admin | admin / minio123 |
 | **PostgreSQL** | localhost:5432 | Database | postgres / postgres |
 | **Kafka** | localhost:9092 | Message broker | N/A |
 | **SonarQube** | http://localhost:9000 | Code quality | admin / admin |
+
+### Custom Keycloak Theme
+The development environment automatically includes a custom Shop Manager login theme with enhanced features:
+
+#### 🎨 Theme Features
+- **Shop Manager branding** - Custom logo, colors, and layout
+- **Password visibility toggle** - Eye icon to show/hide passwords
+- **Development auto-fill buttons** - Quick login with test credentials
+- **Animated background** - Floating retail-themed elements
+- **Responsive design** - Mobile-optimized interface
+- **Accessibility support** - ARIA labels and keyboard navigation
+
+#### 🔧 Theme Deployment
+The custom theme is automatically deployed when Keycloak starts:
+
+```bash
+# Theme files are automatically loaded from:
+# keycloak-theme/shop-manager/login/
+# ├── theme.properties      # Theme configuration
+# ├── template.ftl          # Base template
+# ├── login.ftl             # Login form
+# └── resources/css/
+#     └── shop-manager.css  # Custom styles
+
+# Verify theme is active
+curl http://localhost:8080/realms/shop-manager/login-actions/authenticate
+```
+
+#### 🧪 Development Features
+The theme includes development-only features for testing:
+- **Quick login buttons** for each test user role
+- **Auto-fill credentials** with one click
+- **Development environment indicator**
+- **Enhanced debugging information**
 
 ## Local Kubernetes Setup
 
