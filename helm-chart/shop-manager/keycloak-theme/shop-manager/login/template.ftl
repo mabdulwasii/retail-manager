@@ -108,7 +108,7 @@
                         </div>
                     </div>
                 </#if>
-                <#nested "show-username">
+                <#if auth?has_content && auth.showUsername()>
                     <div class="${properties.kcFormGroupClass!}">
                         <div id="kc-username" class="${properties.kcInputWrapperClass!}">
                             <label id="kc-attempted-username">${auth.attemptedUsername}</label>
@@ -120,17 +120,15 @@
                             </a>
                         </div>
                     </div>
-                </#nested>
+                </#if>
 
-                <#nested "header">
-                    <div class="shop-manager-logo">
-                        <h1 id="kc-page-title">
-                            <span class="logo-icon">🏪</span>
-                            <span class="logo-text">Shop Manager</span>
-                        </h1>
-                        <p class="subtitle">Retail Management Platform</p>
-                    </div>
-                </#nested>
+                <div class="shop-manager-logo">
+                    <h1 id="kc-page-title">
+                        <span class="logo-icon">🏪</span>
+                        <span class="logo-text">Shop Manager</span>
+                    </h1>
+                    <p class="subtitle">Retail Management Platform</p>
+                </div>
             </header>
 
             <div id="kc-content">
