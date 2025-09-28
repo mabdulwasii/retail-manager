@@ -1,16 +1,21 @@
 package com.princely.shopmanager.core.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.princely.shopmanager.auth.filter.TenantFilter;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.UserProfileResponse;
 import com.princely.shopmanager.core.service.UserService;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.service.FeatureFlagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,7 +29,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(controllers = UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -36,6 +42,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private FeatureFlagService featureFlagService;
 
     private User testUser;
     private JwtPrincipal testPrincipal;
