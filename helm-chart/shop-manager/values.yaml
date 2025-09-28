@@ -261,6 +261,13 @@ keycloak:
       value: "false"
     - name: KC_LOG_LEVEL
       value: "INFO"
+    # Disable progress indicators and reduce timeouts
+    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SUPPRESS_PROGRESS_INDICATORS
+      value: "true"
+    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SESSION_TIMEOUT
+      value: "1"
+    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_VERIFICATION_TIMEOUT
+      value: "1"
 
   # Custom theme configuration
   customTheme:

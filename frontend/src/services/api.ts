@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { getKeycloak } from '@/lib/keycloak'
+import { UserProfileResponse } from '@/types/user'
 
 class ApiService {
   private api: AxiosInstance
@@ -198,6 +199,11 @@ class ApiService {
   // Clear analytics cache
   async clearAnalyticsCache(shopId: string) {
     return this.post<void>(`/analytics/clear-cache/${shopId}`)
+  }
+
+  // User Profile API endpoints
+  async getUserProfile(): Promise<UserProfileResponse> {
+    return this.get<UserProfileResponse>('/users/profile')
   }
 }
 

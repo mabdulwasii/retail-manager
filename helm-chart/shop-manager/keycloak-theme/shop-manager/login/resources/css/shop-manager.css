@@ -338,76 +338,6 @@ a:hover {
     margin: 16px 0;
 }
 
-/* Development credentials section - clean layout */
-.dev-credentials {
-    margin-top: 24px;
-    padding: 16px;
-    background: rgba(250, 204, 21, 0.08);
-    border: 1px solid rgba(250, 204, 21, 0.2);
-    border-radius: var(--sm-radius);
-    text-align: center;
-}
-
-.dev-warning {
-    margin: 0 0 12px 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--sm-warning);
-}
-
-.quick-login-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.quick-login-btn {
-    padding: 8px 12px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: white;
-    color: var(--sm-text);
-    width: 100%;
-}
-
-.quick-login-btn.admin {
-    border-color: #dc2626;
-    color: #dc2626;
-}
-
-.quick-login-btn.admin:hover {
-    background: #dc2626;
-    color: white;
-}
-
-.quick-login-btn.manager {
-    border-color: #2563eb;
-    color: #2563eb;
-}
-
-.quick-login-btn.manager:hover {
-    background: #2563eb;
-    color: white;
-}
-
-.quick-login-btn.employee {
-    border-color: #16a34a;
-    color: #16a34a;
-}
-
-.quick-login-btn.employee:hover {
-    background: #16a34a;
-    color: white;
-}
-
-.quick-login-btn.selected {
-    transform: scale(0.95);
-    opacity: 0.8;
-}
 
 /* Alert messages */
 .alert {
@@ -452,14 +382,6 @@ a:hover {
         font-size: 24px;
     }
 
-    .quick-login-buttons {
-        flex-direction: column;
-    }
-
-    .quick-login-btn {
-        font-size: 13px;
-        padding: 8px 12px;
-    }
 }
 
 /* Accessibility improvements */

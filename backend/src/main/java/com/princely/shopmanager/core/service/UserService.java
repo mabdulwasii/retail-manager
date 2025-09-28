@@ -76,4 +76,21 @@ public class UserService {
     public List<User> getManagerUsers(String tenantId) {
         return getUsersByRolesAndTenant(List.of("SHOP_MANAGER"), tenantId);
     }
+
+    /**
+     * Gets a user by their Keycloak ID.
+     *
+     * @param keycloakId Keycloak user ID
+     * @return User if found, null otherwise
+     */
+    public User getUserByKeycloakId(String keycloakId) {
+        log.debug("Finding user by Keycloak ID: {}", keycloakId);
+
+        try {
+            return userRepository.findByKeycloakId(keycloakId).orElse(null);
+        } catch (Exception e) {
+            log.error("Error finding user by Keycloak ID {}: {}", keycloakId, e.getMessage());
+            return null;
+        }
+    }
 }

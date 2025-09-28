@@ -16,10 +16,11 @@ import { InvestmentsPage } from '@/pages/investments/InvestmentsPage'
 import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
 import { AuditPage } from '@/pages/audit/AuditPage'
 import { InventoryPage } from '@/pages/inventory/InventoryPage'
+import { ProfilePage } from '@/pages/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 export const AuthenticatedApp: React.FC = () => {
-  const { isLoading, isAuthenticated } = useAuth()
+  const { isLoading, isAuthenticated, login } = useAuth()
 
   if (isLoading) {
     return (
@@ -30,17 +31,24 @@ export const AuthenticatedApp: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />
+    // Redirect to Keycloak login instead of showing local login page
+    login({ redirectUri: window.location.origin + '/dashboard' })
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+        <p className="ml-2">Redirecting to login...</p>
+      </div>
+    )
   }
 
   return (
     <Routes>
-      {/* Dashboard Route */}
-      <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
+      {/* Dashboard Route - handles empty path when coming from /dashboard */}
+      <Route index element={<Layout><DashboardPage /></Layout>} />
 
       {/* Shop Management */}
       <Route
-        path="/shops"
+        path="shops"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
@@ -50,7 +58,7 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
-        path="/shops/create"
+        path="shops/create"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER']}>
@@ -60,7 +68,7 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
-        path="/shops/:shopId"
+        path="shops/:shopId"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
@@ -72,7 +80,7 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Products & Inventory */}
       <Route
-        path="/products"
+        path="products"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
@@ -82,7 +90,7 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
-        path="/inventory"
+        path="inventory"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'INVENTORY_MANAGER']}>
@@ -94,7 +102,7 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Sales & Receipts */}
       <Route
-        path="/sales"
+        path="sales"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER', 'SALES_MANAGER']}>
@@ -104,7 +112,7 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
-        path="/receipts"
+        path="receipts"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER']}>
@@ -116,7 +124,7 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Investments */}
       <Route
-        path="/investments"
+        path="investments"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'INVESTOR']}>
@@ -128,7 +136,7 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Analytics */}
       <Route
-        path="/analytics"
+        path="analytics"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT']}>
@@ -140,12 +148,22 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Audit Logs */}
       <Route
-        path="/audit"
+        path="audit"
         element={
           <Layout>
             <ProtectedRoute roles={['SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR']}>
               <AuditPage />
             </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      {/* Profile */}
+      <Route
+        path="profile"
+        element={
+          <Layout>
+            <ProfilePage />
           </Layout>
         }
       />

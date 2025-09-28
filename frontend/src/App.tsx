@@ -107,6 +107,14 @@ function App() {
           </KeycloakAuthProvider>
         }
       />
+      <Route
+        path="/profile/*"
+        element={
+          <KeycloakAuthProvider>
+            <AuthenticatedApp />
+          </KeycloakAuthProvider>
+        }
+      />
 
       {/* 404 Page */}
       <Route path="*" element={<NotFoundPage />} />

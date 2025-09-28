@@ -10,10 +10,26 @@ import { AuditorDashboard } from './AuditorDashboard'
 import { CustomerDashboard } from './CustomerDashboard'
 
 export const RoleBasedDashboard: React.FC = () => {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
 
-  if (!user || !user.roles || user.roles.length === 0) {
-    return <div>Loading dashboard...</div>
+  // Debug logging
+  console.log('RoleBasedDashboard - isAuthenticated:', isAuthenticated)
+  console.log('RoleBasedDashboard - user:', user)
+
+  if (!isAuthenticated) {
+    return <div>Not authenticated</div>
+  }
+
+  if (!user) {
+    // If authenticated but no user profile, show default dashboard
+    console.log('Authenticated but no user profile, showing default dashboard')
+    return <OwnerManagerDashboard />
+  }
+
+  if (!user.roles || user.roles.length === 0) {
+    // If user exists but no roles, show default dashboard
+    console.log('User exists but no roles, showing default dashboard')
+    return <OwnerManagerDashboard />
   }
 
   // Get the highest priority role for dashboard selection
