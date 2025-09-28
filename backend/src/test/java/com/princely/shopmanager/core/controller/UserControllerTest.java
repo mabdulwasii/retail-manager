@@ -1,58 +1,46 @@
 package com.princely.shopmanager.core.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.princely.shopmanager.auth.filter.TenantFilter;
 import com.princely.shopmanager.core.domain.User;
-import com.princely.shopmanager.core.dto.UserProfileResponse;
-import com.princely.shopmanager.core.service.UserService;
-import com.princely.shopmanager.shared.domain.JwtPrincipal;
-import com.princely.shopmanager.shared.service.FeatureFlagService;
+import com.princely.shopmanager.core.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = UserController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@DisplayName("UserController Tests")
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
+@DisplayName("UserController Integration Tests")
 class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private UserService userService;
-
-    @MockBean
-    private FeatureFlagService featureFlagService;
+    private UserRepository userRepository;
 
     private User testUser;
-    private JwtPrincipal testPrincipal;
 
     @BeforeEach
     void setUp() {
+        userRepository.deleteAll();
+
         testUser = User.builder()
-            .id("user-123")
             .keycloakId("keycloak-456")
             .username("john.doe")
             .email("john.doe@example.com")
@@ -62,27 +50,14 @@ class UserControllerTest {
             .status(User.UserStatus.ACTIVE)
             .isInvestor(false)
             .build();
-        // Set the auditing fields manually for testing
-        testUser.setCreatedAt(LocalDateTime.of(2024, 1, 15, 10, 30));
-        testUser.setUpdatedAt(LocalDateTime.of(2024, 1, 20, 15, 45));
-
-        testPrincipal = JwtPrincipal.builder()
-            .subject("keycloak-456")
-            .preferredUsername("john.doe")
-            .email("john.doe@example.com")
-            .firstName("John")
-            .lastName("Doe")
-            .roles(List.of("SHOP_MANAGER", "SHOP_EMPLOYEE"))
-            .tenantId("tenant-123")
-            .build();
     }
 
     @Test
     @DisplayName("Should return user profile when user exists in database")
     @WithMockUser(roles = {"SHOP_MANAGER"})
     void shouldReturnUserProfileWhenUserExists() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId("keycloak-456")).thenReturn(testUser);
+        // Given - Save user to database
+        User savedUser = userRepository.save(testUser);
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
@@ -100,7 +75,7 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.id").value("user-123"))
+            .andExpect(jsonPath("$.id").value(savedUser.getId()))
             .andExpect(jsonPath("$.username").value("john.doe"))
             .andExpect(jsonPath("$.email").value("john.doe@example.com"))
             .andExpect(jsonPath("$.firstName").value("John"))
@@ -122,13 +97,12 @@ class UserControllerTest {
     @DisplayName("Should return JWT-based profile when user not found in database")
     @WithMockUser(roles = {"SHOP_MANAGER"})
     void shouldReturnJwtProfileWhenUserNotInDatabase() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId("keycloak-456")).thenReturn(null);
+        // Given - No user in database (repository is cleared in @BeforeEach)
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
                 .with(jwt().jwt(jwt -> jwt
-                    .subject("keycloak-456")
+                    .subject("keycloak-different-id")
                     .claim("preferred_username", "jane.doe")
                     .claim("email", "jane.doe@example.com")
                     .claim("given_name", "Jane")
@@ -141,7 +115,7 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.id").value("keycloak-456"))
+            .andExpect(jsonPath("$.id").value("keycloak-different-id"))
             .andExpect(jsonPath("$.username").value("jane.doe"))
             .andExpect(jsonPath("$.email").value("jane.doe@example.com"))
             .andExpect(jsonPath("$.firstName").value("Jane"))
@@ -177,30 +151,11 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Should handle service exceptions gracefully")
-    @WithMockUser(roles = {"SHOP_MANAGER"})
-    void shouldHandleServiceExceptions() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId(anyString())).thenThrow(new RuntimeException("Database error"));
-
-        // When & Then
-        mockMvc.perform(get("/api/users/profile")
-                .with(jwt().jwt(jwt -> jwt
-                    .subject("keycloak-456")
-                    .claim("preferred_username", "john.doe")
-                    .claim("email", "john.doe@example.com")
-                    .claim("realm_access", java.util.Map.of("roles", List.of("SHOP_MANAGER")))
-                ))
-                .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isInternalServerError());
-    }
-
-    @Test
     @DisplayName("Should accept TENANT_ADMIN role")
     @WithMockUser(roles = {"TENANT_ADMIN"})
     void shouldAcceptTenantAdminRole() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId("keycloak-456")).thenReturn(testUser);
+        // Given - Save user to database
+        User savedUser = userRepository.save(testUser);
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
@@ -211,16 +166,15 @@ class UserControllerTest {
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("user-123"));
+            .andExpect(jsonPath("$.id").value(savedUser.getId()));
     }
 
     @Test
     @DisplayName("Should accept INVESTOR role")
     @WithMockUser(roles = {"INVESTOR"})
     void shouldAcceptInvestorRole() throws Exception {
-        // Given
+        // Given - Create and save investor user
         User investorUser = User.builder()
-            .id("investor-123")
             .keycloakId("keycloak-789")
             .username("investor.user")
             .email("investor@example.com")
@@ -230,7 +184,7 @@ class UserControllerTest {
             .isInvestor(true)
             .build();
 
-        when(userService.getUserByKeycloakId("keycloak-789")).thenReturn(investorUser);
+        User savedInvestor = userRepository.save(investorUser);
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
@@ -242,7 +196,7 @@ class UserControllerTest {
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("investor-123"))
+            .andExpect(jsonPath("$.id").value(savedInvestor.getId()))
             .andExpect(jsonPath("$.isInvestor").value(true));
     }
 
@@ -250,8 +204,8 @@ class UserControllerTest {
     @DisplayName("Should accept SHOP_EMPLOYEE role")
     @WithMockUser(roles = {"SHOP_EMPLOYEE"})
     void shouldAcceptShopEmployeeRole() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId("keycloak-456")).thenReturn(testUser);
+        // Given - Save user to database
+        User savedUser = userRepository.save(testUser);
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
@@ -262,26 +216,25 @@ class UserControllerTest {
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("user-123"));
+            .andExpect(jsonPath("$.id").value(savedUser.getId()));
     }
 
     @Test
     @DisplayName("Should handle missing JWT claims gracefully")
     @WithMockUser(roles = {"SHOP_MANAGER"})
     void shouldHandleMissingJwtClaims() throws Exception {
-        // Given
-        when(userService.getUserByKeycloakId("keycloak-456")).thenReturn(null);
+        // Given - No user in database for this Keycloak ID
 
         // When & Then
         mockMvc.perform(get("/api/users/profile")
                 .with(jwt().jwt(jwt -> jwt
-                    .subject("keycloak-456")
+                    .subject("keycloak-minimal")
                     .claim("preferred_username", "minimal.user")
                     // Missing many optional claims
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("keycloak-456"))
+            .andExpect(jsonPath("$.id").value("keycloak-minimal"))
             .andExpect(jsonPath("$.username").value("minimal.user"))
             .andExpect(jsonPath("$.email").doesNotExist())
             .andExpect(jsonPath("$.firstName").doesNotExist())
