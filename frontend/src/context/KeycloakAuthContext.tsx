@@ -57,8 +57,8 @@ const LoadingFallback: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
     <div className="text-center">
       <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-      <h2 className="text-xl font-semibold text-gray-700">Authenticating...</h2>
-      <p className="text-gray-500 mt-2">Please wait while we verify your session</p>
+      <h2 className="text-xl font-semibold text-gray-700">Shop Manager</h2>
+      <p className="text-gray-500 mt-2">Loading application...</p>
     </div>
   </div>
 )
@@ -183,9 +183,10 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshAuth,
   }
 
-  if (!initialized && !initTimeout) {
-    return <LoadingFallback />
-  }
+  // Skip loading fallback - go straight to auth check
+  // if (!initialized && !initTimeout) {
+  //   return <LoadingFallback />
+  // }
 
   // If initialization timed out, render children with unauthenticated state
   if (initTimeout && !initialized) {
@@ -198,15 +199,15 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
 // Main provider component that wraps ReactKeycloakProvider
 export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const initOptions: Keycloak.KeycloakInitOptions = {
-    onLoad: 'check-sso', // Check SSO but don't force login
+    onLoad: 'login-required', // Force login immediately - faster redirect
     checkLoginIframe: false, // Disable iframe check to prevent 3rd party timeout
     checkLoginIframeInterval: 0, // Disable periodic iframe checks
     pkceMethod: 'S256',
-    enableLogging: import.meta.env.DEV, // Enable logging only in development
+    enableLogging: false, // Disable logging for faster load
     responseMode: 'fragment',
     flow: 'standard',
-    timeoutInSeconds: 10, // Reduce timeout to fail faster
     skipLogout: true,
+    // Don't set redirectUri here - let the app handle routing after auth
   }
 
   const handleKeycloakEvent = (event: Keycloak.KeycloakEvent, error?: Keycloak.KeycloakError) => {
@@ -250,7 +251,7 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <ReactKeycloakProvider
       authClient={keycloak}
       initOptions={initOptions}
-      LoadingComponent={<LoadingFallback />}
+      LoadingComponent={<div />}
       onEvent={handleKeycloakEvent}
       onTokens={handleKeycloakTokens}
     >

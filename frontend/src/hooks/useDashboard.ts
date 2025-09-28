@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiService } from '@/services/api'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/KeycloakAuthContext'
 
 // Helper function to get date ranges
 const getDateRange = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {

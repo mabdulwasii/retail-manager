@@ -1,24 +1,26 @@
-/* Shop Manager Enhanced Keycloak Theme */
-/* Modern, accessible, and feature-rich login experience */
+/* Shop Manager Premium Keycloak Theme */
+/* Modern, professional, and beautiful login experience */
 
 :root {
-    --sm-primary: #2563eb;
-    --sm-primary-dark: #1d4ed8;
-    --sm-primary-light: #3b82f6;
+    --sm-primary: #6366f1;
+    --sm-primary-dark: #4f46e5;
+    --sm-primary-light: #8b5cf6;
     --sm-secondary: #64748b;
-    --sm-success: #16a34a;
-    --sm-warning: #ea580c;
-    --sm-error: #dc2626;
+    --sm-success: #10b981;
+    --sm-warning: #f59e0b;
+    --sm-error: #ef4444;
     --sm-surface: #ffffff;
     --sm-surface-dark: #f8fafc;
     --sm-text: #1e293b;
     --sm-text-light: #64748b;
     --sm-border: #e2e8f0;
-    --sm-border-focus: #3b82f6;
+    --sm-border-focus: #6366f1;
     --sm-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --sm-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --sm-radius: 8px;
-    --sm-radius-lg: 12px;
+    --sm-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --sm-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --sm-radius: 12px;
+    --sm-radius-lg: 16px;
+    --sm-radius-xl: 20px;
 }
 
 /* Reset and base styles */
@@ -27,13 +29,45 @@
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
     min-height: 100vh;
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: var(--sm-text);
     overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Floating particles background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: float 20s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-20px) translateX(10px); }
+    100% { transform: translateY(0px) translateX(0px); }
 }
 
 /* Login container */
@@ -44,31 +78,66 @@ body {
     min-height: 100vh;
     padding: 20px;
     position: relative;
+    z-index: 10;
 }
 
-/* Glassmorphism card */
-.card-pf {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--sm-radius-lg);
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: var(--sm-shadow-lg), 0 0 40px rgba(0, 0, 0, 0.1);
+/* Premium login card */
+.card-pf,
+.login-pf-page .card-pf,
+.kc-form-card,
+#kc-form-wrapper,
+.login-pf-page .kc-form-card {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--sm-radius-xl);
+    padding: 48px;
+    width: 100% !important;
+    max-width: 960px !important;
+    box-shadow:
+        var(--sm-shadow-xl),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 0 60px rgba(99, 102, 241, 0.1);
     position: relative;
     z-index: 10;
-    animation: slideUp 0.6s ease-out;
+    animation: slideUpFade 0.8s ease-out;
+    display: block !important;
+    margin: 0 auto;
 }
 
-@keyframes slideUp {
+/* Enhanced mobile responsive */
+@media (max-width: 768px) {
+    .card-pf,
+    .login-pf-page .card-pf,
+    .kc-form-card,
+    #kc-form-wrapper,
+    .login-pf-page .kc-form-card {
+        max-width: 90vw !important;
+        padding: 32px 24px;
+        margin: 16px;
+        border-radius: var(--sm-radius-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .card-pf,
+    .login-pf-page .card-pf,
+    .kc-form-card,
+    #kc-form-wrapper,
+    .login-pf-page .kc-form-card {
+        padding: 24px 20px;
+        margin: 12px;
+    }
+}
+
+@keyframes slideUpFade {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(40px) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -91,19 +160,7 @@ body {
 
 .logo-icon {
     font-size: 32px;
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-10px);
-    }
-    60% {
-        transform: translateY(-5px);
-    }
+    /* Removed annoying bounce animation */
 }
 
 .subtitle {
@@ -281,19 +338,19 @@ a:hover {
     margin: 16px 0;
 }
 
-/* Development credentials section */
+/* Development credentials section - clean layout */
 .dev-credentials {
-    margin-top: 32px;
-    padding: 20px;
-    background: rgba(250, 204, 21, 0.1);
-    border: 1px solid rgba(250, 204, 21, 0.3);
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(250, 204, 21, 0.08);
+    border: 1px solid rgba(250, 204, 21, 0.2);
     border-radius: var(--sm-radius);
     text-align: center;
 }
 
 .dev-warning {
-    margin: 0 0 16px 0;
-    font-size: 14px;
+    margin: 0 0 12px 0;
+    font-size: 12px;
     font-weight: 600;
     color: var(--sm-warning);
 }
@@ -301,19 +358,20 @@ a:hover {
 .quick-login-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .quick-login-btn {
-    padding: 10px 16px;
-    border: 2px solid transparent;
-    border-radius: var(--sm-radius);
-    font-size: 14px;
-    font-weight: 600;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     background: white;
     color: var(--sm-text);
+    width: 100%;
 }
 
 .quick-login-btn.admin {
@@ -433,4 +491,32 @@ a:hover {
     .form-control {
         border-width: 2px;
     }
+}
+
+/* Hide progress bar and loading messages */
+.kc-loading,
+#kc-loading,
+.loading-overlay,
+.spinner,
+.progress-bar,
+.verification-message,
+[data-testid="loading"],
+.loading-indicator {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Hide specific Keycloak loading/verification messages */
+.instruction:contains("Please wait"),
+.instruction:contains("verify"),
+.instruction:contains("Verifying"),
+.instruction:contains("Loading") {
+    display: none !important;
+}
+
+/* Speed up any remaining animations to make them imperceptible */
+* {
+    animation-duration: 0.01s !important;
+    transition-duration: 0.01s !important;
 }
