@@ -1,18 +1,15 @@
 import Keycloak from 'keycloak-js'
+import configService from '../config/runtime-config'
 
 let keycloak: Keycloak | null = null
-
-const initOptions = {
-  url: import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080',
-  realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
-}
 
 export const initKeycloak = async (): Promise<Keycloak> => {
   if (keycloak) {
     return keycloak
   }
 
+  // Get config at initialization time, not module load time
+  const initOptions = configService.keycloakConfig
   keycloak = new Keycloak(initOptions)
 
   try {
@@ -148,7 +145,7 @@ export const login = async (): Promise<void> => {
 
 export const loginWithCredentials = async (username: string, password: string, onAuthUpdate?: () => Promise<void>): Promise<boolean> => {
   try {
-    const tokenUrl = `${initOptions.url}/realms/${initOptions.realm}/protocol/openid-connect/token`
+    const tokenUrl = `${configService.keycloakUrl}/realms/${configService.keycloakRealm}/protocol/openid-connect/token`
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
@@ -157,7 +154,7 @@ export const loginWithCredentials = async (username: string, password: string, o
       },
       body: new URLSearchParams({
         grant_type: 'password',
-        client_id: initOptions.clientId,
+        client_id: configService.keycloakClientId,
         username,
         password,
       }),
@@ -168,7 +165,7 @@ export const loginWithCredentials = async (username: string, password: string, o
 
       // Initialize Keycloak with the token
       if (!keycloak) {
-        keycloak = new Keycloak(initOptions)
+        keycloak = new Keycloak(configService.keycloakConfig)
       }
 
       // Set the token manually

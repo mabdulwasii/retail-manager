@@ -3,11 +3,11 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Build args for environment variables
-ARG VITE_API_BASE_URL
-ARG VITE_KEYCLOAK_URL
-ARG VITE_KEYCLOAK_REALM
-ARG VITE_KEYCLOAK_CLIENT_ID
+# Build args for environment variables with Kubernetes defaults
+ARG VITE_API_BASE_URL=https://api.shop-manager.local/api
+ARG VITE_KEYCLOAK_URL=https://auth.shop-manager.local
+ARG VITE_KEYCLOAK_REALM=shop-manager
+ARG VITE_KEYCLOAK_CLIENT_ID=shop-manager-frontend
 
 # Set environment variables
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}

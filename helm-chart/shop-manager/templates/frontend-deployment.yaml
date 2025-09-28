@@ -27,17 +27,17 @@ spec:
           containerPort: {{ .Values.frontend.service.targetPort | default 3000 }}
           protocol: TCP
         env:
-        - name: REACT_APP_API_BASE_URL
+        - name: VITE_API_BASE_URL
           value: {{ .Values.frontend.config.apiBaseUrl | default "http://localhost:8081/api" | quote }}
-        - name: REACT_APP_KEYCLOAK_URL
+        - name: VITE_KEYCLOAK_URL
           value: {{ .Values.frontend.config.keycloakUrl | default "http://localhost:8080" | quote }}
-        - name: REACT_APP_KEYCLOAK_REALM
+        - name: VITE_KEYCLOAK_REALM
           value: {{ .Values.frontend.config.keycloakRealm | default "shop-manager" | quote }}
-        - name: REACT_APP_KEYCLOAK_CLIENT_ID
+        - name: VITE_KEYCLOAK_CLIENT_ID
           value: {{ .Values.frontend.config.keycloakClientId | default "shop-manager-frontend" | quote }}
-        - name: REACT_APP_VERSION
+        - name: VITE_APP_VERSION
           value: {{ .Chart.AppVersion | quote }}
-        - name: REACT_APP_ENVIRONMENT
+        - name: VITE_APP_ENV
           value: {{ .Values.frontend.config.environment | default "production" | quote }}
         {{- if .Values.frontend.extraEnvVars }}
         {{- toYaml .Values.frontend.extraEnvVars | nindent 8 }}
@@ -60,6 +60,14 @@ spec:
           failureThreshold: 3
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
+        volumeMounts:
+        - name: frontend-config
+          mountPath: /usr/share/nginx/html/config.js
+          subPath: config.js
+      volumes:
+      - name: frontend-config
+        configMap:
+          name: {{ include "shop-manager.fullname" . }}-frontend-config
       {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

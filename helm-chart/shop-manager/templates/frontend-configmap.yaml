@@ -1,0 +1,19 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-frontend-config
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+data:
+  config.js: |
+    window.RUNTIME_CONFIG = {
+      API_BASE_URL: "{{ .Values.frontend.config.apiBaseUrl | default "http://localhost:8081/api" }}",
+      KEYCLOAK_URL: "{{ .Values.frontend.config.keycloakUrl | default "http://localhost:8080" }}",
+      KEYCLOAK_REALM: "{{ .Values.frontend.config.keycloakRealm | default "shop-manager" }}",
+      KEYCLOAK_CLIENT_ID: "{{ .Values.frontend.config.keycloakClientId | default "shop-manager-frontend" }}",
+      APP_VERSION: "{{ .Chart.AppVersion | default "1.0.0" }}",
+      APP_ENV: "{{ .Values.frontend.config.environment | default "production" }}"
+    };
+{{- end }}
