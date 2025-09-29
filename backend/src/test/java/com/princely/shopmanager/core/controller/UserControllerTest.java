@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = {
+    "app.features.analytics.enabled=false",
+    "app.features.investment.enabled=false",
+    "app.features.fraud.enabled=false",
+    "spring.modulith.events.externalization.enabled=false"
+})
 @Transactional
 @DisplayName("UserController Integration Tests")
 class UserControllerTest {

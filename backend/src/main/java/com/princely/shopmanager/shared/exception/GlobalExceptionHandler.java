@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
         logger.warn("Tenant access denied: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(new ErrorResponse(e.getCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
+        logger.warn("Spring Access denied: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(new ErrorResponse("FORBIDDEN", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

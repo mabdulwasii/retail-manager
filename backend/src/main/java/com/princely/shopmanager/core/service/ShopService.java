@@ -349,5 +349,4 @@ public class ShopService {
         tenant.setContactUser(contactUser);
         return tenantRepository.save(tenant);
     }
-
 }
