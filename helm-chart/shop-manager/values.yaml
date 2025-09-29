@@ -394,7 +394,7 @@ config:
   # Keycloak settings
   keycloak:
     realm: "shop-manager"
-    clientId: "shop-manager-backend"
+    clientId: "shop-manager-frontend"
     authServerUrl: "http://shop-manager-keycloak:80"
     issuerUri: "http://shop-manager-keycloak:80/realms/shop-manager"
     jwkSetUri: "http://shop-manager-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"

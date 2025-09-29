@@ -130,6 +130,8 @@ spec:
               value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
             - name: KEYCLOAK_AUTH_SERVER_URL
               value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80"
+            - name: APP_KEYCLOAK_CLIENT_ID
+              value: {{ .Values.config.keycloak.clientId | default "shop-manager-frontend" | quote }}
             {{- end }}
             # Feature flags
             - name: FEATURE_INVESTMENT_ENABLED

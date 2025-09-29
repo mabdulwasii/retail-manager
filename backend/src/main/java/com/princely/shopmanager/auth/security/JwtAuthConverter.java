@@ -46,23 +46,33 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
 
     @SuppressWarnings("unchecked")
     private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        // Extract realm roles
+        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+        if (realmAccess != null) {
+            Collection<String> realmRoles = (Collection<String>) realmAccess.get("roles");
+            if (realmRoles != null) {
+                authorities.addAll(realmRoles.stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                    .collect(Collectors.toSet()));
+            }
+        }
+
+        // Extract resource/client roles
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-        if (resourceAccess == null) {
-            return Collections.emptySet();
+        if (resourceAccess != null) {
+            Map<String, Object> clientResource = (Map<String, Object>) resourceAccess.get(clientId);
+            if (clientResource != null) {
+                Collection<String> clientRoles = (Collection<String>) clientResource.get("roles");
+                if (clientRoles != null) {
+                    authorities.addAll(clientRoles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                        .collect(Collectors.toSet()));
+                }
+            }
         }
 
-        Map<String, Object> clientResource = (Map<String, Object>) resourceAccess.get(clientId);
-        if (clientResource == null) {
-            return Collections.emptySet();
-        }
-
-        Collection<String> roles = (Collection<String>) clientResource.get("roles");
-        if (roles == null) {
-            return Collections.emptySet();
-        }
-
-        return roles.stream()
-            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-            .collect(Collectors.toSet());
+        return authorities;
     }
 }

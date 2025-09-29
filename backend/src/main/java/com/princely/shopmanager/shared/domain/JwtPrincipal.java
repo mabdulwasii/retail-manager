@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,27 @@ public class JwtPrincipal {
     private String sessionState;
     private String scope;
 
+    @SuppressWarnings("unchecked")
     public static JwtPrincipal fromJwt(Jwt jwt) {
+        List<String> roles = new ArrayList<>();
+
+        // Try to extract roles from realm_access
+        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+        if (realmAccess != null && realmAccess.get("roles") != null) {
+            Object rolesObj = realmAccess.get("roles");
+            if (rolesObj instanceof List) {
+                roles.addAll((List<String>) rolesObj);
+            }
+        }
+
+        // If no realm roles found, try direct roles claim
+        if (roles.isEmpty()) {
+            List<String> directRoles = jwt.getClaimAsStringList("roles");
+            if (directRoles != null) {
+                roles.addAll(directRoles);
+            }
+        }
+
         return JwtPrincipal.builder()
             .subject(jwt.getClaimAsString("sub"))
             .preferredUsername(jwt.getClaimAsString("preferred_username"))
@@ -38,7 +59,7 @@ public class JwtPrincipal {
             .email(jwt.getClaimAsString("email"))
             .firstName(jwt.getClaimAsString("given_name"))
             .lastName(jwt.getClaimAsString("family_name"))
-            .roles(jwt.getClaimAsStringList("roles"))
+            .roles(roles)
             .claims(jwt.getClaims())
             .issuedAt(jwt.getIssuedAt())
             .expiresAt(jwt.getExpiresAt())
