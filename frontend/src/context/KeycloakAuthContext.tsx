@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web'
 import Keycloak from 'keycloak-js'
 import { Loader2 } from 'lucide-react'
+import { apiService } from '@/services/api'
 
 // Initialize Keycloak instance with singleton pattern
 const keycloakConfig = {
@@ -112,8 +113,24 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (initialized) {
       if (keycloak.authenticated) {
         setUser(getUserProfile())
+        // Configure API service with token provider
+        apiService.setTokenProvider(() => keycloak.token)
+
+        // Always save tokens to localStorage upon authentication
+        if (keycloak.token && keycloak.refreshToken) {
+          localStorage.setItem('keycloak_token', keycloak.token)
+          localStorage.setItem('keycloak_access_token', keycloak.token)
+          localStorage.setItem('keycloak_refresh_token', keycloak.refreshToken)
+          localStorage.setItem('keycloak_id_token', keycloak.idToken || '')
+        }
       } else {
         setUser(null)
+        // Clear API service token provider and localStorage
+        apiService.setTokenProvider(() => undefined)
+        localStorage.removeItem('keycloak_token')
+        localStorage.removeItem('keycloak_access_token')
+        localStorage.removeItem('keycloak_refresh_token')
+        localStorage.removeItem('keycloak_id_token')
       }
     }
   }, [initialized, keycloak.authenticated, keycloak.tokenParsed])
@@ -127,6 +144,13 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (refreshed) {
             console.log('Token refreshed successfully')
             setUser(getUserProfile())
+            // Save refreshed tokens to localStorage
+            if (keycloak.token && keycloak.refreshToken) {
+              localStorage.setItem('keycloak_token', keycloak.token)
+              localStorage.setItem('keycloak_access_token', keycloak.token)
+              localStorage.setItem('keycloak_refresh_token', keycloak.refreshToken)
+              localStorage.setItem('keycloak_id_token', keycloak.idToken || '')
+            }
           }
         } catch (error) {
           console.error('Failed to refresh token:', error)
@@ -154,8 +178,15 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshAuth = async (): Promise<void> => {
     if (keycloak.authenticated) {
       try {
-        await keycloak.updateToken(5)
+        const refreshed = await keycloak.updateToken(5)
         setUser(getUserProfile())
+        // Save refreshed tokens to localStorage
+        if (refreshed && keycloak.token && keycloak.refreshToken) {
+          localStorage.setItem('keycloak_token', keycloak.token)
+          localStorage.setItem('keycloak_access_token', keycloak.token)
+          localStorage.setItem('keycloak_refresh_token', keycloak.refreshToken)
+          localStorage.setItem('keycloak_id_token', keycloak.idToken || '')
+        }
       } catch (error) {
         console.error('Failed to refresh auth:', error)
       }
@@ -230,6 +261,7 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.log('User logged out')
         // Clear any persisted data
         localStorage.removeItem('keycloak_token')
+        localStorage.removeItem('keycloak_access_token')
         localStorage.removeItem('keycloak_refresh_token')
         localStorage.removeItem('keycloak_id_token')
         break
@@ -237,9 +269,10 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }
 
   const handleKeycloakTokens = (tokens: Keycloak.KeycloakTokenParsed) => {
-    // Optional: Store tokens for persistence (be careful with security)
+    // Store tokens for persistence and API service access
     if (keycloak.token && keycloak.refreshToken) {
       localStorage.setItem('keycloak_token', keycloak.token)
+      localStorage.setItem('keycloak_access_token', keycloak.token) // Alternative key for fallback
       localStorage.setItem('keycloak_refresh_token', keycloak.refreshToken)
       localStorage.setItem('keycloak_id_token', keycloak.idToken || '')
     }

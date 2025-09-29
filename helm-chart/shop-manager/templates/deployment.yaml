@@ -125,7 +125,7 @@ spec:
             {{- end }}
             {{- if .Values.keycloak.enabled }}
             - name: KEYCLOAK_ISSUER_URI
-              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager"
+              value: "https://auth.shop-manager.local/realms/shop-manager"
             - name: KEYCLOAK_JWK_SET_URI
               value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
             - name: KEYCLOAK_AUTH_SERVER_URL
@@ -151,6 +151,17 @@ spec:
               value: {{ .Values.config.audit.enabled | default "true" | quote }}
             - name: AUDIT_RETENTION_DAYS
               value: {{ .Values.config.audit.retentionDays | default "90" | quote }}
+            # Spring Boot Logging Configuration
+            - name: LOGGING_LEVEL_ROOT
+              value: {{ .Values.config.logging.rootLevel | default "INFO" | quote }}
+            - name: LOGGING_LEVEL_COM_PRINCELY_SHOPMANAGER
+              value: {{ .Values.config.logging.appLevel | default "INFO" | quote }}
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY
+              value: {{ .Values.config.logging.securityLevel | default "WARN" | quote }}
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB
+              value: {{ .Values.config.logging.webLevel | default "WARN" | quote }}
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_OAUTH2
+              value: {{ .Values.config.logging.oauth2Level | default "WARN" | quote }}
             # Security secrets from Kubernetes secrets
             - name: JWT_SECRET
               valueFrom:

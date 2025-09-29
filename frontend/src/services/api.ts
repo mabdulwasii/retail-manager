@@ -1,9 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { getKeycloak } from '@/lib/keycloak'
 import { UserProfileResponse } from '@/types/user'
 
 class ApiService {
   private api: AxiosInstance
+  private getTokenCallback: (() => string | undefined) | null = null
 
   constructor() {
     this.api = axios.create({
@@ -17,14 +17,36 @@ class ApiService {
     this.setupInterceptors()
   }
 
+  // Set token callback function
+  setTokenProvider(getToken: () => string | undefined) {
+    this.getTokenCallback = getToken
+  }
+
   private setupInterceptors() {
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token and Keycloak headers
     this.api.interceptors.request.use(
       async (config) => {
-        const keycloak = getKeycloak()
-        if (keycloak?.token) {
-          config.headers.Authorization = `Bearer ${keycloak.token}`
+        // Try to get token from callback first, then localStorage as fallback
+        let token: string | undefined
+        if (this.getTokenCallback) {
+          token = this.getTokenCallback()
         }
+
+        // Fallback to localStorage if no token from callback
+        if (!token) {
+          token = localStorage.getItem('keycloak_token') ||
+                  localStorage.getItem('keycloak_access_token') ||
+                  undefined
+        }
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+
+        // Add Keycloak realm and client headers for proper context
+        config.headers['X-Keycloak-Realm'] = import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager'
+        config.headers['X-Keycloak-Client'] = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend'
+
         return config
       },
       (error) => Promise.reject(error)
@@ -35,17 +57,7 @@ class ApiService {
       (response: AxiosResponse) => response,
       async (error) => {
         if (error.response?.status === 401) {
-          const keycloak = getKeycloak()
-          if (keycloak) {
-            try {
-              await keycloak.updateToken(5)
-              // Retry the original request
-              return this.api.request(error.config)
-            } catch (refreshError) {
-              keycloak.logout()
-              return Promise.reject(refreshError)
-            }
-          }
+          console.warn('API request received 401 Unauthorized - token may be invalid or expired')
         }
         return Promise.reject(error)
       }

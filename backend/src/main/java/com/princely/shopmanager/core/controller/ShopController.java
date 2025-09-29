@@ -93,7 +93,7 @@ public class ShopController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_SHOP_OWNER')")
     public ResponseEntity<ShopResponse> createShop(
         @Valid @RequestBody ShopCreateRequest request
     ) {
@@ -132,7 +132,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_SHOP_OWNER') or hasRole('ROLE_SHOP_MANAGER') or hasRole('ROLE_CASHIER') or hasRole('ROLE_SHOP_EMPLOYEE')")
     public ResponseEntity<ShopResponse> getShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -168,7 +168,7 @@ public class ShopController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_SHOP_OWNER') or hasRole('ROLE_SHOP_MANAGER')")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -203,7 +203,7 @@ public class ShopController {
         )
     })
     @GetMapping("/active")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_SHOP_OWNER') or hasRole('ROLE_SHOP_MANAGER') or hasRole('ROLE_CASHIER') or hasRole('ROLE_SHOP_EMPLOYEE')")
     public ResponseEntity<List<ShopResponse>> getActiveShops() {
         log.debug("Retrieving active shops");
         List<ShopResponse> response = shopService.getActiveShops();
@@ -250,7 +250,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_SHOP_OWNER') or hasRole('ROLE_SHOP_MANAGER')")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -301,7 +301,7 @@ public class ShopController {
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_SHOP_OWNER')")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -346,7 +346,7 @@ public class ShopController {
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or hasRole('ROLE_SHOP_OWNER')")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId

@@ -39,6 +39,13 @@ spec:
           value: {{ .Chart.AppVersion | quote }}
         - name: VITE_APP_ENV
           value: {{ .Values.frontend.config.environment | default "production" | quote }}
+        # Vite/React Debug Logging Configuration
+        - name: VITE_LOG_LEVEL
+          value: {{ .Values.frontend.config.logging.level | default "info" | quote }}
+        - name: DEBUG
+          value: {{ if .Values.frontend.config.logging.debugMode }}"vite:*,shop-manager:*"{{ else }}""{{ end }}
+        - name: NODE_ENV
+          value: {{ if .Values.frontend.config.logging.debugMode }}"development"{{ else }}"production"{{ end }}
         {{- if .Values.frontend.extraEnvVars }}
         {{- toYaml .Values.frontend.extraEnvVars | nindent 8 }}
         {{- end }}

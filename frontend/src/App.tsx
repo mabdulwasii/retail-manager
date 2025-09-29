@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { KeycloakAuthProvider } from '@/context/KeycloakAuthContext'
 import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -107,13 +107,10 @@ function App() {
           </KeycloakAuthProvider>
         }
       />
+      {/* Profile Route - Redirect to dashboard/profile for consistency */}
       <Route
-        path="/profile/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
+        path="/profile"
+        element={<Navigate to="/dashboard/profile" replace />}
       />
 
       {/* 404 Page */}

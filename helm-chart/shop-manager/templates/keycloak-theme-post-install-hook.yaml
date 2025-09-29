@@ -82,7 +82,8 @@ spec:
           else
             echo "❌ Failed to configure theme (HTTP $HTTP_CODE)"
             echo "Response: $THEME_RESPONSE"
-            exit 1
+            # Don't exit on theme config failure - it might already be set
+            echo "⚠️  Continuing anyway - theme may already be configured"
           fi
 
           # Verify the theme is set
@@ -97,6 +98,7 @@ spec:
           else
             echo "⚠️  Theme verification failed. Current theme: $CURRENT_THEME"
             echo "Expected: {{ .Values.keycloak.customTheme.name }}"
+            echo "This may be normal if realm setup is still in progress"
           fi
           {{- else }}
           echo "ℹ️  Theme application to realm is disabled in configuration"

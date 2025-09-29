@@ -36,7 +36,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             .toList();
         principal.setRoles(roleNames);
 
-        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
+        return new CustomJwtAuthenticationToken(jwt, authorities, principal);
     }
 
     private String getPrincipalClaimName(Jwt jwt) {
