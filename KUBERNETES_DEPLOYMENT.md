@@ -1,17 +1,18 @@
-# Shop Manager - Complete Kubernetes Deployment Guide
+# 🚀 Shop Manager - Complete Kubernetes Deployment Guide
 
-## Table of Contents
+## 📋 Table of Contents
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
 3. [Quick Start](#quick-start)
-4. [Detailed Deployment Steps](#detailed-deployment-steps)
-5. [Helm Chart Deployment](#helm-chart-deployment)
-6. [Custom Keycloak Theme](#custom-keycloak-theme)
-7. [SSL/TLS Configuration](#ssltls-configuration)
-8. [Production Deployment](#production-deployment)
-9. [Monitoring and Operations](#monitoring-and-operations)
-10. [Troubleshooting](#troubleshooting)
-11. [Backup and Recovery](#backup-and-recovery)
+4. [Automated Certificate Installation](#automated-certificate-installation)
+5. [Detailed Deployment Steps](#detailed-deployment-steps)
+6. [Helm Chart Deployment](#helm-chart-deployment)
+7. [Custom Keycloak Theme](#custom-keycloak-theme)
+8. [SSL/TLS Configuration](#ssltls-configuration)
+9. [Production Deployment](#production-deployment)
+10. [Monitoring and Operations](#monitoring-and-operations)
+11. [Troubleshooting](#troubleshooting)
+12. [Backup and Recovery](#backup-and-recovery)
 
 ## Overview
 
@@ -81,6 +82,102 @@ kubectl port-forward service/shop-manager-keycloak 8080:80 -n shop-manager &
 # Frontend: http://localhost:3000
 # Keycloak: http://localhost:8080
 ```
+
+## 🔐 Automated Certificate Installation
+
+### ✅ Quick Certificate Setup
+
+Shop Manager includes automated SSL certificate installation for on-premise deployments:
+
+```bash
+# Deploy with automated certificates
+helm install shop-manager ./helm-chart/shop-manager \
+  --namespace shop-manager \
+  --create-namespace \
+  --set tls.localCertInstallation.enabled=true \
+  --set global.domain="shop-manager.local"
+
+# Wait for certificate installation job
+kubectl wait --for=condition=complete job/shop-manager-cert-installer -n shop-manager --timeout=300s
+
+# Extract and run installation script
+kubectl cp shop-manager/$(kubectl get pods -n shop-manager -l job-name=shop-manager-cert-installer -o jsonpath='{.items[0].metadata.name}'):/shared/install-macos.sh ./install-macos.sh
+chmod +x install-macos.sh && sudo ./install-macos.sh
+```
+
+### 🔧 Certificate Installation Configuration
+
+```yaml
+# In values.yaml or production-values.yaml
+tls:
+  enabled: true
+  issuer: local-ca-issuer
+  localCertInstallation:
+    enabled: true  # Enable automated certificate installation
+    platforms: [macOS, linux, windows]
+
+    installMethods:
+      macOS:
+        keychain: true
+        trust: trustRoot  # System-wide trust
+        browsers: [safari, chrome, firefox]
+
+      linux:
+        distributions: [debian, redhat, alpine]
+        updateCaStore: true
+
+      windows:
+        scope: LocalMachine  # or CurrentUser
+        store: Root
+
+    postInstall:
+      verifyInstallation: true
+      testConnectivity: true
+      generateInstructions: true
+```
+
+### 📱 Platform-Specific Installation
+
+After deployment, extract and run the appropriate script:
+
+```bash
+# macOS Installation
+kubectl cp shop-manager/cert-installer:/shared/install-macos.sh ./install-macos.sh
+chmod +x install-macos.sh
+sudo ./install-macos.sh  # System-wide installation
+
+# Linux Installation
+kubectl cp shop-manager/cert-installer:/shared/install-linux.sh ./install-linux.sh
+chmod +x install-linux.sh
+sudo ./install-linux.sh
+
+# Windows Installation
+kubectl cp shop-manager/cert-installer:/shared/install-windows.ps1 ./install-windows.ps1
+# Run as Administrator in PowerShell: .\install-windows.ps1
+```
+
+### ✅ Verification
+
+After certificate installation:
+
+```bash
+# Test HTTPS connectivity
+curl -I https://shop-manager.local
+curl -I https://api.shop-manager.local/actuator/health
+curl -I https://auth.shop-manager.local
+
+# Access in browser (no SSL warnings)
+open https://shop-manager.local
+open https://auth.shop-manager.local/admin
+```
+
+### 🎯 Benefits
+
+- **No SSL Warnings**: Browser shows secure connection
+- **Automated Setup**: Zero manual certificate management
+- **Cross-Platform**: Works on macOS, Linux, Windows
+- **Production Ready**: Suitable for enterprise deployments
+- **Easy Installation**: One-command deployment with certificates
 
 ## Detailed Deployment Steps
 

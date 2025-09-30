@@ -323,6 +323,7 @@ backend/
 - **Helm Chart Enhancement**: Inline defaults for seamless Kubernetes deployment
 - **Java Records Migration**: Converted analytics DTOs to immutable Java records
 - **Builder Pattern Compliance**: All @Builder classes properly use @Builder.Default
+- **🔐 Automated Certificate Installation**: Local CA setup with platform-specific installation scripts for seamless SSL/TLS
 
 **Current Status**: Production-ready backend with enhanced multi-tenancy and comprehensive business features.
 **Next Steps**: Frontend development, CI/CD pipeline, and production deployment.
@@ -1098,6 +1099,7 @@ git commit -m "test(service): add unit tests for shop validation"
 - [ ] Run database migrations
 - [ ] Import Keycloak test realm
 - [ ] Run integration tests
+- [ ] Install local CA certificate for SSL/TLS (see `CERTIFICATE_AUTOMATION.md`)
 
 ### Staging Deployment
 - [ ] Deploy using Helm to staging namespace

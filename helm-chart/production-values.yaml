@@ -1,0 +1,374 @@
+# 🏢 Shop Manager Production Values Template
+# Copy this file and customize for your environment
+
+# Global Configuration
+global:
+  environment: production
+  domain: "your-domain.com"  # ⚠️ REQUIRED: Change to your actual domain
+  timezone: "UTC"
+
+# Image Configuration
+images:
+  backend:
+    repository: princely/shop-manager-backend
+    tag: "clean-roles"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: princely/shop-manager-frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  keycloak:
+    repository: quay.io/keycloak/keycloak
+    tag: "23.0.1"
+    pullPolicy: IfNotPresent
+
+# Backend Service Configuration
+backend:
+  replicaCount: 2  # Minimum 2 for high availability
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "3Gi"
+      cpu: "2000m"
+
+  # Environment Variables
+  env:
+    SPRING_PROFILES_ACTIVE: "production"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # Never auto-create in production
+    LOGGING_LEVEL_COM_PRINCELY: "INFO"
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics"
+
+  # Health Checks
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8081
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8081
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Frontend Service Configuration
+frontend:
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# PostgreSQL Database Configuration
+postgresql:
+  enabled: true
+
+  auth:
+    postgresPassword: "CHANGE_THIS_POSTGRES_PASSWORD_123!"  # ⚠️ REQUIRED: Change this!
+    username: "shopmanager"
+    password: "CHANGE_THIS_APP_DB_PASSWORD_456!"  # ⚠️ REQUIRED: Change this!
+    database: "shopmanager"
+
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi  # Adjust based on expected data volume
+      storageClass: ""  # ⚠️ REQUIRED: Set your storage class
+
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+    # Backup Configuration
+    initdb:
+      scripts:
+        setup.sql: |
+          -- Production database setup
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+
+    # Performance Tuning
+    postgresql:
+      shared_preload_libraries: "pg_stat_statements"
+      max_connections: "200"
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "64MB"
+      checkpoint_completion_target: "0.9"
+      wal_buffers: "16MB"
+      default_statistics_target: "100"
+
+# Keycloak Configuration
+keycloak:
+  auth:
+    adminUser: "admin"
+    adminPassword: "CHANGE_THIS_KEYCLOAK_ADMIN_PASSWORD_789!"  # ⚠️ REQUIRED: Change this!
+
+  replicaCount: 2  # High availability
+
+  production: true
+  proxy: edge
+  httpRelativePath: "/"
+
+  postgresql:
+    enabled: true
+    auth:
+      username: "keycloak"
+      password: "CHANGE_THIS_KEYCLOAK_DB_PASSWORD_101!"  # ⚠️ REQUIRED: Change this!
+      database: "keycloak"
+
+    primary:
+      persistence:
+        enabled: true
+        size: 20Gi
+        storageClass: ""  # ⚠️ REQUIRED: Set your storage class
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "3Gi"
+      cpu: "2000m"
+
+  # Keycloak specific configuration
+  extraEnvVars:
+    - name: KC_FEATURES
+      value: "token-exchange,admin-fine-grained-authz"
+    - name: KC_LOG_LEVEL
+      value: "INFO"
+    - name: KC_METRICS_ENABLED
+      value: "true"
+    - name: KC_HEALTH_ENABLED
+      value: "true"
+
+# SSL/TLS Configuration with Automated Certificate Installation
+tls:
+  enabled: true
+  issuer: local-ca-issuer  # Use local CA for on-premise
+
+  # Automated Local Certificate Installation
+  localCertInstallation:
+    enabled: true  # Enable for on-premise deployments
+    platforms: [macOS, linux, windows]
+
+    installMethods:
+      macOS:
+        keychain: true
+        trust: trustRoot  # System-wide trust
+        browsers: [safari, chrome, firefox]
+        scope: system  # or 'user' for user-only installation
+
+      linux:
+        distributions: [debian, redhat, alpine]
+        updateCaStore: true
+        certPath: "/usr/local/share/ca-certificates"
+        commandTimeout: 300
+
+      windows:
+        scope: LocalMachine  # System-wide, or 'CurrentUser'
+        store: Root  # Certificate store location
+        trust: true
+
+    postInstall:
+      verifyInstallation: true
+      testConnectivity: true
+      generateInstructions: true
+      sendNotification: false  # Set to true to enable email notifications
+
+    # Job Configuration
+    job:
+      restartPolicy: OnFailure
+      backoffLimit: 3
+      activeDeadlineSeconds: 600
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "200m"
+        limits:
+          memory: "512Mi"
+          cpu: "500m"
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: "nginx"  # ⚠️ Update based on your ingress controller
+
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    cert-manager.io/cluster-issuer: "local-ca-issuer"
+
+  tls:
+    enabled: true
+
+  # Custom domain mappings
+  hosts:
+    frontend: "shop-manager.your-domain.com"  # ⚠️ REQUIRED: Change to your domain
+    backend: "api.shop-manager.your-domain.com"  # ⚠️ REQUIRED: Change to your domain
+    keycloak: "auth.shop-manager.your-domain.com"  # ⚠️ REQUIRED: Change to your domain
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
+
+  alerts:
+    enabled: true
+    rules:
+      cpu: 80  # Alert when CPU > 80%
+      memory: 85  # Alert when memory > 85%
+      errorRate: 5  # Alert when error rate > 5%
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: "30d"  # Keep backups for 30 days
+
+  storage:
+    type: "s3"  # Options: s3, gcs, azure, local
+    # Configure based on your storage provider
+    s3:
+      bucket: "shop-manager-backups"  # ⚠️ REQUIRED if using S3
+      region: "us-east-1"
+      accessKeyId: ""  # Set via secret
+      secretAccessKey: ""  # Set via secret
+      endpoint: ""  # For S3-compatible storage
+
+    encryption:
+      enabled: true
+      key: ""  # Set via secret
+
+  # What to backup
+  components:
+    database: true
+    configurations: true
+    certificates: true
+    logs: false  # Usually handled by log aggregation
+
+# Autoscaling Configuration
+autoscaling:
+  enabled: true
+
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  frontend:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Security Configuration
+security:
+  networkPolicies:
+    enabled: true  # Enable for enhanced security
+
+  podSecurityPolicy:
+    enabled: true
+
+  rbac:
+    create: true
+
+  serviceAccount:
+    create: true
+    annotations: {}
+
+# Feature Flags for Production
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: true
+  backup:
+    enabled: true
+  monitoring:
+    enabled: true
+
+# Performance Tuning
+performance:
+  jvm:
+    heap: "2g"  # Adjust based on available memory
+    gc: "G1GC"
+    opts: "-XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+  database:
+    connectionPool:
+      min: 5
+      max: 20
+      idle: 10
+
+  cache:
+    enabled: true
+    type: "redis"  # Options: redis, caffeine, hazelcast
+    ttl: 3600  # 1 hour default TTL
+
+# Logging Configuration
+logging:
+  level: "INFO"  # Production logging level
+  format: "json"  # Structured logging for production
+
+  aggregation:
+    enabled: true
+    type: "elasticsearch"  # Options: elasticsearch, splunk, datadog
+    endpoint: ""  # Configure based on your log aggregation solution
+
+# Node Affinity and Tolerations
+nodeAffinity:
+  enabled: false
+  # Configure based on your cluster setup
+
+tolerations: []
+  # Configure if using dedicated nodes
+
+# Pod Disruption Budgets
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1  # Always keep at least 1 pod running during updates
+
+# External Secrets (if using external secret management)
+externalSecrets:
+  enabled: false  # Set to true if using external secret management
+  provider: "kubernetes"  # Options: kubernetes, vault, aws, azure, gcp
+
+# Custom Configuration
+custom:
+  # Add any custom configuration specific to your environment
+  timezone: "UTC"
+  locale: "en_US"
+  currency: "USD"

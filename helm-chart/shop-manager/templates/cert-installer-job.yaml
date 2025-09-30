@@ -1,0 +1,343 @@
+{{- if and .Values.tls.enabled .Values.tls.localCertInstallation.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cert-installer
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: cert-installer
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "shop-manager.fullname" . }}-cert-installer
+      containers:
+      - name: cert-installer
+        image: alpine:3.18
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/sh
+          - -c
+          - |
+            set -e
+
+            # Install required packages
+            echo "🔧 Installing required packages..."
+            apk add --no-cache curl jq openssl coreutils
+
+            # Wait for certificates to be ready
+            echo "⏳ Waiting for certificates to be ready..."
+            for i in {1..30}; do
+              if kubectl get secret local-ca-key-pair -n cert-manager >/dev/null 2>&1; then
+                echo "✅ Local CA certificate found"
+                break
+              fi
+              echo "Waiting for local CA certificate... ($i/30)"
+              sleep 10
+            done
+
+            # Extract CA certificate
+            echo "📥 Extracting CA certificate..."
+            kubectl get secret local-ca-key-pair -n cert-manager -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/shop-manager-ca.crt
+
+            # Verify certificate
+            if openssl x509 -in /tmp/shop-manager-ca.crt -text -noout >/dev/null 2>&1; then
+              echo "✅ CA certificate is valid"
+            else
+              echo "❌ Invalid CA certificate"
+              exit 1
+            fi
+
+            # Create installation scripts for different platforms
+            echo "🏗️ Creating platform-specific installation scripts..."
+
+            # macOS Installation Script
+            cat > /shared/install-macos.sh << 'EOF'
+            #!/bin/bash
+            set -e
+
+            CERT_FILE="/tmp/shop-manager-ca.crt"
+            CERT_NAME="Shop Manager Local CA"
+
+            echo "🍎 Installing Shop Manager CA certificate on macOS..."
+
+            # Check if running as root for system-wide installation
+            if [[ $EUID -eq 0 ]]; then
+              KEYCHAIN="/Library/Keychains/System.keychain"
+              echo "Installing to system keychain (requires admin privileges)"
+            else
+              KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
+              echo "Installing to user keychain"
+            fi
+
+            # Install certificate
+            security add-trusted-cert -d -r {{ .Values.tls.localCertInstallation.installMethods.macOS.trust }} -k "$KEYCHAIN" "$CERT_FILE"
+
+            echo "✅ Certificate installed successfully!"
+            echo "🔍 Verifying installation..."
+
+            # Verify certificate is trusted
+            if security verify-cert -c "$CERT_FILE" >/dev/null 2>&1; then
+              echo "✅ Certificate is trusted by the system"
+            else
+              echo "⚠️ Certificate may not be fully trusted. You may need to:"
+              echo "   1. Open Keychain Access"
+              echo "   2. Find '$CERT_NAME' certificate"
+              echo "   3. Double-click and set Trust to 'Always Trust'"
+            fi
+
+            {{- if .Values.tls.localCertInstallation.postInstall.verifyInstallation }}
+            # Test HTTPS connectivity
+            echo "🧪 Testing HTTPS connectivity..."
+            if curl -s --max-time 10 https://{{ (index .Values.frontend.ingress.hosts 0).host }}/health >/dev/null 2>&1; then
+              echo "✅ HTTPS connection successful!"
+            else
+              echo "⚠️ HTTPS connection failed. You may need to restart your browser."
+            fi
+            {{- end }}
+            EOF
+
+            # Linux Installation Script
+            cat > /shared/install-linux.sh << 'EOF'
+            #!/bin/bash
+            set -e
+
+            CERT_FILE="/tmp/shop-manager-ca.crt"
+            CERT_NAME="shop-manager-local-ca.crt"
+
+            echo "🐧 Installing Shop Manager CA certificate on Linux..."
+
+            # Detect Linux distribution
+            if [ -f /etc/debian_version ]; then
+              DISTRO="debian"
+              CERT_DIR="/usr/local/share/ca-certificates"
+            elif [ -f /etc/redhat-release ]; then
+              DISTRO="redhat"
+              CERT_DIR="/etc/pki/ca-trust/source/anchors"
+            else
+              echo "⚠️ Unsupported Linux distribution. Manual installation required."
+              exit 1
+            fi
+
+            echo "Detected distribution: $DISTRO"
+
+            # Copy certificate
+            sudo cp "$CERT_FILE" "$CERT_DIR/$CERT_NAME"
+            sudo chmod 644 "$CERT_DIR/$CERT_NAME"
+
+            # Update certificate store
+            if [ "$DISTRO" = "debian" ]; then
+              sudo update-ca-certificates
+            elif [ "$DISTRO" = "redhat" ]; then
+              sudo update-ca-trust
+            fi
+
+            echo "✅ Certificate installed successfully!"
+
+            {{- if .Values.tls.localCertInstallation.postInstall.verifyInstallation }}
+            # Test HTTPS connectivity
+            echo "🧪 Testing HTTPS connectivity..."
+            if curl -s --max-time 10 https://{{ (index .Values.frontend.ingress.hosts 0).host }}/health >/dev/null 2>&1; then
+              echo "✅ HTTPS connection successful!"
+            else
+              echo "⚠️ HTTPS connection failed. You may need to restart applications."
+            fi
+            {{- end }}
+            EOF
+
+            # Windows Installation Script (PowerShell)
+            cat > /shared/install-windows.ps1 << 'EOF'
+            # PowerShell script for Windows certificate installation
+            param(
+                [string]$CertPath = "C:\temp\shop-manager-ca.crt",
+                [string]$StoreLocation = "{{ .Values.tls.localCertInstallation.installMethods.windows.scope }}"
+            )
+
+            Write-Host "🪟 Installing Shop Manager CA certificate on Windows..." -ForegroundColor Green
+
+            try {
+                # Import certificate
+                $cert = Import-Certificate -FilePath $CertPath -CertStoreLocation "Cert:\$StoreLocation\Root"
+                Write-Host "✅ Certificate installed successfully!" -ForegroundColor Green
+                Write-Host "Certificate Thumbprint: $($cert.Thumbprint)" -ForegroundColor Yellow
+
+                {{- if .Values.tls.localCertInstallation.postInstall.verifyInstallation }}
+                # Test HTTPS connectivity
+                Write-Host "🧪 Testing HTTPS connectivity..." -ForegroundColor Blue
+                try {
+                    $response = Invoke-WebRequest -Uri "https://{{ (index .Values.frontend.ingress.hosts 0).host }}/health" -TimeoutSec 10
+                    Write-Host "✅ HTTPS connection successful!" -ForegroundColor Green
+                } catch {
+                    Write-Host "⚠️ HTTPS connection failed. You may need to restart your browser." -ForegroundColor Yellow
+                }
+                {{- end }}
+
+            } catch {
+                Write-Host "❌ Failed to install certificate: $($_.Exception.Message)" -ForegroundColor Red
+                exit 1
+            }
+            EOF
+
+            # Copy CA certificate to shared volume
+            cp /tmp/shop-manager-ca.crt /shared/
+            chmod 644 /shared/shop-manager-ca.crt
+            chmod +x /shared/install-*.sh
+
+            # Create installation instructions
+            cat > /shared/INSTALLATION_INSTRUCTIONS.md << EOF
+            # 🔐 Shop Manager Local CA Certificate Installation
+
+            The Shop Manager deployment has generated a local Certificate Authority (CA) certificate
+            that needs to be installed on your local machine to avoid SSL certificate warnings.
+
+            ## 📁 Files Available:
+            - \`shop-manager-ca.crt\` - The CA certificate file
+            - \`install-macos.sh\` - Automated installation script for macOS
+            - \`install-linux.sh\` - Automated installation script for Linux
+            - \`install-windows.ps1\` - Automated installation script for Windows
+
+            ## 🚀 Quick Installation:
+
+            ### macOS:
+            \`\`\`bash
+            # Download the installer
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-macos.sh ./install-macos.sh
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt /tmp/shop-manager-ca.crt
+
+            # Run the installer (requires admin password)
+            chmod +x install-macos.sh
+            sudo ./install-macos.sh
+            \`\`\`
+
+            ### Linux (Ubuntu/Debian):
+            \`\`\`bash
+            # Download the installer
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-linux.sh ./install-linux.sh
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt /tmp/shop-manager-ca.crt
+
+            # Run the installer (requires sudo)
+            chmod +x install-linux.sh
+            ./install-linux.sh
+            \`\`\`
+
+            ### Windows (PowerShell as Administrator):
+            \`\`\`powershell
+            # Download the installer
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-windows.ps1 ./install-windows.ps1
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt C:/temp/shop-manager-ca.crt
+
+            # Run the installer (requires Administrator privileges)
+            .\install-windows.ps1
+            \`\`\`
+
+            ## 🌐 Testing:
+            After installation, test SSL connectivity:
+            \`\`\`bash
+            curl https://{{ (index .Values.frontend.ingress.hosts 0).host }}/
+            curl https://{{ (index .Values.ingress.hosts 0).host }}/actuator/health
+            curl https://{{ .Values.keycloak.ingress.hostname }}/realms/{{ .Values.config.keycloak.realm }}
+            \`\`\`
+
+            ## 🔧 Manual Installation:
+            If the automated scripts don't work, you can manually install the certificate:
+
+            1. Download the certificate: \`kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt ./shop-manager-ca.crt\`
+            2. Install it using your OS certificate management tools
+            3. Mark it as trusted for SSL/TLS
+
+            ## 🆘 Troubleshooting:
+            - **Still seeing SSL warnings?** Try restarting your browser
+            - **Certificate not trusted?** Make sure you installed it to the system trust store
+            - **Permission denied?** Run the installer with administrator/sudo privileges
+
+            ---
+            Generated by Shop Manager Helm Chart v{{ .Chart.Version }}
+            Deployment: {{ .Release.Name }} in namespace {{ .Release.Namespace }}
+            EOF
+
+            echo "🎉 Certificate installation preparation complete!"
+            echo ""
+            echo "📋 To install the CA certificate on your local machine:"
+            echo "   kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/INSTALLATION_INSTRUCTIONS.md ./INSTALLATION_INSTRUCTIONS.md"
+            echo "   cat INSTALLATION_INSTRUCTIONS.md"
+            echo ""
+            echo "🔗 Quick Links after certificate installation:"
+            echo "   Frontend: https://{{ (index .Values.frontend.ingress.hosts 0).host }}"
+            echo "   API: https://{{ (index .Values.ingress.hosts 0).host }}"
+            echo "   Keycloak: https://{{ .Values.keycloak.ingress.hostname }}"
+
+        volumeMounts:
+        - name: shared-scripts
+          mountPath: /shared
+        env:
+        - name: KUBECTL_VERSION
+          value: "v1.28.0"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      volumes:
+      - name: shared-scripts
+        emptyDir: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list"]
+- apiGroups: ["cert-manager.io"]
+  resources: ["certificates", "clusterissuers"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+subjects:
+- kind: ServiceAccount
+  name: {{ include "shop-manager.fullname" . }}-cert-installer
+  namespace: {{ .Release.Namespace }}
+{{- end }}

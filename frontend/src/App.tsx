@@ -10,112 +10,34 @@ import { DirectLogin } from '@/components/auth/DirectLogin'
 
 function App() {
   return (
-    <Routes>
-      {/* Public Routes - No authentication required */}
-      <Route path="/" element={<LandingPage />} />
+    <KeycloakAuthProvider>
+      <Routes>
+        {/* Public Routes - No authentication required */}
+        <Route path="/" element={<LandingPage />} />
 
-      {/* Login route redirects directly to Keycloak */}
-      <Route
-        path="/login"
-        element={
-          <KeycloakAuthProvider>
-            <DirectLogin />
-          </KeycloakAuthProvider>
-        }
-      />
+        {/* Login route redirects directly to Keycloak */}
+        <Route path="/login" element={<DirectLogin />} />
 
+        <Route path="/register" element={<RegisterPage />} />
 
-      <Route
-        path="/register"
-        element={
-          <KeycloakAuthProvider>
-            <RegisterPage />
-          </KeycloakAuthProvider>
-        }
-      />
+        {/* All authenticated routes */}
+        <Route path="/dashboard/*" element={<AuthenticatedApp />} />
+        <Route path="/shops/*" element={<AuthenticatedApp />} />
+        <Route path="/products/*" element={<AuthenticatedApp />} />
+        <Route path="/inventory/*" element={<AuthenticatedApp />} />
+        <Route path="/sales/*" element={<AuthenticatedApp />} />
+        <Route path="/receipts/*" element={<AuthenticatedApp />} />
+        <Route path="/investments/*" element={<AuthenticatedApp />} />
+        <Route path="/analytics/*" element={<AuthenticatedApp />} />
+        <Route path="/audit/*" element={<AuthenticatedApp />} />
 
-      {/* All authenticated routes are wrapped in KeycloakAuthProvider */}
-      <Route
-        path="/dashboard/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/shops/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/products/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/inventory/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/sales/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/receipts/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/investments/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/analytics/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      <Route
-        path="/audit/*"
-        element={
-          <KeycloakAuthProvider>
-            <AuthenticatedApp />
-          </KeycloakAuthProvider>
-        }
-      />
-      {/* Profile Route - Redirect to dashboard/profile for consistency */}
-      <Route
-        path="/profile"
-        element={<Navigate to="/dashboard/profile" replace />}
-      />
+        {/* Profile Route - Redirect to dashboard/profile for consistency */}
+        <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
 
-      {/* 404 Page */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* 404 Page */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </KeycloakAuthProvider>
   )
 }
 

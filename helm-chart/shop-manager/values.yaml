@@ -1,9 +1,89 @@
-replicaCount: 1
+# Global configuration - applies to all components
+global:
+  # Release name customization - affects all resource names and DNS
+  # When not specified, uses the Helm release name
+  appName: ""  # Leave empty to use release name, or customize (e.g., "my-retail-app")
 
-image:
-  repository: shop-manager-backend
-  tag: cors-config-fix
-  pullPolicy: IfNotPresent
+  # Domain configuration
+  domain: "shop-manager.local"  # Base domain for all services
+
+  # Environment settings
+  environment: "production"  # Options: development, staging, production
+
+  # Image registry settings
+  imageRegistry: ""  # Leave empty for default registry
+
+  # Common labels applied to all resources
+  commonLabels: {}
+
+  # Common annotations applied to all resources
+  commonAnnotations: {}
+
+# Platform branding and customization
+branding:
+  # Platform identity - what users see
+  platformName: "Shop Manager"  # Main title shown in UI and login
+  companyName: "Your Company"   # Company name in footer and documents
+  platformDescription: "Retail Management Platform"
+
+  # Visual identity
+  logo:
+    # Base64 encoded logo image or URL - used in login page and UI header
+    primary: ""  # Main logo (SVG/PNG recommended)
+    favicon: ""  # Favicon (ICO format recommended)
+    loginLogo: ""  # Optional different logo for login page
+
+  # Color scheme
+  colors:
+    primary: "#1976d2"      # Primary brand color
+    secondary: "#dc004e"    # Secondary brand color
+    success: "#388e3c"      # Success/positive actions
+    warning: "#f57c00"      # Warning/caution
+    error: "#d32f2f"        # Error/danger
+    background: "#fafafa"   # Page background
+    surface: "#ffffff"      # Card/panel background
+
+  # Typography
+  fonts:
+    family: "Roboto, Arial, sans-serif"  # Font family
+    size:
+      small: "12px"
+      medium: "14px"
+      large: "16px"
+      title: "20px"
+
+  # Theme customization for Keycloak login
+  loginTheme:
+    backgroundColor: "#f5f5f5"
+    cardBackgroundColor: "#ffffff"
+    cardShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+    borderRadius: "8px"
+
+  # UI customization
+  ui:
+    showCompanyName: true
+    showPoweredBy: false  # Hide "Powered by Shop Manager"
+    customFooterText: ""  # Custom footer text
+
+  # Email templates branding
+  email:
+    headerColor: "#1976d2"
+    logoUrl: ""  # URL to logo for emails
+    companyAddress: ""
+
+  # PDF reports branding
+  reports:
+    headerLogo: ""  # Logo for PDF headers
+    watermark: ""   # Company watermark
+
+# Backend service configuration
+backend:
+  replicaCount: 1
+
+  image:
+    repository: shop-manager-backend
+    tag: clean-roles
+    pullPolicy: IfNotPresent
 
 # Frontend configuration
 frontend:
@@ -22,8 +102,9 @@ frontend:
     environment: production
     keycloakRealm: shop-manager
     keycloakClientId: shop-manager-frontend
-    apiBaseUrl: "https://api.shop-manager.local/api"
-    keycloakUrl: "https://auth.shop-manager.local"
+    # These will be dynamically generated based on global.domain and global.appName
+    apiBaseUrl: ""  # Will become https://api.{appName}.{domain}/api
+    keycloakUrl: ""  # Will become https://auth.{appName}.{domain}
     logging:
       level: "debug"
       debugMode: true
@@ -45,7 +126,7 @@ frontend:
       nginx.ingress.kubernetes.io/rewrite-target: /
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      cert-manager.io/cluster-issuer: "selfsigned-issuer"
+      cert-manager.io/cluster-issuer: "local-ca-issuer"
     hosts:
       - host: shop-manager.local
         paths:
@@ -71,7 +152,7 @@ ingress:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+    cert-manager.io/cluster-issuer: "local-ca-issuer"
   hosts:
     - host: api.shop-manager.local
       paths:
@@ -100,8 +181,32 @@ autoscaling:
 # TLS Certificate configuration
 tls:
   enabled: true
-  issuer: letsencrypt-prod  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer
+  issuer: local-ca-issuer  # Options: letsencrypt-prod, letsencrypt-staging, selfsigned-issuer, local-ca-issuer
   email: admin@shop-manager.local
+  # Automated local certificate installation for on-premise deployments
+  localCertInstallation:
+    enabled: true  # Enable automatic local certificate installation
+    platforms:     # Platforms to install certificates on
+      - macOS
+      - linux
+      - windows
+    installMethods:
+      macOS:
+        keychain: true          # Install to system keychain
+        trust: trustRoot        # Trust level: trustRoot, trustAsRoot
+        browsers: [safari, chrome, firefox]  # Update browser certificate stores
+      linux:
+        systemStore: true       # Install to system certificate store
+        updateCa: true         # Run update-ca-certificates
+        browsers: [chrome, firefox]
+      windows:
+        certStore: true        # Install to Windows certificate store
+        scope: LocalMachine    # LocalMachine or CurrentUser
+        browsers: [chrome, firefox, edge]
+    postInstall:
+      showInstructions: true   # Show manual installation instructions
+      verifyInstallation: true # Verify certificates are trusted
+      restartServices: false   # Restart browser/services after installation
 
 nodeSelector: {}
 tolerations: []
@@ -226,7 +331,7 @@ keycloak:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-      cert-manager.io/cluster-issuer: "selfsigned-issuer"
+      cert-manager.io/cluster-issuer: "local-ca-issuer"
   service:
     type: ClusterIP
     port: 80
@@ -425,8 +530,8 @@ config:
   logging:
     rootLevel: "DEBUG"
     appLevel: "DEBUG"
-    securityLevel: "DEBUG"
-    webLevel: "DEBUG"
+    securityLevel: "INFO"
+    webLevel: "INFO"
     oauth2Level: "DEBUG"
     pattern: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -436,7 +541,7 @@ config:
     clientId: "shop-manager-frontend"
     authServerUrl: "https://auth.shop-manager.local"
     issuerUri: "https://auth.shop-manager.local/realms/shop-manager"
-    jwkSetUri: "https://auth.shop-manager.local/realms/shop-manager/protocol/openid-connect/certs"
+    jwkSetUri: "http://shop-manager-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
 
   # System flags
   maintenanceMode: false
