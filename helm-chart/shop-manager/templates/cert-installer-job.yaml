@@ -60,6 +60,22 @@ spec:
             # Create installation scripts for different platforms
             echo "🏗️ Creating platform-specific installation scripts..."
 
+            # Get cluster ingress IP
+            echo "🌐 Detecting cluster ingress IP..."
+            INGRESS_IP=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "127.0.0.1")
+            if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" = "null" ]; then
+              INGRESS_IP="127.0.0.1"
+            fi
+            echo "📍 Using ingress IP: $INGRESS_IP"
+
+            # Create DNS entries list
+            cat > /shared/dns-entries.txt << EOF
+            # Shop Manager DNS entries for {{ include "shop-manager.appName" . }}
+            $INGRESS_IP {{ include "shop-manager.frontend.hostname" . }}
+            $INGRESS_IP {{ include "shop-manager.backend.hostname" . }}
+            $INGRESS_IP {{ include "shop-manager.keycloak.hostname" . }}
+            EOF
+
             # macOS Installation Script
             cat > /shared/install-macos.sh << 'EOF'
             #!/bin/bash
@@ -67,8 +83,27 @@ spec:
 
             CERT_FILE="/tmp/shop-manager-ca.crt"
             CERT_NAME="Shop Manager Local CA"
+            DNS_FILE="/tmp/dns-entries.txt"
 
-            echo "🍎 Installing Shop Manager CA certificate on macOS..."
+            echo "🍎 Installing Shop Manager CA certificate and DNS entries on macOS..."
+
+            # Add DNS entries to /etc/hosts
+            echo "🌐 Adding DNS entries to /etc/hosts..."
+            if [ -f "$DNS_FILE" ]; then
+              # Remove existing entries for these domains
+              sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts
+
+              # Add new entries
+              echo "" | sudo tee -a /etc/hosts >/dev/null
+              cat "$DNS_FILE" | sudo tee -a /etc/hosts >/dev/null
+              echo "✅ DNS entries added to /etc/hosts"
+
+              # Show added entries
+              echo "📋 Added DNS entries:"
+              grep "Shop Manager" /etc/hosts | grep -v "^#"
+            else
+              echo "⚠️ DNS entries file not found, skipping DNS setup"
+            fi
 
             # Check if running as root for system-wide installation
             if [[ $EUID -eq 0 ]]; then
@@ -113,8 +148,27 @@ spec:
 
             CERT_FILE="/tmp/shop-manager-ca.crt"
             CERT_NAME="shop-manager-local-ca.crt"
+            DNS_FILE="/tmp/dns-entries.txt"
 
-            echo "🐧 Installing Shop Manager CA certificate on Linux..."
+            echo "🐧 Installing Shop Manager CA certificate and DNS entries on Linux..."
+
+            # Add DNS entries to /etc/hosts
+            echo "🌐 Adding DNS entries to /etc/hosts..."
+            if [ -f "$DNS_FILE" ]; then
+              # Remove existing entries for these domains
+              sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts
+
+              # Add new entries
+              echo "" | sudo tee -a /etc/hosts >/dev/null
+              cat "$DNS_FILE" | sudo tee -a /etc/hosts >/dev/null
+              echo "✅ DNS entries added to /etc/hosts"
+
+              # Show added entries
+              echo "📋 Added DNS entries:"
+              grep "Shop Manager" /etc/hosts | grep -v "^#"
+            else
+              echo "⚠️ DNS entries file not found, skipping DNS setup"
+            fi
 
             # Detect Linux distribution
             if [ -f /etc/debian_version ]; then
@@ -156,13 +210,38 @@ spec:
 
             # Windows Installation Script (PowerShell)
             cat > /shared/install-windows.ps1 << 'EOF'
-            # PowerShell script for Windows certificate installation
+            # PowerShell script for Windows certificate and DNS installation
             param(
                 [string]$CertPath = "C:\temp\shop-manager-ca.crt",
+                [string]$DnsPath = "C:\temp\dns-entries.txt",
                 [string]$StoreLocation = "{{ .Values.tls.localCertInstallation.installMethods.windows.scope }}"
             )
 
-            Write-Host "🪟 Installing Shop Manager CA certificate on Windows..." -ForegroundColor Green
+            Write-Host "🪟 Installing Shop Manager CA certificate and DNS entries on Windows..." -ForegroundColor Green
+
+            # Add DNS entries to hosts file
+            Write-Host "🌐 Adding DNS entries to hosts file..." -ForegroundColor Blue
+            if (Test-Path $DnsPath) {
+                $hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
+
+                # Remove existing entries
+                $content = Get-Content $hostsFile
+                $filtered = $content | Where-Object { $_ -notmatch "# Shop Manager DNS entries" -and $_ -notmatch "{{ include "shop-manager.frontend.hostname" . }}" -and $_ -notmatch "{{ include "shop-manager.backend.hostname" . }}" -and $_ -notmatch "{{ include "shop-manager.keycloak.hostname" . }}" }
+
+                # Add new entries
+                $dnsEntries = Get-Content $DnsPath
+                $newContent = $filtered + "" + $dnsEntries
+
+                # Write back to hosts file (requires admin)
+                Set-Content -Path $hostsFile -Value $newContent -Force
+                Write-Host "✅ DNS entries added to hosts file" -ForegroundColor Green
+
+                # Show added entries
+                Write-Host "📋 Added DNS entries:" -ForegroundColor Yellow
+                $dnsEntries | Write-Host
+            } else {
+                Write-Host "⚠️ DNS entries file not found, skipping DNS setup" -ForegroundColor Yellow
+            }
 
             try {
                 # Import certificate
@@ -194,48 +273,52 @@ spec:
 
             # Create installation instructions
             cat > /shared/INSTALLATION_INSTRUCTIONS.md << EOF
-            # 🔐 Shop Manager Local CA Certificate Installation
+            # 🔐 Shop Manager Local Setup (SSL Certificates & DNS)
 
             The Shop Manager deployment has generated a local Certificate Authority (CA) certificate
-            that needs to be installed on your local machine to avoid SSL certificate warnings.
+            and DNS entries that need to be installed on your local machine for seamless access.
 
             ## 📁 Files Available:
             - \`shop-manager-ca.crt\` - The CA certificate file
-            - \`install-macos.sh\` - Automated installation script for macOS
-            - \`install-linux.sh\` - Automated installation script for Linux
-            - \`install-windows.ps1\` - Automated installation script for Windows
+            - \`dns-entries.txt\` - DNS entries for /etc/hosts (or Windows hosts file)
+            - \`install-macos.sh\` - Automated installation script for macOS (SSL + DNS)
+            - \`install-linux.sh\` - Automated installation script for Linux (SSL + DNS)
+            - \`install-windows.ps1\` - Automated installation script for Windows (SSL + DNS)
 
-            ## 🚀 Quick Installation:
+            ## 🚀 One-Command Installation:
 
             ### macOS:
             \`\`\`bash
-            # Download the installer
+            # Download and run the installer (handles both SSL certificates and DNS)
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-macos.sh ./install-macos.sh
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt /tmp/shop-manager-ca.crt
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/dns-entries.txt /tmp/dns-entries.txt
 
-            # Run the installer (requires admin password)
+            # Run the installer (requires admin password for /etc/hosts and certificate installation)
             chmod +x install-macos.sh
             sudo ./install-macos.sh
             \`\`\`
 
             ### Linux (Ubuntu/Debian):
             \`\`\`bash
-            # Download the installer
+            # Download and run the installer (handles both SSL certificates and DNS)
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-linux.sh ./install-linux.sh
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt /tmp/shop-manager-ca.crt
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/dns-entries.txt /tmp/dns-entries.txt
 
-            # Run the installer (requires sudo)
+            # Run the installer (requires sudo for /etc/hosts and certificate installation)
             chmod +x install-linux.sh
             ./install-linux.sh
             \`\`\`
 
             ### Windows (PowerShell as Administrator):
             \`\`\`powershell
-            # Download the installer
+            # Download and run the installer (handles both SSL certificates and DNS)
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/install-windows.ps1 ./install-windows.ps1
             kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/shop-manager-ca.crt C:/temp/shop-manager-ca.crt
+            kubectl cp {{ .Release.Namespace }}/{{ include "shop-manager.fullname" . }}-cert-installer:/shared/dns-entries.txt C:/temp/dns-entries.txt
 
-            # Run the installer (requires Administrator privileges)
+            # Run the installer (requires Administrator privileges for hosts file and certificate installation)
             .\install-windows.ps1
             \`\`\`
 

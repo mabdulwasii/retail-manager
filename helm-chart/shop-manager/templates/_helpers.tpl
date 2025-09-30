@@ -9,11 +9,7 @@ Expand the name of the chart.
 Get the application name - uses global.appName if set, otherwise release name
 */}}
 {{- define "shop-manager.appName" -}}
-{{- if .Values.global.appName }}
-{{- .Values.global.appName }}
-{{- else }}
-{{- .Release.Name }}
-{{- end }}
+{{- "shop-manager" }}
 {{- end }}
 
 {{/*
@@ -74,10 +70,16 @@ Generate frontend hostname
 */}}
 {{- define "shop-manager.frontend.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
+{{- $domain := "" -}}
+{{- if and .Values.global .Values.global.domain -}}
+{{- $domain = .Values.global.domain -}}
+{{- else -}}
+{{- $domain = "shop-manager.local" -}}
+{{- end -}}
 {{- if eq $appName "shop-manager" }}
-{{- .Values.global.domain }}
+{{- $domain }}
 {{- else }}
-{{- printf "%s.%s" $appName .Values.global.domain }}
+{{- printf "%s.%s" $appName $domain }}
 {{- end }}
 {{- end }}
 
@@ -86,10 +88,16 @@ Generate backend API hostname
 */}}
 {{- define "shop-manager.backend.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
+{{- $domain := "" -}}
+{{- if and .Values.global .Values.global.domain -}}
+{{- $domain = .Values.global.domain -}}
+{{- else -}}
+{{- $domain = "shop-manager.local" -}}
+{{- end -}}
 {{- if eq $appName "shop-manager" }}
-{{- printf "api.%s" .Values.global.domain }}
+{{- printf "api.%s" $domain }}
 {{- else }}
-{{- printf "api.%s.%s" $appName .Values.global.domain }}
+{{- printf "api.%s.%s" $appName $domain }}
 {{- end }}
 {{- end }}
 
@@ -98,10 +106,16 @@ Generate Keycloak hostname
 */}}
 {{- define "shop-manager.keycloak.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
+{{- $domain := "" -}}
+{{- if and .Values.global .Values.global.domain -}}
+{{- $domain = .Values.global.domain -}}
+{{- else -}}
+{{- $domain = "shop-manager.local" -}}
+{{- end -}}
 {{- if eq $appName "shop-manager" }}
-{{- printf "auth.%s" .Values.global.domain }}
+{{- printf "auth.%s" $domain }}
 {{- else }}
-{{- printf "auth.%s.%s" $appName .Values.global.domain }}
+{{- printf "auth.%s.%s" $appName $domain }}
 {{- end }}
 {{- end }}
 
@@ -244,7 +258,7 @@ Generate image name with registry prefix if specified
 Validate configuration
 */}}
 {{- define "shop-manager.validate" -}}
-{{- if not .Values.global.domain }}
-{{- fail "global.domain is required" }}
+{{- if and .Values.global (not .Values.global.domain) }}
+{{- fail "global.domain is required when global section is defined" }}
 {{- end }}
 {{- end }}
