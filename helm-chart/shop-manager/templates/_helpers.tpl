@@ -9,7 +9,31 @@ Expand the name of the chart.
 Get the application name - uses global.appName if set, otherwise release name
 */}}
 {{- define "shop-manager.appName" -}}
-{{- "shop-manager" }}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.appName -}}
+      {{- .Values.global.appName -}}
+    {{- else -}}
+      {{- if .Release -}}
+        {{- .Release.Name -}}
+      {{- else -}}
+        {{- "shop-manager" -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- if .Release -}}
+      {{- .Release.Name -}}
+    {{- else -}}
+      {{- "shop-manager" -}}
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+  {{- if .Release -}}
+    {{- .Release.Name -}}
+  {{- else -}}
+    {{- "shop-manager" -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{/*
@@ -22,19 +46,7 @@ If release name contains chart name it will be used as a full name.
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $appName := include "shop-manager.appName" . }}
-{{- $chartName := "shop-manager" }}
-{{- if and .Chart .Chart.Name }}
-{{- $chartName = .Chart.Name }}
-{{- end }}
-{{- $name := $chartName }}
-{{- if and .Values .Values.nameOverride }}
-{{- $name = .Values.nameOverride }}
-{{- end }}
-{{- if contains $name $appName }}
 {{- $appName | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" $appName $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
 {{- end }}
 {{- end }}
 
@@ -54,7 +66,11 @@ helm.sh/chart: {{ include "shop-manager.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+{{- if .Release }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- else }}
+app.kubernetes.io/managed-by: Helm
+{{- end }}
 {{- end }}
 
 {{/*
@@ -62,7 +78,11 @@ Selector labels
 */}}
 {{- define "shop-manager.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "shop-manager.name" . }}
+{{- if .Release }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- else }}
+app.kubernetes.io/instance: {{ include "shop-manager.appName" . }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -70,11 +90,13 @@ Generate frontend hostname
 */}}
 {{- define "shop-manager.frontend.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
-{{- $domain := "" -}}
-{{- if and .Values.global .Values.global.domain -}}
-{{- $domain = .Values.global.domain -}}
-{{- else -}}
-{{- $domain = "shop-manager.local" -}}
+{{- $domain := "shop-manager.local" -}}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.domain -}}
+      {{- $domain = .Values.global.domain -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
 {{- if eq $appName "shop-manager" }}
 {{- $domain }}
@@ -89,10 +111,18 @@ Generate backend API hostname
 {{- define "shop-manager.backend.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
 {{- $domain := "" -}}
-{{- if and .Values.global .Values.global.domain -}}
-{{- $domain = .Values.global.domain -}}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.domain -}}
+      {{- $domain = .Values.global.domain -}}
+    {{- else -}}
+      {{- $domain = "shop-manager.local" -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $domain = "shop-manager.local" -}}
+  {{- end -}}
 {{- else -}}
-{{- $domain = "shop-manager.local" -}}
+  {{- $domain = "shop-manager.local" -}}
 {{- end -}}
 {{- if eq $appName "shop-manager" }}
 {{- printf "api.%s" $domain }}
@@ -107,10 +137,18 @@ Generate Keycloak hostname
 {{- define "shop-manager.keycloak.hostname" -}}
 {{- $appName := include "shop-manager.appName" . -}}
 {{- $domain := "" -}}
-{{- if and .Values.global .Values.global.domain -}}
-{{- $domain = .Values.global.domain -}}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.domain -}}
+      {{- $domain = .Values.global.domain -}}
+    {{- else -}}
+      {{- $domain = "shop-manager.local" -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $domain = "shop-manager.local" -}}
+  {{- end -}}
 {{- else -}}
-{{- $domain = "shop-manager.local" -}}
+  {{- $domain = "shop-manager.local" -}}
 {{- end -}}
 {{- if eq $appName "shop-manager" }}
 {{- printf "auth.%s" $domain }}
@@ -154,6 +192,14 @@ Generate Keycloak PostgreSQL connection string
 {{- define "shop-manager.keycloak.postgresql.host" -}}
 {{- $appName := include "shop-manager.appName" . -}}
 {{- printf "%s-keycloak-postgresql" $appName }}
+{{- end }}
+
+{{/*
+Generate main PostgreSQL name
+*/}}
+{{- define "shop-manager.postgresql.name" -}}
+{{- $appName := include "shop-manager.appName" . -}}
+{{- printf "%s-postgresql" $appName }}
 {{- end }}
 
 {{/*
@@ -214,6 +260,20 @@ Generate theme ConfigMap name
 {{- end }}
 
 {{/*
+Generate dynamic Keycloak theme name
+*/}}
+{{- define "shop-manager.keycloak.themeName" -}}
+{{- printf "%s-theme" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
+Generate dynamic theme CSS file name
+*/}}
+{{- define "shop-manager.keycloak.themeCssName" -}}
+{{- printf "%s-theme.css" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
 Generate cert-installer job name
 */}}
 {{- define "shop-manager.certInstallerJobName" -}}
@@ -246,7 +306,14 @@ Generate image name with registry prefix if specified
 */}}
 {{- define "shop-manager.image" -}}
 {{- $image := .image -}}
-{{- $registry := .Values.global.imageRegistry -}}
+{{- $registry := "" -}}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.imageRegistry -}}
+      {{- $registry = .Values.global.imageRegistry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- if $registry }}
 {{- printf "%s/%s" $registry $image }}
 {{- else }}
@@ -258,7 +325,11 @@ Generate image name with registry prefix if specified
 Validate configuration
 */}}
 {{- define "shop-manager.validate" -}}
-{{- if and .Values.global (not .Values.global.domain) }}
-{{- fail "global.domain is required when global section is defined" }}
-{{- end }}
+{{- if .Values -}}
+  {{- if .Values.global -}}
+    {{- if not .Values.global.domain -}}
+      {{- fail "global.domain is required when global section is defined" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}

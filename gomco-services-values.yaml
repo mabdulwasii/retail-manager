@@ -1,0 +1,455 @@
+# GOMCO Services - Complete Shop Manager Deployment Configuration
+# Application: Shop Manager Platform
+# Customer: GOMCO Corporation
+# Domain: gomco.com
+# Environment: Production-Ready
+
+# ================================================
+# GLOBAL CONFIGURATION
+# ================================================
+global:
+  appName: "gomco-services"
+  domain: "gomco.com"
+  environment: "production"
+  imageRegistry: ""
+
+# ================================================
+# PLATFORM BRANDING & CUSTOMIZATION
+# ================================================
+branding:
+  # Corporate Identity
+  platformName: "GOMCO Retail Pro"
+  companyName: "GOMCO Corporation"
+  platformDescription: "Advanced Retail Management System"
+
+  # Visual Identity & Colors
+  colors:
+    primary: "#1B5E20"        # GOMCO Dark Green
+    secondary: "#FF8F00"      # GOMCO Orange
+    success: "#2E7D32"        # Success Green
+    warning: "#F57C00"        # Warning Orange
+    error: "#C62828"          # Error Red
+    background: "#F8F9FA"     # Light Background
+    surface: "#FFFFFF"        # White Surface
+
+  # Typography
+  fonts:
+    family: "Inter, system-ui, sans-serif"
+    size:
+      small: "13px"
+      medium: "15px"
+      large: "17px"
+      title: "24px"
+
+  # Logo Configuration (Base64 encoded)
+  logo:
+    primary: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMjAwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMUI1RTIwIiByeD0iOCIvPgo8dGV4dCB4PSIxMDAiIHk9IjMwIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkludGVyLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R09NQ088L3RleHQ+Cjx0ZXh0IHg9IjEwMCIgeT0iNTAiIGZpbGw9IiNGRjhGMDAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+UmV0YWlsIFBybzwvdGV4dD4KPC9zdmc+"
+    favicon: "data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wAbXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/////wD///8AG14g/xtdIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP////8A////ABteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/////AP///wAbXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/xteIP8bXiD/G14g/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wAAAAA="
+
+  # Login Theme Customization
+  loginTheme:
+    backgroundColor: "#E8F5E8"      # Light Green Background
+    cardBackgroundColor: "#FFFFFF"  # White Card
+    cardShadow: "0 12px 40px rgba(27, 94, 32, 0.15)"
+    borderRadius: "16px"
+
+  # UI Customization
+  ui:
+    showCompanyName: true
+    showPoweredBy: false
+    customFooterText: "© 2024 GOMCO Corporation. All rights reserved. | Powered by GOMCO Retail Pro"
+
+  # Email Templates
+  email:
+    headerColor: "#1B5E20"
+    logoUrl: "https://cdn.gomco.com/logo-email.png"
+    companyAddress: "GOMCO Corporation, 123 Business Center, City, State 12345"
+
+  # PDF Reports
+  reports:
+    headerLogo: "https://cdn.gomco.com/logo-reports.png"
+    watermark: "CONFIDENTIAL - GOMCO Corporation"
+
+# ================================================
+# APPLICATION SCALING & PERFORMANCE
+# ================================================
+replicaCount: 1
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# ================================================
+# CONTAINER CONFIGURATION
+# ================================================
+backend:
+  image:
+    repository: "princely/princely"
+    tag: "backend-v0.0.1"
+    pullPolicy: "IfNotPresent"
+
+frontend:
+  enabled: false
+  image:
+    repository: "princely/princely"
+    tag: "frontend-v0.0.1"
+    pullPolicy: "IfNotPresent"
+
+imagePullSecrets: []
+
+# ================================================
+# RESOURCE ALLOCATION
+# ================================================
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# ================================================
+# NETWORKING & INGRESS
+# ================================================
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8081
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  tls:
+    enabled: false
+
+# ================================================
+# DATABASE CONFIGURATION
+# ================================================
+postgresql:
+  enabled: true
+  auth:
+    database: "gomco_shopmanager"
+    username: "gomco_user"
+    password: "GomcoSecure2024!"
+  primary:
+    initdb:
+      scripts:
+        create-multiple-databases.sql: |
+          CREATE USER IF NOT EXISTS keycloak_user WITH PASSWORD 'KeycloakSecure2024!';
+          CREATE DATABASE gomco_shopmanager;
+          GRANT ALL PRIVILEGES ON DATABASE gomco_shopmanager TO gomco_user;
+
+          CREATE DATABASE gomco_keycloak;
+          GRANT ALL PRIVILEGES ON DATABASE gomco_keycloak TO keycloak_user;
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: "hostpath"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+# ================================================
+# KEYCLOAK AUTHENTICATION
+# ================================================
+keycloakPostgresql:
+  enabled: true
+  fullnameOverride: "gomco-services-keycloak-postgresql"
+  auth:
+    database: "gomco_keycloak"
+    username: "keycloak_user"
+    password: "KeycloakSecure2024!"
+    postgresPassword: "KeycloakSecure2024!"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "hostpath"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: "admin"
+    adminPassword: "GomcoAdmin2024!"
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: "gomco-services-keycloak-postgresql"
+    port: 5432
+    database: "gomco_keycloak"
+    user: "keycloak_user"
+    password: "KeycloakSecure2024!"
+  production: true
+  proxy: edge
+  httpRelativePath: "/"
+  extraEnvVars:
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
+    - name: KC_HOSTNAME_STRICT_HTTPS
+      value: "false"
+    - name: KC_HTTP_ENABLED
+      value: "true"
+
+# ================================================
+# MESSAGING & EVENTS
+# ================================================
+kafka:
+  enabled: true
+  replicaCount: 3
+  auth:
+    clientProtocol: plaintext
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+# ================================================
+# APPLICATION CONFIGURATION
+# ================================================
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+
+config:
+  # Monitoring Configuration
+  monitoring:
+    exposedEndpoints: "health,info,metrics,prometheus"
+
+  # Security Configuration
+  security:
+    tenantIsolation: true
+
+  # Keycloak Configuration
+  keycloak:
+    clientId: "gomco-retail-pro"
+    clientSecret: "gomco-client-secret-2024"
+
+  # Backup Configuration
+  backup:
+    path: "/var/gomco/backups"
+    retention: "30"
+    schedule: "0 2 * * *"
+
+  # Audit Configuration
+  audit:
+    enabled: true
+    retentionDays: "365"
+
+  # Logging Configuration
+  logging:
+    rootLevel: "INFO"
+    appLevel: "INFO"
+    securityLevel: "WARN"
+    webLevel: "WARN"
+    oauth2Level: "WARN"
+
+# ================================================
+# FEATURE FLAGS
+# ================================================
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: true
+  notifications:
+    enabled: true
+  backup:
+    enabled: true
+
+# ================================================
+# SECURITY SECRETS
+# ================================================
+secrets:
+  # JWT Configuration
+  jwtSecret: "gomco-jwt-secret-2024-super-secure-key-for-production"
+  encryptionKey: "gomco-encryption-key-2024-advanced-security"
+  swaggerPassword: "GomcoSwagger2024!"
+
+  # Email Configuration
+  email:
+    enabled: true
+    smtpUsername: "noreply@gomco.com"
+    smtpPassword: "GomcoEmail2024!"
+
+# ================================================
+# BUSINESS CONFIGURATION
+# ================================================
+business:
+  # Company Details
+  company:
+    name: "GOMCO Corporation"
+    address: "123 Business Center, City, State 12345"
+    phone: "+1-555-GOMCO-01"
+    email: "support@gomco.com"
+    website: "https://www.gomco.com"
+
+  # Tax Configuration
+  tax:
+    defaultRate: 0.0875
+    categoryRates:
+      electronics: 0.0875
+      clothing: 0.0825
+      food: 0.0400
+      services: 0.0875
+
+  # Currency Configuration
+  currency:
+    default: "USD"
+    symbol: "$"
+    precision: 2
+
+  # Business Rules
+  rules:
+    maxReturnDays: 30
+    minOrderAmount: 1.00
+    maxOrderAmount: 10000.00
+    discountThreshold: 100.00
+
+# ================================================
+# MONITORING & OBSERVABILITY
+# ================================================
+monitoring:
+  enabled: true
+  metrics:
+    enabled: true
+    path: "/actuator/prometheus"
+  health:
+    enabled: true
+    path: "/actuator/health"
+  liveness:
+    enabled: true
+    path: "/actuator/health/liveness"
+  readiness:
+    enabled: true
+    path: "/actuator/health/readiness"
+
+# Health Check Configuration
+livenessProbe:
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 5
+
+readinessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 5
+
+# ================================================
+# SECURITY CONFIGURATION
+# ================================================
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# ================================================
+# ADVANCED CONFIGURATIONS
+# ================================================
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - shop-manager
+        topologyKey: kubernetes.io/hostname
+
+# ================================================
+# CONFIGMAP DATA
+# ================================================
+configMap:
+  data:
+    # Frontend Environment Variables
+    REACT_APP_PLATFORM_NAME: "GOMCO Retail Pro"
+    REACT_APP_COMPANY_NAME: "GOMCO Corporation"
+    REACT_APP_PRIMARY_COLOR: "#1B5E20"
+    REACT_APP_SECONDARY_COLOR: "#FF8F00"
+    REACT_APP_SHOW_COMPANY_NAME: "true"
+    REACT_APP_SHOW_POWERED_BY: "false"
+
+    # Backend Configuration
+    SERVER_SERVLET_CONTEXT_PATH: "/api"
+    MANAGEMENT_SERVER_PORT: "8081"
+    MANAGEMENT_ENDPOINTS_WEB_BASE_PATH: "/actuator"
+
+    # Business Configuration
+    BUSINESS_COMPANY_NAME: "GOMCO Corporation"
+    BUSINESS_SUPPORT_EMAIL: "support@gomco.com"
+    BUSINESS_SUPPORT_PHONE: "+1-555-GOMCO-01"
+
+# ================================================
+# CERTIFICATE MANAGEMENT
+# ================================================
+certificates:
+  enabled: false
+  issuer: "gomco-selfsigned-issuer"
+  duration: "8760h"  # 1 year
+  renewBefore: "720h"  # 30 days
+
+# ================================================
+# DEPLOYMENT STRATEGY
+# ================================================
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# ================================================
+# CUSTOM ANNOTATIONS
+# ================================================
+podAnnotations:
+  deployment.kubernetes.io/revision: "1"
+  company: "gomco-corporation"
+  environment: "production"
+  version: "v1.0.0"
+
+# ================================================
+# END OF CONFIGURATION
+# ================================================

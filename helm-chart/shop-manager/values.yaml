@@ -5,7 +5,7 @@ global:
   appName: ""  # Leave empty to use release name, or customize (e.g., "my-retail-app")
 
   # Domain configuration
-  domain: "shop-manager.local"  # Base domain for all services
+  domain: "shop-manager.local"  # Base domain ozxsr all services
 
   # Environment settings
   environment: "production"  # Options: development, staging, production
@@ -257,7 +257,7 @@ configMap:
 # SECURITY WARNING: Change these passwords in production!
 postgresql:
   enabled: true
-  fullnameOverride: "shop-manager-postgresql"
+  # Dynamic naming: Uses release name/appName automatically
   auth:
     postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
     username: "shop"
@@ -281,7 +281,7 @@ postgresql:
 # Separate PostgreSQL for Keycloak
 keycloakPostgresql:
   enabled: true
-  fullnameOverride: "shop-manager-keycloak-postgresql"
+  # Dynamic naming: Uses release name/appName automatically
   auth:
     postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
     username: "keycloak"
@@ -671,6 +671,13 @@ minio:
   # Additional API keys
   apiKeys: {}
     # EXAMPLE_API_KEY: "your-api-key"
+
+# Certificate management
+certificates:
+  enabled: true
+  issuer: "local-ca-issuer"
+  duration: "8760h"  # 1 year
+  renewBefore: "720h"  # 30 days
 
 # Service Monitor for Prometheus (if using Prometheus Operator)
 serviceMonitor:
