@@ -92,7 +92,7 @@ backend:
     pullPolicy: "IfNotPresent"
 
 frontend:
-  enabled: false
+  enabled: true
   image:
     repository: "princely/princely"
     tag: "frontend-v0.0.1"

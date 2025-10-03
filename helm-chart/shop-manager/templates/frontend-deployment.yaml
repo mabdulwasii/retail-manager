@@ -28,13 +28,13 @@ spec:
           protocol: TCP
         env:
         - name: VITE_API_BASE_URL
-          value: {{ .Values.frontend.config.apiBaseUrl | default "http://localhost:8081/api" | quote }}
+          value: {{ include "shop-manager.frontend.apiBaseUrl" . | quote }}
         - name: VITE_KEYCLOAK_URL
-          value: {{ .Values.frontend.config.keycloakUrl | default "http://localhost:8080" | quote }}
+          value: {{ include "shop-manager.frontend.keycloakUrl" . | quote }}
         - name: VITE_KEYCLOAK_REALM
-          value: {{ .Values.frontend.config.keycloakRealm | default "shop-manager" | quote }}
+          value: {{ include "shop-manager.keycloak.realmName" . | quote }}
         - name: VITE_KEYCLOAK_CLIENT_ID
-          value: {{ .Values.frontend.config.keycloakClientId | default "shop-manager-frontend" | quote }}
+          value: {{ .Values.frontend.config.keycloakClientId | default (include "shop-manager.keycloak.frontendClientId" .) | quote }}
         - name: VITE_APP_VERSION
           value: {{ .Chart.AppVersion | quote }}
         - name: VITE_APP_ENV

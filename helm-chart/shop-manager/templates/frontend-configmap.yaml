@@ -9,10 +9,10 @@ metadata:
 data:
   config.js: |
     window.RUNTIME_CONFIG = {
-      API_BASE_URL: "{{ .Values.frontend.config.apiBaseUrl | default "http://localhost:8081/api" }}",
-      KEYCLOAK_URL: "{{ .Values.frontend.config.keycloakUrl | default "http://localhost:8080" }}",
-      KEYCLOAK_REALM: "{{ .Values.frontend.config.keycloakRealm | default "shop-manager" }}",
-      KEYCLOAK_CLIENT_ID: "{{ .Values.frontend.config.keycloakClientId | default "shop-manager-frontend" }}",
+      API_BASE_URL: "{{ include "shop-manager.frontend.apiBaseUrl" . }}",
+      KEYCLOAK_URL: "{{ include "shop-manager.frontend.keycloakUrl" . }}",
+      KEYCLOAK_REALM: "{{ include "shop-manager.keycloak.realmName" . }}",
+      KEYCLOAK_CLIENT_ID: "{{ .Values.frontend.config.keycloakClientId | default (include "shop-manager.keycloak.frontendClientId" .) }}",
       APP_VERSION: "{{ .Chart.AppVersion | default "1.0.0" }}",
       APP_ENV: "{{ .Values.frontend.config.environment | default "production" }}"
     };

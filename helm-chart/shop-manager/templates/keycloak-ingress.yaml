@@ -15,10 +15,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - auth.shop-manager.local
-      secretName: shop-manager-keycloak-tls
+        - {{ include "shop-manager.keycloak.hostname" . }}
+      secretName: {{ include "shop-manager.keycloak.certName" . }}
   rules:
-    - host: auth.shop-manager.local
+    - host: {{ include "shop-manager.keycloak.hostname" . }}
       http:
         paths:
           - path: /

@@ -34,13 +34,27 @@ spec:
           echo "Keycloak is ready!"
       containers:
       - name: theme-installer
-        image: bitnami/kubectl:latest
+        image: alpine:3.18
         command:
         - sh
         - -c
         - |
           set -e
           echo "🎨 Installing Shop Manager Custom Keycloak Theme"
+
+          # Install kubectl
+          echo "📦 Installing kubectl..."
+          apk add --no-cache curl
+          KUBECTL_VERSION="${KUBECTL_VERSION:-v1.28.0}"
+          ARCH=$(uname -m)
+          case $ARCH in
+            x86_64) KUBECTL_ARCH="amd64" ;;
+            aarch64) KUBECTL_ARCH="arm64" ;;
+            *) KUBECTL_ARCH="amd64" ;;
+          esac
+          curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl"
+          chmod +x kubectl
+          mv kubectl /usr/local/bin/
 
           # Apply the StatefulSet patch to include theme volumes
           echo "📝 Patching Keycloak StatefulSet for theme support..."
@@ -96,8 +110,8 @@ spec:
           sleep 30
 
           {{- if .Values.keycloak.customTheme.applyToRealm }}
-          # Apply theme to shop-manager realm
-          echo "🔐 Configuring theme for shop-manager realm..."
+          # Apply theme to realm
+          echo "🔐 Configuring theme for {{ include "shop-manager.keycloak.realmName" . }} realm..."
 
           # Get the Keycloak pod name
           POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=keycloak,app.kubernetes.io/instance={{ .Release.Name }} -o jsonpath='{.items[0].metadata.name}')
@@ -110,7 +124,7 @@ spec:
           echo "Found Keycloak pod: $POD_NAME"
 
           # Configure the theme in the realm
-          kubectl exec $POD_NAME -- /opt/bitnami/keycloak/bin/kcadm.sh update realms/shop-manager \
+          kubectl exec $POD_NAME -- /opt/bitnami/keycloak/bin/kcadm.sh update realms/{{ include "shop-manager.keycloak.realmName" . }} \
             -s loginTheme={{ .Values.keycloak.customTheme.name }} \
             --server http://localhost:80 \
             --realm master \
@@ -122,7 +136,7 @@ spec:
           echo "✅ Shop Manager theme installation complete!"
           echo ""
           echo "🌐 Access the custom login page at:"
-          echo "   https://{{ .Values.keycloak.ingress.hostname }}/realms/shop-manager/account"
+          echo "   https://{{ include "shop-manager.keycloak.hostname" . }}/realms/{{ include "shop-manager.keycloak.realmName" . }}/account"
           echo ""
           echo "🎨 Theme features:"
           echo "   - Custom Shop Manager branding"

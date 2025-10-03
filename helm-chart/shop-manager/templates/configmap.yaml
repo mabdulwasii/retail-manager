@@ -41,11 +41,11 @@ data:
 
   # Keycloak/Security Configuration
   {{- if .Values.keycloak.enabled }}
-  KEYCLOAK_REALM: {{ .Values.config.keycloak.realm | default "shop-manager" | quote }}
+  KEYCLOAK_REALM: {{ include "shop-manager.keycloak.realmName" . | quote }}
   KEYCLOAK_AUTH_SERVER_URL: {{ .Values.config.keycloak.authServerUrl | default "http://localhost:8080" | quote }}
-  KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloak.clientId | default "shop-manager-backend" | quote }}
-  KEYCLOAK_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | default "http://localhost:8080/realms/shop-manager" | quote }}
-  KEYCLOAK_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | default "http://localhost:8080/realms/shop-manager/protocol/openid-connect/certs" | quote }}
+  KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloak.clientId | default (include "shop-manager.keycloak.backendClientId" .) | quote }}
+  KEYCLOAK_ISSUER_URI: {{ include "shop-manager.keycloak.issuerUri" . | quote }}
+  KEYCLOAK_JWK_SET_URI: {{ include "shop-manager.keycloak.jwkSetUri" . | quote }}
   {{- end }}
 
   # Application Features

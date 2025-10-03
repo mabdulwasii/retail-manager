@@ -29,6 +29,12 @@ spec:
       containers:
       - name: keycloak-realm-import
         image: curlimages/curl:8.5.0
+        env:
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "shop-manager.fullname" . }}-keycloak
+              key: admin-password
         command:
         - /bin/sh
         - -c
@@ -38,8 +44,8 @@ spec:
           ADMIN_TOKEN=$(curl -s -X POST \
             "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/master/protocol/openid-connect/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "username={{ .Values.keycloak.auth.adminUser }}" \
-            -d "password={{ .Values.keycloak.auth.adminPassword }}" \
+            -d "username={{ .Values.keycloak.auth.adminUser | default "admin" }}" \
+            -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
             -d "grant_type=password" \
             -d "client_id=admin-cli" | \
             sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')

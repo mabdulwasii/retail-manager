@@ -8,7 +8,7 @@ metadata:
 data:
   shop-manager-realm.json: |
     {
-      "realm": "shop-manager",
+      "realm": "{{ include "shop-manager.keycloak.realmName" . }}",
       "enabled": true,
       "displayName": "Shop Manager",
       "displayNameHtml": "<div class=\"kc-logo-text\"><span>Shop Manager</span></div>",
@@ -181,12 +181,12 @@ data:
       ],
       "clients": [
         {
-          "clientId": "shop-manager-backend",
+          "clientId": "{{ .Values.config.keycloak.clientId | default "shop-manager-backend" }}",
           "name": "Shop Manager Backend Service",
           "description": "Backend service client for Shop Manager",
           "enabled": true,
           "clientAuthenticatorType": "client-secret",
-          "secret": "shop-manager-backend-secret",
+          "secret": "{{ .Values.config.keycloak.clientSecret | default "shop-manager-backend-secret" }}",
           "bearerOnly": true,
           "serviceAccountsEnabled": true,
           "standardFlowEnabled": false,

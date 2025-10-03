@@ -388,7 +388,7 @@ keycloak:
   extraVolumes:
     - name: theme-config
       configMap:
-        name: shop-manager-keycloak-theme
+        name: keycloak-theme
     - name: themes
       emptyDir: {}
 

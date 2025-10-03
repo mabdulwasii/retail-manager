@@ -207,7 +207,8 @@ Generate JWK Set URI for backend (internal service communication)
 */}}
 {{- define "shop-manager.keycloak.jwkSetUri" -}}
 {{- $appName := include "shop-manager.appName" . -}}
-{{- printf "http://%s-keycloak:80/realms/shop-manager/protocol/openid-connect/certs" $appName }}
+{{- $realmName := include "shop-manager.keycloak.realmName" . -}}
+{{- printf "http://%s-keycloak:80/realms/%s/protocol/openid-connect/certs" $appName $realmName }}
 {{- end }}
 
 {{/*
@@ -228,7 +229,8 @@ Generate frontend Keycloak URL
 Generate Keycloak issuer URI
 */}}
 {{- define "shop-manager.keycloak.issuerUri" -}}
-{{- printf "https://%s/realms/shop-manager" (include "shop-manager.keycloak.hostname" .) }}
+{{- $realmName := include "shop-manager.keycloak.realmName" . -}}
+{{- printf "https://%s/realms/%s" (include "shop-manager.keycloak.hostname" .) $realmName }}
 {{- end }}
 
 {{/*
@@ -243,6 +245,34 @@ Generate configuration map name
 */}}
 {{- define "shop-manager.configMapName" -}}
 {{- printf "%s-config" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
+Generate frontend client ID
+*/}}
+{{- define "shop-manager.keycloak.frontendClientId" -}}
+{{- printf "%s-frontend" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
+Generate backend client ID
+*/}}
+{{- define "shop-manager.keycloak.backendClientId" -}}
+{{- printf "%s-backend" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
+Generate frontend client secret
+*/}}
+{{- define "shop-manager.keycloak.frontendClientSecret" -}}
+{{- printf "%s-frontend-secret" (include "shop-manager.appName" .) }}
+{{- end }}
+
+{{/*
+Generate backend client secret
+*/}}
+{{- define "shop-manager.keycloak.backendClientSecret" -}}
+{{- printf "%s-backend-secret" (include "shop-manager.appName" .) }}
 {{- end }}
 
 {{/*
@@ -318,6 +348,18 @@ Generate image name with registry prefix if specified
 {{- printf "%s/%s" $registry $image }}
 {{- else }}
 {{- $image }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate dynamic Keycloak realm name
+*/}}
+{{- define "shop-manager.keycloak.realmName" -}}
+{{- $appName := include "shop-manager.appName" . -}}
+{{- if eq $appName "shop-manager" }}
+{{- printf "shop-manager" }}
+{{- else }}
+{{- printf "%s" $appName }}
 {{- end }}
 {{- end }}
 

@@ -16,10 +16,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.shop-manager.local
-      secretName: shop-manager-backend-tls
+        - {{ include "shop-manager.backend.hostname" . }}
+      secretName: {{ include "shop-manager.backend.certName" . }}
   rules:
-    - host: api.shop-manager.local
+    - host: {{ include "shop-manager.backend.hostname" . }}
       http:
         paths:
           - path: /
@@ -50,10 +50,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - shop-manager.local
-      secretName: shop-manager-frontend-tls
+        - {{ include "shop-manager.frontend.hostname" . }}
+      secretName: {{ include "shop-manager.frontend.certName" . }}
   rules:
-    - host: shop-manager.local
+    - host: {{ include "shop-manager.frontend.hostname" . }}
       http:
         paths:
           - path: /

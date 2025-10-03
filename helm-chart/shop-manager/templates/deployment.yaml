@@ -30,13 +30,13 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         - name: wait-for-postgres
-          image: postgres:14
+          image: busybox:1.35
           command:
             - sh
             - -c
             - |
               echo "Waiting for PostgreSQL to be ready..."
-              until pg_isready -h {{ include "shop-manager.fullname" . }}-postgresql -p 5432; do
+              until nc -z {{ include "shop-manager.fullname" . }}-postgresql 5432; do
                 echo "PostgreSQL is not ready yet..."
                 sleep 2
               done
@@ -67,7 +67,7 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /api/actuator/health/liveness
               port: http
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 180 }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
@@ -75,7 +75,7 @@ spec:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 5 }}
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /api/actuator/health/readiness
               port: http
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 120 }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 5 }}
@@ -125,9 +125,9 @@ spec:
             {{- end }}
             {{- if .Values.keycloak.enabled }}
             - name: KEYCLOAK_ISSUER_URI
-              value: "https://auth.shop-manager.local/realms/shop-manager"
+              value: {{ include "shop-manager.keycloak.issuerUri" . | quote }}
             - name: KEYCLOAK_JWK_SET_URI
-              value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
+              value: {{ include "shop-manager.keycloak.jwkSetUri" . | quote }}
             - name: KEYCLOAK_AUTH_SERVER_URL
               value: "http://{{ include "shop-manager.fullname" . }}-keycloak:80"
             - name: APP_KEYCLOAK_CLIENT_ID
