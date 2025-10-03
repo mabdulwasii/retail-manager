@@ -258,6 +258,7 @@ configMap:
 postgresql:
   enabled: true
   # Dynamic naming: Uses release name/appName automatically
+  fullnameOverride: ""  # Will be set dynamically in templates
   auth:
     postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
     username: "shop"
@@ -302,6 +303,7 @@ keycloakPostgresql:
 # Kafka configuration
 kafka:
   enabled: false
+  fullnameOverride: ""  # Will be set dynamically in templates
 
 # Keycloak configuration
 # SECURITY WARNING: Change these passwords in production!
@@ -617,6 +619,7 @@ sealedSecrets:
 
 minio:
   enabled: true
+  fullnameOverride: ""  # Will be set dynamically in templates
   auth:
     # Credentials now managed via Kubernetes secrets - see secrets section
     existingSecret: ""
