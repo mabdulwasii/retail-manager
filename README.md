@@ -1,4 +1,4 @@
-# Shop Manager
+# Retail Manager
 
 **🏪 Modular Retail Management Platform**
 
