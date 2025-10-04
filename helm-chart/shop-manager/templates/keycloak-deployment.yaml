@@ -46,7 +46,7 @@ spec:
               mountPath: /themes
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:23.0
+          image: quay.io/keycloak/keycloak:26.0
           args:
             - start-dev
           env:
@@ -77,8 +77,8 @@ spec:
               value: "8080"
             - name: KC_HOSTNAME_STRICT
               value: "false"
-            - name: KC_PROXY
-              value: "edge"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
             # Health check
             - name: KC_HEALTH_ENABLED
               value: "true"

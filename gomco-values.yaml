@@ -1,5 +1,5 @@
 global:
-  appName: "retail-system"
+  appName: "shop"
   domain: "gomco.com"
 
 branding:
@@ -9,3 +9,12 @@ branding:
   colors:
     primary: "#2E7D32"
     secondary: "#FF6F00"
+
+# Disable existingSecret - let Helm create secrets
+postgresql:
+  auth:
+    existingSecret: ""
+
+minio:
+  auth:
+    existingSecret: ""
