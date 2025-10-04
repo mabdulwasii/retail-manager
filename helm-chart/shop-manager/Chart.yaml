@@ -16,20 +16,8 @@ keywords:
   - sales
   - multi-tenant
   - spring-boot
-dependencies:
-  - name: postgresql
-    version: "12.12.10"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: postgresql.enabled
-  - name: kafka
-    version: "26.8.5"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: kafka.enabled
-  - name: keycloak
-    version: "17.3.6"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: keycloak.enabled
-  - name: minio
-    version: "12.10.0"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: minio.enabled
+# All dependencies removed - using official images with custom templates
+# - PostgreSQL: Official postgres:15 image
+# - Keycloak: Official quay.io/keycloak/keycloak:23.0
+# - MinIO: Official minio/minio:latest
+# - Kafka: Disabled by default, can use Strimzi or official Kafka when needed

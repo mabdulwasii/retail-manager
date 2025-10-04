@@ -1,0 +1,129 @@
+{{- if .Values.keycloakPostgresql.enabled }}
+{{- $fullName := include "shop-manager.fullname" . }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $fullName }}-keycloak-postgresql
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql-secret
+type: Opaque
+stringData:
+  # PostgreSQL environment variables (for official postgres image)
+  # For Keycloak PostgreSQL, we use the same password for both admin and app
+  POSTGRES_PASSWORD: {{ .Values.keycloakPostgresql.auth.password | quote }}
+  POSTGRES_USER: {{ .Values.keycloakPostgresql.auth.username | quote }}
+  POSTGRES_DB: {{ .Values.keycloakPostgresql.auth.database | quote }}
+  # Keycloak application key
+  password: {{ .Values.keycloakPostgresql.auth.password | quote }}
+  # Legacy keys for compatibility
+  postgres-password: {{ .Values.keycloakPostgresql.auth.password | quote }}
+---
+# No init script needed - PostgreSQL auto-creates the user with POSTGRES_PASSWORD
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullName }}-keycloak-postgresql
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql
+spec:
+  serviceName: {{ $fullName }}-keycloak-postgresql-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "shop-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak-postgresql
+  template:
+    metadata:
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak-postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:15-alpine
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ $fullName }}-keycloak-postgresql
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.keycloakPostgresql.resources | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.keycloakPostgresql.persistence.size }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-keycloak-postgresql
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+      protocol: TCP
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-keycloak-postgresql-headless
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+      protocol: TCP
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-postgresql
+{{- end }}

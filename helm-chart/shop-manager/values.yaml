@@ -253,77 +253,65 @@ configMap:
     APP_BOOTSTRAP_SUPERADMIN_PHONENUMBER: "+1-555-000-0001"
     APP_BOOTSTRAP_SUPERADMIN_PASSWORD: "SuperAdmin@2024!"
 
-# Database configuration for shop-manager backend
+# PostgreSQL configuration (Official postgres:15-alpine image)
 # SECURITY WARNING: Change these passwords in production!
 postgresql:
   enabled: true
-  # Dynamic naming: Uses release name/appName automatically
-  fullnameOverride: ""  # Will be set dynamically in templates
   auth:
     postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
     username: "shop"
     password: "ShopDB@2024!SecurePassword#CompliantStrong"
     database: "shopdb"
-    existingSecret: ""
-  primary:
-    persistence:
-      enabled: true
-      size: 2Gi
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
-  metrics:
-    enabled: true
+  persistence:
+    size: 2Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
-# Separate PostgreSQL for Keycloak
+# Separate PostgreSQL for Keycloak (Official postgres:15-alpine image)
+# Note: Using same password for admin and app simplifies configuration
 keycloakPostgresql:
   enabled: true
-  # Dynamic naming: Uses release name/appName automatically
   auth:
-    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
+    postgresPassword: "KeycloakDB@2024!SecurePassword#Compliant"  # Not used - we use password field for both
     username: "keycloak"
-    password: "KeycloakDB@2024!SecurePassword#Compliant"
+    password: "KeycloakDB@2024!SecurePassword#Compliant"  # Used for both POSTGRES_PASSWORD and app
     database: "keycloak"
-  primary:
-    persistence:
-      enabled: true
-      size: 1Gi
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
+  persistence:
+    size: 1Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 # Kafka configuration
 kafka:
-  enabled: false
+  enabled: true
   fullnameOverride: ""  # Will be set dynamically in templates
 
-# Keycloak configuration
+# Keycloak configuration (using official Keycloak image)
 # SECURITY WARNING: Change these passwords in production!
-# Override using Helm values or environment variables:
-# --set keycloak.auth.adminPassword="your-secure-admin-password"
-# --set keycloak.postgresql.auth.postgresPassword="your-secure-postgres-password"
-# --set keycloak.postgresql.auth.password="your-secure-keycloak-password"
 keycloak:
   enabled: true
   auth:
     adminUser: admin
     adminPassword: "KeycloakAdm1n@2024!SecureAuth#CompliantPassword"
-  postgresql:
-    enabled: false  # Disable built-in PostgreSQL, use our separate one
   externalDatabase:
-    host: "shop-manager-keycloak-postgresql"
+    host: ""  # Dynamically set by template helper
     port: 5432
     user: "keycloak"
     database: "keycloak"
     password: "KeycloakDB@2024!SecurePassword#Compliant"
+  service:
+    type: ClusterIP
+    port: 80
   ingress:
     enabled: true
     hostname: auth.shop-manager.local
@@ -334,91 +322,14 @@ keycloak:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
       cert-manager.io/cluster-issuer: "local-ca-issuer"
-  service:
-    type: ClusterIP
-    port: 80
-    targetPort: 8080
-  extraEnvVars:
-    # Proper hostname configuration for HTTPS ingress
-    - name: KC_HOSTNAME
-      value: "auth.shop-manager.local"
-    - name: KC_HOSTNAME_STRICT
-      value: "false"
-    - name: KC_HOSTNAME_STRICT_HTTPS
-      value: "false"
-    - name: KC_HOSTNAME_STRICT_BACKCHANNEL
-      value: "false"
-    - name: KC_HTTP_ENABLED
-      value: "true"
-    - name: KC_HTTP_PORT
-      value: "8080"
-    # Proxy settings for ingress SSL termination
-    - name: KC_PROXY
-      value: "edge"
-    - name: KC_PROXY_ADDRESS_FORWARDING
-      value: "true"
-    # Disable HTTPS redirect since ingress handles SSL
-    - name: KC_HOSTNAME_ADMIN_URL
-      value: "https://auth.shop-manager.local"
-    - name: KC_FRONTEND_URL
-      value: "https://auth.shop-manager.local"
-    # Fix iframe timeout issues
-    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SUPPRESS_LOGOUT_CONFIRMATION_SCREEN
-      value: "true"
-    - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_DISABLE_TRUST_MANAGER
-      value: "true"
-    # Development mode settings to bypass iframe checks
-    - name: KEYCLOAK_PRODUCTION
-      value: "false"
-    - name: KC_LOG_LEVEL
-      value: "DEBUG"
-    # Disable progress indicators and reduce timeouts
-    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SUPPRESS_PROGRESS_INDICATORS
-      value: "true"
-    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_SESSION_TIMEOUT
-      value: "1"
-    - name: KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_VERIFICATION_TIMEOUT
-      value: "1"
-
-  # Custom theme configuration
-  customTheme:
-    enabled: true
-    name: "shop-manager"
-    applyToRealm: true
-
-  # Volume mounts for theme files using init container approach
-  extraVolumes:
-    - name: theme-config
-      configMap:
-        name: keycloak-theme
-    - name: themes
-      emptyDir: {}
-
-  extraVolumeMounts:
-    - name: themes
-      mountPath: /opt/bitnami/keycloak/themes
-
-  initContainers:
-    - name: theme-installer
-      image: busybox:1.35
-      command:
-        - sh
-        - -c
-        - |
-          echo "Installing Shop Manager theme files..."
-          mkdir -p /themes/shop-manager/login/resources/css
-          cp /theme-config/theme.properties /themes/shop-manager/login/ || true
-          cp /theme-config/template.ftl /themes/shop-manager/login/ || true
-          cp /theme-config/login.ftl /themes/shop-manager/login/ || true
-          cp /theme-config/shop-manager.css /themes/shop-manager/login/resources/css/ || true
-          chmod -R 755 /themes
-          echo "Theme files installed successfully"
-          ls -la /themes/shop-manager/login/
-      volumeMounts:
-        - name: theme-config
-          mountPath: /theme-config
-        - name: themes
-          mountPath: /themes
+  logLevel: "INFO"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
 
 # Application-specific comprehensive configuration
 config:
@@ -617,13 +528,21 @@ sealedSecrets:
     encryptionKey: ""     # AgA... encrypted value
     swaggerPassword: ""   # AgA... encrypted value
 
+# MinIO configuration (Official minio/minio image)
 minio:
   enabled: true
-  fullnameOverride: ""  # Will be set dynamically in templates
   auth:
-    # Credentials now managed via Kubernetes secrets - see secrets section
-    existingSecret: ""
-  defaultBuckets: "shop-manager-backups"
+    rootUser: "shopmanager"
+    rootPassword: "Min1o!SecureK3y2024#CompliantPassword"
+  persistence:
+    size: 5Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
   email:
     enabled: false

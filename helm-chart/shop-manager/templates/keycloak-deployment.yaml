@@ -1,0 +1,156 @@
+{{- if .Values.keycloak.enabled }}
+{{- $fullName := include "shop-manager.fullname" . }}
+{{- $dbHost := include "shop-manager.keycloak.postgresql.host" . }}
+{{- $themeConfigMapName := include "shop-manager.themeConfigMapName" . }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullName }}-keycloak
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+spec:
+  serviceName: {{ $fullName }}-keycloak-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "shop-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak
+  template:
+    metadata:
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak
+    spec:
+      initContainers:
+        - name: theme-installer
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Installing Shop Manager theme files..."
+              mkdir -p /themes/shop-manager/login/resources/css
+              cp /theme-config/theme.properties /themes/shop-manager/login/ || true
+              cp /theme-config/template.ftl /themes/shop-manager/login/ || true
+              cp /theme-config/login.ftl /themes/shop-manager/login/ || true
+              cp /theme-config/*.css /themes/shop-manager/login/resources/css/ || true
+              chmod -R 755 /themes
+              echo "Theme installed successfully"
+              ls -la /themes/shop-manager/login/
+          volumeMounts:
+            - name: theme-config
+              mountPath: /theme-config
+            - name: themes
+              mountPath: /themes
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:23.0
+          args:
+            - start-dev
+          env:
+            # Database configuration
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://{{ $dbHost }}:5432/{{ .Values.keycloak.externalDatabase.database }}"
+            - name: KC_DB_USERNAME
+              value: {{ .Values.keycloak.externalDatabase.user | quote }}
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}-keycloak-postgresql
+                  key: password
+            # Admin credentials
+            - name: KEYCLOAK_ADMIN
+              value: {{ .Values.keycloak.auth.adminUser | quote }}
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}-keycloak
+                  key: admin-password
+            # HTTP configuration
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HTTP_PORT
+              value: "8080"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_PROXY
+              value: "edge"
+            # Health check
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            # Logging
+            - name: KC_LOG_LEVEL
+              value: {{ .Values.keycloak.logLevel | default "INFO" | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+          volumeMounts:
+            - name: themes
+              mountPath: /opt/keycloak/themes
+          resources:
+            {{- toYaml .Values.keycloak.resources | nindent 12 }}
+      volumes:
+        - name: theme-config
+          configMap:
+            name: {{ $themeConfigMapName }}
+        - name: themes
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-keycloak
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+spec:
+  type: {{ .Values.keycloak.service.type | default "ClusterIP" }}
+  ports:
+    - port: {{ .Values.keycloak.service.port | default 80 }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-keycloak-headless
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+{{- end }}
