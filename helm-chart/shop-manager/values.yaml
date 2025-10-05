@@ -471,6 +471,31 @@ config:
     issuerUri: "https://auth.shop-manager.local/realms/shop-manager"
     jwkSetUri: "http://shop-manager-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
 
+  # Test users configuration (DEVELOPMENT ONLY)
+  # WARNING: These users are automatically created with weak passwords
+  # They should NEVER be enabled in production environments
+  testUsers:
+    enabled: true  # Set to false in production
+    users:
+      - username: "admin@shopmanager.com"
+        password: "admin123"
+        email: "admin@shopmanager.com"
+        firstName: "System"
+        lastName: "Administrator"
+        role: "TENANT_ADMIN"
+      - username: "manager@shopmanager.com"
+        password: "manager123"
+        email: "manager@shopmanager.com"
+        firstName: "Shop"
+        lastName: "Manager"
+        role: "SHOP_MANAGER"
+      - username: "employee@shopmanager.com"
+        password: "employee123"
+        email: "employee@shopmanager.com"
+        firstName: "Shop"
+        lastName: "Employee"
+        role: "SHOP_EMPLOYEE"
+
   # System flags
   maintenanceMode: false
   debugMode: false
