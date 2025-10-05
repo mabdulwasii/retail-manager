@@ -27,42 +27,65 @@ This guide provides comprehensive testing instructions and credentials for the S
 
 ## 🧪 Test User Accounts
 
+⚠️ **SECURITY WARNING**: These credentials are for DEVELOPMENT/TESTING ONLY and are automatically created during Keycloak realm import. They MUST be disabled in production environments.
+
 ### Primary Test Users (shop-manager Realm)
 
 ```
 👤 SYSTEM ADMINISTRATOR
 Email: admin@shopmanager.com
-Password: admin123
+Password: DevAdmin@2024!Test
 Role: TENANT_ADMIN
 Access: Full system administration, tenant management
 Default Context: default-tenant/default-shop
 
 👤 SHOP MANAGER
 Email: manager@shopmanager.com
-Password: manager123
+Password: DevManager@2024!Test
 Role: SHOP_MANAGER
 Access: Shop operations, inventory, sales, reports
 Default Context: default-tenant/default-shop
 
 👤 SHOP EMPLOYEE
 Email: employee@shopmanager.com
-Password: employee123
+Password: DevEmployee@2024!Test
 Role: SHOP_EMPLOYEE
 Access: Sales transactions, basic inventory queries
 Default Context: default-tenant/default-shop
 
 👤 INVESTOR
 Email: investor@shopmanager.com
-Password: investor123
+Password: DevInvestor@2024!Test
 Role: INVESTOR
 Access: Investment tracking, profit reports, analytics
 Default Context: default-tenant
 
 👤 CUSTOMER
 Email: customer@shopmanager.com
-Password: customer123
+Password: DevCustomer@2024!Test
 Role: CUSTOMER
 Access: Purchase history, receipts, order tracking
+Default Context: default-tenant
+
+👤 CASHIER
+Email: cashier@shopmanager.com
+Password: DevCashier@2024!Test
+Role: CASHIER
+Access: Cashier operations, sales transactions, receipt printing
+Default Context: default-tenant/default-shop
+
+👤 ACCOUNTANT
+Email: accountant@shopmanager.com
+Password: DevAccountant@2024!Test
+Role: ACCOUNTANT
+Access: Financial reports, accounting, expense tracking
+Default Context: default-tenant
+
+👤 AUDITOR
+Email: auditor@shopmanager.com
+Password: DevAuditor@2024!Test
+Role: AUDITOR
+Access: Audit logs, compliance reports, system monitoring
 Default Context: default-tenant
 ```
 
@@ -182,7 +205,7 @@ open http://localhost:3000
 curl -X POST "http://localhost:8080/realms/shop-manager/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=admin@shopmanager.com" \
-  -d "password=admin123" \
+  -d "password=DevAdmin@2024!Test" \
   -d "grant_type=password" \
   -d "client_id=shop-manager-frontend"
 

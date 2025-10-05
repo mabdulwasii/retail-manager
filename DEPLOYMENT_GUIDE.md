@@ -4,6 +4,35 @@ Complete guide for deploying Shop Manager in various environments.
 
 ---
 
+## 🚀 Quick Start (3 Steps)
+
+**Prerequisites**: Kubernetes cluster with kubectl and helm installed.
+
+### Step 1: Run Automated Installation
+```bash
+cd helm-chart
+./install-shop-manager.sh
+```
+
+### Step 2: Install SSL Certificates and DNS
+```bash
+sudo /tmp/install-shop-manager-ssl.sh
+```
+
+### Step 3: Access Application
+```bash
+# Restart your browser, then open:
+open https://retail.gomco.com
+
+# Login with test credentials (see TESTING-GUIDE.md):
+# Email: admin@shopmanager.com
+# Password: DevAdmin@2024!Test
+```
+
+**That's it!** The automated script handles cert-manager, ingress-nginx, namespace creation, and all deployments.
+
+---
+
 ## Quick Links
 
 - **[Helm Chart Documentation](./helm-chart/shop-manager/README.md)** - Complete deployment guide with SSL/DNS setup
