@@ -101,7 +101,7 @@ frontend:
   config:
     environment: production
     keycloakRealm: shop-manager
-    keycloakClientId: shop-manager-frontend
+    keycloakClientId: ""  # Will be dynamically generated as {appName}-frontend
     # These will be dynamically generated based on global.domain and global.appName
     apiBaseUrl: ""  # Will become https://api.{appName}.{domain}/api
     keycloakUrl: ""  # Will become https://auth.{appName}.{domain}
