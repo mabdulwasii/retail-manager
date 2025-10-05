@@ -63,13 +63,13 @@ data:
           "clientAuthenticatorType": "client-secret",
           "secret": "{{ include "shop-manager.keycloak.frontendClientSecret" . }}",
           "redirectUris": [
-            "https://shop-manager.local/*",
+            "https://{{ include "shop-manager.frontend.hostname" . }}/*",
             "http://localhost:3000/*",
             "http://localhost:3001/*",
             "http://localhost:3002/*"
           ],
           "webOrigins": [
-            "https://shop-manager.local",
+            "https://{{ include "shop-manager.frontend.hostname" . }}",
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:3002"

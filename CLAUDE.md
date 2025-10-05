@@ -128,15 +128,32 @@ backend/src/main/java/com/princely/shopmanager/
 ## Authentication & Testing
 
 ### Test Users (Development Only)
+⚠️ **SECURITY WARNING**: These credentials are for DEVELOPMENT ONLY and automatically created in Keycloak realm import.
+
 ```bash
 # TENANT_ADMIN
-admin@shopmanager.com / admin123
+admin@shopmanager.com / DevAdmin@2024!Test
 
 # SHOP_MANAGER
-manager@shopmanager.com / manager123
+manager@shopmanager.com / DevManager@2024!Test
 
 # SHOP_EMPLOYEE
-employee@shopmanager.com / employee123
+employee@shopmanager.com / DevEmployee@2024!Test
+
+# INVESTOR
+investor@shopmanager.com / DevInvestor@2024!Test
+
+# CUSTOMER
+customer@shopmanager.com / DevCustomer@2024!Test
+
+# CASHIER
+cashier@shopmanager.com / DevCashier@2024!Test
+
+# ACCOUNTANT
+accountant@shopmanager.com / DevAccountant@2024!Test
+
+# AUDITOR
+auditor@shopmanager.com / DevAuditor@2024!Test
 ```
 
 ### Services (Development)
