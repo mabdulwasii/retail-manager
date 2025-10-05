@@ -104,5 +104,5 @@ spec:
       volumes:
       - name: realm-config
         configMap:
-          name: {{ include "shop-manager.fullname" . }}-keycloak-realm
+          name: {{ include "shop-manager.fullname" . }}-keycloak-realm-config
 {{- end }}
