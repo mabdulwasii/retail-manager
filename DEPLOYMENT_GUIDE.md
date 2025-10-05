@@ -109,31 +109,107 @@ open http://localhost:3001
 
 ### Kubernetes Production (15 minutes)
 
+**Automated Installation** (Recommended):
 ```bash
-# 1. Install prerequisites
+# Run the automated installation script
+cd helm-chart
+./install-shop-manager.sh
+
+# Follow the on-screen instructions to complete SSL/DNS setup
+sudo /tmp/install-shop-manager-ssl.sh
+
+# Restart browser and access
+open https://retail.gomco.com
+```
+
+**Manual Installation** (Step-by-step):
+
+**Step 1: Install cert-manager**
+```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
 
+# Wait for cert-manager to be ready
+kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all
+```
+
+**Step 2: Install NGINX Ingress Controller**
+```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace
+helm repo update
 
-# 2. Deploy Shop Manager
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=LoadBalancer \
+  --wait \
+  --timeout 5m
+```
+
+**Step 3: Create namespace**
+```bash
 kubectl create namespace gomco
+```
 
-helm install retail ./helm-chart/shop-manager \
+**Step 4: Deploy Shop Manager**
+```bash
+cd helm-chart
+
+helm install retail ./shop-manager \
   -n gomco \
-  -f my-values.yaml \
+  -f ../gomco-values.yaml \
   --wait \
   --timeout 10m
+```
 
-# 3. Setup SSL/DNS (see Helm chart README)
-kubectl get secret local-ca-key-pair -n cert-manager -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/shop-manager-ca.crt
+**Step 5: Verify deployment**
+```bash
+# Check all pods are running
+kubectl get pods -n gomco
 
-# Install certificate (macOS)
+# Check ingress and certificates
+kubectl get ingress,certificate -n gomco
+```
+
+**Step 6: Setup SSL/DNS**
+```bash
+# Extract CA certificate
+kubectl get secret local-ca-key-pair -n cert-manager \
+  -o jsonpath='{.data.tls\.crt}' | base64 -d > /tmp/shop-manager-ca.crt
+
+# Get domain information
+NAMESPACE="gomco"
+HOSTNAME=$(kubectl get ingress -n $NAMESPACE -o jsonpath='{.items[0].spec.rules[0].host}')
+APP_NAME=$(echo "$HOSTNAME" | cut -d'.' -f1)
+DOMAIN=$(echo "$HOSTNAME" | cut -d'.' -f2-)
+
+# Create DNS entries
+cat > /tmp/dns-entries.txt << EOF
+# Shop Manager DNS entries
+127.0.0.1 $APP_NAME.$DOMAIN
+127.0.0.1 api.$APP_NAME.$DOMAIN
+127.0.0.1 auth.$APP_NAME.$DOMAIN
+EOF
+
+# For macOS: Install certificate and DNS
 sudo security add-trusted-cert -d -r trustRoot \
   -k /Library/Keychains/System.keychain \
   /tmp/shop-manager-ca.crt
 
-# 4. Access application
+sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts 2>/dev/null || true
+echo "" | sudo tee -a /etc/hosts >/dev/null
+cat /tmp/dns-entries.txt | sudo tee -a /etc/hosts >/dev/null
+
+# For Linux: Install certificate and DNS
+sudo cp /tmp/shop-manager-ca.crt /usr/local/share/ca-certificates/shop-manager-ca.crt
+sudo update-ca-certificates
+sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts 2>/dev/null || true
+echo "" | sudo tee -a /etc/hosts >/dev/null
+cat /tmp/dns-entries.txt | sudo tee -a /etc/hosts >/dev/null
+```
+
+**Step 7: Restart browser and access**
+```bash
+# Access application
 open https://retail.gomco.com
 ```
 
