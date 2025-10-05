@@ -156,10 +156,10 @@ echo ""
 # Step 8: Setup SSL/DNS (automated script generation)
 echo "Step 8: Generating SSL/DNS installation script..."
 
-# Get domain information
-HOSTNAME=$(kubectl get ingress -n "${NAMESPACE}" -o jsonpath='{.items[0].spec.rules[0].host}')
-APP_NAME=$(echo "$HOSTNAME" | cut -d'.' -f1)
-DOMAIN=$(echo "$HOSTNAME" | cut -d'.' -f2-)
+# Get domain information from frontend ingress (not backend)
+FRONTEND_HOSTNAME=$(kubectl get ingress -n "${NAMESPACE}" -l app.kubernetes.io/component=frontend -o jsonpath='{.items[0].spec.rules[0].host}')
+APP_NAME=$(echo "$FRONTEND_HOSTNAME" | cut -d'.' -f1)
+DOMAIN=$(echo "$FRONTEND_HOSTNAME" | cut -d'.' -f2-)
 
 # Extract CA certificate
 kubectl get secret local-ca-key-pair -n cert-manager \
