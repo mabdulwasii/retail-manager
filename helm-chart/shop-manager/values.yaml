@@ -258,10 +258,14 @@ configMap:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "PostgresAdm1n@2024!SecureDB#CompliantPassword"
-    username: "shop"
-    password: "ShopDB@2024!SecurePassword#CompliantStrong"
-    database: "shopdb"
+    # All values are dynamically generated based on appName if not provided
+    # postgresPassword will default to {AppName}PostgresAdm1n@2024!SecureDB#Compliant
+    # password will default to {AppName}DB@2024!SecurePassword#Compliant
+    # username will default to appName (e.g., "retail")
+    # database will default to {appName}db (e.g., "retaildb")
+    # Override any of these in your values file if needed
+    postgresPassword: ""  # Leave empty for dynamic generation
+    password: ""  # Leave empty for dynamic generation
   persistence:
     size: 2Gi
   resources:
@@ -295,6 +299,17 @@ keycloakPostgresql:
 kafka:
   enabled: true
   fullnameOverride: ""  # Will be set dynamically in templates
+  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"  # Base64 UUID for KRaft cluster
+  persistence:
+    size: 2Gi
+    storageClass: ""  # Use default storage class
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
 
 # Keycloak configuration (using official Keycloak image)
 # SECURITY WARNING: Change these passwords in production!

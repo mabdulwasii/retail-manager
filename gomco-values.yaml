@@ -1,5 +1,5 @@
 global:
-  appName: "shop"
+  appName: "retail"
   domain: "gomco.com"
 
 branding:
@@ -9,6 +9,14 @@ branding:
   colors:
     primary: "#2E7D32"
     secondary: "#FF6F00"
+
+# TLS Configuration
+tls:
+  enabled: true
+  issuer: "local-ca-issuer"  # Use local-ca-issuer for local development
+  email: "admin@gomco.com"
+  localCertInstallation:
+    enabled: true
 
 # Disable existingSecret - let Helm create secrets
 postgresql:

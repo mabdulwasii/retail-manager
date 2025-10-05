@@ -1,0 +1,42 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-kafka
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9092
+    targetPort: kafka
+    protocol: TCP
+    name: kafka
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-kafka-headless
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 9092
+    targetPort: kafka
+    protocol: TCP
+    name: kafka
+  - port: 9093
+    targetPort: controller
+    protocol: TCP
+    name: controller
+  selector:
+    {{- include "shop-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+{{- end }}

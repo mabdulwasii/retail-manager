@@ -1,0 +1,118 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "shop-manager.fullname" . }}-kafka
+  labels:
+    {{- include "shop-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  serviceName: {{ include "shop-manager.fullname" . }}-kafka-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "shop-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kafka
+  template:
+    metadata:
+      labels:
+        {{- include "shop-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: apache/kafka:3.8.1
+        ports:
+        - containerPort: 9092
+          name: kafka
+          protocol: TCP
+        - containerPort: 9093
+          name: controller
+          protocol: TCP
+        env:
+        # Cluster ID for KRaft mode
+        - name: CLUSTER_ID
+          value: "{{ .Values.kafka.clusterId | default "MkU3OEVBNTcwNTJENDM2Qk" }}"
+
+        # KRaft mode configuration
+        - name: KAFKA_NODE_ID
+          value: "1"
+
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@{{ include "shop-manager.fullname" . }}-kafka-0.{{ include "shop-manager.fullname" . }}-kafka-headless.{{ .Release.Namespace }}.svc.cluster.local:9093"
+
+        # Listener configuration
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://{{ include "shop-manager.fullname" . }}-kafka:9092"
+
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "PLAINTEXT"
+
+        # Log and data directories
+        - name: KAFKA_LOG_DIRS
+          value: "/var/lib/kafka/data"
+
+        # Performance tuning
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "1"
+
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "1"
+
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
+
+        # JVM settings
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx512M -Xms512M"
+
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/kafka/data
+
+        livenessProbe:
+          tcpSocket:
+            port: kafka
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+
+        readinessProbe:
+          tcpSocket:
+            port: kafka
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 6
+
+        resources:
+          {{- toYaml .Values.kafka.resources | nindent 10 }}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.kafka.persistence.storageClass }}
+      storageClassName: {{ .Values.kafka.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.kafka.persistence.size | default "2Gi" }}
+{{- end }}

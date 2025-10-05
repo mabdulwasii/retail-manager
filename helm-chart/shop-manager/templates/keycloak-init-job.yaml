@@ -57,18 +57,28 @@ spec:
 
           echo "Admin token obtained successfully"
 
+          # Extract realm name from the JSON file
+          REALM_NAME=$(grep -o '"realm"[[:space:]]*:[[:space:]]*"[^"]*"' /realm-config/shop-manager-realm.json | head -1 | sed 's/.*"realm"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+
+          if [ -z "$REALM_NAME" ]; then
+            echo "Failed to extract realm name from config"
+            exit 1
+          fi
+
+          echo "Realm name: $REALM_NAME"
+
           # Check if realm already exists
           REALM_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
-            "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/shop-manager")
+            "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/$REALM_NAME")
 
           if [ "$REALM_EXISTS" = "200" ]; then
-            echo "Realm 'shop-manager' already exists. Skipping import."
+            echo "Realm '$REALM_NAME' already exists. Skipping import."
             exit 0
           fi
 
           # Import realm
-          echo "Importing shop-manager realm..."
+          echo "Importing $REALM_NAME realm..."
           IMPORT_RESULT=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -78,6 +88,9 @@ spec:
 
           if [ "$IMPORT_RESULT" = "201" ]; then
             echo "Realm imported successfully"
+          elif [ "$IMPORT_RESULT" = "409" ]; then
+            echo "Realm '$REALM_NAME' already exists (HTTP 409). Skipping import."
+            exit 0
           else
             echo "Failed to import realm. HTTP status: $IMPORT_RESULT"
             exit 1

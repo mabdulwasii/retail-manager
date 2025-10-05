@@ -49,7 +49,7 @@ spec:
             - -c
             - |
               echo "Waiting for Keycloak to be ready..."
-              until wget -q --spider http://{{ include "shop-manager.fullname" . }}-keycloak:80/health/ready; do
+              until wget -q --spider http://{{ include "shop-manager.fullname" . }}-keycloak:80/; do
                 echo "Keycloak is not ready yet..."
                 sleep 5
               done
@@ -66,18 +66,16 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /api/actuator/health/liveness
+            tcpSocket:
               port: http
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 180 }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 60 }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 5 }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 5 }}
           readinessProbe:
-            httpGet:
-              path: /api/actuator/health/readiness
+            tcpSocket:
               port: http
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 120 }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds | default 30 }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 5 }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 3 }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold | default 5 }}
@@ -98,9 +96,9 @@ spec:
               value: "true"
             {{- if .Values.postgresql.enabled }}
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+              value: "jdbc:postgresql://{{ include "shop-manager.fullname" . }}-postgresql:5432/{{ include "shop-manager.postgresql.database" . }}"
             - name: SPRING_DATASOURCE_USERNAME
-              value: {{ .Values.postgresql.auth.username | quote }}
+              value: {{ include "shop-manager.postgresql.username" . | quote }}
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -193,7 +191,7 @@ spec:
           {{- with .Values.configMap.data }}
           envFrom:
             - configMapRef:
-                name: {{ include "shop-manager.fullname" . }}-config
+                name: {{ include "shop-manager.fullname" $ }}-config
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

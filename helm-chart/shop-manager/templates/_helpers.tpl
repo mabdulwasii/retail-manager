@@ -203,6 +203,54 @@ Generate main PostgreSQL name
 {{- end }}
 
 {{/*
+Generate PostgreSQL database name (dynamic based on appName)
+*/}}
+{{- define "shop-manager.postgresql.database" -}}
+{{- $appName := include "shop-manager.appName" . -}}
+{{- if .Values.postgresql.auth.database -}}
+  {{- .Values.postgresql.auth.database -}}
+{{- else -}}
+  {{- printf "%sdb" $appName -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Generate PostgreSQL username (dynamic based on appName)
+*/}}
+{{- define "shop-manager.postgresql.username" -}}
+{{- $appName := include "shop-manager.appName" . -}}
+{{- if .Values.postgresql.auth.username -}}
+  {{- .Values.postgresql.auth.username -}}
+{{- else -}}
+  {{- $appName -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Generate PostgreSQL password (dynamic based on appName if not provided)
+*/}}
+{{- define "shop-manager.postgresql.password" -}}
+{{- if .Values.postgresql.auth.password -}}
+  {{- .Values.postgresql.auth.password -}}
+{{- else -}}
+  {{- $appName := include "shop-manager.appName" . -}}
+  {{- printf "%sDB@2024!SecurePassword#Compliant" ($appName | title) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Generate PostgreSQL admin password (dynamic based on appName if not provided)
+*/}}
+{{- define "shop-manager.postgresql.postgresPassword" -}}
+{{- if .Values.postgresql.auth.postgresPassword -}}
+  {{- .Values.postgresql.auth.postgresPassword -}}
+{{- else -}}
+  {{- $appName := include "shop-manager.appName" . -}}
+  {{- printf "%sPostgresAdm1n@2024!SecureDB#Compliant" ($appName | title) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Generate JWK Set URI for backend (internal service communication)
 */}}
 {{- define "shop-manager.keycloak.jwkSetUri" -}}

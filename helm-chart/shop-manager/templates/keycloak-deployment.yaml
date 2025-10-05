@@ -89,10 +89,13 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: management
+              containerPort: 9000
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /health/live
-              port: http
+              port: management
             initialDelaySeconds: 120
             periodSeconds: 10
             timeoutSeconds: 5
@@ -100,7 +103,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: http
+              port: management
             initialDelaySeconds: 60
             periodSeconds: 5
             timeoutSeconds: 3
