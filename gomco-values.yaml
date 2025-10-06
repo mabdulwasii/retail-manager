@@ -5,7 +5,7 @@ global:
 # Use latest frontend image with runtime config fixes
 frontend:
   image:
-    tag: "empty-env-fix"
+    tag: "keycloak-context-fix"
 
 branding:
   platformName: "GOMCO Retail Pro"
