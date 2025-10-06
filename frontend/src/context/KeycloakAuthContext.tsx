@@ -3,20 +3,21 @@ import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web'
 import Keycloak from 'keycloak-js'
 import { Loader2 } from 'lucide-react'
 import { apiService } from '@/services/api'
+import configService from '@/config/runtime-config'
 
-// Initialize Keycloak instance with singleton pattern
-const keycloakConfig = {
-  url: import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080',
-  realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
-}
+// Get Keycloak config from runtime config service (uses window.RUNTIME_CONFIG)
+const getKeycloakConfig = () => ({
+  url: configService.keycloakUrl,
+  realm: configService.keycloakRealm,
+  clientId: configService.keycloakClientId,
+})
 
 // Create a singleton Keycloak instance
 let keycloakInstance: Keycloak | null = null
 
 const getKeycloakInstance = (): Keycloak => {
   if (!keycloakInstance) {
-    keycloakInstance = new Keycloak(keycloakConfig)
+    keycloakInstance = new Keycloak(getKeycloakConfig())
   }
   return keycloakInstance
 }
