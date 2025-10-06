@@ -1,4 +1,5 @@
 import Keycloak from 'keycloak-js'
+import configService from '@/config/runtime-config'
 
 /**
  * KeycloakService - Centralized service for Keycloak authentication
@@ -19,14 +20,14 @@ class KeycloakService {
   }
 
   /**
-   * Initialize Keycloak with configuration
+   * Initialize Keycloak with configuration from runtime config
    */
   public init(): Keycloak {
     if (!this.keycloak) {
       this.keycloak = new Keycloak({
-        url: import.meta.env.VITE_KEYCLOAK_URL || 'https://localhost:8443',
-        realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
-        clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
+        url: configService.keycloakUrl,
+        realm: configService.keycloakRealm,
+        clientId: configService.keycloakClientId,
       })
     }
     return this.keycloak

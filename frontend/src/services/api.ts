@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { UserProfileResponse } from '@/types/user'
+import configService from '@/config/runtime-config'
 
 class ApiService {
   private api: AxiosInstance
@@ -7,7 +8,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+      baseURL: configService.apiBaseUrl,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -44,8 +45,8 @@ class ApiService {
         }
 
         // Add Keycloak realm and client headers for proper context
-        config.headers['X-Keycloak-Realm'] = import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager'
-        config.headers['X-Keycloak-Client'] = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend'
+        config.headers['X-Keycloak-Realm'] = configService.keycloakRealm
+        config.headers['X-Keycloak-Client'] = configService.keycloakClientId
 
         return config
       },

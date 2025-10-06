@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ExternalLink, Shield } from 'lucide-react'
+import configService from '@/config/runtime-config'
 
 interface EmbeddedKeycloakLoginProps {
   onSuccess: (tokens: { accessToken: string; refreshToken: string; idToken: string }) => void
@@ -19,9 +20,9 @@ export const EmbeddedKeycloakLogin: React.FC<EmbeddedKeycloakLoginProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const keycloakConfig = {
-    url: import.meta.env.VITE_KEYCLOAK_URL || 'https://localhost:8443',
-    realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
-    clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
+    url: configService.keycloakUrl,
+    realm: configService.keycloakRealm,
+    clientId: configService.keycloakClientId,
   }
 
   const generateCodeChallenge = async (codeVerifier: string): Promise<string> => {

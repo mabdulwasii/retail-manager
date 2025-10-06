@@ -1,4 +1,5 @@
 import Keycloak from 'keycloak-js'
+import configService from '@/config/runtime-config'
 
 /**
  * AuthService - Handles both SSO and embedded authentication
@@ -8,9 +9,9 @@ class AuthService {
 
   constructor() {
     this.keycloak = new Keycloak({
-      url: import.meta.env.VITE_KEYCLOAK_URL || 'https://localhost:8443',
-      realm: import.meta.env.VITE_KEYCLOAK_REALM || 'shop-manager',
-      clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
+      url: configService.keycloakUrl,
+      realm: configService.keycloakRealm,
+      clientId: configService.keycloakClientId,
     })
   }
 

@@ -3,17 +3,8 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Build args for environment variables with Kubernetes defaults
-ARG VITE_API_BASE_URL=https://api.shop-manager.local/api
-ARG VITE_KEYCLOAK_URL=https://auth.shop-manager.local
-ARG VITE_KEYCLOAK_REALM=shop-manager
-ARG VITE_KEYCLOAK_CLIENT_ID=shop-manager-frontend
-
-# Set environment variables
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
-ENV VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
-ENV VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
+# NOTE: We use runtime configuration (window.RUNTIME_CONFIG) from ConfigMap
+# No build-time environment variables needed - all config is loaded at runtime
 
 # Copy package files
 COPY package.json ./
@@ -24,7 +15,7 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Copy environment file for Kubernetes
+# Copy environment file for Kubernetes (contains empty values - runtime config takes precedence)
 COPY .env.k8s .env
 
 # Build the application without TypeScript checking
