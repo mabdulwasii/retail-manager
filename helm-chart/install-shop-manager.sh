@@ -189,47 +189,47 @@ echo "  - https://auth.${APP_NAME}.${DOMAIN}"
 echo ""
 
 # Detect OS
-if [[ "$OSTYPE" == "darwin"* ]]; then
+if [[ "\$OSTYPE" == "darwin"* ]]; then
     # macOS
     echo "Detected macOS"
 
     # Install certificate to system keychain
     echo "Installing CA certificate to system keychain..."
-    sudo security add-trusted-cert -d -r trustRoot \
-        -k /Library/Keychains/System.keychain \
-        "${CERT_FILE}"
+    sudo security add-trusted-cert -d -r trustRoot \\
+        -k /Library/Keychains/System.keychain \\
+        "\${CERT_FILE}"
 
     # Install DNS entries
     echo "Installing DNS entries to /etc/hosts..."
     sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts 2>/dev/null || true
     echo "" | sudo tee -a /etc/hosts >/dev/null
-    cat "${DNS_FILE}" | sudo tee -a /etc/hosts >/dev/null
+    cat "\${DNS_FILE}" | sudo tee -a /etc/hosts >/dev/null
 
     echo "✅ Installation complete!"
     echo ""
     echo "Please restart your browser for changes to take effect."
 
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+elif [[ "\$OSTYPE" == "linux-gnu"* ]]; then
     # Linux
     echo "Detected Linux"
 
     # Install certificate to system CA store
     echo "Installing CA certificate to system CA store..."
-    sudo cp "${CERT_FILE}" /usr/local/share/ca-certificates/shop-manager-ca.crt
+    sudo cp "\${CERT_FILE}" /usr/local/share/ca-certificates/shop-manager-ca.crt
     sudo update-ca-certificates
 
     # Install DNS entries
     echo "Installing DNS entries to /etc/hosts..."
     sudo sed -i.bak '/# Shop Manager DNS entries/,/^$/d' /etc/hosts 2>/dev/null || true
     echo "" | sudo tee -a /etc/hosts >/dev/null
-    cat "${DNS_FILE}" | sudo tee -a /etc/hosts >/dev/null
+    cat "\${DNS_FILE}" | sudo tee -a /etc/hosts >/dev/null
 
     echo "✅ Installation complete!"
     echo ""
     echo "Please restart your browser for changes to take effect."
 
 else
-    echo "❌ Unsupported OS: $OSTYPE"
+    echo "❌ Unsupported OS: \$OSTYPE"
     echo "Please install the certificate and DNS entries manually."
     exit 1
 fi
