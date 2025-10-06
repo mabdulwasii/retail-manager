@@ -2,6 +2,11 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
+# Use latest frontend image with runtime config fixes
+frontend:
+  image:
+    tag: "empty-env-fix"
+
 branding:
   platformName: "GOMCO Retail Pro"
   companyName: "GOMCO Corporation"
