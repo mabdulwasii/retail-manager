@@ -2,10 +2,10 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
-# Use latest frontend image with runtime config fixes
+# Use latest frontend image with ALL hardcoded values removed
 frontend:
   image:
-    tag: "keycloak-context-fix"
+    tag: "final-no-hardcode"
 
 branding:
   platformName: "GOMCO Retail Pro"
