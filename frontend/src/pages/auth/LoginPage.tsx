@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Store, TrendingUp, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react'
+import configService from '@/config/runtime-config'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -22,8 +23,8 @@ export const LoginPage: React.FC = () => {
 
     try {
       // Build Keycloak authorization URL for OAuth flow
-      const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.shop-manager.local'
-      const clientId = 'shop-manager-frontend'
+      const keycloakUrl = configService.keycloakUrl
+      const clientId = configService.keycloakClientId
       const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')
       const loginHint = username ? encodeURIComponent(username) : ''
 
@@ -54,7 +55,8 @@ export const LoginPage: React.FC = () => {
       }
 
       // Build authorization URL for standard OAuth flow with PKCE
-      let authUrl = `${keycloakUrl}/realms/shop-manager/protocol/openid-connect/auth?` +
+      const keycloakRealm = configService.keycloakRealm
+      let authUrl = `${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/auth?` +
         `client_id=${clientId}&` +
         `redirect_uri=${redirectUri}&` +
         `response_type=code&` +

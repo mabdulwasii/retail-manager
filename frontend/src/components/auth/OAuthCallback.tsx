@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import configService from '@/config/runtime-config'
 
 export const OAuthCallback: React.FC = () => {
   const navigate = useNavigate()
@@ -74,8 +75,9 @@ export const OAuthCallback: React.FC = () => {
         }
 
         // Exchange code for tokens
-        const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.shop-manager.local'
-        const clientId = 'shop-manager-frontend'
+        const keycloakUrl = configService.keycloakUrl
+        const keycloakRealm = configService.keycloakRealm
+        const clientId = configService.keycloakClientId
         const redirectUri = window.location.origin + '/auth/callback'
 
         const tokenParams: any = {
@@ -86,7 +88,7 @@ export const OAuthCallback: React.FC = () => {
           code_verifier: codeVerifier,
         }
 
-        const tokenResponse = await fetch(`${keycloakUrl}/realms/shop-manager/protocol/openid-connect/token`, {
+        const tokenResponse = await fetch(`${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
