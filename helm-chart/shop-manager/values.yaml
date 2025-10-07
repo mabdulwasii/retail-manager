@@ -19,6 +19,12 @@ global:
   # Common annotations applied to all resources
   commonAnnotations: {}
 
+# Image pull secrets for private container registries
+# Required for private GitHub Container Registry or Docker Hub private repos
+# Example: imagePullSecrets:
+#   - name: regcred
+imagePullSecrets: []
+
 # Platform branding and customization
 branding:
   # Platform identity - what users see

@@ -2,19 +2,23 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
+# Image pull secrets for private GitHub Container Registry
+imagePullSecrets:
+  - name: regcred
+
 # Backend configuration
 backend:
   image:
-    repository: princely/princely
+    repository: ghcr.io/mabdulwasii/shop-manager
     tag: backend-v0.0.1
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 # Frontend configuration
 frontend:
   image:
-    repository: princely/princely
+    repository: ghcr.io/mabdulwasii/shop-manager
     tag: frontend-v0.0.2
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 branding:
   platformName: "GOMCO Retail Pro"

@@ -4,7 +4,7 @@ Complete guide for deploying Shop Manager in various environments.
 
 ---
 
-## 🚀 Quick Start (3 Steps)
+## 🚀 Quick Start (4 Steps)
 
 **Prerequisites**:
 
@@ -44,9 +44,53 @@ First, install the required tools:
    - Open Docker Desktop → Settings → Kubernetes
    - Check "Enable Kubernetes" → Apply & Restart
 
-**Note**: The installation script automatically installs cert-manager and NGINX ingress controller if they don't already exist. The Docker Hub images (`princely/princely`) are **public** - no authentication or imagePullSecrets needed!
+**Note**: The installation script automatically installs cert-manager and NGINX ingress controller if they don't already exist.
 
-### Step 1: Run Automated Installation
+### Step 1: Configure Private Registry Access
+
+Shop Manager uses **private Docker images** from GitHub Container Registry for commercial deployments. You need to create a Kubernetes secret for image authentication.
+
+#### 1.1 Create GitHub Personal Access Token
+
+1. Go to https://github.com/settings/tokens
+2. Click **"Generate new token (classic)"**
+3. Select scope: **`read:packages`** (for pulling images)
+4. Generate and **copy the token** (you won't see it again)
+
+#### 1.2 Create Kubernetes Secret
+
+```bash
+# Create namespace first
+kubectl create namespace gomco
+
+# Create image pull secret for GitHub Container Registry
+kubectl create secret docker-registry regcred \
+  --docker-server=ghcr.io \
+  --docker-username=mabdulwasii \
+  --docker-password=<YOUR_GITHUB_TOKEN> \
+  --docker-email=deployments@shopmanager.com \
+  -n gomco
+```
+
+**Parameter details:**
+- `--docker-server`: Always `ghcr.io` for GitHub Container Registry
+- `--docker-username`: GitHub username (`mabdulwasii`)
+- `--docker-password`: Your GitHub Personal Access Token (starts with `ghp_`)
+- `--docker-email`: Any email (not validated, can be team email like `deployments@shopmanager.com`)
+
+**Security Note:** Keep your GitHub token secure. Each deployment environment (dev, staging, prod) needs its own secret.
+
+#### 1.3 Verify Secret Creation
+
+```bash
+# Verify the secret was created
+kubectl get secret regcred -n gomco
+
+# Check secret details (base64 encoded)
+kubectl get secret regcred -n gomco -o yaml
+```
+
+### Step 2: Run Automated Installation
 ```bash
 cd helm-chart
 ./install-shop-manager.sh
@@ -59,7 +103,7 @@ The script automatically:
 - ✅ Deploys Shop Manager with Helm
 - ✅ Generates SSL/DNS installation script
 
-### Step 2: Install SSL Certificates and DNS
+### Step 3: Install SSL Certificates and DNS
 ```bash
 sudo /tmp/install-shop-manager-ssl.sh
 ```
@@ -71,7 +115,7 @@ This script automatically:
   - `127.0.0.1 api.retail.gomco.com`
   - `127.0.0.1 auth.retail.gomco.com`
 
-### Step 3: Access Application
+### Step 4: Access Application
 ```bash
 # Restart your browser, then open:
 open https://retail.gomco.com
