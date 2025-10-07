@@ -2,12 +2,12 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { CashierDashboard } from '../CashierDashboard'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useDashboardStats, useRecentActivities } from '@/hooks/useDashboard'
 import { useCurrency } from '@/hooks/useCurrency'
 
 // Mock all dependencies
-jest.mock('@/context/KeycloakAuthContext')
+jest.mock('@/context/ManualAuthContext')
 jest.mock('@/hooks/useDashboard')
 jest.mock('@/hooks/useCurrency')
 

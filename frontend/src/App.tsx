@@ -1,22 +1,21 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { KeycloakAuthProvider } from '@/context/KeycloakAuthContext'
+import { ManualAuthProvider } from '@/context/ManualAuthContext'
 import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AuthenticatedApp } from '@/components/AuthenticatedApp'
-import { DirectLogin } from '@/components/auth/DirectLogin'
 
 function App() {
   return (
-    <KeycloakAuthProvider>
+    <ManualAuthProvider>
       <Routes>
         {/* Public Routes - No authentication required */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Login route redirects directly to Keycloak */}
-        <Route path="/login" element={<DirectLogin />} />
+        {/* Custom login page */}
+        <Route path="/login" element={<LoginPage />} />
 
         <Route path="/register" element={<RegisterPage />} />
 
@@ -37,7 +36,7 @@ function App() {
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </KeycloakAuthProvider>
+    </ManualAuthProvider>
   )
 }
 

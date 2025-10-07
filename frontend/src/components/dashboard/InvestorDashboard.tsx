@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useInvestmentROI } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

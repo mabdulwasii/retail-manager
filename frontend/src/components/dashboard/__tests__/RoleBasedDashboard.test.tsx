@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { RoleBasedDashboard } from '../RoleBasedDashboard'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 
 // Mock all dashboard components
 jest.mock('../AdminDashboard', () => ({
@@ -37,7 +37,7 @@ jest.mock('../CustomerDashboard', () => ({
 }))
 
 // Mock the useAuth hook
-jest.mock('@/context/KeycloakAuthContext', () => ({
+jest.mock('@/context/ManualAuthContext', () => ({
   useAuth: jest.fn()
 }))
 

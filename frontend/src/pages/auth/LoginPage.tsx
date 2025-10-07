@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Store, TrendingUp, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react'
-import configService from '@/config/runtime-config'
+import { useAuth } from '@/context/ManualAuthContext'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { initializeKeycloak } = useAuth()
   const [username, setUsername] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,57 +23,19 @@ export const LoginPage: React.FC = () => {
     setError(null)
 
     try {
-      // Build Keycloak authorization URL for OAuth flow
-      const keycloakUrl = configService.keycloakUrl
-      const clientId = configService.keycloakClientId
-      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')
-      const loginHint = username ? encodeURIComponent(username) : ''
+      // Initialize Keycloak first
+      const kc = await initializeKeycloak()
 
-      // Generate state and nonce for security
-      const state = btoa(Math.random().toString()).substring(10, 25)
-      const nonce = btoa(Math.random().toString()).substring(10, 25)
+      // Trigger Keycloak login with optional username hint
+      const loginOptions: any = {
+        redirectUri: window.location.origin + '/dashboard',
+      }
 
-      // Generate PKCE code verifier and challenge
-      const codeVerifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
-
-      const encoder = new TextEncoder()
-      const data = encoder.encode(codeVerifier)
-      const digest = await crypto.subtle.digest('SHA-256', data)
-      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
-
-      // Store values for validation later
-      sessionStorage.setItem('auth_state', state)
-      sessionStorage.setItem('auth_nonce', nonce)
-      sessionStorage.setItem('code_verifier', codeVerifier)
       if (username) {
-        sessionStorage.setItem('loginHint', username)
+        loginOptions.loginHint = username
       }
 
-      // Build authorization URL for standard OAuth flow with PKCE
-      const keycloakRealm = configService.keycloakRealm
-      let authUrl = `${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${redirectUri}&` +
-        `response_type=code&` +
-        `scope=openid%20profile%20email&` +
-        `state=${state}&` +
-        `nonce=${nonce}&` +
-        `code_challenge=${codeChallenge}&` +
-        `code_challenge_method=S256`
-
-      // Add login hint if provided
-      if (loginHint) {
-        authUrl += `&login_hint=${loginHint}`
-      }
-
-      // Redirect to Keycloak login page
-      window.location.href = authUrl
+      await kc.login(loginOptions)
     } catch (err: any) {
       console.error('Login error:', err)
       setError(t('errors.failedToInitializeLogin'))

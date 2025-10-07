@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { apiService } from '@/services/api'
 import { UserProfileResponse } from '@/types/user'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

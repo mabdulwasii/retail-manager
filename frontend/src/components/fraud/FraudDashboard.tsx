@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import {
   useFraudDetection,
   FraudStatistics,

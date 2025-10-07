@@ -2,10 +2,10 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
-# Use latest frontend image with ALL hardcoded values removed
+# Use manual auth - Keycloak only initializes when user clicks Login
 frontend:
   image:
-    tag: "final-no-hardcode"
+    tag: "manual-auth"
 
 branding:
   platformName: "GOMCO Retail Pro"

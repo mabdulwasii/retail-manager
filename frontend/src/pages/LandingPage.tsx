@@ -19,14 +19,13 @@ import {
   Mail,
   MapPin
 } from 'lucide-react'
+import { useAuth } from '@/context/ManualAuthContext'
 
 export const LandingPage: React.FC = () => {
-  // For now, assume user is not authenticated on landing page
-  const isAuthenticated = false
+  const { isAuthenticated, logout } = useAuth()
 
   const handleLogout = async () => {
-    // Redirect to logout or home
-    window.location.href = '/'
+    await logout()
   }
 
   const features = [

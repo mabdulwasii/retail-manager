@@ -5,7 +5,7 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { mockData } from '@/test/mocks/data'
 
 // Mock the auth context
-jest.mock('@/context/KeycloakAuthContext')
+jest.mock('@/context/ManualAuthContext')
 
 // Mock the API service
 jest.mock('@/services/api')
@@ -43,7 +43,7 @@ jest.mock('@/components/ui/alert', () => ({
 }))
 
 // Import mocked modules after mocking
-import { useAuth } from '@/context/KeycloakAuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { apiService } from '@/services/api'
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
