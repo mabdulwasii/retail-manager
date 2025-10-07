@@ -2,10 +2,7 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
-# Use manual auth - Keycloak only initializes when user clicks Login
-frontend:
-  image:
-    tag: "manual-auth"
+# Frontend will use latest tag from default values.yaml
 
 branding:
   platformName: "GOMCO Retail Pro"

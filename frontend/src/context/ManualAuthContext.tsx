@@ -40,6 +40,7 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isInitialized, setIsInitialized] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<UserProfile | null>(null)
+  const initializingRef = React.useRef(false)
 
   // Extract user profile from token
   const getUserProfile = useCallback((kc: Keycloak): UserProfile | null => {
@@ -62,72 +63,130 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [])
 
-  // Initialize Keycloak instance (called on-demand)
+  // Initialize Keycloak on mount to handle OAuth callback
+  React.useEffect(() => {
+    if (initializingRef.current || keycloak) return
+    initializingRef.current = true
+
+    const init = async () => {
+      const kc = new Keycloak({
+        url: configService.keycloakUrl,
+        realm: configService.keycloakRealm,
+        clientId: configService.keycloakClientId,
+      })
+
+      try {
+        // If there's a hash with OAuth params but we've already retried, clear it
+        const hasRetried = sessionStorage.getItem('kc_retry')
+        if (window.location.hash && hasRetried) {
+          console.log('Already retried once, clearing hash and continuing...')
+          window.location.hash = ''
+          sessionStorage.removeItem('kc_retry')
+        }
+
+        const authenticated = await kc.init({
+          onLoad: 'check-sso',
+          checkLoginIframe: false,
+          pkceMethod: 'S256',
+          enableLogging: true,
+          responseMode: 'fragment',
+          flow: 'standard',
+          silentCheckSsoFallback: false,
+        })
+
+        // Clear retry flag on success
+        sessionStorage.removeItem('kc_retry')
+
+        setKeycloak(kc)
+        setIsInitialized(true)
+
+        if (authenticated) {
+          setIsAuthenticated(true)
+          setUser(getUserProfile(kc))
+          apiService.setTokenProvider(() => kc.token)
+
+          // Store tokens
+          if (kc.token && kc.refreshToken) {
+            localStorage.setItem('keycloak_token', kc.token)
+            localStorage.setItem('keycloak_access_token', kc.token)
+            localStorage.setItem('keycloak_refresh_token', kc.refreshToken)
+            localStorage.setItem('keycloak_id_token', kc.idToken || '')
+          }
+
+          // Set up token refresh
+          setInterval(async () => {
+            try {
+              const refreshed = await kc.updateToken(70)
+              if (refreshed && kc.token && kc.refreshToken) {
+                localStorage.setItem('keycloak_token', kc.token)
+                localStorage.setItem('keycloak_access_token', kc.token)
+                localStorage.setItem('keycloak_refresh_token', kc.refreshToken)
+                localStorage.setItem('keycloak_id_token', kc.idToken || '')
+                setUser(getUserProfile(kc))
+              }
+            } catch (error) {
+              console.error('Failed to refresh token:', error)
+              await kc.logout()
+            }
+          }, 60000)
+        }
+      } catch (error) {
+        console.error('Failed to initialize Keycloak:', error)
+
+        // If there's an OAuth callback error and we haven't retried yet, clear URL and retry once
+        const hasRetried = sessionStorage.getItem('kc_retry')
+        if (window.location.hash && !hasRetried) {
+          console.log('OAuth callback error, clearing hash and retrying...')
+          sessionStorage.setItem('kc_retry', 'true')
+          window.location.hash = ''
+          window.location.reload()
+          return
+        }
+
+        // If already retried or no hash, just mark as initialized
+        sessionStorage.removeItem('kc_retry')
+        setKeycloak(kc)
+        setIsInitialized(true)
+      }
+    }
+
+    init()
+  }, [getUserProfile])
+
+  // Get or wait for Keycloak instance
   const initializeKeycloak = useCallback(async (): Promise<Keycloak> => {
     if (keycloak) return keycloak
 
-    const kc = new Keycloak({
-      url: configService.keycloakUrl,
-      realm: configService.keycloakRealm,
-      clientId: configService.keycloakClientId,
-    })
-
-    try {
-      // Initialize without auto-login
-      const authenticated = await kc.init({
-        onLoad: undefined, // Don't auto-check or auto-login
-        checkLoginIframe: false,
-        pkceMethod: 'S256',
-        enableLogging: false,
-        responseMode: 'fragment',
-        flow: 'standard',
-      })
-
-      setKeycloak(kc)
-      setIsInitialized(true)
-
-      if (authenticated) {
-        setIsAuthenticated(true)
-        setUser(getUserProfile(kc))
-        apiService.setTokenProvider(() => kc.token)
-
-        // Store tokens
-        if (kc.token && kc.refreshToken) {
-          localStorage.setItem('keycloak_token', kc.token)
-          localStorage.setItem('keycloak_access_token', kc.token)
-          localStorage.setItem('keycloak_refresh_token', kc.refreshToken)
-          localStorage.setItem('keycloak_id_token', kc.idToken || '')
+    // Wait for initialization to complete
+    return new Promise((resolve, reject) => {
+      const checkInterval = setInterval(() => {
+        if (keycloak) {
+          clearInterval(checkInterval)
+          resolve(keycloak)
         }
+      }, 100)
 
-        // Set up token refresh
-        setInterval(async () => {
-          try {
-            const refreshed = await kc.updateToken(70)
-            if (refreshed && kc.token && kc.refreshToken) {
-              localStorage.setItem('keycloak_token', kc.token)
-              localStorage.setItem('keycloak_access_token', kc.token)
-              localStorage.setItem('keycloak_refresh_token', kc.refreshToken)
-              localStorage.setItem('keycloak_id_token', kc.idToken || '')
-              setUser(getUserProfile(kc))
-            }
-          } catch (error) {
-            console.error('Failed to refresh token:', error)
-            await kc.logout()
-          }
-        }, 60000)
-      }
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        reject(new Error('Keycloak initialization timeout'))
+      }, 10000)
+    })
+  }, [keycloak])
 
-      return kc
+  // Login - redirect to Keycloak
+  const login = useCallback(async () => {
+    try {
+      const kc = await initializeKeycloak()
+      await kc.login({
+        redirectUri: window.location.origin + '/dashboard',
+      })
     } catch (error) {
-      console.error('Failed to initialize Keycloak:', error)
-      throw error
+      console.error('Login failed:', error)
+      // Redirect to home page if Keycloak init fails
+      window.location.href = '/'
     }
-  }, [keycloak, getUserProfile])
-
-  // Login - navigate to custom login page
-  const login = useCallback(() => {
-    window.location.href = '/login'
-  }, [])
+  }, [initializeKeycloak])
 
   // Logout
   const logout = useCallback(async () => {

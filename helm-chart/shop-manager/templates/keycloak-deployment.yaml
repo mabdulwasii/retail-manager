@@ -2,6 +2,7 @@
 {{- $fullName := include "shop-manager.fullname" . }}
 {{- $dbHost := include "shop-manager.keycloak.postgresql.host" . }}
 {{- $themeConfigMapName := include "shop-manager.themeConfigMapName" . }}
+{{- $themeName := include "shop-manager.appName" . }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -30,15 +31,15 @@ spec:
             - sh
             - -c
             - |
-              echo "Installing Shop Manager theme files..."
-              mkdir -p /themes/shop-manager/login/resources/css
-              cp /theme-config/theme.properties /themes/shop-manager/login/ || true
-              cp /theme-config/template.ftl /themes/shop-manager/login/ || true
-              cp /theme-config/login.ftl /themes/shop-manager/login/ || true
-              cp /theme-config/*.css /themes/shop-manager/login/resources/css/ || true
+              echo "Installing {{ $themeName }} theme files..."
+              mkdir -p /themes/{{ $themeName }}/login/resources/css
+              cp /theme-config/theme.properties /themes/{{ $themeName }}/login/ || true
+              cp /theme-config/template.ftl /themes/{{ $themeName }}/login/ || true
+              cp /theme-config/login.ftl /themes/{{ $themeName }}/login/ || true
+              cp /theme-config/*.css /themes/{{ $themeName }}/login/resources/css/ || true
               chmod -R 755 /themes
               echo "Theme installed successfully"
-              ls -la /themes/shop-manager/login/
+              ls -la /themes/{{ $themeName }}/login/
           volumeMounts:
             - name: theme-config
               mountPath: /theme-config

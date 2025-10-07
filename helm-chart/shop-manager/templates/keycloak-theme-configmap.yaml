@@ -17,6 +17,7 @@ data:
     styles=css/login.css css/{{ $cssFileName }}
 
   template.ftl: |
+    <#macro registrationLayout displayInfo=false displayMessage=true displayRequiredFields=false displayWide=false showAnotherWayIfPresent=true>
     <!DOCTYPE html>
     <html>
     <head>
@@ -53,6 +54,15 @@ data:
                             </header>
                             <div class="row">
                                 <div class="col-md-10 col-md-offset-1">
+                                    <#if displayMessage && message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
+                                        <div class="alert alert-${message.type}">
+                                            <#if message.type = 'success'><span class="pficon pficon-ok"></span></#if>
+                                            <#if message.type = 'warning'><span class="pficon pficon-warning-triangle-o"></span></#if>
+                                            <#if message.type = 'error'><span class="pficon pficon-error-circle-o"></span></#if>
+                                            <#if message.type = 'info'><span class="pficon pficon-info"></span></#if>
+                                            <span class="kc-feedback-text">${kcSanitize(message.summary)?no_esc}</span>
+                                        </div>
+                                    </#if>
                                     <div id="kc-content">
                                         <div id="kc-content-wrapper">
                                             <#nested "form">
@@ -70,6 +80,7 @@ data:
         </div>
     </body>
     </html>
+    </#macro>
 
   login.ftl: |
     <#import "template.ftl" as layout>

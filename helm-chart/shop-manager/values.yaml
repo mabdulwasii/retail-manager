@@ -82,7 +82,7 @@ backend:
 
   image:
     repository: shop-manager-backend
-    tag: clean-roles
+    tag: latest
     pullPolicy: IfNotPresent
 
 # Frontend configuration
@@ -91,7 +91,7 @@ frontend:
   replicaCount: 1
   image:
     repository: shop-manager-frontend
-    tag: localStorage-token-fix
+    tag: latest
     pullPolicy: IfNotPresent
   service:
     type: NodePort

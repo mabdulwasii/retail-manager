@@ -38,10 +38,13 @@ data:
       "otpPolicyDigits": 6,
       "otpPolicyLookAheadWindow": 1,
       "otpPolicyPeriod": 30,
-      "accessTokenLifespan": 3600,
-      "accessTokenLifespanForImplicitFlow": 900,
-      "ssoSessionIdleTimeout": 1800,
-      "ssoSessionMaxLifespan": 36000,
+      "accessTokenLifespan": 300,
+      "accessTokenLifespanForImplicitFlow": 300,
+      "ssoSessionIdleTimeout": 300,
+      "ssoSessionMaxLifespan": 300,
+      "loginTheme": "retail",
+      "accountTheme": "retail",
+      "emailTheme": "retail",
       "ssoSessionIdleTimeoutRememberMe": 0,
       "ssoSessionMaxLifespanRememberMe": 0,
       "offlineSessionIdleTimeout": 2592000,
@@ -373,6 +376,21 @@ data:
             echo "✗ Failed to create realm"
             exit 1
         fi
+    fi
+
+    # Set custom theme for the realm (uses appName dynamically)
+    echo "Configuring custom theme for realm..."
+    THEME_NAME="{{ include "shop-manager.appName" . }}"
+
+    curl -s -X PUT "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"loginTheme\": \"$THEME_NAME\", \"accountTheme\": \"$THEME_NAME\", \"emailTheme\": \"$THEME_NAME\"}"
+
+    if [ $? -eq 0 ]; then
+        echo "✓ Custom theme '$THEME_NAME' applied to realm"
+    else
+        echo "⚠ Warning: Failed to apply custom theme (may not exist yet)"
     fi
 
     # Verify realm is accessible

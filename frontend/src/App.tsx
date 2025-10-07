@@ -2,7 +2,6 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ManualAuthProvider } from '@/context/ManualAuthContext'
 import { LandingPage } from '@/pages/LandingPage'
-import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AuthenticatedApp } from '@/components/AuthenticatedApp'
@@ -13,9 +12,6 @@ function App() {
       <Routes>
         {/* Public Routes - No authentication required */}
         <Route path="/" element={<LandingPage />} />
-
-        {/* Custom login page */}
-        <Route path="/login" element={<LoginPage />} />
 
         <Route path="/register" element={<RegisterPage />} />
 

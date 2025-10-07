@@ -22,7 +22,11 @@ import {
 import { useAuth } from '@/context/ManualAuthContext'
 
 export const LandingPage: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, login, logout } = useAuth()
+
+  const handleLogin = () => {
+    login()
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -155,7 +159,7 @@ export const LandingPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">Login</Link>
+                  <button onClick={handleLogin} className="text-blue-600 hover:text-blue-700 font-medium">Login</button>
                   <Button asChild>
                     <Link to="/register">Get Started</Link>
                   </Button>
