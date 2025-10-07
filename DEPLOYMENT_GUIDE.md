@@ -6,7 +6,45 @@ Complete guide for deploying Shop Manager in various environments.
 
 ## 🚀 Quick Start (3 Steps)
 
-**Prerequisites**: Kubernetes cluster with kubectl and helm installed.
+**Prerequisites**:
+
+First, install the required tools:
+
+1. **Docker Desktop** (includes Kubernetes):
+   - macOS: Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+   - Windows: Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+   - Linux: Install Docker + Minikube separately
+
+2. **kubectl** (Kubernetes CLI):
+   ```bash
+   # macOS
+   brew install kubectl
+
+   # Linux
+   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+   sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+   # Windows (PowerShell)
+   choco install kubernetes-cli
+   ```
+
+3. **Helm** (Kubernetes package manager):
+   ```bash
+   # macOS
+   brew install helm
+
+   # Linux
+   curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+   # Windows (PowerShell)
+   choco install kubernetes-helm
+   ```
+
+4. **Enable Kubernetes in Docker Desktop**:
+   - Open Docker Desktop → Settings → Kubernetes
+   - Check "Enable Kubernetes" → Apply & Restart
+
+**Note**: The installation script automatically installs cert-manager and NGINX ingress controller if they don't already exist. The Docker Hub images (`princely/princely`) are **public** - no authentication or imagePullSecrets needed!
 
 ### Step 1: Run Automated Installation
 ```bash
@@ -14,10 +52,24 @@ cd helm-chart
 ./install-shop-manager.sh
 ```
 
+The script automatically:
+- ✅ Installs cert-manager (if not present)
+- ✅ Installs NGINX ingress controller (if not present)
+- ✅ Creates namespace
+- ✅ Deploys Shop Manager with Helm
+- ✅ Generates SSL/DNS installation script
+
 ### Step 2: Install SSL Certificates and DNS
 ```bash
 sudo /tmp/install-shop-manager-ssl.sh
 ```
+
+This script automatically:
+- ✅ Installs CA certificate to system keychain (macOS) or CA store (Linux)
+- ✅ Adds DNS entries to `/etc/hosts` file:
+  - `127.0.0.1 retail.gomco.com`
+  - `127.0.0.1 api.retail.gomco.com`
+  - `127.0.0.1 auth.retail.gomco.com`
 
 ### Step 3: Access Application
 ```bash
@@ -29,7 +81,7 @@ open https://retail.gomco.com
 # Password: DevAdmin@2024!Test
 ```
 
-**That's it!** The automated script handles cert-manager, ingress-nginx, namespace creation, and all deployments.
+**That's it!** Everything is automated - from cert-manager to ingress-nginx to Shop Manager deployment.
 
 ---
 

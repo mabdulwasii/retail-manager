@@ -2,7 +2,19 @@ global:
   appName: "retail"
   domain: "gomco.com"
 
-# Frontend will use latest tag from default values.yaml
+# Backend configuration
+backend:
+  image:
+    repository: princely/princely
+    tag: backend-v0.0.1
+    pullPolicy: IfNotPresent
+
+# Frontend configuration
+frontend:
+  image:
+    repository: princely/princely
+    tag: frontend-v0.0.2
+    pullPolicy: IfNotPresent
 
 branding:
   platformName: "GOMCO Retail Pro"
