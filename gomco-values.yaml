@@ -15,7 +15,7 @@ backend:
 
 # Frontend configuration
 frontend:
-  enabled: false
+  enabled: true
   image:
     repository: princely/shop-manager
     tag: frontend-v0.0.2

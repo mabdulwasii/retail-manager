@@ -128,6 +128,7 @@
                         <span class="logo-text">Shop Manager</span>
                     </h1>
                     <p class="subtitle">Retail Management Platform</p>
+                    <p class="subtitle">Yes it now works...</p>
                 </div>
             </header>
 
