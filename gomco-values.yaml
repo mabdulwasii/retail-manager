@@ -9,14 +9,15 @@ imagePullSecrets:
 # Backend configuration
 backend:
   image:
-    repository: ghcr.io/mabdulwasii/shop-manager
+    repository: princely/shop-manager
     tag: backend-v0.0.1
     pullPolicy: Always
 
 # Frontend configuration
 frontend:
+  enabled: false
   image:
-    repository: ghcr.io/mabdulwasii/shop-manager
+    repository: princely/shop-manager
     tag: frontend-v0.0.2
     pullPolicy: Always
 
@@ -42,5 +43,10 @@ postgresql:
     existingSecret: ""
 
 minio:
+  enabled: false
   auth:
     existingSecret: ""
+
+kafka:
+  enabled: false
+  

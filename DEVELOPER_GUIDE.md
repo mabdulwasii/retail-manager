@@ -860,6 +860,13 @@ docker-compose logs -f backend
 
 # Reset everything
 docker-compose down -v && docker-compose up -d
+
+
+#Refresh keycloack
+
+helm upgrade retail ./shop-manager -n gomco -f ../gomco-values.yaml
+
+kubectl delete pod retail-keycloak-0 -n gomco
 ```
 
 For production deployment, see [KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md).

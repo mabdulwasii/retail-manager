@@ -86,12 +86,13 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         const authenticated = await kc.init({
           onLoad: 'check-sso',
-          checkLoginIframe: false,
+          checkLoginIframe: true,
           pkceMethod: 'S256',
           enableLogging: true,
           responseMode: 'fragment',
           flow: 'standard',
           silentCheckSsoFallback: false,
+          useNonce:false,
         })
 
         // Clear retry flag on success
@@ -112,7 +113,6 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             localStorage.setItem('keycloak_refresh_token', kc.refreshToken)
             localStorage.setItem('keycloak_id_token', kc.idToken || '')
           }
-
           // Set up token refresh
           setInterval(async () => {
             try {
@@ -126,7 +126,7 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               }
             } catch (error) {
               console.error('Failed to refresh token:', error)
-              await kc.logout()
+              // await kc.logout()
             }
           }, 60000)
         }
@@ -190,9 +190,9 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Logout
   const logout = useCallback(async () => {
-    if (keycloak) {
-      await keycloak.logout()
-    }
+    // if (keycloak) {
+      // await keycloak.logout()
+    // }
 
     // Clear state
     setIsAuthenticated(false)
