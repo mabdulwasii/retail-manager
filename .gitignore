@@ -79,9 +79,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Documentation (as requested)
-docs/
-
 # Claude files (as requested)
 .claude/
 *.claude
