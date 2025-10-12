@@ -40,8 +40,8 @@ export const investmentSchema = yup.object({
   shopId: yup.string().required('Shop is required'),
   amount: yup.number()
     .required('Amount is required')
-    .min(1000, 'Minimum investment is $1,000')
-    .max(1000000, 'Maximum investment is $1,000,000'),
+    .min(1000, 'Minimum investment is #1,000')
+    .max(1000000, 'Maximum investment is #1,000,000'),
   investmentType: yup.string()
     .required('Investment type is required')
     .oneOf(['EQUITY', 'DEBT', 'REVENUE_SHARE']),
@@ -92,7 +92,7 @@ export const shopSchema = yup.object({
     .email('Invalid email format')
     .required('Email is required'),
   phoneNumber: yup.string()
-    .matches(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format')
+    .matches(/^\+?[1-9]\d{1,14}#/, 'Invalid phone number format')
     .required('Phone number is required'),
   address: yup.string().required('Address is required'),
   city: yup.string().required('City is required'),
@@ -126,8 +126,8 @@ export const shopSchema = yup.object({
 ### Investment Management
 
 **Investment Constraints**:
-- Minimum investment: $1,000
-- Maximum single investment: $1,000,000
+- Minimum investment: #1,000
+- Maximum single investment: #1,000,000
 - Profit share range: 1% - 50%
 - Duration range: 3 - 60 months
 
@@ -145,9 +145,9 @@ ROI % = ((Total Returns - Initial Investment) / Initial Investment) × 100
 ### Expense Management
 
 **Approval Workflow**:
-- < $500: Auto-approved
-- $500 - $5,000: Manager approval required
-- > $5,000: Owner approval required
+- < #500: Auto-approved
+- #500 - #5,000: Manager approval required
+- > #5,000: Owner approval required
 
 **Budget Tracking**:
 - Monthly budget limits by category
@@ -174,7 +174,7 @@ ROI % = ((Total Returns - Initial Investment) / Initial Investment) × 100
 ### Fraud Detection
 
 **Alert Triggers**:
-- Transaction > $10,000 (high-value alert)
+- Transaction > #10,000 (high-value alert)
 - > 5 transactions in 1 hour from same user
 - Multiple returns from same customer (> 3 in 7 days)
 - Discount > 50% on single transaction
