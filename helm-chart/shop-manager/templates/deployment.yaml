@@ -141,6 +141,15 @@ spec:
             # Security settings
             - name: SECURITY_TENANT_ISOLATION
               value: {{ .Values.config.security.tenantIsolation | default "true" | quote }}
+            # CORS settings
+            - name: CORS_ALLOWED_ORIGINS
+              value: {{ .Values.config.security.cors.allowedOrigins | default "http://localhost:3000,http://localhost:3001,http://localhost:3002,https://shop-manager.local" | quote }}
+            - name: CORS_ALLOWED_METHODS
+              value: {{ .Values.config.security.cors.allowedMethods | default "GET,POST,PUT,DELETE,OPTIONS,PATCH" | quote }}
+            - name: CORS_ALLOWED_HEADERS
+              value: {{ .Values.config.security.cors.allowedHeaders | default "*" | quote }}
+            - name: CORS_ALLOW_CREDENTIALS
+              value: {{ .Values.config.security.cors.allowCredentials | default "true" | quote }}
             # Storage settings
             - name: STORAGE_BACKUP_PATH
               value: {{ .Values.config.backup.path | default "/var/shop-manager/backups" | quote }}

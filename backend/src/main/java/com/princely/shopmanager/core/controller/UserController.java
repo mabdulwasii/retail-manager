@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,9 +37,8 @@ public class UserController {
     @GetMapping("/profile")
     @Operation(
         summary = "Get current user profile",
-        description = "Retrieves the authenticated user's profile information including personal details and roles"
+        description = "Retrieves the authenticated user's profile information including personal details and roles. Available to all authenticated users."
     )
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'SHOP_MANAGER', 'SHOP_EMPLOYEE', 'INVESTOR')")
     public ResponseEntity<UserProfileResponse> getCurrentUserProfile(
             @AuthenticationPrincipal JwtPrincipal principal) {
 

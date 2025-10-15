@@ -184,8 +184,8 @@ public class ShopService {
     /**
      * Retrieves shops accessible to the current user with pagination.
      *
-     * For system administrators, returns all shops.
-     * For tenant users, returns only shops within their tenant context.
+     * For users with tenant context, returns only shops within their tenant.
+     * Tenant isolation is automatically enforced.
      *
      * @param pageable Pagination parameters
      * @return Page of shop response DTOs
@@ -196,15 +196,32 @@ public class ShopService {
 
         Page<Shop> shops;
         if (currentTenantId == null) {
-            // System admin - can see all shops
-            shops = shopRepository.findAll(pageable);
-            log.debug("Retrieved {} shops for system admin", shops.getContent().size());
+            // No tenant context - shouldn't happen for regular users
+            log.warn("No tenant context found, returning empty result");
+            shops = Page.empty(pageable);
         } else {
             // Tenant user - can only see shops in their tenant
             shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
             log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
         }
 
+        return shops.map(ShopResponse::fromEntity);
+    }
+
+    /**
+     * Retrieves ALL shops across ALL tenants (System Admin only).
+     *
+     * This method explicitly bypasses tenant isolation and returns all shops
+     * in the system. Should only be called from endpoints restricted to SYSTEM_ADMIN.
+     *
+     * @param pageable Pagination parameters
+     * @return Page of all shop response DTOs
+     */
+    @Transactional(readOnly = true)
+    public Page<ShopResponse> getAllShopsSystemAdmin(Pageable pageable) {
+        log.debug("System admin retrieving all shops across all tenants");
+        Page<Shop> shops = shopRepository.findAll(pageable);
+        log.debug("Retrieved {} shops total", shops.getTotalElements());
         return shops.map(ShopResponse::fromEntity);
     }
 

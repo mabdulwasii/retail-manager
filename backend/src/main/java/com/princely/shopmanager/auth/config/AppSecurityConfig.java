@@ -45,6 +45,7 @@ public class AppSecurityConfig {
         private List<String> allowedOrigins = List.of(
             "http://localhost:3000",
             "http://localhost:3001",
+            "http://localhost:3002",
             "https://shop-manager.local",
             "http://shop-manager.local"
         );

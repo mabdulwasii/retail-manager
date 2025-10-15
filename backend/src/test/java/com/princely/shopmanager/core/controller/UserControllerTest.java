@@ -144,17 +144,24 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 403 when user lacks required role")
-    @WithMockUser(roles = {"INVALID_ROLE"})
-    void shouldReturn403WhenInvalidRole() throws Exception {
+    @DisplayName("Should allow access to any authenticated user regardless of role")
+    @WithMockUser(roles = {"CUSTOMER"})
+    void shouldAllowAnyAuthenticatedUser() throws Exception {
         mockMvc.perform(get("/api/users/profile")
                 .with(jwt().jwt(jwt -> jwt
                     .subject("keycloak-456")
                     .claim("preferred_username", "john.doe")
-                    .claim("realm_access", java.util.Map.of("roles", List.of("INVALID_ROLE")))
+                    .claim("email", "john.doe@example.com")
+                    .claim("given_name", "John")
+                    .claim("family_name", "Doe")
+                    .claim("name", "John Doe")
+                    .claim("realm_access", java.util.Map.of("roles", List.of("CUSTOMER")))
+                    .claim("tenant_id", "tenant-123")
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.username").value("john.doe"))
+            .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"));
     }
 
     @Test

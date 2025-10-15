@@ -389,6 +389,11 @@ config:
     accountLockDurationMinutes: 30
     passwordMinLength: 8
     jwtExpirationHours: 24
+    cors:
+      allowedOrigins: "http://localhost:3000,http://localhost:3001,http://localhost:3002,https://shop-manager.local"
+      allowedMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      allowedHeaders: "*"
+      allowCredentials: "true"
 
   # Audit configuration
   audit:

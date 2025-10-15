@@ -143,18 +143,17 @@ public class ShopController {
     }
 
     /**
-     * Retrieves a paginated list of shops.
+     * Retrieves a paginated list of shops for the current tenant.
      *
-     * Returns shops accessible to the current user:
-     * - System admins can see all shops
-     * - Tenant users can only see shops within their tenant
+     * Returns only shops within the authenticated user's tenant.
+     * Tenant isolation is automatically enforced at the service layer.
      *
      * @param pageable Pagination parameters
-     * @return Paginated list of shops
+     * @return Paginated list of shops in the current tenant
      */
     @Operation(
         summary = "Get shops with pagination",
-        description = "Retrieves a paginated list of shops. System admins see all shops, tenant users see only their tenant's shops."
+        description = "Retrieves a paginated list of shops for the current tenant. Tenant isolation is enforced automatically."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -168,7 +167,6 @@ public class ShopController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -180,16 +178,57 @@ public class ShopController {
     }
 
     /**
+     * Retrieves ALL shops across ALL tenants (System Admin only).
+     *
+     * This endpoint bypasses tenant isolation and returns all shops in the system.
+     * Only accessible to users with SYSTEM_ADMIN role.
+     *
+     * @param pageable Pagination parameters
+     * @return Paginated list of all shops across all tenants
+     */
+    @Operation(
+        summary = "Get all shops in the system (System Admin only)",
+        description = "Retrieves all shops across all tenants. Only accessible to system administrators."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "All shops retrieved successfully",
+            content = @Content(schema = @Schema(implementation = Page.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires SYSTEM_ADMIN role"
+        )
+    })
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<Page<ShopResponse>> getAllShops(
+        @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
+        @Parameter(description = "Pagination parameters (page, size, sort)")
+        Pageable pageable
+    ) {
+        log.debug("System admin retrieving all shops with pagination: {}", pageable);
+        Page<ShopResponse> response = shopService.getAllShopsSystemAdmin(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Retrieves all active shops for the current tenant.
      *
      * This endpoint is optimized for dropdown lists and quick selections.
-     * Returns only shops with ACTIVE status.
+     * Returns only shops with ACTIVE status. Available to all authenticated users
+     * within their tenant due to automatic tenant isolation.
      *
      * @return List of active shops
      */
     @Operation(
         summary = "Get active shops",
-        description = "Retrieves all active shops for the current tenant. Useful for dropdown lists and quick selections."
+        description = "Retrieves all active shops for the current tenant. Useful for dropdown lists and quick selections. Tenant isolation is enforced automatically."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -203,7 +242,6 @@ public class ShopController {
         )
     })
     @GetMapping("/active")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER') or hasRole('SHOP_EMPLOYEE')")
     public ResponseEntity<List<ShopResponse>> getActiveShops() {
         log.debug("Retrieving active shops");
         List<ShopResponse> response = shopService.getActiveShops();

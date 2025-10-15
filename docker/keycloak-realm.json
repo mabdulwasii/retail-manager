@@ -212,6 +212,9 @@
         "http://localhost:3001/*",
         "http://localhost:3001/auth/callback",
         "http://localhost:3001/silent-check-sso.html",
+        "http://localhost:3002/*",
+        "http://localhost:3002/auth/callback",
+        "http://localhost:3002/silent-check-sso.html",
         "http://shop-manager.local/*",
         "http://shop-manager.local/auth/callback",
         "https://shop-manager.local/*",
@@ -220,12 +223,13 @@
       "webOrigins": [
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:3002",
         "http://shop-manager.local",
         "https://shop-manager.local"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://shop-manager.local/*##https://shop-manager.local/*",
+        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://localhost:3002/##http://shop-manager.local/*##https://shop-manager.local/*",
         "access.token.lifespan": "300",
         "sso.session.idle.timeout": "300",
         "sso.session.max.lifespan": "300"
