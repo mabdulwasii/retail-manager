@@ -186,7 +186,7 @@ public class AuditService {
 
     // Expense-specific audit methods
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseCreation(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, java.math.BigDecimal amount) {
+    public void logExpenseCreation(java.util.UUID expenseId, String shopId, java.util.UUID userId, java.math.BigDecimal amount) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -209,7 +209,7 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseUpdate(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -232,7 +232,7 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseApproval(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, boolean approved) {
+    public void logExpenseApproval(java.util.UUID expenseId, String shopId, java.util.UUID userId, boolean approved) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -255,7 +255,7 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseDeletion(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId

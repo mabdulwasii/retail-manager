@@ -48,7 +48,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/shops/{shopId}/expenses")
     public ResponseEntity<ExpenseResponse> createExpense(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody ExpenseCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
@@ -102,7 +102,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses")
     public ResponseEntity<Page<ExpenseResponse>> getExpenses(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date filter") @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @Parameter(description = "End date filter") @RequestParam(required = false)
@@ -216,7 +216,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses/summary")
     public ResponseEntity<ExpenseSummaryDto> getExpenseSummary(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date for summary") @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @Parameter(description = "End date for summary") @RequestParam(required = false)

@@ -41,7 +41,7 @@ public class Expense extends BaseEntity {
 
     @NotNull
     @Column(name = "shop_id", nullable = false)
-    private UUID shopId;
+    private String shopId;
 
     @NotBlank
     @Column(nullable = false, length = 255)

@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 public record ExpenseResponse(
     UUID id,
-    UUID shopId,
+    String shopId,
     String title,
     String description,
     ExpenseCategoryResponse category,

@@ -47,7 +47,7 @@ public class ExpenseService {
      */
     @Transactional
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
-    public ExpenseResponse createExpense(UUID shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
+    public ExpenseResponse createExpense(String shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
         log.info("Creating expense for shop: {}, title: {}", shopId, request.title());
 
         validateShopAccess(shopId, principal);
@@ -256,7 +256,7 @@ public class ExpenseService {
     /**
      * Get expenses for a shop with filtering and pagination
      */
-    public Page<ExpenseResponse> getExpenses(UUID shopId, ExpenseFilterCriteria criteria, Pageable pageable, JwtPrincipal principal) {
+    public Page<ExpenseResponse> getExpenses(String shopId, ExpenseFilterCriteria criteria, Pageable pageable, JwtPrincipal principal) {
         validateShopAccess(shopId, principal);
 
         Specification<Expense> spec = createExpenseSpecification(shopId, criteria);
@@ -294,7 +294,7 @@ public class ExpenseService {
     /**
      * Get expense summary for a shop
      */
-    public ExpenseSummaryDto getExpenseSummary(UUID shopId, LocalDate startDate, LocalDate endDate, JwtPrincipal principal) {
+    public ExpenseSummaryDto getExpenseSummary(String shopId, LocalDate startDate, LocalDate endDate, JwtPrincipal principal) {
         validateShopAccess(shopId, principal);
 
         if (startDate == null) {
@@ -339,13 +339,13 @@ public class ExpenseService {
             .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense not found or access denied"));
     }
 
-    private void validateShopAccess(UUID shopId, JwtPrincipal principal) {
+    private void validateShopAccess(String shopId, JwtPrincipal principal) {
         if (!hasAccessToShop(shopId, principal)) {
             throw new ShopNotFoundException("Shop not found or access denied");
         }
     }
 
-    private boolean hasAccessToShop(UUID shopId, JwtPrincipal principal) {
+    private boolean hasAccessToShop(String shopId, JwtPrincipal principal) {
         // For now, we'll use the tenant context to validate access
         return TenantContext.getCurrentTenantId() != null;
     }
@@ -359,7 +359,7 @@ public class ExpenseService {
             .collect(Collectors.toSet());
     }
 
-    private Specification<Expense> createExpenseSpecification(UUID shopId, ExpenseFilterCriteria criteria) {
+    private Specification<Expense> createExpenseSpecification(String shopId, ExpenseFilterCriteria criteria) {
         return (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
