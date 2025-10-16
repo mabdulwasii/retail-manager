@@ -209,7 +209,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(1);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactly("ROLE_SHOP_MANAGER");
+            .containsExactly("ROLE_MANAGER");
     }
 
     @Test
@@ -238,7 +238,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(4);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER", "ROLE_SHOP_OWNER");
+            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER", "ROLE_OWNER");
     }
 
     @Test

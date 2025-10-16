@@ -42,7 +42,7 @@ public class UserProfileResponse {
     @Schema(description = "Whether user is an investor", example = "false")
     private boolean isInvestor;
 
-    @Schema(description = "User roles", example = "[\"SHOP_MANAGER\", \"SHOP_EMPLOYEE\"]")
+    @Schema(description = "User roles", example = "[\"MANAGER\", \"EMPLOYEE\"]")
     private List<String> roles;
 
     @Schema(description = "Tenant ID", example = "tenant-123")

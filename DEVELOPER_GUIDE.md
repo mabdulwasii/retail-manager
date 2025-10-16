@@ -620,15 +620,20 @@ Username: admin@shopmanager.com
 Password: admin123
 Role: TENANT_ADMIN
 
+# Shop Owner
+Username: owner@shopmanager.com
+Password: owner123
+Role: OWNER
+
 # Shop Manager
 Username: manager@shopmanager.com
 Password: manager123
-Role: SHOP_MANAGER
+Role: MANAGER
 
 # Shop Employee
 Username: employee@shopmanager.com
 Password: employee123
-Role: SHOP_EMPLOYEE
+Role: EMPLOYEE
 ```
 
 ### Authentication Flow Testing
@@ -659,7 +664,7 @@ curl -X POST http://localhost:8080/realms/shop-manager/protocol/openid-connect/t
 
 # Use token to access API
 curl -H "Authorization: Bearer <access_token>" \
-  http://localhost:8081/api/v1/shops
+  http://localhost:8081/api/shops
 ```
 
 #### 3. Keycloak Admin Console

@@ -39,17 +39,24 @@ Role: TENANT_ADMIN
 Access: Full system administration, tenant management
 Default Context: default-tenant/default-shop
 
+👤 SHOP OWNER
+Email: owner@shopmanager.com
+Password: DevOwner@2024!Test
+Role: OWNER
+Access: Full business control, financial oversight
+Default Context: default-tenant/default-shop
+
 👤 SHOP MANAGER
 Email: manager@shopmanager.com
 Password: DevManager@2024!Test
-Role: SHOP_MANAGER
+Role: MANAGER
 Access: Shop operations, inventory, sales, reports
 Default Context: default-tenant/default-shop
 
 👤 SHOP EMPLOYEE
 Email: employee@shopmanager.com
 Password: DevEmployee@2024!Test
-Role: SHOP_EMPLOYEE
+Role: EMPLOYEE
 Access: Sales transactions, basic inventory queries
 Default Context: default-tenant/default-shop
 
@@ -219,8 +226,9 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/api/shops
 | User Type | Expected Access | Test URLs |
 |-----------|----------------|-----------|
 | **TENANT_ADMIN** | Full system access | All endpoints |
-| **SHOP_MANAGER** | Shop operations | `/api/shops`, `/api/products`, `/api/sales` |
-| **SHOP_EMPLOYEE** | Limited operations | `/api/sales`, `/api/products` (read-only) |
+| **OWNER** | Shop ownership | `/api/shops`, `/api/investments`, `/api/analytics` |
+| **MANAGER** | Shop operations | `/api/shops`, `/api/products`, `/api/sales` |
+| **EMPLOYEE** | Limited operations | `/api/sales`, `/api/products` (read-only) |
 | **INVESTOR** | Investment data | `/api/investments`, `/api/analytics` |
 | **CUSTOMER** | Personal data | `/api/receipts`, `/api/orders` |
 

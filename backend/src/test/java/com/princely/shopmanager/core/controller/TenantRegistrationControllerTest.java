@@ -68,7 +68,7 @@ class TenantRegistrationControllerTest {
             .thenReturn(expectedResponse);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -91,7 +91,7 @@ class TenantRegistrationControllerTest {
             .build();
 
         // When & Then
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -105,7 +105,7 @@ class TenantRegistrationControllerTest {
             .thenReturn(true);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/public/registration/check-tenant-name")
+        mockMvc.perform(get("/api/public/registration/check-tenant-name")
                 .param("name", "available-name"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.value").value("available-name"))
@@ -121,7 +121,7 @@ class TenantRegistrationControllerTest {
             .thenReturn(true);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/public/registration/check-username")
+        mockMvc.perform(get("/api/public/registration/check-username")
                 .param("username", "available-username"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.value").value("available-username"))
@@ -137,7 +137,7 @@ class TenantRegistrationControllerTest {
             .thenReturn(true);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/public/registration/check-email")
+        mockMvc.perform(get("/api/public/registration/check-email")
                 .param("email", "available@test.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.value").value("available@test.com"))
@@ -148,7 +148,7 @@ class TenantRegistrationControllerTest {
     @Test
     @DisplayName("Should return 400 for missing tenant name parameter")
     void shouldReturn400ForMissingTenantNameParameter() throws Exception {
-        mockMvc.perform(get("/api/v1/public/registration/check-tenant-name"))
+        mockMvc.perform(get("/api/public/registration/check-tenant-name"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -161,7 +161,7 @@ class TenantRegistrationControllerTest {
             .thenThrow(new RuntimeException("Service error"));
 
         // When & Then
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError());

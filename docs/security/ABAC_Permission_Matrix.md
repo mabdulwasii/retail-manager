@@ -8,7 +8,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 
 ### Subjects (Users)
 - **System Administrator**: Global system management
-- **Shop Owner**: Full control within their shop(s)
+- **Owner**: Full control within their shop(s)
 - **Manager**: Operational management within assigned shop
 - **Cashier**: Point-of-sale operations and basic inventory
 - **Investor**: Investment tracking and reporting access
@@ -49,7 +49,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | Any Shop | READ, WRITE, UPDATE, DELETE, ADMIN | None | Full global access |
-| **Shop Owner** | Own Shop | READ, WRITE, UPDATE, DELETE, ADMIN | `tenant_id == shop_id` | Complete shop control |
+| **Owner** | Own Shop | READ, WRITE, UPDATE, DELETE, ADMIN | `tenant_id == shop_id` | Complete shop control |
 | **Manager** | Own Shop | READ, WRITE, UPDATE | `tenant_id == shop_id` | Operational management |
 | **Cashier** | Own Shop | READ | `tenant_id == shop_id` | View shop info only |
 | **Investor** | Invested Shops | READ | `has_investment(shop_id)` | Limited shop information |
@@ -60,7 +60,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | Products | READ, WRITE, UPDATE, DELETE | None | Global product access |
-| **Shop Owner** | Shop Products | READ, WRITE, UPDATE, DELETE | `tenant_id == shop_id` | Full product control |
+| **Owner** | Shop Products | READ, WRITE, UPDATE, DELETE | `tenant_id == shop_id` | Full product control |
 | **Manager** | Shop Products | READ, WRITE, UPDATE | `tenant_id == shop_id` | Product management |
 | **Cashier** | Shop Products | READ, UPDATE | `tenant_id == shop_id AND action == 'inventory_update'` | Inventory updates only |
 | **Investor** | Invested Products | READ | `has_investment(product_id)` | Investment-related products |
@@ -71,7 +71,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | All Transactions | READ, WRITE, UPDATE, DELETE | None | Global transaction access |
-| **Shop Owner** | Shop Transactions | READ, WRITE, UPDATE, DELETE | `tenant_id == shop_id` | Full transaction control |
+| **Owner** | Shop Transactions | READ, WRITE, UPDATE, DELETE | `tenant_id == shop_id` | Full transaction control |
 | **Manager** | Shop Transactions | READ, WRITE, UPDATE | `tenant_id == shop_id AND amount <= manager_limit` | Transaction management |
 | **Cashier** | Shop Transactions | READ, WRITE | `tenant_id == shop_id AND cashier_id == user_id` | Own transactions |
 | **Investor** | Investment Transactions | READ | `has_investment(shop_id)` | Investment-related sales |
@@ -82,7 +82,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | All Investments | READ, WRITE, UPDATE, DELETE, APPROVE | None | Global investment access |
-| **Shop Owner** | Shop Investments | READ, WRITE, UPDATE, APPROVE | `tenant_id == shop_id` | Investment management |
+| **Owner** | Shop Investments | READ, WRITE, UPDATE, APPROVE | `tenant_id == shop_id` | Investment management |
 | **Manager** | Shop Investments | READ | `tenant_id == shop_id` | View only |
 | **Investor** | Own Investments | READ | `investor_id == user_id` | Personal investments |
 | **Auditor** | All Investments | READ | `audit_role == true` | Audit access |
@@ -92,7 +92,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | All Analytics | READ, EXECUTE, EXPORT | None | Global analytics access |
-| **Shop Owner** | Shop Analytics | READ, EXECUTE, EXPORT | `tenant_id == shop_id` | Own shop analytics |
+| **Owner** | Shop Analytics | READ, EXECUTE, EXPORT | `tenant_id == shop_id` | Own shop analytics |
 | **Manager** | Shop Analytics | READ, EXECUTE | `tenant_id == shop_id` | Analytics viewing |
 | **Investor** | Investment Analytics | READ | `has_investment(shop_id)` | Investment-specific reports |
 | **Auditor** | All Analytics | READ, EXPORT | `audit_role == true` | Audit reporting |
@@ -102,7 +102,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | All Users | READ, WRITE, UPDATE, DELETE | None | Global user management |
-| **Shop Owner** | Shop Users | READ, WRITE, UPDATE | `tenant_id == shop_id AND target_role != 'OWNER'` | Shop staff management |
+| **Owner** | Shop Users | READ, WRITE, UPDATE | `tenant_id == shop_id AND target_role != 'OWNER'` | Shop staff management |
 | **Manager** | Shop Cashiers | READ, WRITE, UPDATE | `tenant_id == shop_id AND target_role == 'CASHIER'` | Cashier management |
 
 ### 7. Financial Data Access
@@ -110,7 +110,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 | Role | Resource | Action | Conditions | Description |
 |------|----------|--------|------------|-------------|
 | **System Admin** | All Financial | READ, EXPORT | None | Global financial access |
-| **Shop Owner** | Shop Financial | READ, EXPORT | `tenant_id == shop_id` | Own shop finances |
+| **Owner** | Shop Financial | READ, EXPORT | `tenant_id == shop_id` | Own shop finances |
 | **Manager** | Shop Financial | READ | `tenant_id == shop_id AND data_level <= 'SUMMARY'` | Summary financial data |
 | **Investor** | Investment Financial | READ | `has_investment(shop_id)` | Investment returns |
 | **Auditor** | All Financial | READ, EXPORT | `audit_role == true` | Audit access |
@@ -122,7 +122,7 @@ This document defines the Attribute-Based Access Control (ABAC) permission matri
 ```
 RULE: business_hours_access
 IF (current_time BETWEEN shop.business_hours.start AND shop.business_hours.end)
-   OR (user.role IN ['SYSTEM_ADMIN', 'SHOP_OWNER'])
+   OR (user.role IN ['SYSTEM_ADMIN', 'OWNER'])
 THEN allow_access = true
 ELSE allow_access = false
 ```
@@ -132,7 +132,7 @@ ELSE allow_access = false
 ```
 RULE: transaction_amount_limit
 IF (transaction.amount > user.transaction_limit)
-   AND (user.role NOT IN ['SHOP_OWNER', 'SYSTEM_ADMIN'])
+   AND (user.role NOT IN ['OWNER', 'SYSTEM_ADMIN'])
 THEN require_approval = true
 ```
 
@@ -151,7 +151,7 @@ ELSE location_access = false
 ```
 RULE: feature_based_access
 IF (feature_flag.investment.enabled == true)
-   AND (user.role IN ['SHOP_OWNER', 'INVESTOR', 'SYSTEM_ADMIN'])
+   AND (user.role IN ['OWNER', 'INVESTOR', 'SYSTEM_ADMIN'])
 THEN investment_access = true
 ```
 

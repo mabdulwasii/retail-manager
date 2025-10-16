@@ -152,8 +152,8 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
-        @DisplayName("Should create shop successfully with SHOP_OWNER role")
+        @WithMockUser(roles = "OWNER")
+        @DisplayName("Should create shop successfully with OWNER role")
         void shouldCreateShopWithShopOwnerRole() throws Exception {
             // Given
             when(shopService.createShop(any(ShopCreateRequest.class)))
@@ -169,7 +169,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_MANAGER")
+        @WithMockUser(roles = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -229,7 +229,7 @@ class ShopControllerTest {
     class GetShopTests {
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
+        @WithMockUser(roles = "OWNER")
         @DisplayName("Should get shop successfully")
         void shouldGetShopSuccessfully() throws Exception {
             // Given
@@ -258,7 +258,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
+        @WithMockUser(roles = "OWNER")
         @DisplayName("Should handle shop not found")
         void shouldHandleShopNotFound() throws Exception {
             // Given
@@ -303,8 +303,8 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_MANAGER")
-        @DisplayName("Should allow access with SHOP_MANAGER role")
+        @WithMockUser(roles = "MANAGER")
+        @DisplayName("Should allow access with MANAGER role")
         void shouldAllowAccessWithShopManagerRole() throws Exception {
             // Given
             Page<ShopResponse> page = new PageImpl<>(Arrays.asList(sampleShopResponse));
@@ -353,7 +353,7 @@ class ShopControllerTest {
     class UpdateShopTests {
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
+        @WithMockUser(roles = "OWNER")
         @DisplayName("Should update shop successfully")
         void shouldUpdateShopSuccessfully() throws Exception {
             // Given
@@ -397,7 +397,7 @@ class ShopControllerTest {
     class ChangeShopStatusTests {
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
+        @WithMockUser(roles = "OWNER")
         @DisplayName("Should change shop status successfully")
         void shouldChangeShopStatusSuccessfully() throws Exception {
             // Given
@@ -421,7 +421,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_MANAGER")
+        @WithMockUser(roles = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -437,7 +437,7 @@ class ShopControllerTest {
     class DeleteShopTests {
 
         @Test
-        @WithMockUser(roles = "SHOP_OWNER")
+        @WithMockUser(roles = "OWNER")
         @DisplayName("Should delete shop successfully")
         void shouldDeleteShopSuccessfully() throws Exception {
             // Given
@@ -452,7 +452,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SHOP_MANAGER")
+        @WithMockUser(roles = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then

@@ -46,7 +46,7 @@ public class ExpenseService {
      * Create a new expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
     public ExpenseResponse createExpense(UUID shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
         log.info("Creating expense for shop: {}, title: {}", shopId, request.title());
 
@@ -109,7 +109,7 @@ public class ExpenseService {
      * Update an existing expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
     public ExpenseResponse updateExpense(UUID expenseId, ExpenseUpdateRequest request, JwtPrincipal principal) {
         log.info("Updating expense: {}", expenseId);
 
@@ -189,7 +189,7 @@ public class ExpenseService {
      * Approve an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ExpenseResponse approveExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Approving expense: {}", expenseId);
 
@@ -217,7 +217,7 @@ public class ExpenseService {
      * Reject an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ExpenseResponse rejectExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Rejecting expense: {}", expenseId);
 
@@ -269,7 +269,7 @@ public class ExpenseService {
      * Delete an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public void deleteExpense(UUID expenseId, JwtPrincipal principal) {
         log.info("Deleting expense: {}", expenseId);
 

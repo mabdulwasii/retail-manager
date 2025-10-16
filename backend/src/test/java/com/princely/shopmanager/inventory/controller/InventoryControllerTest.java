@@ -130,10 +130,10 @@ class InventoryControllerTest {
         when(inventoryService.createInventory(any(InventoryCreateRequest.class)))
             .thenReturn(inventoryResponse);
 
-        ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
+        ResultActions result = mockMvc.perform(post("/api/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(createRequest))
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -151,10 +151,10 @@ class InventoryControllerTest {
             .minimumStock(-10)
             .build();
 
-        ResultActions result = mockMvc.perform(post("/api/v1/shops/shop-1/inventory")
+        ResultActions result = mockMvc.perform(post("/api/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest))
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isBadRequest());
     }
@@ -171,12 +171,12 @@ class InventoryControllerTest {
         when(inventoryService.getInventory(anyString(), any(Specification.class), any(Pageable.class)))
             .thenReturn(inventoryPage);
 
-        ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory")
+        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory")
             .param("page", "0")
             .param("size", "20")
             .param("sortBy", "lastStockUpdate")
             .param("sortDir", "desc")
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value("inventory-1"))
@@ -192,8 +192,8 @@ class InventoryControllerTest {
         when(inventoryService.getInventoryById("inventory-1"))
             .thenReturn(inventoryResponse);
 
-        ResultActions result = mockMvc.perform(get("/api/v1/inventory/inventory-1")
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+        ResultActions result = mockMvc.perform(get("/api/inventory/inventory-1")
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -232,10 +232,10 @@ class InventoryControllerTest {
         when(inventoryService.adjustStock("inventory-1", adjustmentRequest))
             .thenReturn(adjustedResponse);
 
-        ResultActions result = mockMvc.perform(put("/api/v1/inventory/inventory-1/adjust-stock")
+        ResultActions result = mockMvc.perform(put("/api/inventory/inventory-1/adjust-stock")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(adjustmentRequest))
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.currentStock").value(150))
@@ -266,8 +266,8 @@ class InventoryControllerTest {
         when(inventoryService.getInventorySummary("shop-1"))
             .thenReturn(summary);
 
-        ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory/summary")
-            .with(withJwtPrincipal("manager", "SHOP_MANAGER")));
+        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory/summary")
+            .with(withJwtPrincipal("manager", "MANAGER")));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.totalItems").value(50))
@@ -282,7 +282,7 @@ class InventoryControllerTest {
     @DisplayName("Should deny access for unauthorized user")
     @WithMockUser(roles = "CUSTOMER")
     void shouldDenyAccessForUnauthorizedUser() throws Exception {
-        ResultActions result = mockMvc.perform(get("/api/v1/shops/shop-1/inventory")
+        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory")
             .with(withJwtPrincipal("customer", "CUSTOMER")));
 
         result.andExpect(status().isForbidden());

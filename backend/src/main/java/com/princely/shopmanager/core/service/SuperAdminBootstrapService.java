@@ -90,9 +90,9 @@ public class SuperAdminBootstrapService {
      * Check if any super admin user exists
      */
     private boolean hasSuperAdminUser() {
-        Optional<Role> superAdminRole = roleRepository.findByName("SUPER_ADMIN");
+        Optional<Role> superAdminRole = roleRepository.findByName("SYSTEM_ADMIN");
         if (superAdminRole.isEmpty()) {
-            log.warn("SUPER_ADMIN role not found in database");
+            log.warn("SYSTEM_ADMIN role not found in database");
             return false;
         }
 
@@ -105,9 +105,9 @@ public class SuperAdminBootstrapService {
      * Create the bootstrap super admin user
      */
     private void createBootstrapSuperAdmin() {
-        // Get or create SUPER_ADMIN role
-        Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
-            .orElseThrow(() -> new IllegalStateException("SUPER_ADMIN role not found. Please ensure database migrations have been applied."));
+        // Get or create SYSTEM_ADMIN role
+        Role superAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
+            .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found. Please ensure database migrations have been applied."));
 
         // Generate password if not provided
         String finalPassword = superAdminPassword.isEmpty()
@@ -133,7 +133,7 @@ public class SuperAdminBootstrapService {
 
         // Log the bootstrap event
         auditService.logEvent(
-            "SUPER_ADMIN_BOOTSTRAP",
+            "SYSTEM_ADMIN_BOOTSTRAP",
             "Bootstrap super admin user created: " + superAdminUsername,
             Map.of(
                 "username", superAdminUsername,
@@ -180,7 +180,7 @@ public class SuperAdminBootstrapService {
      * Get current super admin count
      */
     public long getSuperAdminCount() {
-        Optional<Role> superAdminRole = roleRepository.findByName("SUPER_ADMIN");
+        Optional<Role> superAdminRole = roleRepository.findByName("SYSTEM_ADMIN");
         if (superAdminRole.isEmpty()) {
             return 0;
         }

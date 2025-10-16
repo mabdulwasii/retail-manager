@@ -78,12 +78,12 @@ Refer to FRONTEND_ARCHITECTURE.md for complete React Query examples with:
 ### Tenant Management APIs
 
 ```
-POST   /api/v1/public/registration/tenant
-GET    /api/v1/public/registration/check-tenant-name
-GET    /api/v1/public/registration/check-email
-GET    /api/v1/admin/tenants/pending
-GET    /api/v1/admin/tenants/{tenantId}
-POST   /api/v1/admin/tenants/{tenantId}/activate
+POST   /api/public/registration/tenant
+GET    /api/public/registration/check-tenant-name
+GET    /api/public/registration/check-email
+GET    /api/admin/tenants/pending
+GET    /api/admin/tenants/{tenantId}
+POST   /api/admin/tenants/{tenantId}/activate
 ```
 
 ### Shop Management APIs
@@ -101,65 +101,65 @@ GET    /api/shops/active
 ### Inventory APIs
 
 ```
-POST   /api/v1/shops/{shopId}/inventory
-GET    /api/v1/shops/{shopId}/inventory
-GET    /api/v1/inventory/{inventoryId}
-PUT    /api/v1/inventory/{inventoryId}/adjust-stock
-POST   /api/v1/inventory/{inventoryId}/reserve
-POST   /api/v1/inventory/{inventoryId}/release
-PUT    /api/v1/inventory/{inventoryId}/status
-GET    /api/v1/inventory/{inventoryId}/history
-GET    /api/v1/shops/{shopId}/inventory/low-stock
-GET    /api/v1/shops/{shopId}/inventory/expiring
-GET    /api/v1/shops/{shopId}/inventory/total-value
-GET    /api/v1/shops/{shopId}/inventory/summary
+POST   /api/shops/{shopId}/inventory
+GET    /api/shops/{shopId}/inventory
+GET    /api/inventory/{inventoryId}
+PUT    /api/inventory/{inventoryId}/adjust-stock
+POST   /api/inventory/{inventoryId}/reserve
+POST   /api/inventory/{inventoryId}/release
+PUT    /api/inventory/{inventoryId}/status
+GET    /api/inventory/{inventoryId}/history
+GET    /api/shops/{shopId}/inventory/low-stock
+GET    /api/shops/{shopId}/inventory/expiring
+GET    /api/shops/{shopId}/inventory/total-value
+GET    /api/shops/{shopId}/inventory/summary
 ```
 
 ### Investment APIs
 
 ```
-POST   /api/v1/investments
-GET    /api/v1/shops/{shopId}/investments
-GET    /api/v1/my-investments
-GET    /api/v1/investments/{investmentId}
-PUT    /api/v1/investments/{investmentId}/status
-POST   /api/v1/investments/{investmentId}/withdraw
-GET    /api/v1/investments/{investmentId}/distributions
-GET    /api/v1/my-distributions
-POST   /api/v1/distributions/{distributionId}/approve
-POST   /api/v1/distributions/{distributionId}/mark-paid
+POST   /api/investments
+GET    /api/shops/{shopId}/investments
+GET    /api/my-investments
+GET    /api/investments/{investmentId}
+PUT    /api/investments/{investmentId}/status
+POST   /api/investments/{investmentId}/withdraw
+GET    /api/investments/{investmentId}/distributions
+GET    /api/my-distributions
+POST   /api/distributions/{distributionId}/approve
+POST   /api/distributions/{distributionId}/mark-paid
 ```
 
 ### Expense APIs
 
 ```
-POST   /api/v1/shops/{shopId}/expenses
-PUT    /api/v1/expenses/{expenseId}
-GET    /api/v1/expenses/{expenseId}
-GET    /api/v1/shops/{shopId}/expenses
-POST   /api/v1/expenses/{expenseId}/approve
-POST   /api/v1/expenses/{expenseId}/reject
-DELETE /api/v1/expenses/{expenseId}
-GET    /api/v1/shops/{shopId}/expenses/summary
+POST   /api/shops/{shopId}/expenses
+PUT    /api/expenses/{expenseId}
+GET    /api/expenses/{expenseId}
+GET    /api/shops/{shopId}/expenses
+POST   /api/expenses/{expenseId}/approve
+POST   /api/expenses/{expenseId}/reject
+DELETE /api/expenses/{expenseId}
+GET    /api/shops/{shopId}/expenses/summary
 ```
 
 ### Fraud Detection APIs
 
 ```
-GET    /api/v1/fraud/alerts
-GET    /api/v1/fraud/alerts/{alertId}
-POST   /api/v1/fraud/alerts/{alertId}/acknowledge
-POST   /api/v1/fraud/alerts/{alertId}/resolve
-POST   /api/v1/fraud/alerts/{alertId}/false-positive
-GET    /api/v1/fraud/risk-assessments
-POST   /api/v1/fraud/risk-assessments/{assessmentId}/approve
-POST   /api/v1/fraud/risk-assessments/{assessmentId}/reject
-GET    /api/v1/fraud/rules
-POST   /api/v1/fraud/rules
-PUT    /api/v1/fraud/rules/{ruleId}
-DELETE /api/v1/fraud/rules/{ruleId}
-PUT    /api/v1/fraud/rules/{ruleId}/status
-GET    /api/v1/fraud/statistics
+GET    /api/fraud/alerts
+GET    /api/fraud/alerts/{alertId}
+POST   /api/fraud/alerts/{alertId}/acknowledge
+POST   /api/fraud/alerts/{alertId}/resolve
+POST   /api/fraud/alerts/{alertId}/false-positive
+GET    /api/fraud/risk-assessments
+POST   /api/fraud/risk-assessments/{assessmentId}/approve
+POST   /api/fraud/risk-assessments/{assessmentId}/reject
+GET    /api/fraud/rules
+POST   /api/fraud/rules
+PUT    /api/fraud/rules/{ruleId}
+DELETE /api/fraud/rules/{ruleId}
+PUT    /api/fraud/rules/{ruleId}/status
+GET    /api/fraud/statistics
 ```
 
 ### Product Returns APIs
@@ -240,7 +240,7 @@ async function uploadReceipt(file: File, expenseId: string) {
   formData.append('file', file);
 
   const { data } = await api.post(
-    `/api/v1/expenses/${expenseId}/receipt`,
+    `/api/expenses/${expenseId}/receipt`,
     formData,
     {
       headers: {

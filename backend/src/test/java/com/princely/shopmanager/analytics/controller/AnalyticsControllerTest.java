@@ -140,7 +140,7 @@ class AnalyticsControllerTest {
 
         @Test
         @WithMockUser(roles = "OWNER")
-        @DisplayName("Should allow access with SHOP_OWNER role")
+        @DisplayName("Should allow access with OWNER role")
         void shouldAllowAccessWithShopOwnerRole() throws Exception {
             // Given
             when(analyticsService.getSalesSummary(eq("shop-123"), any(), any()))
@@ -197,7 +197,7 @@ class AnalyticsControllerTest {
 
         @Test
         @WithMockUser(roles = "OWNER")
-        @DisplayName("Should allow access with SHOP_OWNER role")
+        @DisplayName("Should allow access with OWNER role")
         void shouldAllowAccessWithShopOwnerRole() throws Exception {
             // Given
             when(analyticsService.getInvestmentROI(eq("shop-123"), any(), any()))
@@ -279,7 +279,7 @@ class AnalyticsControllerTest {
 
         @Test
         @WithMockUser(roles = "OWNER")
-        @DisplayName("Should clear cache successfully with SHOP_OWNER role")
+        @DisplayName("Should clear cache successfully with OWNER role")
         void shouldClearCacheWithShopOwnerRole() throws Exception {
             // Given
             doNothing().when(analyticsService).clearCacheForShop("shop-123");

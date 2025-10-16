@@ -26,7 +26,7 @@ import java.util.List;
  * Controller for super admin tenant management operations
  */
 @RestController
-@RequestMapping("/api/v1/admin/tenants")
+@RequestMapping("/api/admin/tenants")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Tenant Administration", description = "Super admin endpoints for tenant management")
@@ -44,7 +44,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<List<PendingTenantResponse>> getPendingRegistrations() {
         log.info("Retrieving pending tenant registrations");
 
@@ -65,7 +65,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/{tenantId}/activate")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<TenantActivationResponse> activateTenant(
             @PathVariable String tenantId,
             @Valid @RequestBody TenantActivationRequest request,
@@ -105,7 +105,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<PendingTenantResponse> getTenantDetails(@PathVariable String tenantId) {
         log.info("Retrieving tenant details for: {}", tenantId);
 

@@ -30,7 +30,7 @@ import java.util.UUID;
  * REST Controller for expense management operations
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Expenses", description = "Expense and procurement management operations")

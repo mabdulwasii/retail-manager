@@ -57,7 +57,7 @@ public class ShopController {
      * Creates a new shop in the system.
      *
      * This endpoint allows authorized users to create new shops with proper validation
-     * and automatic tenant ID generation. Only users with SYSTEM_ADMIN or SHOP_OWNER
+     * and automatic tenant ID generation. Only users with SYSTEM_ADMIN or OWNER
      * roles can create new shops.
      *
      * @param request Shop creation request with validation
@@ -65,7 +65,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Create a new shop",
-        description = "Creates a new shop with automatic tenant ID generation. Requires SYSTEM_ADMIN or SHOP_OWNER role.",
+        description = "Creates a new shop with automatic tenant ID generation. Requires SYSTEM_ADMIN or OWNER role.",
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Shop creation details",
             required = true,
@@ -89,11 +89,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SYSTEM_ADMIN or SHOP_OWNER role"
+            description = "Insufficient permissions - requires SYSTEM_ADMIN or OWNER role"
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
     public ResponseEntity<ShopResponse> createShop(
         @Valid @RequestBody ShopCreateRequest request
     ) {
@@ -132,7 +132,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER') or hasRole('SHOP_EMPLOYEE')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ShopResponse> getShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -260,7 +260,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Update shop information",
-        description = "Updates shop information with partial update support. Only non-null fields are updated. Requires SHOP_OWNER or SHOP_MANAGER role."
+        description = "Updates shop information with partial update support. Only non-null fields are updated. Requires OWNER or MANAGER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -284,11 +284,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER or SHOP_MANAGER role"
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -311,7 +311,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Change shop status",
-        description = "Changes the status of a shop with validation of status transitions. Requires SHOP_OWNER role."
+        description = "Changes the status of a shop with validation of status transitions. Requires OWNER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -335,11 +335,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER role"
+            description = "Insufficient permissions - requires OWNER role"
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER')")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -362,7 +362,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Delete shop (soft delete)",
-        description = "Soft deletes a shop by setting status to CLOSED. Preserves historical data. Requires SHOP_OWNER role."
+        description = "Soft deletes a shop by setting status to CLOSED. Preserves historical data. Requires OWNER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -380,11 +380,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER role"
+            description = "Insufficient permissions - requires OWNER role"
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER')")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId

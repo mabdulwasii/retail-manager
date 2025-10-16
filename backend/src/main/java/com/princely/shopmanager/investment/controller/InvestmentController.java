@@ -28,7 +28,7 @@ import java.util.List;
  * REST Controller for investment and profit sharing operations
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Investment", description = "Investment and profit sharing management operations")
@@ -46,7 +46,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Shop or products not found")
     @PostMapping("/investments")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('INVESTOR') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestmentResponse> createInvestment(
             @Valid @RequestBody InvestmentCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -64,7 +64,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "200", description = "Investments retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/investments")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Page<InvestmentResponse>> getShopInvestments(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -110,7 +110,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @GetMapping("/investments/{investmentId}")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('INVESTOR') or hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestmentResponse> getInvestment(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -128,7 +128,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @PutMapping("/investments/{investmentId}/status")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestmentResponse> updateInvestmentStatus(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @Parameter(description = "New status") @RequestParam Investment.InvestmentStatus status,
@@ -150,7 +150,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @PostMapping("/investments/{investmentId}/withdraw")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('INVESTOR') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestmentResponse> processWithdrawal(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @Valid @RequestBody WithdrawalRequest request,
@@ -171,7 +171,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @GetMapping("/investments/{investmentId}/distributions")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('INVESTOR') or hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<List<InvestorDistributionResponse>> getInvestmentDistributions(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -204,7 +204,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Distribution not found")
     @PostMapping("/distributions/{distributionId}/approve")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestorDistributionResponse> approveDistribution(
             @Parameter(description = "Distribution ID") @PathVariable String distributionId,
             @Parameter(description = "Approval notes") @RequestParam(required = false) String notes,
@@ -225,7 +225,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Distribution not found")
     @PostMapping("/distributions/{distributionId}/mark-paid")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InvestorDistributionResponse> markDistributionAsPaid(
             @Parameter(description = "Distribution ID") @PathVariable String distributionId,
             @Parameter(description = "Payment reference") @RequestParam String paymentReference,

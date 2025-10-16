@@ -61,7 +61,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Should return user profile when user exists in database")
-    @WithMockUser(roles = {"SHOP_MANAGER"})
+    @WithMockUser(roles = {"MANAGER"})
     void shouldReturnUserProfileWhenUserExists() throws Exception {
         // Given - Save user to database
         User savedUser = userRepository.save(testUser);
@@ -75,7 +75,7 @@ class UserControllerTest {
                     .claim("given_name", "John")
                     .claim("family_name", "Doe")
                     .claim("name", "John Doe")
-                    .claim("realm_access", java.util.Map.of("roles", List.of("SHOP_MANAGER", "SHOP_EMPLOYEE")))
+                    .claim("realm_access", java.util.Map.of("roles", List.of("MANAGER", "EMPLOYEE")))
                     .claim("tenant_id", "tenant-123")
                     .claim("shop_id", "shop-456")
                 ))
@@ -92,8 +92,8 @@ class UserControllerTest {
             .andExpect(jsonPath("$.status").value("ACTIVE"))
             .andExpect(jsonPath("$.isInvestor").value(false))
             .andExpect(jsonPath("$.roles").isArray())
-            .andExpect(jsonPath("$.roles[0]").value("SHOP_MANAGER"))
-            .andExpect(jsonPath("$.roles[1]").value("SHOP_EMPLOYEE"))
+            .andExpect(jsonPath("$.roles[0]").value("MANAGER"))
+            .andExpect(jsonPath("$.roles[1]").value("EMPLOYEE"))
             .andExpect(jsonPath("$.tenantId").value("tenant-123"))
             .andExpect(jsonPath("$.shopId").value("shop-456"))
             .andExpect(jsonPath("$.createdAt").exists())
@@ -102,7 +102,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Should return JWT-based profile when user not found in database")
-    @WithMockUser(roles = {"SHOP_MANAGER"})
+    @WithMockUser(roles = {"MANAGER"})
     void shouldReturnJwtProfileWhenUserNotInDatabase() throws Exception {
         // Given - No user in database (repository is cleared in @BeforeEach)
 
@@ -215,8 +215,8 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Should accept SHOP_EMPLOYEE role")
-    @WithMockUser(roles = {"SHOP_EMPLOYEE"})
+    @DisplayName("Should accept EMPLOYEE role")
+    @WithMockUser(roles = {"EMPLOYEE"})
     void shouldAcceptShopEmployeeRole() throws Exception {
         // Given - Save user to database
         User savedUser = userRepository.save(testUser);
@@ -226,7 +226,7 @@ class UserControllerTest {
                 .with(jwt().jwt(jwt -> jwt
                     .subject("keycloak-456")
                     .claim("preferred_username", "employee.user")
-                    .claim("realm_access", java.util.Map.of("roles", List.of("SHOP_EMPLOYEE")))
+                    .claim("realm_access", java.util.Map.of("roles", List.of("EMPLOYEE")))
                 ))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
@@ -235,7 +235,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Should handle missing JWT claims gracefully")
-    @WithMockUser(roles = {"SHOP_MANAGER"})
+    @WithMockUser(roles = {"MANAGER"})
     void shouldHandleMissingJwtClaims() throws Exception {
         // Given - No user in database for this Keycloak ID
 

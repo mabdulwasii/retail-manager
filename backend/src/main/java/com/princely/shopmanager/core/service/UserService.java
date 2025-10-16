@@ -64,7 +64,7 @@ public class UserService {
      * @return List of admin users
      */
     public List<User> getAdminUsers(String tenantId) {
-        return getUsersByRolesAndTenant(List.of("TENANT_ADMIN", "SHOP_OWNER"), tenantId);
+        return getUsersByRolesAndTenant(List.of("TENANT_ADMIN", "OWNER"), tenantId);
     }
 
     /**
@@ -74,7 +74,7 @@ public class UserService {
      * @return List of manager users
      */
     public List<User> getManagerUsers(String tenantId) {
-        return getUsersByRolesAndTenant(List.of("SHOP_MANAGER"), tenantId);
+        return getUsersByRolesAndTenant(List.of("MANAGER"), tenantId);
     }
 
     /**

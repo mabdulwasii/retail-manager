@@ -26,16 +26,36 @@
   "roles": {
     "realm": [
       {
+        "name": "SYSTEM_ADMIN",
+        "description": "System administrator with full access to all tenants"
+      },
+      {
         "name": "TENANT_ADMIN",
         "description": "Tenant administrator with full access to tenant resources"
       },
       {
-        "name": "SHOP_MANAGER",
+        "name": "OWNER",
+        "description": "Shop owner with full access to shop operations"
+      },
+      {
+        "name": "MANAGER",
         "description": "Shop manager with operational access"
       },
       {
-        "name": "SHOP_EMPLOYEE",
+        "name": "EMPLOYEE",
         "description": "Shop employee with limited access"
+      },
+      {
+        "name": "CASHIER",
+        "description": "Cashier with POS and sales access"
+      },
+      {
+        "name": "ACCOUNTANT",
+        "description": "Accountant with financial data access"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Auditor with read-only audit access"
       },
       {
         "name": "INVESTOR",
@@ -54,11 +74,11 @@
     },
     {
       "name": "shop-managers",
-      "realmRoles": ["SHOP_MANAGER"]
+      "realmRoles": ["MANAGER"]
     },
     {
       "name": "shop-employees",
-      "realmRoles": ["SHOP_EMPLOYEE"]
+      "realmRoles": ["EMPLOYEE"]
     },
     {
       "name": "investors",
@@ -92,6 +112,26 @@
       }
     },
     {
+      "username": "owner@shopmanager.com",
+      "email": "owner@shopmanager.com",
+      "firstName": "Shop",
+      "lastName": "Owner",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "owner123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["OWNER"],
+      "attributes": {
+        "tenant_id": ["default-tenant"],
+        "shop_ids": ["default-shop"]
+      }
+    },
+    {
       "username": "manager@shopmanager.com",
       "email": "manager@shopmanager.com",
       "firstName": "Shop",
@@ -105,7 +145,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["SHOP_MANAGER"],
+      "realmRoles": ["MANAGER"],
       "groups": ["shop-managers"],
       "attributes": {
         "tenant_id": ["default-tenant"],
@@ -126,7 +166,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["SHOP_EMPLOYEE"],
+      "realmRoles": ["EMPLOYEE"],
       "groups": ["shop-employees"],
       "attributes": {
         "tenant_id": ["default-tenant"],

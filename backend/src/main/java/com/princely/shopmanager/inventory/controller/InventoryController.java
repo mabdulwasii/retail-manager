@@ -36,7 +36,7 @@ import java.util.List;
  * REST Controller for inventory management operations
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Inventory", description = "Inventory and stock management operations")
@@ -54,7 +54,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @PostMapping("/shops/{shopId}/inventory")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InventoryResponse> createInventory(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody InventoryCreateRequest request,
@@ -74,7 +74,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Inventory items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('SHOP_EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Page<InventoryResponse>> getInventory(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Search query for product name or SKU") @RequestParam(required = false) String search,
@@ -139,7 +139,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @GetMapping("/inventory/{inventoryId}")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('SHOP_EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InventoryResponse> getInventoryById(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -157,7 +157,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PutMapping("/inventory/{inventoryId}/adjust-stock")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InventoryResponse> adjustStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Valid @RequestBody InventoryAdjustmentRequest request,
@@ -179,7 +179,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PostMapping("/inventory/{inventoryId}/reserve")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('SHOP_EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Void> reserveStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Valid @RequestBody StockReservationRequest request,
@@ -202,7 +202,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PostMapping("/inventory/{inventoryId}/release")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('SHOP_EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Void> releaseReservedStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Parameter(description = "Quantity to release") @RequestParam int quantity,
@@ -225,7 +225,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PutMapping("/inventory/{inventoryId}/status")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InventoryResponse> updateInventoryStatus(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Parameter(description = "New status") @RequestParam Inventory.InventoryStatus status,
@@ -246,7 +246,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @GetMapping("/inventory/{inventoryId}/history")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<List<InventoryHistory>> getInventoryHistory(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -262,7 +262,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Low stock items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/low-stock")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<List<InventoryResponse>> getLowStockItems(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -278,7 +278,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Expiring items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/expiring")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<List<InventoryResponse>> getExpiringItems(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Days threshold for expiry warning") @RequestParam(defaultValue = "30") int daysThreshold,
@@ -295,7 +295,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Total inventory value calculated successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/total-value")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<BigDecimal> getTotalInventoryValue(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -311,7 +311,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Demand forecasting triggered successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/products/{productId}/forecast")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Void> forecastDemand(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @Parameter(description = "Forecast period in days") @RequestParam(defaultValue = "30") int forecastDays,
@@ -331,7 +331,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Summary retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/summary")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<InventorySummaryDto> getInventorySummary(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {

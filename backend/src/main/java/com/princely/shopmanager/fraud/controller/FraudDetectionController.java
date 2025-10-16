@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/fraud")
+@RequestMapping("/api/fraud")
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(name = "app.features.fraud.enabled", havingValue = "true", matchIfMissing = false)
@@ -51,7 +51,7 @@ public class FraudDetectionController {
     @ApiResponse(responseCode = "200", description = "Fraud alerts retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/alerts")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Page<FraudAlertResponse>> getFraudAlerts(
             @Parameter(description = "Shop ID filter") @RequestParam(required = false) String shopId,
             @Parameter(description = "Alert status filter") @RequestParam(required = false) FraudAlert.AlertStatus status,
@@ -79,7 +79,7 @@ public class FraudDetectionController {
     @ApiResponse(responseCode = "200", description = "Fraud alert retrieved successfully")
     @ApiResponse(responseCode = "404", description = "Fraud alert not found")
     @GetMapping("/alerts/{alertId}")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudAlertResponse> getFraudAlert(
             @Parameter(description = "Alert ID") @PathVariable String alertId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -95,7 +95,7 @@ public class FraudDetectionController {
     @ApiResponse(responseCode = "200", description = "Alert acknowledged successfully")
     @ApiResponse(responseCode = "400", description = "Alert cannot be acknowledged")
     @PostMapping("/alerts/{alertId}/acknowledge")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudAlertResponse> acknowledgeFraudAlert(
             @Parameter(description = "Alert ID") @PathVariable String alertId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -115,7 +115,7 @@ public class FraudDetectionController {
     @ApiResponse(responseCode = "200", description = "Alert resolved successfully")
     @ApiResponse(responseCode = "400", description = "Alert cannot be resolved")
     @PostMapping("/alerts/{alertId}/resolve")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudAlertResponse> resolveFraudAlert(
             @Parameter(description = "Alert ID") @PathVariable String alertId,
             @Parameter(description = "Resolution notes") @RequestParam String resolutionNotes,
@@ -135,7 +135,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Alert marked as false positive successfully")
     @PostMapping("/alerts/{alertId}/false-positive")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudAlertResponse> markAsFalsePositive(
             @Parameter(description = "Alert ID") @PathVariable String alertId,
             @Parameter(description = "Reason for false positive") @RequestParam String reason,
@@ -155,7 +155,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Risk assessments retrieved successfully")
     @GetMapping("/risk-assessments")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Page<RiskAssessmentResponse>> getRiskAssessments(
             @Parameter(description = "Shop ID filter") @RequestParam(required = false) String shopId,
             @Parameter(description = "Risk level filter") @RequestParam(required = false) RiskAssessment.RiskLevel riskLevel,
@@ -182,7 +182,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Risk assessment approved successfully")
     @PostMapping("/risk-assessments/{assessmentId}/approve")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<RiskAssessmentResponse> approveRiskAssessment(
             @Parameter(description = "Assessment ID") @PathVariable String assessmentId,
             @Parameter(description = "Review notes") @RequestParam(required = false) String reviewNotes,
@@ -202,7 +202,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Risk assessment rejected successfully")
     @PostMapping("/risk-assessments/{assessmentId}/reject")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<RiskAssessmentResponse> rejectRiskAssessment(
             @Parameter(description = "Assessment ID") @PathVariable String assessmentId,
             @Parameter(description = "Review notes") @RequestParam String reviewNotes,
@@ -224,7 +224,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Fraud rules retrieved successfully")
     @GetMapping("/rules")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Page<FraudRule>> getFraudRules(
             @Parameter(description = "Shop ID filter") @RequestParam(required = false) String shopId,
             @Parameter(description = "Rule type filter") @RequestParam(required = false) FraudRule.FraudRuleType ruleType,
@@ -249,7 +249,7 @@ public class FraudDetectionController {
     @ApiResponse(responseCode = "201", description = "Fraud rule created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid request data")
     @PostMapping("/rules")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudRule> createFraudRule(
             @Valid @RequestBody FraudRuleRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -266,7 +266,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Fraud rule updated successfully")
     @PutMapping("/rules/{ruleId}")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudRule> updateFraudRule(
             @Parameter(description = "Rule ID") @PathVariable String ruleId,
             @Valid @RequestBody FraudRuleRequest request,
@@ -284,7 +284,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "204", description = "Fraud rule deleted successfully")
     @DeleteMapping("/rules/{ruleId}")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Void> deleteFraudRule(
             @Parameter(description = "Rule ID") @PathVariable String ruleId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -301,7 +301,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Fraud statistics retrieved successfully")
     @GetMapping("/statistics")
-    @PreAuthorize("hasRole('SHOP_MANAGER') or hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<Map<String, Object>> getFraudStatistics(
             @Parameter(description = "Shop ID filter") @RequestParam(required = false) String shopId,
             @Parameter(description = "Start date") @RequestParam(required = false) LocalDateTime startDate,
@@ -318,7 +318,7 @@ public class FraudDetectionController {
     )
     @ApiResponse(responseCode = "200", description = "Fraud rule status updated successfully")
     @PutMapping("/rules/{ruleId}/status")
-    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
     public ResponseEntity<FraudRule> updateRuleStatus(
             @Parameter(description = "Rule ID") @PathVariable String ruleId,
             @Parameter(description = "Enabled status") @RequestParam boolean enabled,

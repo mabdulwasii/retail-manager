@@ -85,7 +85,7 @@ public class ProductReturnController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_MANAGER or CASHIER role"
+            description = "Insufficient permissions - requires MANAGER or CASHIER role"
         ),
         @ApiResponse(
             responseCode = "404",
@@ -93,7 +93,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER')")
     public ResponseEntity<ProductReturnResponse> createReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -116,7 +116,7 @@ public class ProductReturnController {
      */
     @Operation(
         summary = "Process a product return",
-        description = "Processes a pending product return, handling inventory and refund calculations. Requires SHOP_MANAGER or higher permissions."
+        description = "Processes a pending product return, handling inventory and refund calculations. Requires MANAGER or higher permissions."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -134,7 +134,7 @@ public class ProductReturnController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_MANAGER or higher role"
+            description = "Insufficient permissions - requires MANAGER or higher role"
         ),
         @ApiResponse(
             responseCode = "404",
@@ -142,7 +142,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping("/{returnId}/process")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
     public ResponseEntity<ProductReturnResponse> processReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -187,7 +187,7 @@ public class ProductReturnController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER')")
     public ResponseEntity<Page<ProductReturnResponse>> getReturns(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,

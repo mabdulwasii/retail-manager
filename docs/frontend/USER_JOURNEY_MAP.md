@@ -49,10 +49,10 @@ Shop Manager is a multi-tenant retail management platform with **8 distinct user
 |------|-----------------|--------------|-------------|
 | **Super Admin** | Platform management, tenant approval | System-wide | Tenant approval dashboard, system settings |
 | **Tenant Admin** | Organization management, multi-shop oversight | Tenant-level | Multi-shop dashboard, organization settings |
-| **Shop Owner** | Business strategy, financial oversight | Shop-level (full access) | Business analytics, investment management |
-| **Shop Manager** | Daily operations, team management | Shop-level (operational) | Sales dashboard, inventory management |
+| **Owner** | Business strategy, financial oversight | Shop-level (full access) | Business analytics, investment management |
+| **Manager** | Daily operations, team management | Shop-level (operational) | Sales dashboard, inventory management |
 | **Cashier** | Point of sale, customer transactions | Shop-level (limited) | POS interface, receipt printing |
-| **Shop Employee** | Sales support, inventory assistance | Shop-level (minimal) | Product lookup, stock check |
+| **Employee** | Sales support, inventory assistance | Shop-level (minimal) | Product lookup, stock check |
 | **Investor** | Investment tracking, ROI monitoring | Tenant-level (financial) | Investment portfolio, distribution tracking |
 | **Accountant** | Financial reporting, expense management | Tenant-level (financial) | Financial reports, expense analytics |
 
@@ -121,9 +121,9 @@ Steps:
 | Screen Name | Path | API Endpoints | Key Components |
 |-------------|------|---------------|----------------|
 | **Super Admin Dashboard** | `/admin/dashboard` | - | System metrics cards, recent activity feed |
-| **Pending Tenant List** | `/admin/tenants/pending` | `GET /api/v1/admin/tenants/pending` | Data table with filters, status badges |
-| **Tenant Application Detail** | `/admin/tenants/:tenantId` | `GET /api/v1/admin/tenants/{tenantId}` | Application form review, document viewer |
-| **Tenant Activation Modal** | Modal overlay | `POST /api/v1/admin/tenants/{tenantId}/activate` | Shop selection, approval form |
+| **Pending Tenant List** | `/admin/tenants/pending` | `GET /api/admin/tenants/pending` | Data table with filters, status badges |
+| **Tenant Application Detail** | `/admin/tenants/:tenantId` | `GET /api/admin/tenants/{tenantId}` | Application form review, document viewer |
+| **Tenant Activation Modal** | Modal overlay | `POST /api/admin/tenants/{tenantId}/activate` | Shop selection, approval form |
 | **System Settings** | `/admin/settings` | - | Feature flag toggles, configuration forms |
 
 ---
@@ -221,10 +221,10 @@ Steps:
 | **Shop Detail** | `/shops/:shopId` | `GET /api/shops/{shopId}` | Shop info, staff list, recent activity |
 | **Edit Shop** | `/shops/:shopId/edit` | `PUT /api/shops/{shopId}` | Form with validation |
 | **Shop Status Management** | `/shops/:shopId` | `PATCH /api/shops/{shopId}/status` | Status dropdown, confirmation modal |
-| **Fraud Dashboard** | `/fraud` | `GET /api/v1/fraud/alerts` | Alert cards, severity indicators |
-| **Fraud Alert Detail** | `/fraud/alerts/:alertId` | `GET /api/v1/fraud/alerts/{alertId}` | Alert details, action buttons |
-| **Fraud Rules Management** | `/fraud/rules` | `GET /api/v1/fraud/rules`, `POST /api/v1/fraud/rules` | Rule list, rule builder form |
-| **Risk Assessment List** | `/fraud/risk-assessments` | `GET /api/v1/fraud/risk-assessments` | Assessment cards, approval workflow |
+| **Fraud Dashboard** | `/fraud` | `GET /api/fraud/alerts` | Alert cards, severity indicators |
+| **Fraud Alert Detail** | `/fraud/alerts/:alertId` | `GET /api/fraud/alerts/{alertId}` | Alert details, action buttons |
+| **Fraud Rules Management** | `/fraud/rules` | `GET /api/fraud/rules`, `POST /api/fraud/rules` | Rule list, rule builder form |
+| **Risk Assessment List** | `/fraud/risk-assessments` | `GET /api/fraud/risk-assessments` | Assessment cards, approval workflow |
 | **Tenant Settings** | `/settings/organization` | - | Tenant profile form, integration configs |
 
 ---
@@ -268,7 +268,7 @@ graph TD
 ```
 
 #### Entry Points
-1. **Login Page** → Keycloak authentication with SHOP_OWNER role
+1. **Login Page** → Keycloak authentication with OWNER role
 2. **Default Landing**: `/dashboard` (shop owner view)
 
 #### Key User Stories
@@ -328,15 +328,15 @@ Steps:
 |-------------|------|---------------|----------------|
 | **Shop Owner Dashboard** | `/dashboard` | `GET /api/analytics/*` | KPI cards, revenue charts, alerts |
 | **Business Analytics** | `/analytics` | `GET /api/analytics/sales-summary`, `GET /api/analytics/revenue-analytics` | Line charts, bar charts, data tables |
-| **Investment Portfolio** | `/investments` | `GET /api/v1/shops/{shopId}/investments` | Investment cards, ROI metrics |
-| **Investment Detail** | `/investments/:investmentId` | `GET /api/v1/investments/{investmentId}` | Investment info, distribution history |
-| **Distribution Management** | `/investments/distributions` | `GET /api/v1/investments/{investmentId}/distributions` | Distribution list, approval workflow |
-| **Approve Distribution** | Modal | `POST /api/v1/distributions/{distributionId}/approve` | Approval form, notes field |
-| **Mark Distribution Paid** | Modal | `POST /api/v1/distributions/{distributionId}/mark-paid` | Payment reference input |
-| **Inventory Dashboard** | `/inventory` | `GET /api/v1/shops/{shopId}/inventory` | Stock level cards, reorder alerts |
-| **Inventory Detail** | `/inventory/:inventoryId` | `GET /api/v1/inventory/{inventoryId}` | Product details, stock history |
-| **Stock Adjustment** | Modal | `PUT /api/v1/inventory/{inventoryId}/adjust-stock` | Adjustment form, reason dropdown |
-| **Expense Approval** | `/expenses/approvals` | `GET /api/v1/shops/{shopId}/expenses?status=PENDING` | Expense cards, approval buttons |
+| **Investment Portfolio** | `/investments` | `GET /api/shops/{shopId}/investments` | Investment cards, ROI metrics |
+| **Investment Detail** | `/investments/:investmentId` | `GET /api/investments/{investmentId}` | Investment info, distribution history |
+| **Distribution Management** | `/investments/distributions` | `GET /api/investments/{investmentId}/distributions` | Distribution list, approval workflow |
+| **Approve Distribution** | Modal | `POST /api/distributions/{distributionId}/approve` | Approval form, notes field |
+| **Mark Distribution Paid** | Modal | `POST /api/distributions/{distributionId}/mark-paid` | Payment reference input |
+| **Inventory Dashboard** | `/inventory` | `GET /api/shops/{shopId}/inventory` | Stock level cards, reorder alerts |
+| **Inventory Detail** | `/inventory/:inventoryId` | `GET /api/inventory/{inventoryId}` | Product details, stock history |
+| **Stock Adjustment** | Modal | `PUT /api/inventory/{inventoryId}/adjust-stock` | Adjustment form, reason dropdown |
+| **Expense Approval** | `/expenses/approvals` | `GET /api/shops/{shopId}/expenses?status=PENDING` | Expense cards, approval buttons |
 | **Returns Management** | `/returns` | `GET /api/shops/{shopId}/returns` | Return list, status filters |
 | **Process Return** | `/returns/:returnId` | `POST /api/shops/{shopId}/returns/{returnId}/process` | Return form, refund calculation |
 
@@ -378,7 +378,7 @@ graph TD
 ```
 
 #### Entry Points
-1. **Login Page** → Keycloak authentication with SHOP_MANAGER role
+1. **Login Page** → Keycloak authentication with MANAGER role
 2. **Default Landing**: `/dashboard` (shop manager view)
 
 #### Key User Stories
@@ -441,18 +441,18 @@ Steps:
 | Screen Name | Path | API Endpoints | Key Components |
 |-------------|------|---------------|----------------|
 | **Shop Manager Dashboard** | `/dashboard` | `GET /api/analytics/sales-summary` | Daily sales, inventory alerts, staff metrics |
-| **Inventory List** | `/inventory` | `GET /api/v1/shops/{shopId}/inventory` | Paginated table, filters, search |
-| **Inventory Detail** | `/inventory/:inventoryId` | `GET /api/v1/inventory/{inventoryId}` | Product info, stock levels, history |
-| **Stock Adjustment Modal** | Modal | `PUT /api/v1/inventory/{inventoryId}/adjust-stock` | Adjustment form, reason codes |
-| **Low Stock Report** | `/inventory/low-stock` | `GET /api/v1/shops/{shopId}/inventory/low-stock` | Alert list, reorder suggestions |
-| **Expiring Items Report** | `/inventory/expiring` | `GET /api/v1/shops/{shopId}/inventory/expiring` | Expiry list, date filters |
+| **Inventory List** | `/inventory` | `GET /api/shops/{shopId}/inventory` | Paginated table, filters, search |
+| **Inventory Detail** | `/inventory/:inventoryId` | `GET /api/inventory/{inventoryId}` | Product info, stock levels, history |
+| **Stock Adjustment Modal** | Modal | `PUT /api/inventory/{inventoryId}/adjust-stock` | Adjustment form, reason codes |
+| **Low Stock Report** | `/inventory/low-stock` | `GET /api/shops/{shopId}/inventory/low-stock` | Alert list, reorder suggestions |
+| **Expiring Items Report** | `/inventory/expiring` | `GET /api/shops/{shopId}/inventory/expiring` | Expiry list, date filters |
 | **Returns List** | `/returns` | `GET /api/shops/{shopId}/returns` | Return cards, status filters |
 | **Create Return** | `/returns/create` | `POST /api/shops/{shopId}/returns` | Return form, transaction lookup |
 | **Process Return** | `/returns/:returnId/process` | `POST /api/shops/{shopId}/returns/{returnId}/process` | Refund calculation, inventory update |
-| **Expense List** | `/expenses` | `GET /api/v1/shops/{shopId}/expenses` | Expense table, filters, search |
-| **Create Expense** | `/expenses/create` | `POST /api/v1/shops/{shopId}/expenses` | Expense form, receipt upload |
+| **Expense List** | `/expenses` | `GET /api/shops/{shopId}/expenses` | Expense table, filters, search |
+| **Create Expense** | `/expenses/create` | `POST /api/shops/{shopId}/expenses` | Expense form, receipt upload |
 | **Sales History** | `/sales/history` | - | Sales table, date filters, export |
-| **Fraud Alerts** | `/fraud/alerts` | `GET /api/v1/fraud/alerts` | Alert cards, severity badges |
+| **Fraud Alerts** | `/fraud/alerts` | `GET /api/fraud/alerts` | Alert cards, severity badges |
 
 ---
 
@@ -590,7 +590,7 @@ graph TD
 ```
 
 #### Entry Points
-1. **Login Page** → Keycloak authentication with SHOP_EMPLOYEE role
+1. **Login Page** → Keycloak authentication with EMPLOYEE role
 2. **Default Landing**: `/dashboard` (simplified view)
 
 #### Key User Stories
@@ -635,7 +635,7 @@ Steps:
 | **Employee Dashboard** | `/dashboard` | - | Simplified view, quick actions |
 | **Product Search** | `/products/search` | - | Search interface, product cards |
 | **Product Detail** | `/products/:productId` | - | Product info, stock level, location |
-| **Inventory View** | `/inventory` | `GET /api/v1/shops/{shopId}/inventory` | Read-only inventory list |
+| **Inventory View** | `/inventory` | `GET /api/shops/{shopId}/inventory` | Read-only inventory list |
 | **Profile Page** | `/profile` | `GET /api/users/profile` | User profile, contact info |
 
 ---
@@ -736,14 +736,14 @@ Steps:
 
 | Screen Name | Path | API Endpoints | Key Components |
 |-------------|------|---------------|----------------|
-| **Investor Dashboard** | `/investments` | `GET /api/v1/my-investments` | Portfolio summary, ROI metrics |
-| **Investment Portfolio** | `/investments/portfolio` | `GET /api/v1/my-investments` | Investment cards, filters, search |
-| **Investment Detail** | `/investments/:investmentId` | `GET /api/v1/investments/{investmentId}` | Investment info, distribution history |
-| **Create Investment** | `/investments/create` | `POST /api/v1/investments` | Multi-step form, shop selection |
+| **Investor Dashboard** | `/investments` | `GET /api/my-investments` | Portfolio summary, ROI metrics |
+| **Investment Portfolio** | `/investments/portfolio` | `GET /api/my-investments` | Investment cards, filters, search |
+| **Investment Detail** | `/investments/:investmentId` | `GET /api/investments/{investmentId}` | Investment info, distribution history |
+| **Create Investment** | `/investments/create` | `POST /api/investments` | Multi-step form, shop selection |
 | **Investment Analytics** | `/investments/analytics` | `GET /api/analytics/investment-roi` | Charts, performance metrics |
-| **Distributions List** | `/investments/distributions` | `GET /api/v1/my-distributions` | Distribution history, payment status |
+| **Distributions List** | `/investments/distributions` | `GET /api/my-distributions` | Distribution history, payment status |
 | **Distribution Detail** | Modal | - | Distribution calculation, payment info |
-| **Withdrawal Request** | Modal | `POST /api/v1/investments/{investmentId}/withdraw` | Withdrawal form, bank details |
+| **Withdrawal Request** | Modal | `POST /api/investments/{investmentId}/withdraw` | Withdrawal form, bank details |
 | **ROI Analysis** | `/investments/roi` | `GET /api/analytics/investment-roi` | ROI charts, trends, comparisons |
 
 ---
@@ -838,10 +838,10 @@ Steps:
 
 | Screen Name | Path | API Endpoints | Key Components |
 |-------------|------|---------------|----------------|
-| **Accountant Dashboard** | `/finances` | `GET /api/v1/shops/{shopId}/expenses/summary` | Financial KPIs, expense trends |
-| **Expense List** | `/finances/expenses` | `GET /api/v1/shops/{shopId}/expenses` | Expense table, filters, bulk actions |
-| **Expense Detail** | `/finances/expenses/:expenseId` | `GET /api/v1/expenses/{expenseId}` | Expense info, receipt viewer, notes |
-| **Expense Approval** | Modal | `POST /api/v1/expenses/{expenseId}/approve` | Approval form, category selection |
+| **Accountant Dashboard** | `/finances` | `GET /api/shops/{shopId}/expenses/summary` | Financial KPIs, expense trends |
+| **Expense List** | `/finances/expenses` | `GET /api/shops/{shopId}/expenses` | Expense table, filters, bulk actions |
+| **Expense Detail** | `/finances/expenses/:expenseId` | `GET /api/expenses/{expenseId}` | Expense info, receipt viewer, notes |
+| **Expense Approval** | Modal | `POST /api/expenses/{expenseId}/approve` | Approval form, category selection |
 | **Budget Dashboard** | `/finances/budgets` | - | Budget vs actual, variance charts |
 | **Create Budget** | `/finances/budgets/create` | - | Budget form, category allocation |
 | **Financial Reports** | `/finances/reports` | - | Report builder, preview, export |
@@ -1013,21 +1013,21 @@ Steps:
 - **API**: `GET /api/users/profile` → `UserProfileResponse`
 
 **Registration Page** (`/register`)
-- **Check Tenant Name**: `GET /api/v1/public/registration/check-tenant-name?name={name}`
-- **Check Email**: `GET /api/v1/public/registration/check-email?email={email}`
-- **Check Username**: `GET /api/v1/public/registration/check-username?username={username}`
-- **Submit Registration**: `POST /api/v1/public/registration/tenant` → `TenantRegistrationResponse`
+- **Check Tenant Name**: `GET /api/public/registration/check-tenant-name?name={name}`
+- **Check Email**: `GET /api/public/registration/check-email?email={email}`
+- **Check Username**: `GET /api/public/registration/check-username?username={username}`
+- **Submit Registration**: `POST /api/public/registration/tenant` → `TenantRegistrationResponse`
 
 ### Super Admin Screens
 
 **Pending Tenant List** (`/admin/tenants/pending`)
-- **Get Pending Tenants**: `GET /api/v1/admin/tenants/pending` → `List<PendingTenantResponse>`
+- **Get Pending Tenants**: `GET /api/admin/tenants/pending` → `List<PendingTenantResponse>`
 
 **Tenant Application Detail** (`/admin/tenants/:tenantId`)
-- **Get Tenant Details**: `GET /api/v1/admin/tenants/{tenantId}` → `PendingTenantResponse`
+- **Get Tenant Details**: `GET /api/admin/tenants/{tenantId}` → `PendingTenantResponse`
 
 **Tenant Activation Modal**
-- **Activate Tenant**: `POST /api/v1/admin/tenants/{tenantId}/activate` + `TenantActivationRequest` → `TenantActivationResponse`
+- **Activate Tenant**: `POST /api/admin/tenants/{tenantId}/activate` + `TenantActivationRequest` → `TenantActivationResponse`
 
 ### Shop Management Screens
 
@@ -1054,90 +1054,90 @@ Steps:
 ### Inventory Management Screens
 
 **Inventory List** (`/inventory`)
-- **Get Inventory**: `GET /api/v1/shops/{shopId}/inventory?page={page}&size={size}&search={term}&status={status}&category={category}` → `Page<InventoryResponse>`
+- **Get Inventory**: `GET /api/shops/{shopId}/inventory?page={page}&size={size}&search={term}&status={status}&category={category}` → `Page<InventoryResponse>`
 
 **Inventory Detail** (`/inventory/:inventoryId`)
-- **Get Inventory**: `GET /api/v1/inventory/{inventoryId}` → `InventoryResponse`
-- **Get History**: `GET /api/v1/inventory/{inventoryId}/history` → `List<InventoryHistory>`
+- **Get Inventory**: `GET /api/inventory/{inventoryId}` → `InventoryResponse`
+- **Get History**: `GET /api/inventory/{inventoryId}/history` → `List<InventoryHistory>`
 
 **Create Inventory** (`/inventory/create`)
-- **Create Inventory**: `POST /api/v1/shops/{shopId}/inventory` + `InventoryCreateRequest` → `InventoryResponse`
+- **Create Inventory**: `POST /api/shops/{shopId}/inventory` + `InventoryCreateRequest` → `InventoryResponse`
 
 **Stock Adjustment Modal**
-- **Adjust Stock**: `PUT /api/v1/inventory/{inventoryId}/adjust-stock` + `InventoryAdjustmentRequest` → `InventoryResponse`
+- **Adjust Stock**: `PUT /api/inventory/{inventoryId}/adjust-stock` + `InventoryAdjustmentRequest` → `InventoryResponse`
 
 **Stock Reservation Modal**
-- **Reserve Stock**: `POST /api/v1/inventory/{inventoryId}/reserve` + `StockReservationRequest` → `200 OK`
+- **Reserve Stock**: `POST /api/inventory/{inventoryId}/reserve` + `StockReservationRequest` → `200 OK`
 
 **Release Stock Modal**
-- **Release Stock**: `POST /api/v1/inventory/{inventoryId}/release?quantity={qty}` → `200 OK`
+- **Release Stock**: `POST /api/inventory/{inventoryId}/release?quantity={qty}` → `200 OK`
 
 **Update Status**
-- **Update Status**: `PUT /api/v1/inventory/{inventoryId}/status?status={status}` → `InventoryResponse`
+- **Update Status**: `PUT /api/inventory/{inventoryId}/status?status={status}` → `InventoryResponse`
 
 **Low Stock Report** (`/inventory/low-stock`)
-- **Get Low Stock**: `GET /api/v1/shops/{shopId}/inventory/low-stock` → `List<InventoryResponse>`
+- **Get Low Stock**: `GET /api/shops/{shopId}/inventory/low-stock` → `List<InventoryResponse>`
 
 **Expiring Items** (`/inventory/expiring`)
-- **Get Expiring**: `GET /api/v1/shops/{shopId}/inventory/expiring?daysThreshold={days}` → `List<InventoryResponse>`
+- **Get Expiring**: `GET /api/shops/{shopId}/inventory/expiring?daysThreshold={days}` → `List<InventoryResponse>`
 
 **Inventory Summary** (`/inventory/summary`)
-- **Get Summary**: `GET /api/v1/shops/{shopId}/inventory/summary` → `InventorySummaryDto`
+- **Get Summary**: `GET /api/shops/{shopId}/inventory/summary` → `InventorySummaryDto`
 
 **Inventory Valuation**
-- **Get Total Value**: `GET /api/v1/shops/{shopId}/inventory/total-value` → `BigDecimal`
+- **Get Total Value**: `GET /api/shops/{shopId}/inventory/total-value` → `BigDecimal`
 
 ### Investment Management Screens
 
 **Investment Portfolio** (`/investments`)
-- **Get Shop Investments**: `GET /api/v1/shops/{shopId}/investments?page={page}` → `Page<InvestmentResponse>`
-- **Get My Investments**: `GET /api/v1/my-investments?page={page}` → `Page<InvestmentResponse>` (Investor)
+- **Get Shop Investments**: `GET /api/shops/{shopId}/investments?page={page}` → `Page<InvestmentResponse>`
+- **Get My Investments**: `GET /api/my-investments?page={page}` → `Page<InvestmentResponse>` (Investor)
 
 **Investment Detail** (`/investments/:investmentId`)
-- **Get Investment**: `GET /api/v1/investments/{investmentId}` → `InvestmentResponse`
-- **Get Distributions**: `GET /api/v1/investments/{investmentId}/distributions` → `List<InvestorDistributionResponse>`
+- **Get Investment**: `GET /api/investments/{investmentId}` → `InvestmentResponse`
+- **Get Distributions**: `GET /api/investments/{investmentId}/distributions` → `List<InvestorDistributionResponse>`
 
 **Create Investment** (`/investments/create`)
-- **Create Investment**: `POST /api/v1/investments` + `InvestmentCreateRequest` → `InvestmentResponse`
+- **Create Investment**: `POST /api/investments` + `InvestmentCreateRequest` → `InvestmentResponse`
 
 **Update Status**
-- **Update Status**: `PUT /api/v1/investments/{investmentId}/status?status={status}` → `InvestmentResponse`
+- **Update Status**: `PUT /api/investments/{investmentId}/status?status={status}` → `InvestmentResponse`
 
 **Withdrawal Request Modal**
-- **Request Withdrawal**: `POST /api/v1/investments/{investmentId}/withdraw` + `WithdrawalRequest` → `InvestmentResponse`
+- **Request Withdrawal**: `POST /api/investments/{investmentId}/withdraw` + `WithdrawalRequest` → `InvestmentResponse`
 
 **Distribution List** (`/investments/distributions`)
-- **Get My Distributions**: `GET /api/v1/my-distributions` → `List<InvestorDistributionResponse>` (Investor)
+- **Get My Distributions**: `GET /api/my-distributions` → `List<InvestorDistributionResponse>` (Investor)
 
 **Approve Distribution Modal**
-- **Approve Distribution**: `POST /api/v1/distributions/{distributionId}/approve?notes={notes}` → `InvestorDistributionResponse`
+- **Approve Distribution**: `POST /api/distributions/{distributionId}/approve?notes={notes}` → `InvestorDistributionResponse`
 
 **Mark Paid Modal**
-- **Mark as Paid**: `POST /api/v1/distributions/{distributionId}/mark-paid?paymentReference={ref}` → `InvestorDistributionResponse`
+- **Mark as Paid**: `POST /api/distributions/{distributionId}/mark-paid?paymentReference={ref}` → `InvestorDistributionResponse`
 
 ### Expense Management Screens
 
 **Expense List** (`/expenses`)
-- **Get Expenses**: `GET /api/v1/shops/{shopId}/expenses?page={page}&status={status}&category={category}&startDate={date}&endDate={date}` → `Page<ExpenseResponse>`
+- **Get Expenses**: `GET /api/shops/{shopId}/expenses?page={page}&status={status}&category={category}&startDate={date}&endDate={date}` → `Page<ExpenseResponse>`
 
 **Expense Detail** (`/expenses/:expenseId`)
-- **Get Expense**: `GET /api/v1/expenses/{expenseId}` → `ExpenseResponse`
+- **Get Expense**: `GET /api/expenses/{expenseId}` → `ExpenseResponse`
 
 **Create Expense** (`/expenses/create`)
-- **Create Expense**: `POST /api/v1/shops/{shopId}/expenses` + `ExpenseCreateRequest` → `ExpenseResponse`
+- **Create Expense**: `POST /api/shops/{shopId}/expenses` + `ExpenseCreateRequest` → `ExpenseResponse`
 
 **Edit Expense** (`/expenses/:expenseId/edit`)
-- **Update Expense**: `PUT /api/v1/expenses/{expenseId}` + `ExpenseUpdateRequest` → `ExpenseResponse`
+- **Update Expense**: `PUT /api/expenses/{expenseId}` + `ExpenseUpdateRequest` → `ExpenseResponse`
 
 **Expense Approval Modal**
-- **Approve Expense**: `POST /api/v1/expenses/{expenseId}/approve` + `ExpenseApprovalRequest` → `ExpenseResponse`
-- **Reject Expense**: `POST /api/v1/expenses/{expenseId}/reject` + `ExpenseApprovalRequest` → `ExpenseResponse`
+- **Approve Expense**: `POST /api/expenses/{expenseId}/approve` + `ExpenseApprovalRequest` → `ExpenseResponse`
+- **Reject Expense**: `POST /api/expenses/{expenseId}/reject` + `ExpenseApprovalRequest` → `ExpenseResponse`
 
 **Delete Expense**
-- **Delete Expense**: `DELETE /api/v1/expenses/{expenseId}` → `204 No Content`
+- **Delete Expense**: `DELETE /api/expenses/{expenseId}` → `204 No Content`
 
 **Expense Summary** (`/expenses/summary`)
-- **Get Summary**: `GET /api/v1/shops/{shopId}/expenses/summary?startDate={date}&endDate={date}` → `ExpenseSummaryDto`
+- **Get Summary**: `GET /api/shops/{shopId}/expenses/summary?startDate={date}&endDate={date}` → `ExpenseSummaryDto`
 
 ### Returns Management Screens
 
@@ -1156,38 +1156,38 @@ Steps:
 ### Fraud Detection Screens
 
 **Fraud Dashboard** (`/fraud`)
-- **Get Alert Summary**: `GET /api/v1/fraud/statistics?shopId={shopId}` → `Map<String, Object>`
+- **Get Alert Summary**: `GET /api/fraud/statistics?shopId={shopId}` → `Map<String, Object>`
 
 **Alert List** (`/fraud/alerts`)
-- **Get Alerts**: `GET /api/v1/fraud/alerts?page={page}&shopId={shopId}&status={status}&severity={severity}` → `Page<FraudAlertResponse>`
+- **Get Alerts**: `GET /api/fraud/alerts?page={page}&shopId={shopId}&status={status}&severity={severity}` → `Page<FraudAlertResponse>`
 
 **Alert Detail** (`/fraud/alerts/:alertId`)
-- **Get Alert**: `GET /api/v1/fraud/alerts/{alertId}` → `FraudAlertResponse`
+- **Get Alert**: `GET /api/fraud/alerts/{alertId}` → `FraudAlertResponse`
 
 **Acknowledge Alert**
-- **Acknowledge**: `POST /api/v1/fraud/alerts/{alertId}/acknowledge` → `FraudAlertResponse`
+- **Acknowledge**: `POST /api/fraud/alerts/{alertId}/acknowledge` → `FraudAlertResponse`
 
 **Resolve Alert**
-- **Resolve**: `POST /api/v1/fraud/alerts/{alertId}/resolve?resolutionNotes={notes}` → `FraudAlertResponse`
+- **Resolve**: `POST /api/fraud/alerts/{alertId}/resolve?resolutionNotes={notes}` → `FraudAlertResponse`
 
 **Mark False Positive**
-- **False Positive**: `POST /api/v1/fraud/alerts/{alertId}/false-positive?reason={reason}` → `FraudAlertResponse`
+- **False Positive**: `POST /api/fraud/alerts/{alertId}/false-positive?reason={reason}` → `FraudAlertResponse`
 
 **Risk Assessment List** (`/fraud/risk-assessments`)
-- **Get Assessments**: `GET /api/v1/fraud/risk-assessments?page={page}&shopId={shopId}` → `Page<RiskAssessmentResponse>`
+- **Get Assessments**: `GET /api/fraud/risk-assessments?page={page}&shopId={shopId}` → `Page<RiskAssessmentResponse>`
 
 **Approve Assessment**
-- **Approve**: `POST /api/v1/fraud/risk-assessments/{assessmentId}/approve?reviewNotes={notes}` → `RiskAssessmentResponse`
+- **Approve**: `POST /api/fraud/risk-assessments/{assessmentId}/approve?reviewNotes={notes}` → `RiskAssessmentResponse`
 
 **Reject Assessment**
-- **Reject**: `POST /api/v1/fraud/risk-assessments/{assessmentId}/reject?reviewNotes={notes}&action={action}` → `RiskAssessmentResponse`
+- **Reject**: `POST /api/fraud/risk-assessments/{assessmentId}/reject?reviewNotes={notes}&action={action}` → `RiskAssessmentResponse`
 
 **Fraud Rules** (`/fraud/rules`)
-- **Get Rules**: `GET /api/v1/fraud/rules?page={page}` → `Page<FraudRule>`
-- **Create Rule**: `POST /api/v1/fraud/rules` + `FraudRuleRequest` → `FraudRule`
-- **Update Rule**: `PUT /api/v1/fraud/rules/{ruleId}` + `FraudRuleRequest` → `FraudRule`
-- **Delete Rule**: `DELETE /api/v1/fraud/rules/{ruleId}` → `204 No Content`
-- **Toggle Status**: `PUT /api/v1/fraud/rules/{ruleId}/status?enabled={bool}` → `FraudRule`
+- **Get Rules**: `GET /api/fraud/rules?page={page}` → `Page<FraudRule>`
+- **Create Rule**: `POST /api/fraud/rules` + `FraudRuleRequest` → `FraudRule`
+- **Update Rule**: `PUT /api/fraud/rules/{ruleId}` + `FraudRuleRequest` → `FraudRule`
+- **Delete Rule**: `DELETE /api/fraud/rules/{ruleId}` → `204 No Content`
+- **Toggle Status**: `PUT /api/fraud/rules/{ruleId}/status?enabled={bool}` → `FraudRule`
 
 ### Analytics Screens
 

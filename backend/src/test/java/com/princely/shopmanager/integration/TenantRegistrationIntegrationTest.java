@@ -84,7 +84,7 @@ class TenantRegistrationIntegrationTest {
         TenantRegistrationRequest request = createValidRegistrationRequest();
 
         // When & Then - Register tenant
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -100,7 +100,7 @@ class TenantRegistrationIntegrationTest {
     @DisplayName("Should check tenant name availability")
     void shouldCheckTenantNameAvailability() throws Exception {
         // When & Then - Check available name
-        mockMvc.perform(get("/api/v1/public/registration/check-tenant-name")
+        mockMvc.perform(get("/api/public/registration/check-tenant-name")
                 .param("name", "AvailableTenant"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true))
@@ -116,7 +116,7 @@ class TenantRegistrationIntegrationTest {
             .thenReturn(false);
 
         // When & Then - Check email availability
-        mockMvc.perform(get("/api/v1/public/registration/check-email")
+        mockMvc.perform(get("/api/public/registration/check-email")
                 .param("email", "existing@test.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(false))
@@ -128,7 +128,7 @@ class TenantRegistrationIntegrationTest {
     @DisplayName("Should check username availability")
     void shouldCheckUsernameAvailability() throws Exception {
         // When & Then - Check available username
-        mockMvc.perform(get("/api/v1/public/registration/check-username")
+        mockMvc.perform(get("/api/public/registration/check-username")
                 .param("username", "availableuser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true))
@@ -140,7 +140,7 @@ class TenantRegistrationIntegrationTest {
     @DisplayName("Should check email availability")
     void shouldCheckEmailAvailability() throws Exception {
         // When & Then - Check available email
-        mockMvc.perform(get("/api/v1/public/registration/check-email")
+        mockMvc.perform(get("/api/public/registration/check-email")
                 .param("email", "available@test.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true))
@@ -167,7 +167,7 @@ class TenantRegistrationIntegrationTest {
         // When & Then - This should pass validation and call the service
         // Since this is a mock-based test, the service will return the mocked response
         // The validation is at the business logic level, not the controller level
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isCreated()); // The controller validation might not be enforced in @WebMvcTest
@@ -183,7 +183,7 @@ class TenantRegistrationIntegrationTest {
         TenantRegistrationRequest request = createValidRegistrationRequest();
 
         // When & Then
-        mockMvc.perform(post("/api/v1/public/registration/tenant")
+        mockMvc.perform(post("/api/public/registration/tenant")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError());

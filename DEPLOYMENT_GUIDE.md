@@ -123,6 +123,9 @@ open https://retail.gomco.com
 # Login with test credentials (see TESTING-GUIDE.md):
 # Email: admin@shopmanager.com
 # Password: DevAdmin@2024!Test
+# Or
+# Email: owner@shopmanager.com
+# Password: DevOwner@2024!Test
 ```
 
 **That's it!** Everything is automated - from cert-manager to ingress-nginx to Shop Manager deployment.

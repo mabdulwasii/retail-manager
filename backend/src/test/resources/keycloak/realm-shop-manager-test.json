@@ -39,7 +39,7 @@
       ],
       "realmRoles": ["user"],
       "clientRoles": {
-        "shop-manager-backend": ["SHOP_OWNER", "SHOP_MANAGER"]
+        "shop-manager-backend": ["OWNER", "MANAGER"]
       }
     }
   ],
@@ -52,16 +52,31 @@
     "client": {
       "shop-manager-backend": [
         {
-          "name": "SHOP_OWNER"
+          "name": "SYSTEM_ADMIN"
         },
         {
-          "name": "SHOP_MANAGER"
+          "name": "TENANT_ADMIN"
         },
         {
-          "name": "SHOP_ADMIN"
+          "name": "OWNER"
+        },
+        {
+          "name": "MANAGER"
+        },
+        {
+          "name": "EMPLOYEE"
         },
         {
           "name": "CASHIER"
+        },
+        {
+          "name": "ACCOUNTANT"
+        },
+        {
+          "name": "AUDITOR"
+        },
+        {
+          "name": "INVESTOR"
         }
       ]
     }

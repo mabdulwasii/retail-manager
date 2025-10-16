@@ -129,7 +129,7 @@ public class TenantSecurityService {
         return auth.getAuthorities().stream()
             .anyMatch(authority ->
                 authority.getAuthority().equals(SecurityRoles.ROLE_SYSTEM_ADMIN) ||
-                authority.getAuthority().equals(SecurityRoles.ROLE_SUPER_ADMIN));
+                authority.getAuthority().equals(SecurityRoles.ROLE_TENANT_ADMIN));
     }
 
     /**
@@ -153,19 +153,19 @@ public class TenantSecurityService {
         // Define permission matrix based on roles and actions
         return switch (action.toUpperCase()) {
             case "READ" -> hasRoleInCurrentTenant(SecurityRoles.CASHIER) ||
-                          hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER) ||
-                          hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
+                          hasRoleInCurrentTenant(SecurityRoles.MANAGER) ||
+                          hasRoleInCurrentTenant(SecurityRoles.OWNER);
 
-            case "WRITE", "UPDATE" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER) ||
-                                     hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
+            case "WRITE", "UPDATE" -> hasRoleInCurrentTenant(SecurityRoles.MANAGER) ||
+                                     hasRoleInCurrentTenant(SecurityRoles.OWNER);
 
-            case "DELETE" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER);
+            case "DELETE" -> hasRoleInCurrentTenant(SecurityRoles.OWNER);
 
             case "APPROVE" -> resourceType.equals("INVESTMENT") ?
-                            hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER) :
-                            hasRoleInCurrentTenant(SecurityRoles.SHOP_MANAGER);
+                            hasRoleInCurrentTenant(SecurityRoles.OWNER) :
+                            hasRoleInCurrentTenant(SecurityRoles.MANAGER);
 
-            case "ADMIN" -> hasRoleInCurrentTenant(SecurityRoles.SHOP_OWNER) || hasSystemRole(SecurityContextHolder.getContext().getAuthentication());
+            case "ADMIN" -> hasRoleInCurrentTenant(SecurityRoles.OWNER) || hasSystemRole(SecurityContextHolder.getContext().getAuthentication());
 
             default -> false;
         };

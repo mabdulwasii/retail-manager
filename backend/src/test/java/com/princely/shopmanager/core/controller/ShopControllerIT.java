@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ShopControllerIT extends IntegrationTestBase {
 
     @Test
-    @DisplayName("Should create shop successfully with valid data and SHOP_OWNER role")
+    @DisplayName("Should create shop successfully with valid data and OWNER role")
     void shouldCreateShopSuccessfully() {
         // Given
         String tenantId = "test-tenant-001";
@@ -44,7 +44,7 @@ class ShopControllerIT extends IntegrationTestBase {
             request, 
             "shop-owner", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then
@@ -85,7 +85,7 @@ class ShopControllerIT extends IntegrationTestBase {
             "/shops/" + testShop.getId(), 
             "shop-manager", 
             ShopResponse.class, 
-            "SHOP_MANAGER"
+            "MANAGER"
         );
 
         // Then
@@ -103,7 +103,7 @@ class ShopControllerIT extends IntegrationTestBase {
             "/shops/non-existent-id", 
             "shop-manager", 
             ShopResponse.class, 
-            "SHOP_MANAGER"
+            "MANAGER"
         );
 
         // Then
@@ -127,7 +127,7 @@ class ShopControllerIT extends IntegrationTestBase {
             0, 
             10, 
             "shop-owner", 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then
@@ -171,7 +171,7 @@ class ShopControllerIT extends IntegrationTestBase {
             updateRequest, 
             "shop-manager", 
             ShopResponse.class, 
-            "SHOP_MANAGER"
+            "MANAGER"
         );
 
         // Then
@@ -195,7 +195,7 @@ class ShopControllerIT extends IntegrationTestBase {
             null, 
             "shop-owner", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then
@@ -223,7 +223,7 @@ class ShopControllerIT extends IntegrationTestBase {
             "/shops/" + shopInTenantA.getId(), 
             "shop-manager", 
             ShopResponse.class, 
-            "SHOP_MANAGER"
+            "MANAGER"
         );
 
         // Then - Should not find the shop due to tenant isolation
@@ -245,7 +245,7 @@ class ShopControllerIT extends IntegrationTestBase {
             invalidRequest, 
             "shop-owner", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then
@@ -268,7 +268,7 @@ class ShopControllerIT extends IntegrationTestBase {
             request1, 
             "shop-owner1", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         ResponseEntity<ShopResponse> response2 = performAuthenticatedPost(
@@ -276,7 +276,7 @@ class ShopControllerIT extends IntegrationTestBase {
             request2, 
             "shop-owner2", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then - Both should succeed with unique names
@@ -321,7 +321,7 @@ class ShopControllerIT extends IntegrationTestBase {
             request, 
             "shop-owner", 
             ShopResponse.class, 
-            "SHOP_OWNER"
+            "OWNER"
         );
 
         // Then

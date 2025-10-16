@@ -92,7 +92,7 @@ class TenantAdminIntegrationTest {
         when(tenantRegistrationService.getPendingRegistrations()).thenReturn(List.of(mockResponse));
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/pending"))
+        mockMvc.perform(get("/api/admin/tenants/pending"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$[0].tenantId").value("test-tenant-id"))
@@ -105,7 +105,7 @@ class TenantAdminIntegrationTest {
     @WithMockUser(roles = "TENANT_ADMIN")
     void shouldDenyAccessToNonSuperAdminUsers() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/pending"))
+        mockMvc.perform(get("/api/admin/tenants/pending"))
             .andExpect(status().isForbidden());
     }
 
@@ -149,7 +149,7 @@ class TenantAdminIntegrationTest {
         when(tenantRegistrationService.getTenantDetails(tenantId)).thenReturn(mockResponse);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/{tenantId}", tenantId))
+        mockMvc.perform(get("/api/admin/tenants/{tenantId}", tenantId))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.tenantId").value(tenantId))
@@ -172,7 +172,7 @@ class TenantAdminIntegrationTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -197,7 +197,7 @@ class TenantAdminIntegrationTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -223,7 +223,7 @@ class TenantAdminIntegrationTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)

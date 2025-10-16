@@ -90,7 +90,7 @@ class TenantAdminControllerTest {
         when(tenantRegistrationService.getPendingRegistrations()).thenReturn(pendingTenants);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/pending"))
+        mockMvc.perform(get("/api/admin/tenants/pending"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$", hasSize(1)))
@@ -105,7 +105,7 @@ class TenantAdminControllerTest {
     @WithMockUser(roles = "TENANT_ADMIN")
     void shouldDenyAccessToPendingRegistrationsForNonSuperAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/pending"))
+        mockMvc.perform(get("/api/admin/tenants/pending"))
             .andExpect(status().isForbidden());
     }
 
@@ -123,7 +123,7 @@ class TenantAdminControllerTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ class TenantAdminControllerTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", tenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -179,7 +179,7 @@ class TenantAdminControllerTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/tenants/{tenantId}/activate", pathTenantId)
+        mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", pathTenantId)
                 .with(csrf())
                 .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -216,7 +216,7 @@ class TenantAdminControllerTest {
         when(tenantRegistrationService.getTenantDetails(tenantId)).thenReturn(tenantDetails);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/{tenantId}", tenantId))
+        mockMvc.perform(get("/api/admin/tenants/{tenantId}", tenantId))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.tenantId").value(tenantId))
@@ -230,7 +230,7 @@ class TenantAdminControllerTest {
     @WithMockUser(roles = "TENANT_ADMIN")
     void shouldDenyAccessToTenantDetailsForNonSuperAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/tenants/tenant-1"))
+        mockMvc.perform(get("/api/admin/tenants/tenant-1"))
             .andExpect(status().isForbidden());
     }
 

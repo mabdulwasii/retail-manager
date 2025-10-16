@@ -433,7 +433,7 @@ public class InventoryService {
                     .build();
             })
             .sorted((a, b) -> b.getItemCount().compareTo(a.getItemCount()))
-            .collect(Collectors.toList());
+            .toList();
 
         return InventorySummaryDto.builder()
             .totalItems(allInventory.size())

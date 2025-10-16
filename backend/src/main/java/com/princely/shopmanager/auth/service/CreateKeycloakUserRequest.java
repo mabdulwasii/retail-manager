@@ -59,7 +59,7 @@ public record CreateKeycloakUserRequest(
                 password,
                 true,
                 true, // enabled immediately
-                List.of("SUPER_ADMIN")
+                List.of("SYSTEM_ADMIN")
         );
     }
 }

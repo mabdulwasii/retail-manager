@@ -107,21 +107,21 @@ public class FraudAlertNotificationService {
             case CRITICAL -> {
                 // Critical alerts: Notify all admins, managers, and owners
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("TENANT_ADMIN", "SHOP_OWNER", "SHOP_MANAGER"),
+                    List.of("TENANT_ADMIN", "OWNER", "MANAGER"),
                     tenantId
                 );
             }
             case HIGH -> {
                 // High alerts: Notify admins and managers
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("TENANT_ADMIN", "SHOP_MANAGER"),
+                    List.of("TENANT_ADMIN", "MANAGER"),
                     tenantId
                 );
             }
             case MEDIUM -> {
                 // Medium alerts: Notify managers only
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("SHOP_MANAGER"),
+                    List.of("MANAGER"),
                     tenantId
                 );
             }
@@ -141,7 +141,7 @@ public class FraudAlertNotificationService {
 
         // Risk assessments require review by admins and senior managers
         return userService.getUsersByRolesAndTenant(
-            List.of("TENANT_ADMIN", "SHOP_OWNER"),
+            List.of("TENANT_ADMIN", "OWNER"),
             tenantId
         );
     }
