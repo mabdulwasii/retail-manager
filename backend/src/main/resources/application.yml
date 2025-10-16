@@ -82,6 +82,9 @@ logging:
     com.princely.shopmanager: ${LOGGING_LEVEL_COM_PRINCELY_SHOPMANAGER:DEBUG}
     org.springframework.security: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY:INFO}
     org.springframework.web: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB:INFO}
+    # Suppress harmless Tomcat EOFException from health checks and connection closures
+    org.apache.coyote.http11.Http11Processor: ${LOGGING_LEVEL_TOMCAT_HTTP:INFO}
+    org.apache.tomcat.util.net.NioEndpoint: ${LOGGING_LEVEL_TOMCAT_NIO:INFO}
   pattern:
     console: ${LOGGING_PATTERN_CONSOLE:%d{yyyy-MM-dd HH:mm:ss} - %msg%n}
 
