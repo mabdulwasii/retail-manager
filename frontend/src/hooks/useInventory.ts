@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
+import { api } from '@/services/api'
 
 export interface Product {
   id: string
@@ -133,18 +134,7 @@ export const useInventory = () => {
       if (filter?.maxStock !== undefined) queryParams.append('maxStock', filter.maxStock.toString())
       if (filter?.searchQuery) queryParams.append('search', filter.searchQuery)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory')
-      }
-
-      const data = await response.json()
+      const data = await api.get<InventoryItem[]>(`/shops/${shopId}/inventory?${queryParams}`)
       setInventory(data)
       return data
     } catch (err) {
@@ -162,20 +152,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create inventory item')
-      }
-
-      const item = await response.json()
+      const item = await api.post<InventoryItem>(`/shops/${shopId}/inventory`, request)
       setInventory(prevInventory => [item, ...prevInventory])
       return item
     } catch (err) {
@@ -193,20 +170,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/adjust`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to adjust stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/adjust`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -228,20 +192,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/reserve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to reserve stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/reserve`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -263,20 +214,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/release`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to release reserved stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/release`, { quantity })
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -298,18 +236,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/history`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory history')
-      }
-
-      const history = await response.json()
+      const history = await api.get<InventoryHistory[]>(`/inventory/${inventoryId}/history`)
       setInventoryHistory(history)
       return history
     } catch (err) {
@@ -327,18 +254,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/summary`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory summary')
-      }
-
-      const summaryData = await response.json()
+      const summaryData = await api.get<InventorySummary>(`/shops/${shopId}/inventory/summary`)
       setSummary(summaryData)
       return summaryData
     } catch (err) {
@@ -356,20 +272,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update inventory settings')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.put<InventoryItem>(`/inventory/${inventoryId}`, updates)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -391,20 +294,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update inventory status')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}/status`, { status })
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -423,18 +313,7 @@ export const useInventory = () => {
   // Get low stock alerts
   const getLowStockAlerts = useCallback(async (shopId: string): Promise<InventoryItem[]> => {
     try {
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/low-stock`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch low stock alerts')
-      }
-
-      return await response.json()
+      return await api.get<InventoryItem[]>(`/shops/${shopId}/inventory/low-stock`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -445,18 +324,7 @@ export const useInventory = () => {
   // Get expiring items
   const getExpiringItems = useCallback(async (shopId: string, daysAhead: number = 30): Promise<InventoryItem[]> => {
     try {
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch expiring items')
-      }
-
-      return await response.json()
+      return await api.get<InventoryItem[]>(`/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -470,17 +338,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/export?format=${format}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to export inventory')
-      }
-
-      const blob = await response.blob()
+      const blob = await api.getBlob(`/shops/${shopId}/inventory/export?format=${format}`)
       const url = window.URL.createObjectURL(blob)
       return url
     } catch (err) {
@@ -498,15 +356,15 @@ export const useInventory = () => {
   }, [])
 
   // Permission checks
-  const canManageInventory = user?.roles.some(role =>
+  const canManageInventory = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
   ) || false
 
-  const canViewInventory = user?.roles.some(role =>
+  const canViewInventory = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER', 'ROLE_CASHIER', 'ROLE_SHOP_EMPLOYEE'].includes(role)
   ) || false
 
-  const canAdjustStock = user?.roles.some(role =>
+  const canAdjustStock = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
   ) || false
 

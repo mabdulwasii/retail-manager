@@ -179,7 +179,7 @@ export const LandingPage: React.FC = () => {
 
               {isAuthenticated ? (
                 <>
-                  <Link to="/dashboard" className="text-blue-600 hover:text-blue-700 font-medium">Dashboard</Link>
+                  <Link to="/redirect" className="text-blue-600 hover:text-blue-700 font-medium">Dashboard</Link>
                   <Button variant="outline" onClick={handleLogout}>
                     Logout
                   </Button>

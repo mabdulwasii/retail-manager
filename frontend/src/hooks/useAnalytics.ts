@@ -58,14 +58,8 @@ export const useAnalytics = () => {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams({
-        shopId,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      })
-
-      const response = await api.get(`/analytics/sales-summary?${params}`)
-      return response.data
+      const response = await api.getSalesSummary(shopId, dateRange.startDate, dateRange.endDate)
+      return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch sales summary')
       return null
@@ -79,14 +73,8 @@ export const useAnalytics = () => {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams({
-        shopId,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      })
-
-      const response = await api.get(`/analytics/revenue-analytics?${params}`)
-      return response.data
+      const response = await api.getRevenueAnalytics(shopId, dateRange.startDate, dateRange.endDate)
+      return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch revenue analytics')
       return null
@@ -100,14 +88,8 @@ export const useAnalytics = () => {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams({
-        shopId,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      })
-
-      const response = await api.get(`/analytics/investment-roi?${params}`)
-      return response.data
+      const response = await api.getInvestmentROI(shopId, dateRange.startDate, dateRange.endDate)
+      return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch investment ROI')
       return null
@@ -121,14 +103,8 @@ export const useAnalytics = () => {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams({
-        shopId,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      })
-
-      const response = await api.get(`/analytics/fraud-statistics?${params}`)
-      return response.data
+      const response = await api.getFraudStatistics(shopId, dateRange.startDate, dateRange.endDate)
+      return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch fraud statistics')
       return null
@@ -142,7 +118,7 @@ export const useAnalytics = () => {
       setIsLoading(true)
       setError(null)
 
-      await api.post(`/analytics/clear-cache/${shopId}`)
+      await api.clearAnalyticsCache(shopId)
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear analytics cache')

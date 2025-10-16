@@ -17,7 +17,12 @@ import {
   Coins,
   Shield,
   Loader2,
-  Activity
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  FileText
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useDashboardData, useFraudStatistics } from '@/hooks/useDashboard'
@@ -31,6 +36,8 @@ export const OwnerManagerDashboard: React.FC = () => {
     salesSummary,
     investmentROI,
     revenueAnalytics,
+    inventorySummary,
+    expenseSummary,
     isLoading,
     hasError,
     refetch
@@ -42,10 +49,10 @@ export const OwnerManagerDashboard: React.FC = () => {
   const businessStats = [
     {
       title: 'Total Revenue',
-      value: revenueAnalytics ? `$${(revenueAnalytics.totalRevenue || 0).toLocaleString()}` : '$0',
+      value: revenueAnalytics ? `$${(revenueAnalytics.currentRevenue || 0).toLocaleString()}` : '$0',
       description: `This ${period}`,
       icon: DollarSign,
-      trend: revenueAnalytics ? `${revenueAnalytics.revenueGrowth > 0 ? '+' : ''}${revenueAnalytics.revenueGrowth?.toFixed(1) || 0}%` : '0%',
+      trend: revenueAnalytics ? `${revenueAnalytics.growthRate > 0 ? '+' : ''}${revenueAnalytics.growthRate?.toFixed(1) || 0}%` : '0%',
       color: 'text-green-600'
     },
     {
@@ -57,19 +64,19 @@ export const OwnerManagerDashboard: React.FC = () => {
       color: 'text-blue-600'
     },
     {
-      title: 'Products Sold',
-      value: salesSummary ? (salesSummary.totalSales?.toString() || '0') : '0',
+      title: 'Transactions',
+      value: salesSummary ? (salesSummary.totalTransactions?.toString() || '0') : '0',
       description: `This ${period}`,
       icon: Package,
-      trend: salesSummary ? `Avg: $${salesSummary.averageOrderValue?.toFixed(2) || '0.00'}` : 'No sales',
+      trend: salesSummary ? `Avg: $${salesSummary.averageTransactionValue?.toFixed(2) || '0.00'}` : 'No sales',
       color: 'text-purple-600'
     },
     {
       title: 'Investment ROI',
-      value: investmentROI ? `${investmentROI.roi?.toFixed(1) || 0}%` : '0%',
+      value: investmentROI ? `${investmentROI.roiPercentage?.toFixed(1) || 0}%` : '0%',
       description: `${period} return`,
       icon: TrendingUp,
-      trend: investmentROI ? `$${investmentROI.totalReturn?.toLocaleString() || '0'} earned` : 'No returns',
+      trend: investmentROI ? `$${investmentROI.totalDistributions?.toLocaleString() || '0'} earned` : 'No returns',
       color: 'text-emerald-600'
     }
   ]
@@ -136,29 +143,15 @@ export const OwnerManagerDashboard: React.FC = () => {
     }
   ]
 
-  const investmentSummary = [
-    {
-      name: 'Tech Product Line',
-      invested: '$25,000',
-      returns: '$31,250',
-      roi: '25%',
-      status: 'active'
-    },
-    {
-      name: 'Fashion Inventory',
-      invested: '$18,500',
-      returns: '$22,200',
-      roi: '20%',
-      status: 'active'
-    },
-    {
-      name: 'Seasonal Products',
-      invested: '$12,000',
-      returns: '$13,560',
-      roi: '13%',
-      status: 'completed'
-    }
-  ]
+  // Calculate total alerts count
+  const totalAlerts = (
+    (inventorySummary?.lowStockItems || 0) +
+    (inventorySummary?.expiredItems || 0) +
+    (inventorySummary?.expiringSoonItems || 0) +
+    (expenseSummary?.pendingApproval || 0) +
+    (fraudStats?.highRiskCount || 0) +
+    (fraudStats?.criticalRiskCount || 0)
+  )
 
   // Handle loading state
   if (isLoading && !salesSummary && !revenueAnalytics && !investmentROI) {
@@ -364,94 +357,319 @@ export const OwnerManagerDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Investment Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Investment Portfolio</CardTitle>
-          <CardDescription>
-            Your investment performance and returns
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            {investmentSummary.map((investment, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium">{investment.name}</h4>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    investment.status === 'active' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {investment.status}
-                  </span>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Invested:</span>
-                    <span>{investment.invested}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Current Value:</span>
-                    <span className="font-semibold">{investment.returns}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">ROI:</span>
-                    <span className="text-green-600 font-semibold">+{investment.roi}</span>
+      {/* Critical Alerts Section */}
+      {totalAlerts > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-orange-800">
+              <AlertTriangle className="h-5 w-5" />
+              <span>Action Required ({totalAlerts} items)</span>
+            </CardTitle>
+            <CardDescription>Important items that need your attention</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Expense Approvals */}
+            {expenseSummary && expenseSummary.pendingApproval > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-orange-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-medium">Expenses Awaiting Approval</p>
+                    <p className="text-xs text-muted-foreground">
+                      {expenseSummary.pendingApproval} expense(s) totaling ${expenseSummary.totalAmount?.toLocaleString() || '0'}
+                    </p>
                   </div>
                 </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/expenses?status=pending">Review</Link>
+                </Button>
               </div>
-            ))}
-          </div>
-          <Button variant="outline" className="w-full mt-4" asChild>
-            <Link to="/investments">View Full Portfolio</Link>
-          </Button>
-        </CardContent>
-      </Card>
+            )}
 
-      {/* Risk Alerts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5" />
-            <span>Risk Management</span>
-          </CardTitle>
-          <CardDescription>
-            Security alerts and fraud detection
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium">Unusual Sales Pattern Detected</p>
-                  <p className="text-xs text-muted-foreground">
-                    Downtown Electronics - Large electronics sale outside normal hours
-                  </p>
+            {/* Low Stock Items */}
+            {inventorySummary && inventorySummary.lowStockItems > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-yellow-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="text-sm font-medium">Low Stock Alert</p>
+                    <p className="text-xs text-muted-foreground">
+                      {inventorySummary.lowStockItems} product(s) running low on inventory
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/inventory?filter=lowStock">Restock</Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Expired Items */}
+            {inventorySummary && inventorySummary.expiredItems > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <XCircle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-sm font-medium">Expired Items</p>
+                    <p className="text-xs text-muted-foreground">
+                      {inventorySummary.expiredItems} expired product(s) need to be removed
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/inventory?filter=expired">Remove</Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Expiring Soon */}
+            {inventorySummary && inventorySummary.expiringSoonItems > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-amber-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Clock className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-medium">Items Expiring Soon</p>
+                    <p className="text-xs text-muted-foreground">
+                      {inventorySummary.expiringSoonItems} product(s) expiring in the next 30 days
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/inventory?filter=expiringSoon">Review</Link>
+                </Button>
+              </div>
+            )}
+
+            {/* High Risk Transactions */}
+            {fraudStats && fraudStats.highRiskCount > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-orange-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Shield className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-medium">High Risk Transactions</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fraudStats.highRiskCount} transaction(s) flagged for review
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/fraud-detection?risk=high">Investigate</Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Critical Risk Transactions */}
+            {fraudStats && fraudStats.criticalRiskCount > 0 && (
+              <div className="flex items-center justify-between p-3 bg-white border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">Critical Risk Alert</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fraudStats.criticalRiskCount} critical transaction(s) require immediate attention
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="destructive" asChild>
+                  <Link to="/fraud-detection?risk=critical">Review Now</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Inventory & Expense Overview */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Inventory Summary */}
+        {inventorySummary && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Package className="h-5 w-5" />
+                <span>Inventory Overview</span>
+              </CardTitle>
+              <CardDescription>Stock levels and inventory health</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total Items</p>
+                  <p className="text-2xl font-bold">{inventorySummary.totalItems}</p>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total Value</p>
+                  <p className="text-2xl font-bold">${inventorySummary.totalValue?.toLocaleString() || '0'}</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline">
-                Review
-              </Button>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Shield className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium">All Systems Secure</p>
-                  <p className="text-xs text-muted-foreground">
-                    No security threats detected in the last 24 hours
-                  </p>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
+                  <span className="text-sm">Low Stock</span>
+                  <span className="text-sm font-semibold text-yellow-700">{inventorySummary.lowStockItems}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-red-50 rounded">
+                  <span className="text-sm">Expired</span>
+                  <span className="text-sm font-semibold text-red-700">{inventorySummary.expiredItems}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-amber-50 rounded">
+                  <span className="text-sm">Expiring Soon</span>
+                  <span className="text-sm font-semibold text-amber-700">{inventorySummary.expiringSoonItems}</span>
                 </div>
               </div>
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/security">View Details</Link>
+
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/inventory">Manage Inventory</Link>
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Expense Summary */}
+        {expenseSummary && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Receipt className="h-5 w-5" />
+                <span>Expense Summary</span>
+              </CardTitle>
+              <CardDescription>Monthly expenses and approvals</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total Expenses</p>
+                  <p className="text-2xl font-bold">{expenseSummary.totalExpenses}</p>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total Amount</p>
+                  <p className="text-2xl font-bold">${expenseSummary.totalAmount?.toLocaleString() || '0'}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                  <span className="text-sm">Pending Approval</span>
+                  <span className="text-sm font-semibold text-orange-700">{expenseSummary.pendingApproval}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                  <span className="text-sm">Approved</span>
+                  <span className="text-sm font-semibold text-green-700">{expenseSummary.approvedExpenses}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <span className="text-sm">This Month</span>
+                  <span className="text-sm font-semibold text-blue-700">${expenseSummary.monthlyTotal?.toLocaleString() || '0'}</span>
+                </div>
+              </div>
+
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/expenses">View All Expenses</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Investment Summary */}
+      {investmentROI && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Coins className="h-5 w-5" />
+              <span>Investment Performance</span>
+            </CardTitle>
+            <CardDescription>
+              Your investment returns for this {period}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Invested</p>
+                <p className="text-2xl font-bold">${investmentROI.totalInvestmentAmount?.toLocaleString() || '0'}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Returns</p>
+                <p className="text-2xl font-bold text-green-600">${investmentROI.totalDistributions?.toLocaleString() || '0'}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">ROI</p>
+                <p className="text-2xl font-bold text-emerald-600">+{investmentROI.roiPercentage?.toFixed(1) || '0'}%</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Button variant="outline" className="w-full mt-4" asChild>
+              <Link to="/investments">View Full Portfolio</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fraud & Risk Analytics */}
+      {fraudStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="h-5 w-5" />
+              <span>Fraud Detection & Risk Management</span>
+            </CardTitle>
+            <CardDescription>
+              Security analytics for this {period}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-4 mb-4">
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground">Total Assessments</p>
+                <p className="text-2xl font-bold">{fraudStats.totalAssessments}</p>
+              </div>
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground">High Risk</p>
+                <p className="text-2xl font-bold text-orange-600">{fraudStats.highRiskCount}</p>
+              </div>
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground">Critical Risk</p>
+                <p className="text-2xl font-bold text-red-600">{fraudStats.criticalRiskCount}</p>
+              </div>
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground">Risk Rate</p>
+                <p className="text-2xl font-bold">{fraudStats.riskRate?.toFixed(1) || '0'}%</p>
+              </div>
+            </div>
+
+            {fraudStats.criticalRiskCount === 0 && fraudStats.highRiskCount === 0 ? (
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium">All Systems Secure</p>
+                    <p className="text-xs text-muted-foreground">
+                      No high-risk transactions detected this {period}
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/fraud-detection">View Details</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">Security Alerts Active</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fraudStats.highRiskCount + fraudStats.criticalRiskCount} transaction(s) require review
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="destructive" asChild>
+                  <Link to="/fraud-detection">Review Now</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

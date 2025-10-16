@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
+import { api } from '@/services/api'
 
 export interface Expense {
   id: string
@@ -189,18 +190,7 @@ export const useExpenses = () => {
       if (filter?.maxAmount) queryParams.append('maxAmount', filter.maxAmount.toString())
       if (filter?.tags?.length) queryParams.append('tags', filter.tags.join(','))
 
-      const response = await fetch(`/api/v1/expenses?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch expenses')
-      }
-
-      const data = await response.json()
+      const data = await api.get<Expense[]>(`/expenses?${queryParams}`)
       setExpenses(data)
       return data
     } catch (err) {
@@ -228,19 +218,7 @@ export const useExpenses = () => {
       if (expenseData.tags?.length) formData.append('tags', JSON.stringify(expenseData.tags))
       if (expenseData.notes) formData.append('notes', expenseData.notes)
 
-      const response = await fetch('/api/v1/expenses', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create expense')
-      }
-
-      const expense = await response.json()
+      const expense = await api.post<Expense>('/expenses', formData)
       setExpenses(prevExpenses => [expense, ...prevExpenses])
       return expense
     } catch (err) {
@@ -269,19 +247,7 @@ export const useExpenses = () => {
       if (updates.notes !== undefined) formData.append('notes', updates.notes)
       if (updates.status) formData.append('status', updates.status)
 
-      const response = await fetch(`/api/v1/expenses/${expenseId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update expense')
-      }
-
-      const updatedExpense = await response.json()
+      const updatedExpense = await api.put<Expense>(`/expenses/${expenseId}`, formData)
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
           expense.id === expenseId ? updatedExpense : expense
@@ -303,16 +269,7 @@ export const useExpenses = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/expenses/${expenseId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete expense')
-      }
+      await api.delete(`/expenses/${expenseId}`)
 
       setExpenses(prevExpenses =>
         prevExpenses.filter(expense => expense.id !== expenseId)
@@ -333,20 +290,7 @@ export const useExpenses = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/expenses/${expenseId}/${approved ? 'approve' : 'reject'}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ notes })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${approved ? 'approve' : 'reject'} expense`)
-      }
-
-      const updatedExpense = await response.json()
+      const updatedExpense = await api.post<Expense>(`/expenses/${expenseId}/${approved ? 'approve' : 'reject'}`, { notes })
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
           expense.id === expenseId ? updatedExpense : expense
@@ -372,18 +316,7 @@ export const useExpenses = () => {
       if (period?.startDate) queryParams.append('startDate', period.startDate)
       if (period?.endDate) queryParams.append('endDate', period.endDate)
 
-      const response = await fetch(`/api/v1/expenses/summary?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch expense summary')
-      }
-
-      const summaryData = await response.json()
+      const summaryData = await api.get<ExpenseSummary>(`/expenses/summary?${queryParams}`)
       setSummary(summaryData)
       return summaryData
     } catch (err) {
@@ -398,19 +331,7 @@ export const useExpenses = () => {
   // Fetch categories
   const fetchCategories = useCallback(async (): Promise<ExpenseCategory[]> => {
     try {
-      const response = await fetch('/api/v1/expenses/categories', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        // Use default categories if API fails
-        return defaultCategories
-      }
-
-      const data = await response.json()
+      const data = await api.get<ExpenseCategory[]>('/expenses/categories')
       setCategories(data)
       return data
     } catch (err) {
@@ -429,19 +350,7 @@ export const useExpenses = () => {
       const formData = new FormData()
       formData.append('receipt', file)
 
-      const response = await fetch(`/api/v1/expenses/${expenseId}/receipt`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to upload receipt')
-      }
-
-      const result = await response.json()
+      const result = await api.post<{ receiptUrl: string }>(`/expenses/${expenseId}/receipt`, formData)
       return result.receiptUrl
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
@@ -493,15 +402,15 @@ export const useExpenses = () => {
   }, [])
 
   // Permission checks
-  const canCreateExpense = user?.roles.some(role =>
+  const canCreateExpense = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_ACCOUNTANT'].includes(role)
   ) || false
 
-  const canApproveExpense = user?.roles.some(role =>
+  const canApproveExpense = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER'].includes(role)
   ) || false
 
-  const canViewAllExpenses = user?.roles.some(role =>
+  const canViewAllExpenses = user?.roles.some((role: string) =>
     ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_ACCOUNTANT', 'ROLE_AUDITOR'].includes(role)
   ) || false
 
