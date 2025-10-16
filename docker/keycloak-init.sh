@@ -18,7 +18,7 @@ ADMIN_TOKEN=$(curl -s -X POST \
   "http://keycloak:8080/realms/master/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=admin" \
-  -d "password=admin" \
+  -d "password=Adm1n!SecureP@ss2024" \
   -d "grant_type=password" \
   -d "client_id=admin-cli" | \
   sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')

@@ -614,26 +614,59 @@ backend/
 ### Pre-configured Test Users
 The development environment includes pre-configured test users for immediate testing:
 
+**Note**: All passwords follow the policy: 8+ chars, digits, upper, lower, special chars
+
 ```bash
-# System Administrator
+# System Super Admin (Bootstrap)
+Username: superadmin
+Email: superadmin@shopmanager.local
+Password: SuperAdmin@2024!
+Role: SYSTEM_ADMIN
+
+# Tenant Administrator
 Username: admin@shopmanager.com
-Password: admin123
+Password: DevAdmin@2024!Test
 Role: TENANT_ADMIN
 
 # Shop Owner
 Username: owner@shopmanager.com
-Password: owner123
+Password: DevOwner@2024!Test
 Role: OWNER
 
 # Shop Manager
 Username: manager@shopmanager.com
-Password: manager123
+Password: DevManager@2024!Test
 Role: MANAGER
 
 # Shop Employee
 Username: employee@shopmanager.com
-Password: employee123
+Password: DevEmployee@2024!Test
 Role: EMPLOYEE
+
+# Cashier
+Username: cashier@shopmanager.com
+Password: DevCashier@2024!Test
+Role: CASHIER
+
+# Accountant
+Username: accountant@shopmanager.com
+Password: DevAccountant@2024!Test
+Role: ACCOUNTANT
+
+# Auditor
+Username: auditor@shopmanager.com
+Password: DevAuditor@2024!Test
+Role: AUDITOR
+
+# Investor
+Username: investor@shopmanager.com
+Password: DevInvestor@2024!Test
+Role: INVESTOR
+
+# Customer
+Username: customer@shopmanager.com
+Password: DevCustomer@2024!Test
+Role: CUSTOMER
 ```
 
 ### Authentication Flow Testing

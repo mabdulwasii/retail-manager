@@ -58,7 +58,7 @@ export const expenseService = {
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
-    const { data } = await api.get(`/v1/shops/${shopId}/expenses/summary`, {
+    const { data } = await api.get(`/shops/${shopId}/expenses/summary`, {
       params,
     });
     return data;
@@ -68,12 +68,12 @@ export const expenseService = {
     shopId: string,
     params?: Record<string, any>
   ): Promise<Expense[]> {
-    const { data } = await api.get(`/v1/shops/${shopId}/expenses`, { params });
+    const { data } = await api.get(`/shops/${shopId}/expenses`, { params });
     return data;
   },
 
   async getExpenseById(expenseId: string): Promise<Expense> {
-    const { data } = await api.get(`/v1/expenses/${expenseId}`);
+    const { data } = await api.get(`/expenses/${expenseId}`);
     return data;
   },
 
@@ -93,7 +93,7 @@ export const expenseService = {
       formData.append("tags", JSON.stringify(request.tags));
     if (request.notes) formData.append("notes", request.notes);
 
-    const { data } = await api.post(`/v1/shops/${shopId}/expenses`, formData, {
+    const { data } = await api.post(`/shops/${shopId}/expenses`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
@@ -115,25 +115,25 @@ export const expenseService = {
     if (updates.notes !== undefined) formData.append("notes", updates.notes);
     if (updates.status) formData.append("status", updates.status);
 
-    const { data } = await api.put(`/v1/expenses/${expenseId}`, formData, {
+    const { data } = await api.put(`/expenses/${expenseId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
   },
 
   async deleteExpense(expenseId: string): Promise<void> {
-    await api.delete(`/v1/expenses/${expenseId}`);
+    await api.delete(`/expenses/${expenseId}`);
   },
 
   async approveExpense(expenseId: string, notes?: string): Promise<Expense> {
-    const { data } = await api.post(`/v1/expenses/${expenseId}/approve`, {
+    const { data } = await api.post(`/expenses/${expenseId}/approve`, {
       notes,
     });
     return data;
   },
 
   async rejectExpense(expenseId: string, notes?: string): Promise<Expense> {
-    const { data } = await api.post(`/v1/expenses/${expenseId}/reject`, {
+    const { data } = await api.post(`/expenses/${expenseId}/reject`, {
       notes,
     });
     return data;
@@ -147,7 +147,7 @@ export const expenseService = {
     formData.append("receipt", file);
 
     const { data } = await api.post(
-      `/v1/expenses/${expenseId}/receipt`,
+      `/expenses/${expenseId}/receipt`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },

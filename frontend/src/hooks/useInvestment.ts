@@ -97,7 +97,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.post('/api/v1/investments', request)
+      const response = await api.post('/api/investments', request)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create investment')
@@ -153,7 +153,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.get(`/api/v1/investments/${investmentId}`)
+      const response = await api.get(`/api/investments/${investmentId}`)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch investment')
@@ -171,7 +171,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.put(`/api/v1/investments/${investmentId}/status?status=${status}`)
+      const response = await api.put(`/api/investments/${investmentId}/status?status=${status}`)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update investment status')
@@ -189,7 +189,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.post(`/api/v1/investments/${investmentId}/withdraw`, request)
+      const response = await api.post(`/api/investments/${investmentId}/withdraw`, request)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process withdrawal')
@@ -204,7 +204,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.get(`/api/v1/investments/${investmentId}/distributions`)
+      const response = await api.get(`/api/investments/${investmentId}/distributions`)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch distributions')
@@ -219,7 +219,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.get('/api/v1/my-distributions')
+      const response = await api.get('/api/my-distributions')
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch my distributions')
@@ -238,7 +238,7 @@ export const useInvestment = () => {
       setError(null)
 
       const params = notes ? `?notes=${encodeURIComponent(notes)}` : ''
-      const response = await api.post(`/api/v1/distributions/${distributionId}/approve${params}`)
+      const response = await api.post(`/api/distributions/${distributionId}/approve${params}`)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve distribution')
@@ -257,7 +257,7 @@ export const useInvestment = () => {
       setError(null)
 
       const response = await api.post(
-        `/api/v1/distributions/${distributionId}/mark-paid?paymentReference=${encodeURIComponent(paymentReference)}`
+        `/api/distributions/${distributionId}/mark-paid?paymentReference=${encodeURIComponent(paymentReference)}`
       )
       return response
     } catch (err) {

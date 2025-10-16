@@ -77,7 +77,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/products/search?q=${encodeURIComponent(query)}`, {
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -105,7 +105,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/products/barcode/${encodeURIComponent(barcode)}`, {
+      const response = await fetch(`/api/products/barcode/${encodeURIComponent(barcode)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -243,7 +243,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch('/api/v1/sales', {
+      const response = await fetch('/api/sales', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -289,7 +289,7 @@ export const useSales = () => {
       if (filter?.minAmount) queryParams.append('minAmount', filter.minAmount.toString())
       if (filter?.maxAmount) queryParams.append('maxAmount', filter.maxAmount.toString())
 
-      const response = await fetch(`/api/v1/sales?${queryParams}`, {
+      const response = await fetch(`/api/sales?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -317,7 +317,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/sales/${saleId}`, {
+      const response = await fetch(`/api/sales/${saleId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -348,7 +348,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/sales/${saleId}/receipt`, {
+      const response = await fetch(`/api/sales/${saleId}/receipt`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         }

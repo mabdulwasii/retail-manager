@@ -89,6 +89,6 @@ export const analyticsService = {
   },
 
   async clearAnalyticsCache(shopId: string): Promise<void> {
-    await api.post(`/v1/analytics/clear-cache/${shopId}`);
+    await api.post(`/analytics/clear-cache/${shopId}`);
   },
 };

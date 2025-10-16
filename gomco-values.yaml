@@ -10,7 +10,7 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.1
+    tag: backend-v0.0.2
     pullPolicy: Always
 
 # Frontend configuration
@@ -18,7 +18,7 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.2
+    tag: frontend-v0.0.3
     pullPolicy: Always
 
 branding:

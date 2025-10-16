@@ -374,7 +374,7 @@ export const useExpenses = () => {
       if (filter?.categoryId) queryParams.append('categoryId', filter.categoryId)
       if (filter?.status) queryParams.append('status', filter.status)
 
-      const response = await fetch(`/api/v1/expenses/export?${queryParams}`, {
+      const response = await fetch(`/api/expenses/export?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

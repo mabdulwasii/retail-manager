@@ -79,7 +79,7 @@ export const investmentService = {
   async createInvestment(
     request: CreateInvestmentRequest
   ): Promise<Investment> {
-    const { data } = await api.post("/v1/investments", request);
+    const { data } = await api.post("/investments", request);
     return data;
   },
 
@@ -90,7 +90,7 @@ export const investmentService = {
     sortBy = "investmentDate",
     sortDir = "desc"
   ): Promise<PaginatedResponse<Investment>> {
-    const { data } = await api.get(`/v1/shops/${shopId}/investments`, {
+    const { data } = await api.get(`/shops/${shopId}/investments`, {
       params: { page, size, sortBy, sortDir },
     });
     return data;
@@ -102,14 +102,14 @@ export const investmentService = {
     sortBy = "investmentDate",
     sortDir = "desc"
   ): Promise<PaginatedResponse<Investment>> {
-    const { data } = await api.get("/v1/my-investments", {
+    const { data } = await api.get("/my-investments", {
       params: { page, size, sortBy, sortDir },
     });
     return data;
   },
 
   async getInvestmentById(investmentId: string): Promise<Investment> {
-    const { data } = await api.get(`/v1/investments/${investmentId}`);
+    const { data } = await api.get(`/investments/${investmentId}`);
     return data;
   },
 
@@ -118,7 +118,7 @@ export const investmentService = {
     status: string
   ): Promise<Investment> {
     const { data } = await api.put(
-      `/v1/investments/${investmentId}/status`,
+      `/investments/${investmentId}/status`,
       null,
       {
         params: { status },
@@ -132,7 +132,7 @@ export const investmentService = {
     request: WithdrawalRequest
   ): Promise<Investment> {
     const { data } = await api.post(
-      `/v1/investments/${investmentId}/withdraw`,
+      `/investments/${investmentId}/withdraw`,
       request
     );
     return data;
@@ -142,13 +142,13 @@ export const investmentService = {
     investmentId: string
   ): Promise<InvestorDistribution[]> {
     const { data } = await api.get(
-      `/v1/investments/${investmentId}/distributions`
+      `/investments/${investmentId}/distributions`
     );
     return data;
   },
 
   async getMyDistributions(): Promise<InvestorDistribution[]> {
-    const { data } = await api.get("/v1/my-distributions");
+    const { data } = await api.get("/my-distributions");
     return data;
   },
 
@@ -157,7 +157,7 @@ export const investmentService = {
     notes?: string
   ): Promise<InvestorDistribution> {
     const { data } = await api.post(
-      `/v1/distributions/${distributionId}/approve`,
+      `/distributions/${distributionId}/approve`,
       null,
       {
         params: notes ? { notes } : undefined,
@@ -171,7 +171,7 @@ export const investmentService = {
     paymentReference: string
   ): Promise<InvestorDistribution> {
     const { data } = await api.post(
-      `/v1/distributions/${distributionId}/mark-paid`,
+      `/distributions/${distributionId}/mark-paid`,
       null,
       {
         params: { paymentReference },

@@ -290,7 +290,7 @@ class ApiService {
         totalValue: number;
         lowStockCount: number;
       }>;
-    }>(`/api/v1/shops/${shopId}/inventory/summary`);
+    }>(`/api/shops/${shopId}/inventory/summary`);
   }
 
   // Expense API endpoints
@@ -315,7 +315,7 @@ class ApiService {
         itemCount: number;
         totalValue: number;
       }>;
-    }>(`/api/v1/shops/${shopId}/expenses/summary${queryString}`);
+    }>(`/api/shops/${shopId}/expenses/summary${queryString}`);
   }
 
   // Health check endpoint
@@ -341,7 +341,7 @@ class ApiService {
       totalPages: number;
       number: number;
       size: number;
-    }>(`/v1/shops/${shopId}/investments?page=${page}&size=${size}`);
+    }>(`/shops/${shopId}/investments?page=${page}&size=${size}`);
   }
 
   async getMyInvestments(page = 0, size = 20) {
@@ -351,7 +351,7 @@ class ApiService {
       totalPages: number;
       number: number;
       size: number;
-    }>(`/v1/my-investments?page=${page}&size=${size}`);
+    }>(`/my-investments?page=${page}&size=${size}`);
   }
 }
 

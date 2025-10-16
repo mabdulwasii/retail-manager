@@ -72,7 +72,7 @@ export interface ReserveStockRequest {
 
 export const inventoryService = {
   async getInventorySummary(shopId: string): Promise<InventorySummary> {
-    const { data } = await api.get(`/v1/shops/${shopId}/inventory/summary`);
+    const { data } = await api.get(`/shops/${shopId}/inventory/summary`);
     return data;
   },
 
@@ -80,7 +80,7 @@ export const inventoryService = {
     shopId: string,
     params?: Record<string, any>
   ): Promise<InventoryItem[]> {
-    const { data } = await api.get(`/v1/shops/${shopId}/inventory`, { params });
+    const { data } = await api.get(`/shops/${shopId}/inventory`, { params });
     return data;
   },
 
@@ -88,7 +88,7 @@ export const inventoryService = {
     shopId: string,
     request: CreateInventoryRequest
   ): Promise<InventoryItem> {
-    const { data } = await api.post(`/v1/shops/${shopId}/inventory`, request);
+    const { data } = await api.post(`/shops/${shopId}/inventory`, request);
     return data;
   },
 
@@ -97,7 +97,7 @@ export const inventoryService = {
     request: AdjustStockRequest
   ): Promise<InventoryItem> {
     const { data } = await api.post(
-      `/v1/inventory/${inventoryId}/adjust`,
+      `/inventory/${inventoryId}/adjust`,
       request
     );
     return data;
@@ -108,7 +108,7 @@ export const inventoryService = {
     request: ReserveStockRequest
   ): Promise<InventoryItem> {
     const { data } = await api.post(
-      `/v1/inventory/${inventoryId}/reserve`,
+      `/inventory/${inventoryId}/reserve`,
       request
     );
     return data;
@@ -118,7 +118,7 @@ export const inventoryService = {
     inventoryId: string,
     quantity: number
   ): Promise<InventoryItem> {
-    const { data } = await api.post(`/v1/inventory/${inventoryId}/release`, {
+    const { data } = await api.post(`/inventory/${inventoryId}/release`, {
       quantity,
     });
     return data;
@@ -128,7 +128,7 @@ export const inventoryService = {
     inventoryId: string,
     updates: Partial<CreateInventoryRequest>
   ): Promise<InventoryItem> {
-    const { data } = await api.put(`/v1/inventory/${inventoryId}`, updates);
+    const { data } = await api.put(`/inventory/${inventoryId}`, updates);
     return data;
   },
 
@@ -136,19 +136,19 @@ export const inventoryService = {
     inventoryId: string,
     status: string
   ): Promise<InventoryItem> {
-    const { data } = await api.patch(`/v1/inventory/${inventoryId}/status`, {
+    const { data } = await api.patch(`/inventory/${inventoryId}/status`, {
       status,
     });
     return data;
   },
 
   async getInventoryHistory(inventoryId: string): Promise<any[]> {
-    const { data } = await api.get(`/v1/inventory/${inventoryId}/history`);
+    const { data } = await api.get(`/inventory/${inventoryId}/history`);
     return data;
   },
 
   async getLowStockAlerts(shopId: string): Promise<InventoryItem[]> {
-    const { data } = await api.get(`/v1/shops/${shopId}/inventory/low-stock`);
+    const { data } = await api.get(`/shops/${shopId}/inventory/low-stock`);
     return data;
   },
 
@@ -156,7 +156,7 @@ export const inventoryService = {
     shopId: string,
     daysAhead: number = 30
   ): Promise<InventoryItem[]> {
-    const { data } = await api.get(`/v1/shops/${shopId}/inventory/expiring`, {
+    const { data } = await api.get(`/shops/${shopId}/inventory/expiring`, {
       params: { daysAhead },
     });
     return data;
