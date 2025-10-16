@@ -1,10 +1,9 @@
-import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { ManualAuthProvider } from '@/context/ManualAuthContext'
-import { LandingPage } from '@/pages/LandingPage'
-import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { AuthenticatedApp } from '@/components/AuthenticatedApp'
+import { AuthenticatedApp } from "@/components/AuthenticatedApp";
+import { DashboardRedirect } from "@/components/auth/DashboardRedirect";
+import { ManualAuthProvider } from "@/context/ManualAuthContext";
+import { LandingPage } from "@/pages/LandingPage";
+import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { Route, Routes } from "react-router-dom";
 
 function App() {
   return (
@@ -12,28 +11,14 @@ function App() {
       <Routes>
         {/* Public Routes - No authentication required */}
         <Route path="/" element={<LandingPage />} />
-
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/redirect" element={<DashboardRedirect />} />
 
-        {/* All authenticated routes */}
-        <Route path="/dashboard/*" element={<AuthenticatedApp />} />
-        <Route path="/shops/*" element={<AuthenticatedApp />} />
-        <Route path="/products/*" element={<AuthenticatedApp />} />
-        <Route path="/inventory/*" element={<AuthenticatedApp />} />
-        <Route path="/sales/*" element={<AuthenticatedApp />} />
-        <Route path="/receipts/*" element={<AuthenticatedApp />} />
-        <Route path="/investments/*" element={<AuthenticatedApp />} />
-        <Route path="/analytics/*" element={<AuthenticatedApp />} />
-        <Route path="/audit/*" element={<AuthenticatedApp />} />
-
-        {/* Profile Route - Redirect to dashboard/profile for consistency */}
-        <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
-
-        {/* 404 Page */}
-        <Route path="*" element={<NotFoundPage />} />
+        {/* All authenticated routes - single wildcard to AuthenticatedApp */}
+        <Route path="/*" element={<AuthenticatedApp />} />
       </Routes>
     </ManualAuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

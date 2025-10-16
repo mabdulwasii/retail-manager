@@ -1,77 +1,91 @@
-import React from 'react'
-import { Routes, Route } from 'react-router-dom'
-import { useAuth } from '@/context/ManualAuthContext'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { Layout } from '@/components/layout/Layout'
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { DashboardPage } from '@/pages/dashboard/DashboardPage'
-import { ShopsPage } from '@/pages/shops/ShopsPage'
-import { ShopDetailPage } from '@/pages/shops/ShopDetailPage'
-import { CreateShopPage } from '@/pages/shops/CreateShopPage'
-import { ProductsPage } from '@/pages/products/ProductsPage'
-import { SalesPage } from '@/pages/sales/SalesPage'
-import { ReceiptsPage } from '@/pages/receipts/ReceiptsPage'
-import { InvestmentsPage } from '@/pages/investments/InvestmentsPage'
-import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
-import { AuditPage } from '@/pages/audit/AuditPage'
-import { InventoryPage } from '@/pages/inventory/InventoryPage'
-import { ProfilePage } from '@/pages/ProfilePage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { Layout } from "@/components/layout/Layout";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/context/ManualAuthContext";
+import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
+import { AuditPage } from "@/pages/audit/AuditPage";
+import { DashboardPage } from "@/pages/dashboard/DashboardPage";
+import { InventoryPage } from "@/pages/inventory/InventoryPage";
+import { InvestmentsPage } from "@/pages/investments/InvestmentsPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+import { ProductsPage } from "@/pages/products/ProductsPage";
+import { ProfilePage } from "@/pages/ProfilePage";
+import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
+import { SalesPage } from "@/pages/sales/SalesPage";
+import { CreateShopPage } from "@/pages/shops/CreateShopPage";
+import { ShopDetailPage } from "@/pages/shops/ShopDetailPage";
+import { ShopsPage } from "@/pages/shops/ShopsPage";
+import React from "react";
+import { Route, Routes } from "react-router-dom";
 
 export const AuthenticatedApp: React.FC = () => {
-  const { isLoading, isAuthenticated, login } = useAuth()
+  const { isInitialized, isAuthenticated, user, login } = useAuth();
 
-  if (isLoading) {
+  if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
+        <p className="ml-2">Initializing...</p>
       </div>
-    )
+    );
   }
 
-  if (!isAuthenticated) {
-    // Redirect to Keycloak login instead of showing local login page
-    login({ redirectUri: window.location.origin + '/dashboard' })
+  if (!isAuthenticated && !user) {
+    login();
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
         <p className="ml-2">Redirecting to login...</p>
       </div>
-    )
+    );
   }
 
   return (
     <Routes>
-      {/* Dashboard Route - handles empty path when coming from /dashboard */}
-      <Route index element={<Layout><DashboardPage /></Layout>} />
+      {/* Dashboard Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <Layout>
+            <DashboardPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        }
+      />
 
       {/* Shop Management */}
       <Route
-        path="shops"
+        path="/shops"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
               <ShopsPage />
             </ProtectedRoute>
           </Layout>
         }
       />
       <Route
-        path="shops/create"
+        path="/shops/create"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER']}>
+            <ProtectedRoute roles={["SHOP_OWNER"]}>
               <CreateShopPage />
             </ProtectedRoute>
           </Layout>
         }
       />
       <Route
-        path="shops/:shopId"
+        path="/shops/:shopId"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
               <ShopDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -80,20 +94,22 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Products & Inventory */}
       <Route
-        path="products"
+        path="/products"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
               <ProductsPage />
             </ProtectedRoute>
           </Layout>
         }
       />
       <Route
-        path="inventory"
+        path="/inventory"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'INVENTORY_MANAGER']}>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "SHOP_MANAGER", "INVENTORY_MANAGER"]}
+            >
               <InventoryPage />
             </ProtectedRoute>
           </Layout>
@@ -102,20 +118,22 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Sales & Receipts */}
       <Route
-        path="sales"
+        path="/sales"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER', 'SALES_MANAGER']}>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "SHOP_MANAGER", "CASHIER", "SALES_MANAGER"]}
+            >
               <SalesPage />
             </ProtectedRoute>
           </Layout>
         }
       />
       <Route
-        path="receipts"
+        path="/receipts"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'CASHIER']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER", "CASHIER"]}>
               <ReceiptsPage />
             </ProtectedRoute>
           </Layout>
@@ -124,10 +142,10 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Investments */}
       <Route
-        path="investments"
+        path="/investments"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'INVESTOR']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR"]}>
               <InvestmentsPage />
             </ProtectedRoute>
           </Layout>
@@ -136,10 +154,12 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Analytics */}
       <Route
-        path="analytics"
+        path="/analytics"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT']}>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "SHOP_MANAGER", "ACCOUNTANT"]}
+            >
               <AnalyticsPage />
             </ProtectedRoute>
           </Layout>
@@ -148,22 +168,12 @@ export const AuthenticatedApp: React.FC = () => {
 
       {/* Audit Logs */}
       <Route
-        path="audit"
+        path="/audit"
         element={
           <Layout>
-            <ProtectedRoute roles={['SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR']}>
+            <ProtectedRoute roles={["SHOP_OWNER", "SYSTEM_ADMIN", "AUDITOR"]}>
               <AuditPage />
             </ProtectedRoute>
-          </Layout>
-        }
-      />
-
-      {/* Profile */}
-      <Route
-        path="profile"
-        element={
-          <Layout>
-            <ProfilePage />
           </Layout>
         }
       />
@@ -171,5 +181,5 @@ export const AuthenticatedApp: React.FC = () => {
       {/* Default redirect or 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
-}
+  );
+};
