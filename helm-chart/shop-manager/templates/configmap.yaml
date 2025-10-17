@@ -97,6 +97,18 @@ data:
   APP_SECURITY_PASSWORD_MIN_LENGTH: {{ .Values.config.security.passwordMinLength | default "8" | quote }}
   APP_SECURITY_JWT_EXPIRATION_HOURS: {{ .Values.config.security.jwtExpirationHours | default "24" | quote }}
 
+  # CORS Configuration
+  # Dynamically generated based on global.domain, global.appName, and tls.enabled
+  # Override with config.security.cors.allowedOrigins if needed
+  {{- if .Values.config.security.cors.allowedOrigins }}
+  APP_SECURITY_CORS_ALLOWED_ORIGINS: {{ .Values.config.security.cors.allowedOrigins | quote }}
+  {{- else }}
+  APP_SECURITY_CORS_ALLOWED_ORIGINS: {{ include "shop-manager.cors.allowedOrigins" . | quote }}
+  {{- end }}
+  APP_SECURITY_CORS_ALLOWED_METHODS: {{ .Values.config.security.cors.allowedMethods | default "GET,POST,PUT,DELETE,OPTIONS,PATCH" | quote }}
+  APP_SECURITY_CORS_ALLOWED_HEADERS: {{ .Values.config.security.cors.allowedHeaders | default "*" | quote }}
+  APP_SECURITY_CORS_ALLOW_CREDENTIALS: {{ .Values.config.security.cors.allowCredentials | default "true" | quote }}
+
   # Notification Configuration
   APP_NOTIFICATION_EMAIL_ENABLED: {{ .Values.config.notification.emailEnabled | default "true" | quote }}
   APP_NOTIFICATION_SMS_ENABLED: {{ .Values.config.notification.smsEnabled | default "false" | quote }}

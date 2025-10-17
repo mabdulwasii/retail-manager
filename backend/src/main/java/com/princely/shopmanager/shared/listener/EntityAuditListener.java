@@ -74,8 +74,12 @@ public class EntityAuditListener {
     }
 
     private boolean shouldAudit(Object entity) {
-        // Audit all BaseEntity instances except AuditLog itself to avoid infinite loops
-        return entity instanceof BaseEntity && !(entity instanceof AuditLog);
+        // Audit all BaseEntity instances except:
+        // - AuditLog itself (to avoid infinite loops)
+        // - AnalyticsCache (to avoid lazy-loading issues with detached entities)
+        return entity instanceof BaseEntity
+            && !(entity instanceof AuditLog)
+            && !entity.getClass().getSimpleName().equals("AnalyticsCache");
     }
 
     private void logEntityEvent(Object entity, AuditLog.ActionType actionType,

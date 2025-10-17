@@ -47,7 +47,7 @@ class ExpenseServiceTest {
     @InjectMocks
     private ExpenseService expenseService;
 
-    private UUID shopId;
+    private String shopId;
     private UUID categoryId;
     private String userId;
     private JwtPrincipal principal;
@@ -56,7 +56,7 @@ class ExpenseServiceTest {
 
     @BeforeEach
     void setUp() {
-        shopId = UUID.randomUUID();
+        shopId = UUID.randomUUID().toString();
         categoryId = UUID.randomUUID();
         userId = UUID.randomUUID().toString();
 

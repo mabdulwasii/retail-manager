@@ -40,27 +40,28 @@ public class AppSecurityConfig {
     public static class Cors {
         /**
          * List of allowed origins for CORS requests.
-         * Default includes localhost and ingress URLs.
+         * Configurable via APP_SECURITY_CORS_ALLOWED_ORIGINS environment variable (comma-separated).
+         * Default includes localhost URLs for development.
          */
-        private List<String> allowedOrigins = List.of(
+        private List<String> allowedOrigins = new java.util.ArrayList<>(List.of(
             "http://localhost:3000",
             "http://localhost:3001",
-            "http://localhost:3002",
-            "https://shop-manager.local",
-            "http://shop-manager.local"
-        );
+            "http://localhost:3002"
+        ));
 
         /**
          * List of allowed HTTP methods for CORS requests.
+         * Configurable via APP_SECURITY_CORS_ALLOWED_METHODS environment variable (comma-separated).
          */
-        private List<String> allowedMethods = List.of(
+        private List<String> allowedMethods = new java.util.ArrayList<>(List.of(
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        );
+        ));
 
         /**
          * List of allowed headers for CORS requests.
+         * Configurable via APP_SECURITY_CORS_ALLOWED_HEADERS environment variable (comma-separated).
          */
-        private List<String> allowedHeaders = List.of("*");
+        private List<String> allowedHeaders = new java.util.ArrayList<>(List.of("*"));
 
         /**
          * Whether to allow credentials in CORS requests.

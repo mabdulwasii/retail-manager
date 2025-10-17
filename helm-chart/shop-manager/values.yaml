@@ -390,7 +390,9 @@ config:
     passwordMinLength: 8
     jwtExpirationHours: 24
     cors:
-      allowedOrigins: "http://localhost:3000,http://localhost:3001,http://localhost:3002,https://shop-manager.local"
+      # allowedOrigins is dynamically generated from global.domain, global.appName, and tls.enabled
+      # Uncomment to override: allowedOrigins: "http://localhost:3000,https://custom.domain.com"
+      allowedOrigins: ""
       allowedMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
       allowedHeaders: "*"
       allowCredentials: "true"
