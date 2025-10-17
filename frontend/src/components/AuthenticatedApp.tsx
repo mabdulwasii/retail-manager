@@ -65,7 +65,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
               <ShopsPage />
             </ProtectedRoute>
           </Layout>
@@ -85,7 +85,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
               <ShopDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -97,7 +97,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/products"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER"]}>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
               <ProductsPage />
             </ProtectedRoute>
           </Layout>
@@ -108,7 +108,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["SHOP_OWNER", "SHOP_MANAGER", "INVENTORY_MANAGER"]}
+              roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
             >
               <InventoryPage />
             </ProtectedRoute>
@@ -122,7 +122,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["SHOP_OWNER", "SHOP_MANAGER", "CASHIER", "SALES_MANAGER"]}
+              roles={["SHOP_OWNER", "MANAGER", "CASHIER", "SALES_MANAGER"]}
             >
               <SalesPage />
             </ProtectedRoute>
@@ -133,7 +133,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/receipts"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "SHOP_MANAGER", "CASHIER"]}>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "CASHIER"]}>
               <ReceiptsPage />
             </ProtectedRoute>
           </Layout>
@@ -158,7 +158,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["SHOP_OWNER", "SHOP_MANAGER", "ACCOUNTANT"]}
+              roles={["SHOP_OWNER", "MANAGER", "ACCOUNTANT"]}
             >
               <AnalyticsPage />
             </ProtectedRoute>

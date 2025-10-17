@@ -104,9 +104,9 @@ public class ExpenseController {
     public ResponseEntity<Page<ExpenseResponse>> getExpenses(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date filter") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate startDate,
             @Parameter(description = "End date filter") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate endDate,
             @Parameter(description = "Status filter") @RequestParam(required = false) ExpenseStatus status,
             @Parameter(description = "Category ID filter") @RequestParam(required = false) UUID categoryId,
             @Parameter(description = "Created by user filter") @RequestParam(required = false) UUID createdBy,
@@ -218,9 +218,9 @@ public class ExpenseController {
     public ResponseEntity<ExpenseSummaryDto> getExpenseSummary(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date for summary") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate startDate,
             @Parameter(description = "End date for summary") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate endDate,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
         ExpenseSummaryDto response = expenseService.getExpenseSummary(shopId, startDate, endDate, principal);

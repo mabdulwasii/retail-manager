@@ -81,7 +81,7 @@ export const useSalesSummary = (shopId?: string, period: 'today' | 'week' | 'mon
   return useQuery({
     queryKey: ['analytics', 'sales-summary', targetShopId, period],
     queryFn: () => analyticsService.getSalesSummary(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN'))),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN'))),
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 1
   })
@@ -115,7 +115,7 @@ export const useRevenueAnalytics = (shopId?: string, period: 'today' | 'week' | 
   return useQuery({
     queryKey: ['analytics', 'revenue-analytics', targetShopId, period],
     queryFn: () => analyticsService.getRevenueAnalytics(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN'))),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN'))),
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1
   })
@@ -132,7 +132,7 @@ export const useFraudStatistics = (shopId?: string, period: 'today' | 'week' | '
   return useQuery({
     queryKey: ['analytics', 'fraud-statistics', targetShopId, period],
     queryFn: () => analyticsService.getFraudStatistics(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN'))),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN'))),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1
   })
@@ -148,7 +148,7 @@ export const useInventorySummary = (shopId?: string) => {
   return useQuery({
     queryKey: ['inventory', 'summary', targetShopId],
     queryFn: () => inventoryService.getInventorySummary(targetShopId!),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN'))),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN'))),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1
   })
@@ -165,7 +165,7 @@ export const useExpenseSummary = (shopId?: string, period: 'today' | 'week' | 'm
   return useQuery({
     queryKey: ['expenses', 'summary', targetShopId, period],
     queryFn: () => expenseService.getExpenseSummary(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN') || user.roles.includes('ACCOUNTANT'))),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN') || user.roles.includes('ACCOUNTANT'))),
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1
   })
@@ -195,7 +195,7 @@ export const useAlerts = () => {
         }
       ])
     },
-    enabled: !!(isAuthenticated && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('SHOP_MANAGER') || user.roles.includes('TENANT_ADMIN'))),
+    enabled: !!(isAuthenticated && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('MANAGER') || user.roles.includes('TENANT_ADMIN'))),
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 1
   })

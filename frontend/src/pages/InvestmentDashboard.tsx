@@ -43,7 +43,7 @@ export const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({
 
     const roles = user.roles || []
     if (roles.includes('TENANT_ADMIN') || roles.includes('SHOP_OWNER')) return 'admin'
-    if (roles.includes('SHOP_MANAGER')) return 'shop'
+    if (roles.includes('MANAGER')) return 'shop'
     return 'investor'
   }
 

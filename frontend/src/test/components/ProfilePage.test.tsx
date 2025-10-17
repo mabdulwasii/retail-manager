@@ -98,7 +98,7 @@ describe('ProfilePage', () => {
           email: 'john.doe@example.com',
           firstName: 'John',
           lastName: 'Doe',
-          roles: ['SHOP_MANAGER']
+          roles: ['MANAGER']
         }
       })
     })

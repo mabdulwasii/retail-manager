@@ -46,7 +46,7 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
 
     const roles = user.roles || []
     if (roles.includes('TENANT_ADMIN')) return 'admin'
-    if (roles.includes('SHOP_OWNER') || roles.includes('SHOP_MANAGER')) return 'shop'
+    if (roles.includes('SHOP_OWNER') || roles.includes('MANAGER')) return 'shop'
     return 'admin'
   }
 

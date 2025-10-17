@@ -403,15 +403,15 @@ export const useExpenses = () => {
 
   // Permission checks
   const canCreateExpense = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_ACCOUNTANT'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_ACCOUNTANT'].includes(role)
   ) || false
 
   const canApproveExpense = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER'].includes(role)
   ) || false
 
   const canViewAllExpenses = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_ACCOUNTANT', 'ROLE_AUDITOR'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_ACCOUNTANT', 'ROLE_AUDITOR'].includes(role)
   ) || false
 
   return {

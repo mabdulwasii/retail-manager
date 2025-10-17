@@ -25,7 +25,7 @@ export function DashboardRedirect() {
       return "/dashboard?view=multi-shop";
     } else if (hasRole("SHOP_OWNER")) {
       return "/dashboard?view=business";
-    } else if (hasRole("SHOP_MANAGER") || hasRole("SALES_MANAGER")) {
+    } else if (hasRole("MANAGER") || hasRole("SALES_MANAGER")) {
       return "/dashboard?view=operations";
     } else if (hasRole("INVESTOR")) {
       return "/investments";
@@ -33,7 +33,7 @@ export function DashboardRedirect() {
       return "/dashboard?view=financial";
     } else if (hasRole("CASHIER")) {
       return "/sales";
-    } else if (hasRole("INVENTORY_MANAGER") || hasRole("SHOP_EMPLOYEE")) {
+    } else if (hasRole("INVENTORY_MANAGER") || hasRole("EMPLOYEE")) {
       return "/inventory";
     }
 

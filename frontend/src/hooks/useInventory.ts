@@ -357,15 +357,15 @@ export const useInventory = () => {
 
   // Permission checks
   const canManageInventory = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
   ) || false
 
   const canViewInventory = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER', 'ROLE_CASHIER', 'ROLE_SHOP_EMPLOYEE'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER', 'ROLE_CASHIER', 'ROLE_EMPLOYEE'].includes(role)
   ) || false
 
   const canAdjustStock = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
+    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
   ) || false
 
   return {

@@ -30,8 +30,8 @@ export const testScenarios = {
   auth: {
     authenticated: () => createMockAuth(true),
     unauthenticated: () => createMockAuth(false),
-    manager: () => createMockAuth(true, { roles: ['SHOP_MANAGER'] }),
-    employee: () => createMockAuth(true, { roles: ['SHOP_EMPLOYEE'] }),
+    manager: () => createMockAuth(true, { roles: ['MANAGER'] }),
+    employee: () => createMockAuth(true, { roles: ['EMPLOYEE'] }),
     investor: () => createMockAuth(true, { roles: ['INVESTOR'] }),
     admin: () => createMockAuth(true, { roles: ['TENANT_ADMIN'] })
   },

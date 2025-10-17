@@ -1,9 +1,16 @@
 package com.princely.shopmanager.shared.exception;
 
+import com.princely.shopmanager.auth.service.KeycloakUserException;
+import com.princely.shopmanager.core.service.TenantRegistrationException;
 import com.princely.shopmanager.shared.dto.ErrorResponse;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +19,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -67,6 +75,113 @@ public class GlobalExceptionHandler {
         logger.warn("Illegal argument: {}", e.getMessage());
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("INVALID_ARGUMENT", e.getMessage()));
+    }
+
+    @ExceptionHandler(ConversionFailedException.class)
+    public ResponseEntity<ErrorResponse> handleConversionFailedException(ConversionFailedException e, WebRequest request) {
+        logger.warn("Conversion failed: {}", e.getMessage());
+        String message = "Invalid parameter format";
+
+        // Extract more specific error message for date/time parsing
+        if (e.getCause() != null && e.getCause().getMessage() != null) {
+            String cause = e.getCause().getMessage();
+            if (cause.contains("DateTimeParseException") || cause.contains("date")) {
+                message = "Invalid date format. Expected format: yyyy-MM-dd or yyyy-MM-dd'T'HH:mm:ss";
+            }
+        }
+
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("INVALID_PARAMETER_FORMAT", message));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e, WebRequest request) {
+        logger.warn("Illegal state: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse("INVALID_STATE", e.getMessage()));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException e, WebRequest request) {
+        logger.warn("Entity not found: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e, WebRequest request) {
+        logger.warn("Element not found: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse("NOT_FOUND", "Requested resource not found"));
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockException(OptimisticLockException e, WebRequest request) {
+        logger.warn("Concurrent modification detected: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse("CONCURRENT_UPDATE",
+                "The record was modified by another user. Please refresh and try again."));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e, WebRequest request) {
+        logger.warn("Data integrity violation: {}", e.getMessage());
+
+        String message = "Database constraint violation";
+        String code = "DATA_INTEGRITY_ERROR";
+
+        if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+            org.hibernate.exception.ConstraintViolationException cve =
+                (org.hibernate.exception.ConstraintViolationException) e.getCause();
+
+            if (cve.getConstraintName() != null) {
+                if (cve.getConstraintName().toLowerCase().contains("unique") ||
+                    cve.getConstraintName().toLowerCase().contains("uq_")) {
+                    code = "DUPLICATE_ENTRY";
+                    message = "A record with this information already exists";
+                } else if (cve.getConstraintName().toLowerCase().contains("foreign") ||
+                           cve.getConstraintName().toLowerCase().contains("fk_")) {
+                    code = "INVALID_REFERENCE";
+                    message = "Referenced record does not exist";
+                }
+            }
+        } else if (e.getMessage() != null) {
+            // Try to extract constraint name from error message
+            String errorMsg = e.getMessage().toLowerCase();
+            if (errorMsg.contains("unique") || errorMsg.contains("duplicate")) {
+                code = "DUPLICATE_ENTRY";
+                message = "A record with this information already exists";
+            } else if (errorMsg.contains("foreign key") || errorMsg.contains("violates")) {
+                code = "INVALID_REFERENCE";
+                message = "Referenced record does not exist";
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse(code, message));
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException e, WebRequest request) {
+        logger.error("Database access error", e);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(new ErrorResponse("DATABASE_ERROR",
+                "Database operation failed. Please try again later."));
+    }
+
+    @ExceptionHandler(KeycloakUserException.class)
+    public ResponseEntity<ErrorResponse> handleKeycloakUserException(KeycloakUserException e, WebRequest request) {
+        logger.error("Keycloak user operation failed: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+            .body(new ErrorResponse("EXTERNAL_SERVICE_ERROR",
+                "User management operation failed. Please try again later."));
+    }
+
+    @ExceptionHandler(TenantRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleTenantRegistrationException(TenantRegistrationException e, WebRequest request) {
+        logger.warn("Tenant registration failed: {}", e.getMessage());
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("REGISTRATION_ERROR", e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

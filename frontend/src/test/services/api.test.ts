@@ -44,7 +44,7 @@ describe('API Service - User Profile', () => {
       expect(profile.id).toBe('user-123')
       expect(profile.username).toBe('john.doe')
       expect(profile.email).toBe('john.doe@example.com')
-      expect(profile.roles).toEqual(['SHOP_MANAGER', 'SHOP_EMPLOYEE'])
+      expect(profile.roles).toEqual(['MANAGER', 'EMPLOYEE'])
     })
 
     it('should include authorization header', async () => {
@@ -294,7 +294,7 @@ describe('API Service - User Profile', () => {
         email: 'john.doe@example.com',
         status: 'ACTIVE',
         isInvestor: false,
-        roles: ['SHOP_EMPLOYEE']
+        roles: ['EMPLOYEE']
         // Missing optional fields
       }
 

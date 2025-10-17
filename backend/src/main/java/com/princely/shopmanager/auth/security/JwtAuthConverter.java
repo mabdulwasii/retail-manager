@@ -54,7 +54,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             Collection<String> realmRoles = (Collection<String>) realmAccess.get("roles");
             if (realmRoles != null) {
                 authorities.addAll(realmRoles.stream()
-                    .map(role -> new SimpleGrantedAuthority(role.toUpperCase()))
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                     .collect(Collectors.toSet()));
             }
         }
@@ -67,7 +67,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                 Collection<String> clientRoles = (Collection<String>) clientResource.get("roles");
                 if (clientRoles != null) {
                     authorities.addAll(clientRoles.stream()
-                        .map(role -> new SimpleGrantedAuthority(role.toUpperCase()))
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                         .collect(Collectors.toSet()));
                 }
             }

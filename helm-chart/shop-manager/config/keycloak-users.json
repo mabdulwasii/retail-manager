@@ -28,7 +28,7 @@
     "enabled": true,
     "emailVerified": true,
     "attributes": {
-      "role": ["SHOP_MANAGER"],
+      "role": ["MANAGER"],
       "tenant_id": ["default-tenant"],
       "shop_id": ["default-shop"]
     },
@@ -39,7 +39,7 @@
         "temporary": false
       }
     ],
-    "realmRoles": ["SHOP_MANAGER"]
+    "realmRoles": ["MANAGER"]
   },
   {
     "username": "employee",
@@ -49,7 +49,7 @@
     "enabled": true,
     "emailVerified": true,
     "attributes": {
-      "role": ["SHOP_EMPLOYEE"],
+      "role": ["EMPLOYEE"],
       "tenant_id": ["default-tenant"],
       "shop_id": ["default-shop"]
     },
@@ -60,7 +60,7 @@
         "temporary": false
       }
     ],
-    "realmRoles": ["SHOP_EMPLOYEE"]
+    "realmRoles": ["EMPLOYEE"]
   },
   {
     "username": "investor",

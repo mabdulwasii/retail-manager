@@ -99,7 +99,7 @@ src/
 The application uses Keycloak for SSO authentication with the following roles:
 
 - **SHOP_OWNER**: Full access to all features
-- **SHOP_MANAGER**: Shop and product management, analytics
+- **MANAGER**: Shop and product management, analytics
 - **CASHIER**: Sales transactions and receipt generation
 - **INVESTOR**: Investment portfolio and ROI tracking
 - **SYSTEM_ADMIN**: System administration and audit logs

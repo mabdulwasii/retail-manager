@@ -90,7 +90,7 @@ export const AnalyticsPage: React.FC = () => {
 
   // Check user permissions for analytics access
   const hasAnalyticsAccess = user?.roles?.some(role =>
-    ['SHOP_MANAGER', 'SHOP_OWNER', 'TENANT_ADMIN', 'INVESTOR'].includes(role)
+    ['MANAGER', 'SHOP_OWNER', 'TENANT_ADMIN', 'INVESTOR'].includes(role)
   )
 
   if (!hasAnalyticsAccess) {

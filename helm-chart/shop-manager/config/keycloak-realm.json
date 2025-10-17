@@ -87,12 +87,16 @@
         "description": "Tenant administrator with full access to tenant resources"
       },
       {
-        "name": "SHOP_MANAGER",
-        "description": "Shop manager with full access to shop operations"
+        "name": "OWNER",
+        "description": "Shop Owner with full business control and financial oversight"
       },
       {
-        "name": "SHOP_EMPLOYEE",
-        "description": "Shop employee with limited access to daily operations"
+        "name": "MANAGER",
+        "description": "Shop manager with full access to shop operations and management"
+      },
+      {
+        "name": "EMPLOYEE",
+        "description": "Shop employee with limited access to daily operations and sales"
       },
       {
         "name": "INVESTOR",

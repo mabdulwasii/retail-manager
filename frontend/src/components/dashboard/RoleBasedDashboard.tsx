@@ -72,14 +72,14 @@ export const RoleBasedDashboard: React.FC = () => {
     "SYSTEM_ADMIN",
     "SUPER_ADMIN",
     "SHOP_OWNER",
-    "SHOP_MANAGER",
+    "MANAGER",
     "SALES_MANAGER",
     "INVENTORY_MANAGER",
     "ACCOUNTANT",
     "AUDITOR",
     "INVESTOR",
     "CASHIER",
-    "SHOP_EMPLOYEE",
+    "EMPLOYEE",
     "CUSTOMER",
   ];
 
@@ -92,7 +92,7 @@ export const RoleBasedDashboard: React.FC = () => {
       return <AdminDashboard />;
 
     case "SHOP_OWNER":
-    case "SHOP_MANAGER":
+    case "MANAGER":
     case "SALES_MANAGER":
       return <OwnerManagerDashboard />;
 
@@ -111,7 +111,7 @@ export const RoleBasedDashboard: React.FC = () => {
     case "AUDITOR":
       return <AuditorDashboard />;
 
-    case "SHOP_EMPLOYEE":
+    case "EMPLOYEE":
       return <EmployeeDashboard />;
 
     case "CUSTOMER":

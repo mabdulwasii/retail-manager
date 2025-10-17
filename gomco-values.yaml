@@ -10,15 +10,17 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.3
+    tag: backend-v0.0.8
     pullPolicy: Always
+  podAnnotations:
+    configVersion: "6"  # Force pod restart with migration V8
 
 # Frontend configuration
 frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.3
+    tag: frontend-v0.0.4
     pullPolicy: Always
 
 branding:

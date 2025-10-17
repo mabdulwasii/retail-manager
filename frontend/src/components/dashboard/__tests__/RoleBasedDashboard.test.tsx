@@ -128,13 +128,13 @@ describe('RoleBasedDashboard', () => {
     expect(screen.getByTestId('owner-manager-dashboard')).toBeInTheDocument()
   })
 
-  it('should render OwnerManagerDashboard for SHOP_MANAGER role', () => {
+  it('should render OwnerManagerDashboard for MANAGER role', () => {
     mockUseAuth.mockReturnValue({
       user: {
         id: '1',
         username: 'manager',
         email: 'manager@example.com',
-        roles: ['ROLE_SHOP_MANAGER']
+        roles: ['ROLE_MANAGER']
       },
       login: jest.fn(),
       logout: jest.fn(),
@@ -254,13 +254,13 @@ describe('RoleBasedDashboard', () => {
     expect(screen.getByTestId('employee-dashboard')).toBeInTheDocument()
   })
 
-  it('should render EmployeeDashboard for SHOP_EMPLOYEE role', () => {
+  it('should render EmployeeDashboard for EMPLOYEE role', () => {
     mockUseAuth.mockReturnValue({
       user: {
         id: '1',
         username: 'employee',
         email: 'employee@example.com',
-        roles: ['ROLE_SHOP_EMPLOYEE']
+        roles: ['ROLE_EMPLOYEE']
       },
       login: jest.fn(),
       logout: jest.fn(),
@@ -309,14 +309,14 @@ describe('RoleBasedDashboard', () => {
   })
 
   it('should prioritize higher roles when user has multiple roles', () => {
-    // User has both SHOP_EMPLOYEE and SYSTEM_ADMIN roles
+    // User has both EMPLOYEE and SYSTEM_ADMIN roles
     // Should render AdminDashboard due to higher priority
     mockUseAuth.mockReturnValue({
       user: {
         id: '1',
         username: 'multipleRoles',
         email: 'multiple@example.com',
-        roles: ['ROLE_SHOP_EMPLOYEE', 'ROLE_SYSTEM_ADMIN']
+        roles: ['ROLE_EMPLOYEE', 'ROLE_SYSTEM_ADMIN']
       },
       login: jest.fn(),
       logout: jest.fn(),
