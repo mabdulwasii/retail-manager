@@ -56,7 +56,7 @@ public class ExpenseService {
 
         // Validate category exists and belongs to the shop
         ExpenseCategory category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + request.categoryId() + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + request.categoryId() + " was not found"));
 
         // Validate category belongs to the shop
         if (!category.getShopId().equals(shopId)) {
@@ -137,7 +137,7 @@ public class ExpenseService {
 
         if (request.categoryId() != null) {
             ExpenseCategory category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + request.categoryId() + "\" was not found"));
+                .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + request.categoryId() + " was not found"));
 
             // Validate category belongs to the same shop
             if (!category.getShopId().equals(expense.getShopId())) {
@@ -193,7 +193,7 @@ public class ExpenseService {
 
         UUID categoryId = expense.getCategoryId();
         ExpenseCategory category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + categoryId + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + categoryId + " was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -222,7 +222,7 @@ public class ExpenseService {
 
         UUID categoryId = expense.getCategoryId();
         ExpenseCategory category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + categoryId + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_OT_FOUND", "The expense category with id " + categoryId + " was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -251,7 +251,7 @@ public class ExpenseService {
 
         UUID categoryId = expense.getCategoryId();
         ExpenseCategory category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + categoryId + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + categoryId + " was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -264,7 +264,7 @@ public class ExpenseService {
 
         UUID categoryId = expense.getCategoryId();
         ExpenseCategory category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + categoryId + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + categoryId + " was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -352,7 +352,7 @@ public class ExpenseService {
     private Expense findExpenseForUser(UUID expenseId, JwtPrincipal principal) {
         // Step 1: Check if expense exists
         Expense expense = expenseRepository.findById(expenseId)
-            .orElseThrow(() -> new BusinessException("EXPENSE_NOT_FOUND", "The expense with id \"" + expenseId + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("EXPENSE_NOT_FOUND", "The expense with id " + expenseId + " was not found"));
 
         // Step 2: Check permissions
         if (!hasAccessToShop(expense.getShopId(), principal)) {
@@ -366,12 +366,12 @@ public class ExpenseService {
         // Step 1: Check if shop exists
         boolean shopExists = shopRepository.existsById(shopId);
         if (!shopExists) {
-            throw new ShopNotFoundException("The shop with id \"" + shopId + "\" was not found");
+            throw new ShopNotFoundException("The shop with id " + shopId + " was not found");
         }
 
         // Step 2: Check permissions
         if (!hasAccessToShop(shopId, principal)) {
-            throw new AccessDeniedException("You don't have permission to access shop with id \"" + shopId + "\"");
+            throw new AccessDeniedException("You don't have permission to access shop with id " + shopId);
         }
     }
 
@@ -458,7 +458,7 @@ public class ExpenseService {
 
     private ExpenseResponse mapToResponseWithCategory(Expense expense) {
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id \"" + expense.getCategoryId() + "\" was not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category with id " + expense.getCategoryId() + " was not found"));
         return mapToResponse(expense, category);
     }
 

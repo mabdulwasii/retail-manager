@@ -101,6 +101,38 @@ data:
             "phone",
             "offline_access",
             "microprofile-jwt"
+          ],
+          "protocolMappers": [
+            {
+              "name": "tenant-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "tenantId",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "tenant_id",
+                "jsonType.label": "String",
+                "multivalued": "false"
+              }
+            },
+            {
+              "name": "shop-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "shopId",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "shop_id",
+                "jsonType.label": "String",
+                "multivalued": "false"
+              }
+            }
           ]
         },
         {

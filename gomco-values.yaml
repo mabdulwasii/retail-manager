@@ -13,7 +13,7 @@ backend:
     tag: backend-v0.0.11
     pullPolicy: Always
   podAnnotations:
-    configVersion: "10"  # Force pod restart with separated validation error messages
+    configVersion: "11"  # Force pod restart with fixed error messages and Keycloak protocol mappers
 
 # Frontend configuration
 frontend:
