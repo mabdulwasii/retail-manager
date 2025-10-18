@@ -3,9 +3,11 @@ package com.princely.shopmanager.shared.exception;
 import com.princely.shopmanager.auth.service.KeycloakUserException;
 import com.princely.shopmanager.core.service.TenantRegistrationException;
 import com.princely.shopmanager.shared.dto.ErrorResponse;
+import com.princely.shopmanager.shared.service.MessageService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionFailedException;
@@ -23,15 +25,31 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final MessageService messageService;
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, WebRequest request) {
-        logger.warn("Business exception occurred: {} - {}", e.getCode(), e.getMessage());
-        return ResponseEntity.badRequest()
-            .body(new ErrorResponse(e.getCode(), e.getMessage()));
+        String message;
+        HttpStatus status;
+
+        // If ErrorCode is present, use it to get localized message and HTTP status
+        if (e.getErrorCode() != null) {
+            message = messageService.getMessage(e.getErrorCode().getMessageKey(), e.getMessageParams());
+            status = e.getErrorCode().getHttpStatus();
+            logger.warn("Business exception occurred: {} - {}", e.getCode(), message);
+        } else {
+            // Fallback for deprecated constructor usage
+            message = e.getMessage();
+            status = HttpStatus.BAD_REQUEST;
+            logger.warn("Business exception occurred (deprecated): {} - {}", e.getCode(), message);
+        }
+
+        return ResponseEntity.status(status)
+            .body(new ErrorResponse(e.getCode(), message));
     }
 
     @ExceptionHandler(TenantAccessDeniedException.class)

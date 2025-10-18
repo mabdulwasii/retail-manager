@@ -224,8 +224,8 @@ data:
           ],
           "realmRoles": ["TENANT_ADMIN"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -244,8 +244,8 @@ data:
           ],
           "realmRoles": ["OWNER"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -264,8 +264,8 @@ data:
           ],
           "realmRoles": ["MANAGER"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -284,8 +284,8 @@ data:
           ],
           "realmRoles": ["EMPLOYEE"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -304,7 +304,7 @@ data:
           ],
           "realmRoles": ["INVESTOR"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -323,7 +323,7 @@ data:
           ],
           "realmRoles": ["CUSTOMER"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -342,8 +342,8 @@ data:
           ],
           "realmRoles": ["CASHIER"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -362,7 +362,7 @@ data:
           ],
           "realmRoles": ["ACCOUNTANT"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -381,7 +381,7 @@ data:
           ],
           "realmRoles": ["AUDITOR"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         }
       ]

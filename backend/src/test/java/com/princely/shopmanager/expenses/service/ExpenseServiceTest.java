@@ -9,6 +9,8 @@ import com.princely.shopmanager.expenses.dto.ExpenseCreateRequest;
 import com.princely.shopmanager.expenses.dto.ExpenseResponse;
 import com.princely.shopmanager.expenses.repository.ExpenseCategoryRepository;
 import com.princely.shopmanager.expenses.repository.ExpenseRepository;
+import com.princely.shopmanager.shared.exception.BusinessException;
+import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -203,7 +205,9 @@ class ExpenseServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
-                .hasMessageContaining("The expense category with id");
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo("EXPENSE_CATEGORY_NOT_FOUND");
 
             verify(expenseRepository, never()).save(any(Expense.class));
             verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
@@ -223,6 +227,7 @@ class ExpenseServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
+                .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessageContaining("Cannot create expense for inactive category");
 
             verify(expenseRepository, never()).save(any(Expense.class));
