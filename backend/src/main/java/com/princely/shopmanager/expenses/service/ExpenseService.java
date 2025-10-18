@@ -54,7 +54,7 @@ public class ExpenseService {
 
         // Validate category exists and belongs to the shop
         ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), shopId)
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found or does not belong to this shop"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The selected expense category was not found or does not belong to this shop"));
 
         if (!category.getIsActive()) {
             throw new BusinessRuleViolationException("Cannot create expense for inactive category");
@@ -130,7 +130,7 @@ public class ExpenseService {
 
         if (request.categoryId() != null) {
             ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), expense.getShopId())
-                .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found"));
+                .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
 
             if (!category.getIsActive()) {
                 throw new BusinessRuleViolationException("Cannot assign expense to inactive category");
@@ -180,7 +180,7 @@ public class ExpenseService {
         log.info("Expense updated successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -208,7 +208,7 @@ public class ExpenseService {
         log.info("Expense approved successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -236,7 +236,7 @@ public class ExpenseService {
         log.info("Expense rejected successfully: {}", expense.getId());
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -248,7 +248,7 @@ public class ExpenseService {
         Expense expense = findExpenseForUser(expenseId, principal);
 
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
 
         return mapToResponse(expense, category);
     }
@@ -336,18 +336,38 @@ public class ExpenseService {
     private Expense findExpenseForUser(UUID expenseId, JwtPrincipal principal) {
         return expenseRepository.findById(expenseId)
             .filter(expense -> hasAccessToShop(expense.getShopId(), principal))
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense not found or access denied"));
+            .orElseThrow(() -> new BusinessException("EXPENSE_NOT_FOUND", "The expense was not found or you do not have permission to access it"));
     }
 
     private void validateShopAccess(String shopId, JwtPrincipal principal) {
         if (!hasAccessToShop(shopId, principal)) {
-            throw new ShopNotFoundException("Shop not found or access denied");
+            throw new ShopNotFoundException("The shop was not found or you do not have permission to access it");
         }
     }
 
     private boolean hasAccessToShop(String shopId, JwtPrincipal principal) {
-        // For now, we'll use the tenant context to validate access
-        return TenantContext.getCurrentTenantId() != null;
+        // Validate that tenant context is set
+        String tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) {
+            log.warn("No tenant context found for shop access validation");
+            return false;
+        }
+
+        // Validate that user's tenant matches the current tenant context
+        if (principal.getTenantId() != null && !principal.getTenantId().equals(tenantId)) {
+            log.warn("User tenant {} does not match context tenant {}", principal.getTenantId(), tenantId);
+            return false;
+        }
+
+        // If user has shop_id in JWT, validate it matches the requested shop
+        if (principal.getShopId() != null && !principal.getShopId().equals(shopId)) {
+            log.warn("User shop {} does not match requested shop {}", principal.getShopId(), shopId);
+            return false;
+        }
+
+        // TODO: For multi-shop users, query database to verify shop access
+        // For now, tenant-level access is sufficient for TENANT_ADMIN, OWNER roles
+        return true;
     }
 
     private Set<String> cleanTags(Set<String> tags) {
@@ -408,7 +428,7 @@ public class ExpenseService {
 
     private ExpenseResponse mapToResponseWithCategory(Expense expense) {
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException("CATEGORY_NOT_FOUND", "The expense category was not found"));
         return mapToResponse(expense, category);
     }
 

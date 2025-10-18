@@ -20,6 +20,7 @@ public class JwtPrincipal {
     private String subject;
     private String preferredUsername;
     private String tenantId;
+    private String shopId;
     private String email;
     private String firstName;
     private String lastName;
@@ -56,6 +57,7 @@ public class JwtPrincipal {
             .subject(jwt.getClaimAsString("sub"))
             .preferredUsername(jwt.getClaimAsString("preferred_username"))
             .tenantId(jwt.getClaimAsString("tenant_id"))
+            .shopId(jwt.getClaimAsString("shop_id"))
             .email(jwt.getClaimAsString("email"))
             .firstName(jwt.getClaimAsString("given_name"))
             .lastName(jwt.getClaimAsString("family_name"))
