@@ -44,6 +44,9 @@ class ExpenseServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private com.princely.shopmanager.core.repository.ShopRepository shopRepository;
+
     @InjectMocks
     private ExpenseService expenseService;
 
@@ -64,6 +67,9 @@ class ExpenseServiceTest {
         lenient().when(principal.getUserId()).thenReturn(userId);
         lenient().when(principal.getFullName()).thenReturn("Test User");
         lenient().when(principal.getUsername()).thenReturn("testuser");
+
+        // Mock shop repository to return true for shop existence by default
+        lenient().when(shopRepository.existsById(anyString())).thenReturn(true);
 
         category = ExpenseCategory.builder()
             .id(categoryId)
@@ -99,7 +105,7 @@ class ExpenseServiceTest {
     @DisplayName("Should create expense successfully")
     void shouldCreateExpenseSuccessfully() {
         // Given
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
@@ -135,7 +141,7 @@ class ExpenseServiceTest {
         category.setAutoApprovalEnabled(false);
         category.setRequiresApproval(true);
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         Expense savedExpense = createExpenseFromRequest();
@@ -167,7 +173,7 @@ class ExpenseServiceTest {
             .submitForApproval(true)
             .build();
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         Expense savedExpense = createExpenseFromRequest();
@@ -189,7 +195,7 @@ class ExpenseServiceTest {
     @DisplayName("Should throw exception when category not found")
     void shouldThrowExceptionWhenCategoryNotFound() {
         // Given
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.empty());
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
@@ -197,7 +203,7 @@ class ExpenseServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
-                .hasMessageContaining("Expense category not found");
+                .hasMessageContaining("The expense category with id");
 
             verify(expenseRepository, never()).save(any(Expense.class));
             verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
@@ -209,7 +215,7 @@ class ExpenseServiceTest {
     void shouldThrowExceptionWhenCategoryIsInactive() {
         // Given
         category.setIsActive(false);
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
@@ -242,7 +248,7 @@ class ExpenseServiceTest {
             .tags(messyTags)
             .build();
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
