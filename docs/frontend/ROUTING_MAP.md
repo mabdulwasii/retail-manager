@@ -56,7 +56,7 @@
 | `/shops/create` | CreateShopPage | TENANT_ADMIN, SHOP_OWNER | Create new shop |
 | `/shops/:shopId` | ShopDetailPage | TENANT_ADMIN, SHOP_OWNER, SHOP_MANAGER | Shop details |
 | `/shops/:shopId/edit` | EditShopPage | TENANT_ADMIN, SHOP_OWNER, SHOP_MANAGER | Edit shop |
-| `/shops/:shopId/settings` | ShopSettings | SHOP_OWNER, SHOP_MANAGER | Shop configuration |
+| `/shops/:shopId/settings` | ShopSettings | SHOP_OWNER, SHOP_MANAGER | Shop configuration and customization |
 
 ### Inventory Routes
 
@@ -356,6 +356,46 @@ function InventoryPage() {
   );
 }
 ```
+
+---
+
+## Shop Settings APIs
+
+The `/shops/:shopId/settings` route uses the following backend APIs:
+
+### Configuration APIs (Business Settings)
+- `GET /api/shops/{shopId}/configuration` - Get shop configuration
+- `PUT /api/shops/{shopId}/configuration` - Update shop configuration
+
+**Settings Include**:
+- Investment enabled/disabled
+- Analytics enabled/disabled
+- Fraud detection enabled/disabled
+- Auto backup enabled/disabled
+- Currency (e.g., NGN, USD)
+- Tax rate
+- Maximum discount percentage
+- Receipt footer text
+
+### Customization APIs (Branding & Visual Settings)
+- `GET /api/shops/{shopId}/customization` - Get shop customization
+- `PUT /api/shops/{shopId}/customization` - Update shop customization
+- `PATCH /api/shops/{shopId}/customization/colors` - Update color scheme
+- `PATCH /api/shops/{shopId}/customization/theme` - Update theme settings
+- `POST /api/shops/{shopId}/customization/logo` - Upload logo
+- `PATCH /api/shops/{shopId}/customization/contact` - Update contact info
+- `DELETE /api/shops/{shopId}/customization` - Reset to defaults
+
+**Settings Include**:
+- Brand colors (primary, secondary, accent, background, text)
+- Logos and images (logo, favicon, banner, background)
+- Website URL and social media links
+- Theme settings (light/dark/auto, font family, font size)
+- Layout preferences (border radius, dashboard layout)
+- Receipt customization (header, footer, show logo)
+- Feature toggles (show banner, animations, advanced features)
+
+For detailed API documentation, see [SHOP_SETTINGS_API.md](../backend/SHOP_SETTINGS_API.md).
 
 ---
 

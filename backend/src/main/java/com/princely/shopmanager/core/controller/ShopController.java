@@ -393,4 +393,100 @@ public class ShopController {
         shopService.deleteShop(shopId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Retrieves the configuration settings for a specific shop.
+     *
+     * Configuration includes business settings like currency, tax rates,
+     * feature toggles, and discount limits.
+     *
+     * @param shopId Shop ID
+     * @return Shop configuration settings
+     */
+    @Operation(
+        summary = "Get shop configuration",
+        description = "Retrieves the business configuration settings for a shop including currency, tax rates, and feature toggles."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration retrieved successfully",
+            content = @Content(schema = @Schema(implementation = com.princely.shopmanager.core.dto.ShopConfigurationResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        )
+    })
+    @GetMapping("/{shopId}/configuration")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    public ResponseEntity<com.princely.shopmanager.core.dto.ShopConfigurationResponse> getConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId
+    ) {
+        log.debug("Retrieving configuration for shop: {}", shopId);
+        ShopResponse shopResponse = shopService.getShop(shopId);
+        return ResponseEntity.ok(shopResponse.getConfiguration());
+    }
+
+    /**
+     * Updates the configuration settings for a specific shop.
+     *
+     * Supports partial updates - only provided fields are updated.
+     *
+     * @param shopId Shop ID
+     * @param request Configuration settings to update
+     * @return Updated shop with new configuration
+     */
+    @Operation(
+        summary = "Update shop configuration",
+        description = "Updates business configuration settings for a shop. Supports partial updates - only provided fields are updated."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid configuration data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PutMapping("/{shopId}/configuration")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    public ResponseEntity<ShopResponse> updateConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody com.princely.shopmanager.core.dto.ShopConfigurationRequest request
+    ) {
+        log.info("Updating configuration for shop: {}", shopId);
+
+        // Use ShopUpdateRequest to update configuration via existing service method
+        ShopUpdateRequest updateRequest = ShopUpdateRequest.builder()
+            .configuration(request)
+            .build();
+
+        ShopResponse response = shopService.updateShop(shopId, updateRequest);
+        return ResponseEntity.ok(response);
+    }
 }

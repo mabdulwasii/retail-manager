@@ -71,6 +71,9 @@ public class ShopResponse {
     @Schema(description = "When the shop was last updated", example = "2024-01-15T14:30:00")
     private LocalDateTime updatedAt;
 
+    @Schema(description = "Shop configuration settings")
+    private ShopConfigurationResponse configuration;
+
     /**
      * Factory method to create ShopResponse from Shop entity.
      *
@@ -95,6 +98,7 @@ public class ShopResponse {
             .openingDate(shop.getOpeningDate())
             .createdAt(shop.getCreatedAt())
             .updatedAt(shop.getUpdatedAt())
+            .configuration(ShopConfigurationResponse.fromEntity(shop.getConfiguration()))
             .build();
     }
 }
