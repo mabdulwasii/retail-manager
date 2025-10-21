@@ -13,7 +13,9 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
 import { CreateShopPage } from "@/pages/shops/CreateShopPage";
+import { EditShopPage } from "@/pages/shops/EditShopPage";
 import { ShopDetailPage } from "@/pages/shops/ShopDetailPage";
+import { ShopSettingsPage } from "@/pages/shops/ShopSettingsPage";
 import { ShopsPage } from "@/pages/shops/ShopsPage";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
@@ -87,6 +89,26 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
               <ShopDetailPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/shops/:shopId/edit"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+              <EditShopPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/shops/:shopId/settings"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+              <ShopSettingsPage />
             </ProtectedRoute>
           </Layout>
         }

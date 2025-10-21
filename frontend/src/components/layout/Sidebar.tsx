@@ -5,7 +5,6 @@ import { useSidebar } from '@/context/SidebarContext'
 import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { CurrencySelector } from '@/components/ui/currency-selector'
 import {
   LayoutDashboard,
@@ -111,12 +110,11 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="w-64 flex flex-col h-screen lg:h-full">
-
       <div className="flex items-center justify-between p-4 lg:hidden">
         <h2 className="font-semibold">Navigation</h2>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={close}
           aria-label="Close sidebar"
         >
@@ -127,24 +125,31 @@ export const Sidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-4">
           <div className="space-y-1">
-            {filteredNavItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={handleNavigation}
-                className={cn(
-                  'text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition',
-                  location.pathname === item.href
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground'
-                )}
-              >
-                <div className="flex items-center flex-1">
-                  <item.icon className="h-5 w-5 mr-3" />
-                  {item.title}
-                </div>
-              </Link>
-            ))}
+            {filteredNavItems.map((item) => {
+              const isActive =
+                location.pathname === item.href ||
+                (item.href !== "/" &&
+                  location.pathname.startsWith(item.href + "/"));
+
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={handleNavigation}
+                  className={cn(
+                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition",
+                    isActive
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <div className="flex items-center flex-1">
+                    <item.icon className="h-5 w-5 mr-3" />
+                    {item.title}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -153,7 +158,9 @@ export const Sidebar: React.FC = () => {
       <div className="shrink-0 px-3 py-4 border-t">
         <div className="space-y-4">
           <div>
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-2">Settings</h3>
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-2">
+              Settings
+            </h3>
             <div className="space-y-1">
               <div className="flex items-center justify-between p-2">
                 <div className="flex items-center">
@@ -162,26 +169,36 @@ export const Sidebar: React.FC = () => {
                 </div>
                 <CurrencySelector variant="ghost" size="sm" />
               </div>
-              <div 
-                className="flex items-center justify-between p-2 cursor-pointer hover:bg-primary/10 rounded-lg transition"
+              <button
+                type="button"
+                className="flex items-center justify-between p-2 w-full cursor-pointer hover:bg-primary/10 rounded-lg transition"
                 onClick={toggleTheme}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
                 <div className="flex items-center">
-                  {theme === 'dark' ? (
+                  {theme === "dark" ? (
                     <Moon className="h-4 w-4 mr-2 text-muted-foreground" />
                   ) : (
                     <Sun className="h-4 w-4 mr-2 text-muted-foreground" />
                   )}
-                  <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
+                  <span className="text-sm">
+                    {theme === "dark" ? "Dark" : "Light"} Mode
+                  </span>
                 </div>
                 <div className="w-8 h-4 bg-muted relative rounded-full">
-                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full transform transition-transform ${theme === 'dark' ? 'bg-primary translate-x-4' : 'bg-foreground'}`}></div>
+                  <div
+                    className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full transform transition-transform ${
+                      theme === "dark"
+                        ? "bg-primary translate-x-4"
+                        : "bg-foreground"
+                    }`}
+                  ></div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

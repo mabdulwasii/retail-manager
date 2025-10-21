@@ -25,7 +25,7 @@ import {
   FileText
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useDashboardData, useFraudStatistics } from '@/hooks/useDashboard'
+import { useDashboardData, useFraudStatistics, useAllShopsPerformance } from '@/hooks/useDashboard'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -44,6 +44,7 @@ export const OwnerManagerDashboard: React.FC = () => {
   } = useDashboardData(period)
 
   const { data: fraudStats } = useFraudStatistics(undefined, period)
+  const { data: shopsPerformance, isLoading: loadingPerformance } = useAllShopsPerformance(period)
 
   // Calculate business stats from real data
   const businessStats = [
@@ -81,67 +82,56 @@ export const OwnerManagerDashboard: React.FC = () => {
     }
   ]
 
-  const shopPerformance = [
-    {
-      name: 'Downtown Electronics',
-      revenue: '$12,450',
-      sales: 342,
-      growth: '+15%',
-      status: 'excellent'
-    },
-    {
-      name: 'Mall Fashion Store',
-      revenue: '$9,870',
-      sales: 287,
-      growth: '+8%',
-      status: 'good'
-    },
-    {
-      name: 'Grocery Express',
-      revenue: '$8,230',
-      sales: 156,
-      growth: '+22%',
-      status: 'excellent'
-    },
-    {
-      name: 'Sports Center',
-      revenue: '$5,440',
-      sales: 98,
-      growth: '-3%',
-      status: 'attention'
+  // Format shop performance data from API
+  const shopPerformance = (shopsPerformance || []).map((shop) => {
+    const getPerformanceStatus = (growth: number) => {
+      if (growth >= 15) return 'excellent'
+      if (growth >= 5) return 'good'
+      if (growth >= 0) return 'average'
+      return 'attention'
     }
-  ]
 
-  const recentActivities = [
-    {
-      type: 'sale',
-      shop: 'Downtown Electronics',
-      description: 'Large sale completed: iPhone 15 Pro Max',
-      amount: '$1,299.00',
-      time: '5 minutes ago'
-    },
-    {
-      type: 'investment',
-      shop: 'Investment Pool',
-      description: 'Quarterly profit distribution processed',
-      amount: '$8,450.00',
-      time: '2 hours ago'
-    },
-    {
-      type: 'inventory',
-      shop: 'Mall Fashion Store',
-      description: 'Low stock alert: Designer Jeans',
-      amount: '12 units left',
-      time: '4 hours ago'
-    },
-    {
-      type: 'analytics',
-      shop: 'Grocery Express',
-      description: 'Best performing product: Organic Bananas',
-      amount: '145 sold today',
-      time: '6 hours ago'
+    return {
+      shopId: shop.shopId,
+      name: shop.shopName,
+      revenue: `$${shop.revenue.toLocaleString()}`,
+      sales: shop.transactions,
+      growth: `${shop.growthRate > 0 ? '+' : ''}${shop.growthRate.toFixed(1)}%`,
+      status: getPerformanceStatus(shop.growthRate)
     }
-  ]
+  })
+
+  // Recent activities - using derived data from alerts and inventory
+  const recentActivities = [
+    ...(inventorySummary?.lowStockItems ? [{
+      type: 'inventory' as const,
+      shop: 'Inventory Alert',
+      description: `${inventorySummary.lowStockItems} items running low on stock`,
+      amount: `${inventorySummary.lowStockItems} items`,
+      time: 'Current'
+    }] : []),
+    ...(inventorySummary?.expiredItems ? [{
+      type: 'inventory' as const,
+      shop: 'Inventory Alert',
+      description: `${inventorySummary.expiredItems} expired items need attention`,
+      amount: `${inventorySummary.expiredItems} items`,
+      time: 'Current'
+    }] : []),
+    ...(expenseSummary?.pendingApproval ? [{
+      type: 'expense' as const,
+      shop: 'Expense Management',
+      description: `${expenseSummary.pendingApproval} expenses awaiting approval`,
+      amount: 'Pending',
+      time: 'Current'
+    }] : []),
+    ...(fraudStats?.highRiskCount ? [{
+      type: 'alert' as const,
+      shop: 'Fraud Detection',
+      description: `${fraudStats.highRiskCount} high-risk transactions detected`,
+      amount: `${fraudStats.highRiskCount} flagged`,
+      time: 'Recent'
+    }] : [])
+  ].slice(0, 4) // Show only top 4 activities
 
   // Calculate total alerts count
   const totalAlerts = (
@@ -288,36 +278,59 @@ export const OwnerManagerDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {shopPerformance.map((shop, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-3 h-3 rounded-full ${
-                      shop.status === 'excellent' ? 'bg-green-500' :
-                      shop.status === 'good' ? 'bg-blue-500' :
-                      'bg-yellow-500'
-                    }`}></div>
-                    <div>
-                      <p className="font-medium">{shop.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {shop.sales} sales this month
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{shop.revenue}</p>
-                    <p className={`text-sm ${
-                      shop.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {shop.growth}
-                    </p>
-                  </div>
+            {loadingPerformance ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : shopPerformance.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No shop performance data available</p>
+                <Button variant="outline" className="mt-4" asChild>
+                  <Link to="/shops/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Your First Shop
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {shopPerformance.map((shop, index) => (
+                    <Link 
+                      key={index} 
+                      to={`/shops/${shop.shopId}`}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          shop.status === 'excellent' ? 'bg-green-500' :
+                          shop.status === 'good' ? 'bg-blue-500' :
+                          shop.status === 'average' ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <p className="font-medium">{shop.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {shop.sales} transactions this {period}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{shop.revenue}</p>
+                        <p className={`text-sm ${
+                          shop.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {shop.growth}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/shops">View All Shops</Link>
-            </Button>
+                <Button variant="outline" className="w-full mt-4" asChild>
+                  <Link to="/shops">View All Shops</Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -330,29 +343,43 @@ export const OwnerManagerDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'sale' ? 'bg-green-500' :
-                    activity.type === 'investment' ? 'bg-blue-500' :
-                    activity.type === 'inventory' ? 'bg-yellow-500' :
-                    'bg-purple-500'
-                  }`}></div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.shop} • {activity.time}
-                    </p>
-                    <p className="text-sm font-semibold text-green-600">
-                      {activity.amount}
-                    </p>
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">No recent activities to show</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Activity alerts will appear here based on your business operations
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.type === 'inventory' ? 'bg-yellow-500' :
+                      activity.type === 'expense' ? 'bg-blue-500' :
+                      activity.type === 'alert' ? 'bg-red-500' :
+                      'bg-purple-500'
+                    }`}></div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.shop} • {activity.time}
+                      </p>
+                      <p className={`text-sm font-semibold ${
+                        activity.type === 'alert' ? 'text-red-600' :
+                        activity.type === 'inventory' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`}>
+                        {activity.amount}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

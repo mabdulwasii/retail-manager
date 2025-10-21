@@ -5,8 +5,9 @@ import { analyticsService } from '@/services/analyticsService'
 import { inventoryService } from '@/services/inventoryService'
 import { expenseService } from '@/services/expenseService'
 
-// Helper function to get date ranges
-const getDateRange = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export type TimePeriod = 'today' | 'week' | 'month' | 'year'
+
+const getDateRange = (period: TimePeriod = 'month') => {
   const now = new Date()
   let startDate: Date
 
@@ -70,11 +71,10 @@ export const useAllShops = (page = 0, size = 20) => {
   })
 }
 
-export const useSalesSummary = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useSalesSummary = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -87,11 +87,10 @@ export const useSalesSummary = (shopId?: string, period: 'today' | 'week' | 'mon
   })
 }
 
-export const useInvestmentROI = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useInvestmentROI = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -104,11 +103,10 @@ export const useInvestmentROI = (shopId?: string, period: 'today' | 'week' | 'mo
   })
 }
 
-export const useRevenueAnalytics = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useRevenueAnalytics = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -121,11 +119,10 @@ export const useRevenueAnalytics = (shopId?: string, period: 'today' | 'week' | 
   })
 }
 
-export const useFraudStatistics = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useFraudStatistics = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -141,7 +138,6 @@ export const useFraudStatistics = (shopId?: string, period: 'today' | 'week' | '
 export const useInventorySummary = (shopId?: string) => {
   const { isAuthenticated, user } = useAuth()
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -154,11 +150,10 @@ export const useInventorySummary = (shopId?: string) => {
   })
 }
 
-export const useExpenseSummary = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useExpenseSummary = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
@@ -201,8 +196,58 @@ export const useAlerts = () => {
   })
 }
 
+// Hook to get performance data for all shops
+export const useAllShopsPerformance = (period: TimePeriod = 'month') => {
+  const { isAuthenticated, user } = useAuth()
+  const { data: shops } = useActiveShops()
+  const { startDate, endDate } = getDateRange(period)
+
+  return useQuery({
+    queryKey: ['analytics', 'all-shops-performance', period],
+    queryFn: async () => {
+      if (!shops || shops.length === 0) return []
+
+      // Fetch analytics for each shop in parallel
+      const performancePromises = shops.map(async (shop) => {
+        try {
+          const [salesSummary, revenueAnalytics] = await Promise.all([
+            analyticsService.getSalesSummary(shop.id, startDate, endDate),
+            analyticsService.getRevenueAnalytics(shop.id, startDate, endDate)
+          ])
+
+          return {
+            shopId: shop.id,
+            shopName: shop.name,
+            revenue: salesSummary.totalRevenue,
+            transactions: salesSummary.totalTransactions,
+            averageTransaction: salesSummary.averageTransactionValue,
+            growthRate: revenueAnalytics.growthRate,
+            status: shop.status
+          }
+        } catch (error) {
+          console.error(`Failed to fetch performance for shop ${shop.id}:`, error)
+          return {
+            shopId: shop.id,
+            shopName: shop.name,
+            revenue: 0,
+            transactions: 0,
+            averageTransaction: 0,
+            growthRate: 0,
+            status: shop.status
+          }
+        }
+      })
+
+      return Promise.all(performancePromises)
+    },
+    enabled: !!(isAuthenticated && shops && shops.length > 0 && user?.roles && (user.roles.includes('MANAGER') || user.roles.includes('OWNER') || user.roles.includes('TENANT_ADMIN'))),
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    retry: 1
+  })
+}
+
 // Combined dashboard data hook for easy consumption
-export const useDashboardData = (period: 'today' | 'week' | 'month' | 'year' = 'month', shopId?: string) => {
+export const useDashboardData = (period: TimePeriod = 'month', shopId?: string) => {
   const { user } = useAuth()
   const shops = useActiveShops()
   const salesSummary = useSalesSummary(shopId, period)

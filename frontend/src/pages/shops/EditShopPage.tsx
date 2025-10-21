@@ -1,5 +1,5 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -9,11 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Store, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { useCreateShop } from '@/hooks/useShops'
-import { ShopCreateRequest } from '@/services/shopService'
+import { ArrowLeft, Store, Loader2, AlertCircle, Save } from 'lucide-react'
+import { useShopById, useUpdateShop } from '@/hooks/useShops'
+import { ShopUpdateRequest } from '@/services/shopService'
+import { ShopStatusBadge } from '@/components/shops'
 
-// Validation schema
 const shopSchema = yup.object().shape({
   name: yup
     .string()
@@ -44,44 +44,55 @@ const shopSchema = yup.object().shape({
 
 type ShopFormData = yup.InferType<typeof shopSchema>
 
-export const CreateShopPage: React.FC = () => {
+export const EditShopPage: React.FC = () => {
+  const { shopId } = useParams<{ shopId: string }>()
   const navigate = useNavigate()
-  const createShopMutation = useCreateShop()
+  
+  const { data: shop, isLoading: loadingShop, isError, error } = useShopById(shopId)
+  const updateShopMutation = useUpdateShop()
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
     reset
   } = useForm<ShopFormData>({
-    resolver: yupResolver(shopSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      description: '',
-      phoneNumber: '',
-      address: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: '',
-      taxId: '',
-      openingDate: new Date().toISOString().split('T')[0]
-    }
+    resolver: yupResolver(shopSchema)
   })
 
+  useEffect(() => {
+    if (shop) {
+      reset({
+        name: shop.name,
+        email: shop.email,
+        description: shop.description || '',
+        phoneNumber: shop.phoneNumber || '',
+        address: shop.address || '',
+        city: shop.city || '',
+        state: shop.state || '',
+        country: shop.country || '',
+        postalCode: shop.postalCode || '',
+        taxId: shop.taxId || '',
+        openingDate: shop.openingDate ? new Date(shop.openingDate).toISOString().split('T')[0] : ''
+      })
+    }
+  }, [shop, reset])
+
   const onSubmit = async (data: ShopFormData) => {
+    if (!shopId || !shop) return
+
     try {
       // Convert date to ISO 8601 format if provided
-      let isoOpeningDate: string | undefined = undefined
+      let isoOpeningDate = shop.openingDate // Keep existing if not changed
       if (data.openingDate) {
+        // Convert YYYY-MM-DD to full ISO timestamp
         const date = new Date(data.openingDate)
         // Set time to noon UTC to avoid timezone issues
         date.setUTCHours(12, 0, 0, 0)
         isoOpeningDate = date.toISOString()
       }
 
-      const shopData: ShopCreateRequest = {
+      const shopData: ShopUpdateRequest = {
         name: data.name,
         email: data.email,
         ...(data.description && { description: data.description }),
@@ -95,20 +106,44 @@ export const CreateShopPage: React.FC = () => {
         ...(isoOpeningDate && { openingDate: isoOpeningDate })
       }
 
-      const newShop = await createShopMutation.mutateAsync(shopData)
+      await updateShopMutation.mutateAsync({ shopId, data: shopData })
       
-      // Navigate to the newly created shop's detail page
-      if (newShop) {
-        navigate(`/shops/${newShop.id}`)
-      }
+      // Navigate back to shop detail page
+      navigate(`/shops/${shopId}`)
     } catch (error) {
       // Error handling is done in the mutation hook
-      console.error('Failed to create shop:', error)
+      console.error('Failed to update shop:', error)
     }
   }
 
   const handleCancel = () => {
-    navigate('/shops')
+    navigate(`/shops/${shopId}`)
+  }
+
+
+  if (loadingShop) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (isError || !shop) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" onClick={() => navigate('/shops')}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Shops
+        </Button>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error?.message || 'Shop not found'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -117,24 +152,28 @@ export const CreateShopPage: React.FC = () => {
       <div className="flex flex-col gap-4">
         <Button variant="ghost" className="w-fit" onClick={handleCancel}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Shops
+          Back to Shop Details
         </Button>
         
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Store className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Create New Shop</h1>
-            <p className="text-muted-foreground mt-1">
-              Add a new retail location to your business
-            </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Store className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">Edit Shop</h1>
+                <ShopStatusBadge status={shop.status} showIcon />
+              </div>
+              <p className="text-muted-foreground mt-1">
+                Update information for {shop.name}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Information */}
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -144,7 +183,6 @@ export const CreateShopPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Shop Name */}
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="name">
                   Shop Name <span className="text-destructive">*</span>
@@ -160,7 +198,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">
                   Email Address <span className="text-destructive">*</span>
@@ -177,7 +214,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Phone Number */}
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input
@@ -192,7 +228,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Opening Date */}
               <div className="space-y-2">
                 <Label htmlFor="openingDate">Opening Date</Label>
                 <Input
@@ -206,7 +241,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Tax ID */}
               <div className="space-y-2">
                 <Label htmlFor="taxId">Tax ID / VAT Number</Label>
                 <Input
@@ -220,7 +254,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Description */}
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -238,7 +271,6 @@ export const CreateShopPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Address Information */}
         <Card>
           <CardHeader>
             <CardTitle>Location & Address</CardTitle>
@@ -248,7 +280,7 @@ export const CreateShopPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Street Address */}
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="address">Street Address</Label>
                 <Input
@@ -262,7 +294,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* City */}
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
                 <Input
@@ -276,7 +307,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* State */}
               <div className="space-y-2">
                 <Label htmlFor="state">State / Province</Label>
                 <Input
@@ -290,7 +320,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Postal Code */}
               <div className="space-y-2">
                 <Label htmlFor="postalCode">Postal / ZIP Code</Label>
                 <Input
@@ -304,7 +333,6 @@ export const CreateShopPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Country */}
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
                 <Input
@@ -321,46 +349,74 @@ export const CreateShopPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-3 justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSubmitting || createShopMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || createShopMutation.isPending}
-              >
-                {(isSubmitting || createShopMutation.isPending) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Shop...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Create Shop
-                  </>
-                )}
-              </Button>
+          <CardHeader>
+            <CardTitle>Shop Metadata</CardTitle>
+            <CardDescription>System-generated information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Shop ID</p>
+                <p className="font-mono">{shop.id}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Current Status</p>
+                <ShopStatusBadge status={shop.status} showIcon />
+              </div>
+              <div>
+                <p className="text-muted-foreground">Created</p>
+                <p>{new Date(shop.createdAt).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Last Updated</p>
+                <p>{new Date(shop.updatedAt).toLocaleString()}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Helper Text */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <span className="text-destructive">*</span> Required fields must be filled out. 
-            All other fields are optional but recommended for complete shop information.
-          </AlertDescription>
-        </Alert>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-between">
+              <Alert className="flex-1">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {isDirty 
+                    ? 'You have unsaved changes' 
+                    : 'No changes made yet'}
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSubmitting || updateShopMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || updateShopMutation.isPending || !isDirty}
+                >
+                  {(isSubmitting || updateShopMutation.isPending) ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving Changes...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </form>
     </div>
   )
