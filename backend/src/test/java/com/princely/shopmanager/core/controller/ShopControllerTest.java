@@ -509,6 +509,165 @@ class ShopControllerTest {
         }
     }
 
+    @Nested
+    @DisplayName("GET /api/shops/{shopId}/configuration - Get Shop Configuration")
+    class GetConfigurationTests {
+
+        @Test
+        @WithMockUser(roles = "OWNER")
+        @DisplayName("Should get shop configuration successfully")
+        void shouldGetConfiguration() throws Exception {
+            // Given
+            com.princely.shopmanager.core.dto.ShopConfigurationResponse configResponse =
+                com.princely.shopmanager.core.dto.ShopConfigurationResponse.builder()
+                    .investmentEnabled(true)
+                    .analyticsEnabled(true)
+                    .fraudDetectionEnabled(false)
+                    .autoBackupEnabled(true)
+                    .currency("NGN")
+                    .taxRate(7.5)
+                    .maxDiscountPercentage(20.0)
+                    .receiptFooter("Thank you!")
+                    .build();
+
+            ShopResponse shopResponse = ShopResponse.builder()
+                .id("shop-123")
+                .name("Test Shop")
+                .configuration(configResponse)
+                .build();
+
+            when(shopService.getShop("shop-123")).thenReturn(shopResponse);
+
+            // When & Then
+            mockMvc.perform(get("/api/shops/shop-123/configuration"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.investmentEnabled").value(true))
+                .andExpect(jsonPath("$.analyticsEnabled").value(true))
+                .andExpect(jsonPath("$.fraudDetectionEnabled").value(false))
+                .andExpect(jsonPath("$.currency").value("NGN"))
+                .andExpect(jsonPath("$.taxRate").value(7.5))
+                .andExpect(jsonPath("$.maxDiscountPercentage").value(20.0))
+                .andExpect(jsonPath("$.receiptFooter").value("Thank you!"));
+
+            verify(shopService).getShop("shop-123");
+        }
+
+        @Test
+        @WithMockUser(roles = "CASHIER")
+        @DisplayName("Should deny access with insufficient role")
+        void shouldDenyAccessWithInsufficientRole() throws Exception {
+            mockMvc.perform(get("/api/shops/shop-123/configuration"))
+                .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/shops/{shopId}/configuration - Update Shop Configuration")
+    class UpdateConfigurationTests {
+
+        @Test
+        @WithMockUser(roles = "OWNER")
+        @DisplayName("Should update shop configuration successfully")
+        void shouldUpdateConfiguration() throws Exception {
+            // Given
+            com.princely.shopmanager.core.dto.ShopConfigurationRequest configRequest =
+                com.princely.shopmanager.core.dto.ShopConfigurationRequest.builder()
+                    .currency("USD")
+                    .taxRate(8.5)
+                    .maxDiscountPercentage(25.0)
+                    .fraudDetectionEnabled(true)
+                    .build();
+
+            com.princely.shopmanager.core.dto.ShopConfigurationResponse configResponse =
+                com.princely.shopmanager.core.dto.ShopConfigurationResponse.builder()
+                    .investmentEnabled(true)
+                    .analyticsEnabled(true)
+                    .fraudDetectionEnabled(true)
+                    .autoBackupEnabled(true)
+                    .currency("USD")
+                    .taxRate(8.5)
+                    .maxDiscountPercentage(25.0)
+                    .build();
+
+            ShopResponse shopResponse = ShopResponse.builder()
+                .id("shop-123")
+                .name("Test Shop")
+                .configuration(configResponse)
+                .build();
+
+            when(shopService.updateShop(eq("shop-123"), any(ShopUpdateRequest.class)))
+                .thenReturn(shopResponse);
+
+            // When & Then
+            mockMvc.perform(put("/api/shops/shop-123/configuration")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(configRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configuration.currency").value("USD"))
+                .andExpect(jsonPath("$.configuration.taxRate").value(8.5))
+                .andExpect(jsonPath("$.configuration.maxDiscountPercentage").value(25.0))
+                .andExpect(jsonPath("$.configuration.fraudDetectionEnabled").value(true));
+
+            verify(shopService).updateShop(eq("shop-123"), any(ShopUpdateRequest.class));
+        }
+
+        @Test
+        @WithMockUser(roles = "MANAGER")
+        @DisplayName("Should allow MANAGER role")
+        void shouldAllowManagerRole() throws Exception {
+            // Given
+            com.princely.shopmanager.core.dto.ShopConfigurationRequest configRequest =
+                com.princely.shopmanager.core.dto.ShopConfigurationRequest.builder()
+                    .currency("EUR")
+                    .build();
+
+            when(shopService.updateShop(eq("shop-123"), any(ShopUpdateRequest.class)))
+                .thenReturn(sampleShopResponse);
+
+            // When & Then
+            mockMvc.perform(put("/api/shops/shop-123/configuration")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(configRequest)))
+                .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "CASHIER")
+        @DisplayName("Should deny access with insufficient role")
+        void shouldDenyAccessWithInsufficientRole() throws Exception {
+            com.princely.shopmanager.core.dto.ShopConfigurationRequest configRequest =
+                com.princely.shopmanager.core.dto.ShopConfigurationRequest.builder()
+                    .currency("EUR")
+                    .build();
+
+            mockMvc.perform(put("/api/shops/shop-123/configuration")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(configRequest)))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(roles = "OWNER")
+        @DisplayName("Should validate configuration request")
+        void shouldValidateConfigurationRequest() throws Exception {
+            // Given - Invalid tax rate over 100%
+            com.princely.shopmanager.core.dto.ShopConfigurationRequest configRequest =
+                com.princely.shopmanager.core.dto.ShopConfigurationRequest.builder()
+                    .taxRate(150.0)
+                    .build();
+
+            // When & Then
+            mockMvc.perform(put("/api/shops/shop-123/configuration")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(configRequest)))
+                .andExpect(status().isBadRequest());
+        }
+    }
+
     @Configuration
     static class ControllerTestConfiguration {
 
