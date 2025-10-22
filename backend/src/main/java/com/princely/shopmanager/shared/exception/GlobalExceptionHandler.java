@@ -152,6 +152,33 @@ public class GlobalExceptionHandler {
             org.hibernate.exception.ConstraintViolationException cve =
                 (org.hibernate.exception.ConstraintViolationException) e.getCause();
 
+            // Check for NOT NULL constraint violations first
+            if (cve.getSQLException() != null && cve.getSQLException().getMessage() != null) {
+                String sqlMsg = cve.getSQLException().getMessage();
+                if (sqlMsg.contains("null value") && sqlMsg.contains("violates not-null constraint")) {
+                    code = "REQUIRED_FIELD_MISSING";
+
+                    // Try to extract the column name from error message
+                    // Format: null value in column "column_name" of relation "table_name"
+                    try {
+                        int columnStart = sqlMsg.indexOf("column \"") + 8;
+                        int columnEnd = sqlMsg.indexOf("\"", columnStart);
+                        if (columnStart > 7 && columnEnd > columnStart) {
+                            String columnName = sqlMsg.substring(columnStart, columnEnd);
+                            message = "Required field '" + columnName + "' is missing or null";
+                        } else {
+                            message = "Required field is missing or null";
+                        }
+                    } catch (Exception ex) {
+                        message = "Required field is missing or null";
+                    }
+
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ErrorResponse(code, message));
+                }
+            }
+
+            // Check constraint name for other violations
             if (cve.getConstraintName() != null) {
                 if (cve.getConstraintName().toLowerCase().contains("unique") ||
                     cve.getConstraintName().toLowerCase().contains("uq_")) {
@@ -164,9 +191,12 @@ public class GlobalExceptionHandler {
                 }
             }
         } else if (e.getMessage() != null) {
-            // Try to extract constraint name from error message
+            // Try to extract constraint type from error message
             String errorMsg = e.getMessage().toLowerCase();
-            if (errorMsg.contains("unique") || errorMsg.contains("duplicate")) {
+            if (errorMsg.contains("null value") && errorMsg.contains("not-null constraint")) {
+                code = "REQUIRED_FIELD_MISSING";
+                message = "Required field is missing or null";
+            } else if (errorMsg.contains("unique") || errorMsg.contains("duplicate")) {
                 code = "DUPLICATE_ENTRY";
                 message = "A record with this information already exists";
             } else if (errorMsg.contains("foreign key") || errorMsg.contains("violates")) {

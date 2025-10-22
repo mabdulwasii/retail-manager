@@ -40,8 +40,12 @@ public class AuditService {
                                    String entityId, String description,
                                    String oldValues, String newValues) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.createDataModification(
-                shop, userId, username, actionType, entityType, entityId,
+                shop, effectiveUserId, effectiveUsername, actionType, entityType, entityId,
                 description, oldValues, newValues
             );
             auditLogRepository.save(auditLog);
@@ -73,10 +77,14 @@ public class AuditService {
                               String entityType, String entityId, String description,
                               Map<String, String> details, AuditLog.Severity severity) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
-                .userId(userId)
-                .username(username)
+                .userId(effectiveUserId)
+                .username(effectiveUsername)
                 .category(category)
                 .actionType(actionType)
                 .entityType(entityType)
@@ -100,10 +108,14 @@ public class AuditService {
                         AuditLog.ActionType actionType, String description,
                         String errorMessage) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
-                .userId(userId)
-                .username(username)
+                .userId(effectiveUserId)
+                .username(effectiveUsername)
                 .category(AuditLog.AuditCategory.SYSTEM_EVENT)
                 .actionType(actionType)
                 .actionDescription(description)
@@ -114,7 +126,7 @@ public class AuditService {
                 .build();
 
             auditLogRepository.save(auditLog);
-            log.debug("Error event logged: {} for user {}", actionType, username);
+            log.debug("Error event logged: {} for user {}", actionType, effectiveUsername);
         } catch (Exception e) {
             log.error("Failed to log error event: {} for user {}", actionType, username, e);
         }
@@ -125,6 +137,8 @@ public class AuditService {
     public void logEntityCreation(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.CREATE)
                 .entityType(entityType)
@@ -146,6 +160,8 @@ public class AuditService {
     public void logEntityModification(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
                 .entityType(entityType)
@@ -167,6 +183,8 @@ public class AuditService {
     public void logEntityDeletion(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
                 .entityType(entityType)
