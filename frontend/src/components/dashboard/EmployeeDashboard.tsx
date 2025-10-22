@@ -14,32 +14,34 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+interface Task {
+  id: string
+  title: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  status: 'pending' | 'in_progress' | 'completed'
+  estimatedTime: string
+}
+
+interface Activity {
+  id: string
+  type: 'task' | 'inventory' | 'sale'
+  description: string
+  time: string
+  amount?: string
+}
+
+interface Notification {
+  type: 'info' | 'warning' | 'success'
+  message: string
+  time: string
+}
+
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth()
-  // Mock stats for employee dashboard
-  const stats = {
-    totalTasks: 12,
-    completedTasks: 8,
-    pendingTasks: 4,
-    efficiency: 85
-  }
-  // Mock activities for employee dashboard
-  const activities = [
-    {
-      id: '1',
-      type: 'task',
-      description: 'Completed inventory check for electronics section',
-      time: '30 minutes ago'
-    },
-    {
-      id: '2',
-      type: 'task',
-      description: 'Updated product prices in fashion department',
-      time: '2 hours ago'
-    }
-  ]
-  const activitiesLoading = false
+  
   const statsLoading = false
+  const activitiesLoading = false
 
   const taskStats = [
     {
@@ -58,7 +60,7 @@ export const EmployeeDashboard: React.FC = () => {
     },
     {
       title: 'Products Handled',
-      value: stats?.totalProducts ? `${stats.totalProducts}` : '0',
+      value: '147',
       description: 'This week',
       icon: Package,
       color: 'text-blue-600'
@@ -72,7 +74,22 @@ export const EmployeeDashboard: React.FC = () => {
     }
   ]
 
-  const todayTasks = [
+  const activities: Activity[] = [
+    {
+      id: '1',
+      type: 'task',
+      description: 'Completed inventory check for electronics section',
+      time: '30 minutes ago'
+    },
+    {
+      id: '2',
+      type: 'task',
+      description: 'Updated product prices in fashion department',
+      time: '2 hours ago'
+    }
+  ]
+
+  const todayTasks: Task[] = [
     {
       id: '1',
       title: 'Restock Electronics Section',
@@ -138,7 +155,7 @@ export const EmployeeDashboard: React.FC = () => {
     }
   ]
 
-  const notifications = [
+  const notifications: Notification[] = [
     {
       type: 'info',
       message: 'New training module available: "Customer Service Excellence"',

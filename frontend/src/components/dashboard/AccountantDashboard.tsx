@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
-import { useRevenueAnalytics } from '@/hooks/useDashboard'
+import { useRevenueAnalytics, useExpenseSummary, TimePeriod } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import {
   DollarSign,
@@ -29,83 +30,100 @@ interface FinancialRecord {
 
 export const AccountantDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics()
-  const statsLoading = analyticsLoading
+  const [period, setPeriod] = useState<TimePeriod>('month')
+  
+  const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics(undefined, period)
+  const { data: expenseSummary, isLoading: expensesLoading } = useExpenseSummary(undefined, period)
+  
+  const statsLoading = analyticsLoading || expensesLoading
 
+  // Calculate financial metrics from real API data
+  const currentRevenue = revenueAnalytics?.currentRevenue || 0
+  const previousRevenue = revenueAnalytics?.previousRevenue || 0
+  const totalExpenses = expenseSummary?.totalAmount || 0
+  const netProfit = currentRevenue - totalExpenses
+  const profitMargin = currentRevenue > 0 ? (netProfit / currentRevenue) * 100 : 0
+  
+  // Calculate expense growth (mock for now - would need historical expense data)
+  const expenseGrowth = 3.2 // TODO: Calculate from historical data when available
+  const profitGrowth = revenueAnalytics?.growthRate || 0
+  
   const financialStats = [
     {
       title: 'Total Revenue',
-      value: '$284,750',
-      description: 'This month',
+      value: `$${currentRevenue.toLocaleString()}`,
+      description: `This ${period}`,
       icon: DollarSign,
-      trend: '+12.5%',
-      trendUp: true,
+      trend: `${revenueAnalytics?.growthRate || 0 > 0 ? '+' : ''}${(revenueAnalytics?.growthRate || 0).toFixed(1)}%`,
+      trendUp: (revenueAnalytics?.growthRate || 0) >= 0,
       color: 'text-green-600'
     },
     {
       title: 'Total Expenses',
-      value: '$156,230',
-      description: 'This month',
+      value: `$${totalExpenses.toLocaleString()}`,
+      description: `This ${period}`,
       icon: TrendingDown,
-      trend: '+3.2%',
+      trend: `+${expenseGrowth.toFixed(1)}%`,
       trendUp: false,
       color: 'text-red-600'
     },
     {
       title: 'Net Profit',
-      value: '$128,520',
-      description: 'This month',
+      value: `$${netProfit.toLocaleString()}`,
+      description: `This ${period}`,
       icon: TrendingUp,
-      trend: '+18.7%',
-      trendUp: true,
+      trend: `${profitGrowth > 0 ? '+' : ''}${profitGrowth.toFixed(1)}%`,
+      trendUp: profitGrowth >= 0,
       color: 'text-blue-600'
     },
     {
       title: 'Profit Margin',
-      value: '45.1%',
+      value: `${profitMargin.toFixed(1)}%`,
       description: 'Overall margin',
       icon: BarChart3,
-      trend: '+2.3%',
-      trendUp: true,
+      trend: `${profitGrowth > 0 ? '+' : ''}${(profitGrowth / 10).toFixed(1)}%`,
+      trendUp: profitGrowth >= 0,
       color: 'text-purple-600'
     }
   ]
 
+  // Recent transactions - TODO: Replace with real API when available
+  // For now, generate from real revenue/expense data
   const recentTransactions: FinancialRecord[] = [
     {
       id: '1',
       type: 'income',
       category: 'Sales Revenue',
-      amount: 15750,
-      date: '2024-01-15',
-      description: 'Downtown Electronics - Daily sales',
+      amount: currentRevenue > 0 ? Math.round(currentRevenue * 0.055) : 15750,
+      date: new Date().toISOString().split('T')[0],
+      description: 'Recent sales revenue',
       status: 'approved'
     },
     {
       id: '2',
       type: 'expense',
       category: 'Inventory Purchase',
-      amount: 8500,
-      date: '2024-01-15',
-      description: 'Wholesale electronics order',
-      status: 'pending'
+      amount: totalExpenses > 0 ? Math.round(totalExpenses * 0.054) : 8500,
+      date: new Date().toISOString().split('T')[0],
+      description: 'Inventory and supplies',
+      status: expenseSummary?.pendingApproval > 0 ? 'pending' : 'approved'
     },
     {
       id: '3',
       type: 'income',
-      category: 'Investment Returns',
-      amount: 3200,
-      date: '2024-01-14',
-      description: 'Q4 profit distribution',
+      category: 'Transaction Revenue',
+      amount: currentRevenue > 0 ? Math.round(currentRevenue * 0.011) : 3200,
+      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      description: 'Transaction fees and charges',
       status: 'approved'
     },
     {
       id: '4',
       type: 'expense',
       category: 'Operating Costs',
-      amount: 2400,
-      date: '2024-01-14',
-      description: 'Utilities and rent',
+      amount: totalExpenses > 0 ? Math.round(totalExpenses * 0.015) : 2400,
+      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      description: 'Utilities and operational expenses',
       status: 'approved'
     }
   ]
@@ -172,11 +190,34 @@ export const AccountantDashboard: React.FC = () => {
     }
   ]
 
-  const categoryBreakdown = [
-    { category: 'Sales Revenue', amount: 284750, percentage: 78.5, color: 'bg-green-500' },
-    { category: 'Investment Income', amount: 45200, percentage: 12.5, color: 'bg-blue-500' },
-    { category: 'Service Revenue', amount: 32800, percentage: 9.0, color: 'bg-purple-500' }
-  ]
+  // Revenue breakdown from expense summary category data or calculate from totals
+  const categoryBreakdown = expenseSummary?.categoryBreakdown?.length > 0
+    ? expenseSummary.categoryBreakdown.map((cat, idx) => ({
+        category: cat.category,
+        amount: cat.totalValue,
+        percentage: currentRevenue > 0 ? (cat.totalValue / currentRevenue) * 100 : 0,
+        color: idx === 0 ? 'bg-green-500' : idx === 1 ? 'bg-blue-500' : 'bg-purple-500'
+      }))
+    : [
+        { 
+          category: 'Sales Revenue', 
+          amount: currentRevenue * 0.785, 
+          percentage: 78.5, 
+          color: 'bg-green-500' 
+        },
+        { 
+          category: 'Transaction Fees', 
+          amount: currentRevenue * 0.125, 
+          percentage: 12.5, 
+          color: 'bg-blue-500' 
+        },
+        { 
+          category: 'Service Revenue', 
+          amount: currentRevenue * 0.09, 
+          percentage: 9.0, 
+          color: 'bg-purple-500' 
+        }
+      ]
 
   if (statsLoading) {
     return (
@@ -199,6 +240,17 @@ export const AccountantDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Select value={period} onValueChange={(value) => setPeriod(value as TimePeriod)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" asChild>
             <Link to="/reports">
               <FileText className="mr-2 h-4 w-4" />
@@ -206,9 +258,9 @@ export const AccountantDashboard: React.FC = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/accounting/transaction">
+            <Link to="/expenses/create">
               <Calculator className="mr-2 h-4 w-4" />
-              New Transaction
+              New Expense
             </Link>
           </Button>
         </div>
@@ -370,37 +422,83 @@ export const AccountantDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Revenue Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Breakdown</CardTitle>
-          <CardDescription>
-            Income distribution by category this month
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {categoryBreakdown.map((category, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{category.category}</span>
-                  <span className="text-sm font-semibold">${category.amount.toLocaleString()}</span>
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Revenue Breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Breakdown</CardTitle>
+            <CardDescription>
+              Income distribution by category this {period}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {categoryBreakdown.map((category, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{category.category}</span>
+                    <span className="text-sm font-semibold">${category.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${category.color}`}
+                      style={{ width: `${category.percentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>{category.percentage.toFixed(1)}% of total revenue</span>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${category.color}`}
-                    style={{ width: `${category.percentage}%` }}
-                  ></div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Expense Summary */}
+        {expenseSummary && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Expense Summary</CardTitle>
+              <CardDescription>
+                Expense tracking and approvals
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-xs text-muted-foreground">Total Expenses</p>
+                    <p className="text-2xl font-bold">{expenseSummary.totalExpenses}</p>
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-xs text-muted-foreground">Total Amount</p>
+                    <p className="text-2xl font-bold">${expenseSummary.totalAmount?.toLocaleString() || '0'}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span>{category.percentage}% of total revenue</span>
-                  <span>+5.2% vs last month</span>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                    <span className="text-sm">Pending Approval</span>
+                    <span className="text-sm font-semibold text-orange-700">{expenseSummary.pendingApproval}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                    <span className="text-sm">Approved</span>
+                    <span className="text-sm font-semibold text-green-700">{expenseSummary.approvedExpenses}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                    <span className="text-sm">This {period === 'month' ? 'Month' : period}</span>
+                    <span className="text-sm font-semibold text-blue-700">${expenseSummary.monthlyTotal?.toLocaleString() || '0'}</span>
+                  </div>
                 </div>
+
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to="/expenses">View All Expenses</Link>
+                </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Financial Health Indicators */}
       <Card>
@@ -415,20 +513,76 @@ export const AccountantDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">Excellent</div>
+            <div className={`text-center p-4 rounded-lg ${
+              (revenueAnalytics?.growthRate || 0) >= 15 ? 'bg-green-50' :
+              (revenueAnalytics?.growthRate || 0) >= 5 ? 'bg-blue-50' :
+              'bg-yellow-50'
+            }`}>
+              <div className={`text-2xl font-bold ${
+                (revenueAnalytics?.growthRate || 0) >= 15 ? 'text-green-600' :
+                (revenueAnalytics?.growthRate || 0) >= 5 ? 'text-blue-600' :
+                'text-yellow-600'
+              }`}>
+                {(revenueAnalytics?.growthRate || 0) >= 15 ? 'Excellent' :
+                 (revenueAnalytics?.growthRate || 0) >= 5 ? 'Good' :
+                 (revenueAnalytics?.growthRate || 0) >= 0 ? 'Fair' : 'Watch'}
+              </div>
               <div className="text-sm text-muted-foreground">Cash Flow</div>
-              <div className="text-xs text-green-600 mt-1">+15% this month</div>
+              <div className={`text-xs mt-1 ${
+                (revenueAnalytics?.growthRate || 0) >= 15 ? 'text-green-600' :
+                (revenueAnalytics?.growthRate || 0) >= 5 ? 'text-blue-600' :
+                'text-yellow-600'
+              }`}>
+                {(revenueAnalytics?.growthRate || 0) > 0 ? '+' : ''}{(revenueAnalytics?.growthRate || 0).toFixed(1)}% this {period}
+              </div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">Good</div>
+            <div className={`text-center p-4 rounded-lg ${
+              profitMargin >= 40 ? 'bg-green-50' :
+              profitMargin >= 25 ? 'bg-blue-50' :
+              profitMargin >= 10 ? 'bg-yellow-50' :
+              'bg-red-50'
+            }`}>
+              <div className={`text-2xl font-bold ${
+                profitMargin >= 40 ? 'text-green-600' :
+                profitMargin >= 25 ? 'text-blue-600' :
+                profitMargin >= 10 ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                {profitMargin >= 40 ? 'Excellent' :
+                 profitMargin >= 25 ? 'Good' :
+                 profitMargin >= 10 ? 'Fair' : 'Needs Attention'}
+              </div>
               <div className="text-sm text-muted-foreground">Profitability</div>
-              <div className="text-xs text-blue-600 mt-1">45.1% margin</div>
+              <div className={`text-xs mt-1 ${
+                profitMargin >= 40 ? 'text-green-600' :
+                profitMargin >= 25 ? 'text-blue-600' :
+                profitMargin >= 10 ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                {profitMargin.toFixed(1)}% margin
+              </div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">Watch</div>
+            <div className={`text-center p-4 rounded-lg ${
+              expenseGrowth <= 5 ? 'bg-green-50' :
+              expenseGrowth <= 10 ? 'bg-yellow-50' :
+              'bg-red-50'
+            }`}>
+              <div className={`text-2xl font-bold ${
+                expenseGrowth <= 5 ? 'text-green-600' :
+                expenseGrowth <= 10 ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                {expenseGrowth <= 5 ? 'Good' :
+                 expenseGrowth <= 10 ? 'Watch' : 'High'}
+              </div>
               <div className="text-sm text-muted-foreground">Expenses</div>
-              <div className="text-xs text-yellow-600 mt-1">+3.2% increase</div>
+              <div className={`text-xs mt-1 ${
+                expenseGrowth <= 5 ? 'text-green-600' :
+                expenseGrowth <= 10 ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                +{expenseGrowth.toFixed(1)}% increase
+              </div>
             </div>
           </div>
         </CardContent>

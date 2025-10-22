@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useSalesSummary } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,67 +12,93 @@ import {
   TrendingUp,
   Users,
   Scan,
-  Loader2
+  Loader2,
+  RefreshCw,
+  Star
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export const CashierDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { data: salesSummary, isLoading: salesLoading } = useSalesSummary(undefined, 'today')
+  const { data: salesSummary, isLoading: salesLoading, refetch } = useSalesSummary(undefined, 'today')
+  const [currentTime, setCurrentTime] = useState(new Date())
+  
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000) // Update every minute
+    return () => clearInterval(timer)
+  }, [])
 
+  const totalTransactions = salesSummary?.totalTransactions || 0
+  const totalRevenue = salesSummary?.totalRevenue || 0
+  const avgTransaction = salesSummary?.averageTransactionValue || 0
+  const topProductsCount = salesSummary?.topProducts?.length || 0
+  
   const todayStats = [
     {
       title: 'Sales Today',
-      value: salesSummary ? `${salesSummary.totalSales || 0}` : '0',
+      value: `${totalTransactions}`,
       description: 'Transactions completed',
       icon: ShoppingCart,
       color: 'text-blue-600'
     },
     {
       title: 'Revenue Today',
-      value: salesSummary ? `$${(salesSummary.totalRevenue || 0).toLocaleString()}` : '$0',
+      value: `$${totalRevenue.toLocaleString()}`,
       description: 'Total earnings',
       icon: DollarSign,
       color: 'text-green-600'
     },
     {
       title: 'Top Products',
-      value: salesSummary?.topProducts ? `${salesSummary.topProducts.length}` : '0',
+      value: `${topProductsCount}`,
       description: 'Product varieties',
       icon: Package,
       color: 'text-purple-600'
     },
     {
       title: 'Avg. Transaction',
-      value: salesSummary ? `$${(salesSummary.averageOrderValue || 0).toFixed(2)}` : '$0.00',
+      value: `$${avgTransaction.toFixed(2)}`,
       description: 'Per sale',
       icon: TrendingUp,
       color: 'text-orange-600'
     }
   ]
 
-  const recentActivities = [
-    {
-      id: '1',
-      type: 'sale',
-      description: 'Completed sale #1234',
-      time: '2 minutes ago',
-      amount: '$45.99'
-    },
-    {
-      id: '2',
-      type: 'inventory',
-      description: 'Product scan completed',
-      time: '15 minutes ago'
-    },
-    {
-      id: '3',
-      type: 'sale',
-      description: 'Processed customer return',
-      time: '1 hour ago',
-      amount: '-$12.50'
-    }
-  ]
+  // Generate activities from real sales data
+  const recentActivities = totalTransactions > 0
+    ? [
+        {
+          id: '1',
+          type: 'sale',
+          description: `Completed ${totalTransactions} transaction${totalTransactions !== 1 ? 's' : ''} today`,
+          time: 'Today',
+          amount: `$${totalRevenue.toLocaleString()}`
+        },
+        {
+          id: '2',
+          type: 'inventory',
+          description: topProductsCount > 0 ? `${topProductsCount} products sold today` : 'No products sold yet',
+          time: 'Today'
+        },
+        {
+          id: '3',
+          type: 'sale',
+          description: `Average transaction value: $${avgTransaction.toFixed(2)}`,
+          time: 'Today',
+          amount: `$${avgTransaction.toFixed(2)}`
+        }
+      ]
+    : [
+        {
+          id: '1',
+          type: 'sale',
+          description: 'No sales recorded today yet',
+          time: 'Waiting for first sale'
+        }
+      ]
 
   const quickActions = [
     {
@@ -126,13 +152,27 @@ export const CashierDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome, {user?.firstName || user?.username}!
-        </h1>
-        <p className="text-muted-foreground">
-          Ready to serve customers and process sales.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome, {user?.firstName || user?.username}!
+          </h1>
+          <p className="text-muted-foreground">
+            Ready to serve customers and process sales.
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => refetch()}
+          disabled={salesLoading}
+        >
+          {salesLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          Refresh
+        </Button>
       </div>
 
       {/* Today's Performance */}
@@ -186,12 +226,12 @@ export const CashierDashboard: React.FC = () => {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Recent Sales Activity */}
+        {/* Today's Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Today's Summary</CardTitle>
             <CardDescription>
-              Your latest transactions and actions
+              Your performance metrics for today
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -223,10 +263,28 @@ export const CashierDashboard: React.FC = () => {
                 ))
               ) : (
                 <p className="text-center text-muted-foreground py-4">
-                  No recent activity
+                  No sales data available
                 </p>
               )}
             </div>
+            
+            {/* Top Products Section */}
+            {salesSummary?.topProducts && salesSummary.topProducts.length > 0 && (
+              <div className="mt-6 pt-4 border-t">
+                <h4 className="text-sm font-semibold mb-3 flex items-center">
+                  <Star className="h-4 w-4 mr-2 text-yellow-500" />
+                  Top Selling Products Today
+                </h4>
+                <div className="space-y-2">
+                  {salesSummary.topProducts.slice(0, 5).map((product, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">{product.name || `Product ${idx + 1}`}</span>
+                      <span className="font-medium">{product.quantity || product.count || 0} sold</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -266,31 +324,57 @@ export const CashierDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Current Shift Info */}
+      {/* Current Shift Info & Performance */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Clock className="h-5 w-5" />
-            <span>Shift Information</span>
+            <span>Current Session</span>
           </CardTitle>
+          <CardDescription>
+            Your work session and performance
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">8:00 AM</div>
-              <div className="text-sm text-muted-foreground">Shift Started</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">6:00 PM</div>
-              <div className="text-sm text-muted-foreground">Shift Ends</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+              <div className="text-2xl font-bold text-blue-700">
+                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
-              <div className="text-sm text-muted-foreground">Current Time</div>
+              <div className="text-sm text-blue-600">Current Time</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+              <div className="text-2xl font-bold text-green-700">{totalTransactions}</div>
+              <div className="text-sm text-green-600">Transactions Today</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+              <div className="text-2xl font-bold text-purple-700">
+                ${totalRevenue.toLocaleString()}
+              </div>
+              <div className="text-sm text-purple-600">Total Revenue</div>
             </div>
           </div>
+          
+          {/* Performance Badge */}
+          {totalTransactions > 0 && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <Star className="h-5 w-5 text-yellow-600" />
+                <span className="font-semibold text-yellow-900">
+                  {totalTransactions >= 20 ? 'Outstanding Performance!' :
+                   totalTransactions >= 10 ? 'Great Work Today!' :
+                   totalTransactions >= 5 ? 'Keep It Up!' :
+                   'Good Start!'}
+                </span>
+              </div>
+              <p className="text-xs text-yellow-700 mt-1">
+                {totalTransactions >= 20 ? 'You\'ve processed over 20 transactions!' :
+                 totalTransactions >= 10 ? 'You\'re doing great with ' + totalTransactions + ' sales!' :
+                 totalTransactions >= 5 ? totalTransactions + ' transactions and counting!' :
+                 'First sale of the day!'}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -25,7 +25,7 @@ import {
   FileText
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useDashboardData, useFraudStatistics, useAllShopsPerformance } from '@/hooks/useDashboard'
+import { useDashboardData, useAllShopsPerformance } from '@/hooks/useDashboard'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -38,12 +38,14 @@ export const OwnerManagerDashboard: React.FC = () => {
     revenueAnalytics,
     inventorySummary,
     expenseSummary,
+    fraudStatistics,
     isLoading,
     hasError,
     refetch
   } = useDashboardData(period)
 
-  const { data: fraudStats } = useFraudStatistics(undefined, period)
+  // Use fraudStatistics from useDashboardData instead of calling useFraudStatistics again
+  const fraudStats = fraudStatistics
   const { data: shopsPerformance, isLoading: loadingPerformance } = useAllShopsPerformance(period)
 
   // Calculate business stats from real data
