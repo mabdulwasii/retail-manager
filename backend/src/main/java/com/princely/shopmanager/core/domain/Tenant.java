@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -44,6 +45,7 @@ public class Tenant extends BaseEntity {
     @NotNull(message = "Contact user is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_user")
+    @JsonIgnoreProperties({"tenant", "roles"})
     private User contactUser;
 
     @Column(name = "contact_phone")
@@ -72,10 +74,12 @@ public class Tenant extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"tenant"})
     private Set<Shop> shops = new HashSet<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"tenant", "roles"})
     private Set<User> users = new HashSet<>();
 
     public enum TenantStatus {

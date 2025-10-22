@@ -55,8 +55,9 @@ public class AuditLog extends BaseEntity {
     @JoinColumn(name = "shop_id")
     private Shop shop;
 
+    @Builder.Default
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private String userId = "SYSTEM";
 
     @Column(name = "username")
     private String username;
