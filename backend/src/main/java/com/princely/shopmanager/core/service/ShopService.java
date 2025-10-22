@@ -75,13 +75,9 @@ public class ShopService {
             throw new IllegalArgumentException("Shop with name '" + request.getName() + "' already exists");
         }
 
-        // Create or get tenant
-        Tenant tenant = getOrCreateTenant(request.getName());
-
-        // Create shop entity
+        // Build shop entity first (without tenant)
         Shop shop = Shop.builder()
             .name(request.getName())
-            .tenant(tenant)
             .description(request.getDescription())
             .address(request.getAddress())
             .city(request.getCity())
@@ -94,6 +90,10 @@ public class ShopService {
             .status(Shop.ShopStatus.ACTIVE)
             .openingDate(request.getOpeningDate() != null ? request.getOpeningDate() : LocalDateTime.now())
             .build();
+
+        // Create or get tenant using shop information
+        Tenant tenant = getOrCreateTenant(shop);
+        shop.setTenant(tenant);
 
         shop = shopRepository.save(shop);
 
@@ -325,13 +325,13 @@ public class ShopService {
     }
 
     /**
-     * Creates or retrieves a tenant based on shop name.
+     * Creates or retrieves a tenant using shop information.
      *
-     * @param shopName Name of the shop
+     * @param shop Shop entity containing information to populate tenant
      * @return Tenant entity
      */
-    private Tenant getOrCreateTenant(String shopName) {
-        String baseTenantId = shopName.toLowerCase()
+    private Tenant getOrCreateTenant(Shop shop) {
+        String baseTenantId = shop.getName().toLowerCase()
             .replaceAll("[^a-z0-9]", "-")
             .replaceAll("-+", "-")
             .replaceAll("^-|-$", "");
@@ -342,23 +342,32 @@ public class ShopService {
             tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
         }
 
-        // Create new tenant first
+        // Create new tenant using shop information
         Tenant tenant = tenantRepository.save(Tenant.builder()
             .id(tenantId)
-            .name(shopName + " Organization")
-            .contactEmail("admin@" + baseTenantId.replaceAll("-", "") + ".com")
+            .name(shop.getName() + " Organization")
+            .description(shop.getDescription())
+            .contactEmail(shop.getEmail() != null ? shop.getEmail() : "admin@" + baseTenantId.replaceAll("-", "") + ".com")
+            .contactPhone(shop.getPhoneNumber())
+            .primaryAddress(shop.getAddress())
+            .city(shop.getCity())
+            .state(shop.getState())
+            .country(shop.getCountry())
+            .postalCode(shop.getPostalCode())
+            .taxId(shop.getTaxId())
             .status(Tenant.TenantStatus.ACTIVE)
             .build());
 
         // Create contact user for the tenant
-        String contactEmail = "admin@" + baseTenantId.replaceAll("-", "") + ".com";
+        String contactEmail = shop.getEmail() != null ? shop.getEmail() : "admin@" + baseTenantId.replaceAll("-", "") + ".com";
         User contactUser = userRepository.save(User.builder()
             .tenant(tenant)
             .keycloakId("admin-" + tenantId)
-            .username("admin-" + shopName.toLowerCase().replaceAll("[^a-z0-9]", ""))
+            .username("admin-" + shop.getName().toLowerCase().replaceAll("[^a-z0-9]", ""))
             .email(contactEmail)
             .firstName("Admin")
             .lastName("User")
+            .phoneNumber(shop.getPhoneNumber())
             .status(User.UserStatus.ACTIVE)
             .build());
 
