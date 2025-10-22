@@ -5,6 +5,7 @@ import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logSecurityEvent(Shop shop, String userId, String username,
                                 AuditLog.ActionType actionType, String description,
@@ -34,6 +36,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logDataModification(Shop shop, String userId, String username,
                                    AuditLog.ActionType actionType, String entityType,
@@ -55,6 +58,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFinancialTransaction(Shop shop, String userId, String username,
                                        AuditLog.ActionType actionType, String entityId,
@@ -71,6 +75,7 @@ public class AuditService {
     }
 
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logCustomEvent(Shop shop, String userId, String username,
                               AuditLog.AuditCategory category, AuditLog.ActionType actionType,
@@ -103,6 +108,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logError(Shop shop, String userId, String username,
                         AuditLog.ActionType actionType, String description,
@@ -133,6 +139,7 @@ public class AuditService {
     }
 
     // Convenience methods for common audit operations
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityCreation(String entityType, String entityId, String description) {
         try {
@@ -156,6 +163,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityModification(String entityType, String entityId, String description) {
         try {
@@ -179,6 +187,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityDeletion(String entityType, String entityId, String description) {
         try {
@@ -203,6 +212,7 @@ public class AuditService {
     }
 
     // Expense-specific audit methods
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logExpenseCreation(java.util.UUID expenseId, String shopId, java.util.UUID userId, java.math.BigDecimal amount) {
         try {
@@ -226,6 +236,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logExpenseUpdate(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
         try {

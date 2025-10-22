@@ -196,9 +196,9 @@ public class ShopService {
 
         Page<Shop> shops;
         if (currentTenantId == null) {
-            // No tenant context - shouldn't happen for regular users
-            log.warn("No tenant context found, returning empty result");
-            shops = Page.empty(pageable);
+            // No tenant context - return all shops (system admin)
+            shops = shopRepository.findAll(pageable);
+            log.debug("Retrieved {} shops total (system admin)", shops.getContent().size());
         } else {
             // Tenant user - can only see shops in their tenant
             shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
@@ -342,7 +342,7 @@ public class ShopService {
             tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
         }
 
-        // Create new tenant using shop information
+        // Create a new tenant using shop information
         Tenant tenant = tenantRepository.save(Tenant.builder()
             .id(tenantId)
             .name(shop.getName() + " Organization")
@@ -358,7 +358,7 @@ public class ShopService {
             .status(Tenant.TenantStatus.ACTIVE)
             .build());
 
-        // Create contact user for the tenant
+        // Create a contact user for the tenant
         String contactEmail = shop.getEmail() != null ? shop.getEmail() : "admin@" + baseTenantId.replaceAll("-", "") + ".com";
         User contactUser = userRepository.save(User.builder()
             .tenant(tenant)

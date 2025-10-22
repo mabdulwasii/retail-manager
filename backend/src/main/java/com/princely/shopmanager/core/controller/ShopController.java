@@ -167,6 +167,7 @@ public class ShopController {
         )
     })
     @GetMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER') or hasRole('EMPLOYEE')")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
