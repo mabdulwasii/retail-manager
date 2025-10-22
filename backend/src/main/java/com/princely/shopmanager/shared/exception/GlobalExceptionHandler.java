@@ -147,6 +147,7 @@ public class GlobalExceptionHandler {
 
         String message = "Database constraint violation";
         String code = "DATA_INTEGRITY_ERROR";
+        HttpStatus status = HttpStatus.CONFLICT;
 
         if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
             org.hibernate.exception.ConstraintViolationException cve =
@@ -157,6 +158,7 @@ public class GlobalExceptionHandler {
                 String sqlMsg = cve.getSQLException().getMessage();
                 if (sqlMsg.contains("null value") && sqlMsg.contains("violates not-null constraint")) {
                     code = "REQUIRED_FIELD_MISSING";
+                    status = HttpStatus.BAD_REQUEST; // 400 for validation errors
 
                     // Try to extract the column name from error message
                     // Format: null value in column "column_name" of relation "table_name"
@@ -173,7 +175,7 @@ public class GlobalExceptionHandler {
                         message = "Required field is missing or null";
                     }
 
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                    return ResponseEntity.status(status)
                         .body(new ErrorResponse(code, message));
                 }
             }
@@ -184,10 +186,12 @@ public class GlobalExceptionHandler {
                     cve.getConstraintName().toLowerCase().contains("uq_")) {
                     code = "DUPLICATE_ENTRY";
                     message = "A record with this information already exists";
+                    status = HttpStatus.CONFLICT; // 409 for conflicts
                 } else if (cve.getConstraintName().toLowerCase().contains("foreign") ||
                            cve.getConstraintName().toLowerCase().contains("fk_")) {
                     code = "INVALID_REFERENCE";
                     message = "Referenced record does not exist";
+                    status = HttpStatus.BAD_REQUEST; // 400 for invalid references
                 }
             }
         } else if (e.getMessage() != null) {
@@ -196,16 +200,19 @@ public class GlobalExceptionHandler {
             if (errorMsg.contains("null value") && errorMsg.contains("not-null constraint")) {
                 code = "REQUIRED_FIELD_MISSING";
                 message = "Required field is missing or null";
+                status = HttpStatus.BAD_REQUEST; // 400 for validation errors
             } else if (errorMsg.contains("unique") || errorMsg.contains("duplicate")) {
                 code = "DUPLICATE_ENTRY";
                 message = "A record with this information already exists";
+                status = HttpStatus.CONFLICT; // 409 for conflicts
             } else if (errorMsg.contains("foreign key") || errorMsg.contains("violates")) {
                 code = "INVALID_REFERENCE";
                 message = "Referenced record does not exist";
+                status = HttpStatus.BAD_REQUEST; // 400 for invalid references
             }
         }
 
-        return ResponseEntity.status(HttpStatus.CONFLICT)
+        return ResponseEntity.status(status)
             .body(new ErrorResponse(code, message));
     }
 
