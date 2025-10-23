@@ -134,9 +134,11 @@ export const useInventory = () => {
       if (filter?.maxStock !== undefined) queryParams.append('maxStock', filter.maxStock.toString())
       if (filter?.searchQuery) queryParams.append('search', filter.searchQuery)
 
-      const data = await api.get<InventoryItem[]>(`/shops/${shopId}/inventory?${queryParams}`)
-      setInventory(data)
-      return data
+      const data = await api.get<any>(`/shops/${shopId}/inventory?${queryParams}`)
+      // Handle paginated response
+      const items = Array.isArray(data) ? data : (data?.content || [])
+      setInventory(items)
+      return items
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -170,7 +172,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/adjust`, request)
+      const updatedItem = await api.put<InventoryItem>(`/inventory/${inventoryId}/adjust-stock`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -236,7 +238,9 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const history = await api.get<InventoryHistory[]>(`/inventory/${inventoryId}/history`)
+      const data = await api.get<any>(`/inventory/${inventoryId}/history`)
+      // Handle paginated response
+      const history = Array.isArray(data) ? data : (data?.content || [])
       setInventoryHistory(history)
       return history
     } catch (err) {
@@ -313,7 +317,9 @@ export const useInventory = () => {
   // Get low stock alerts
   const getLowStockAlerts = useCallback(async (shopId: string): Promise<InventoryItem[]> => {
     try {
-      return await api.get<InventoryItem[]>(`/shops/${shopId}/inventory/low-stock`)
+      const data = await api.get<any>(`/shops/${shopId}/inventory/low-stock`)
+      // Handle paginated response
+      return Array.isArray(data) ? data : (data?.content || [])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -324,7 +330,9 @@ export const useInventory = () => {
   // Get expiring items
   const getExpiringItems = useCallback(async (shopId: string, daysAhead: number = 30): Promise<InventoryItem[]> => {
     try {
-      return await api.get<InventoryItem[]>(`/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`)
+      const data = await api.get<any>(`/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`)
+      // Handle paginated response
+      return Array.isArray(data) ? data : (data?.content || [])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)

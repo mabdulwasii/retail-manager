@@ -5,7 +5,12 @@ import { useAuth } from "@/context/ManualAuthContext";
 import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { AuditPage } from "@/pages/audit/AuditPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
-import { InventoryPage } from "@/pages/inventory/InventoryPage";
+import { 
+  InventoryPage,
+  InventoryDetailPage,
+  LowStockReportPage,
+  ExpiringItemsPage
+} from "@/pages/inventory";
 import { InvestmentsPage } from "@/pages/investments/InvestmentsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
@@ -133,6 +138,42 @@ export const AuthenticatedApp: React.FC = () => {
               roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
             >
               <InventoryPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/inventory/low-stock"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+            >
+              <LowStockReportPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/inventory/expiring"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+            >
+              <ExpiringItemsPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/inventory/:inventoryId"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+            >
+              <InventoryDetailPage />
             </ProtectedRoute>
           </Layout>
         }
