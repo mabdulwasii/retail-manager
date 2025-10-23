@@ -1,5 +1,7 @@
 {{- if .Values.keycloak.enabled }}
 {{- $themeName := include "shop-manager.keycloak.themeName" . -}}
+{{- $platformName := .Values.branding.platformName | default "Shop Manager" -}}
+{{- $platformDescription := .Values.branding.platformDescription | default "Retail Management Platform" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,11 +14,11 @@ data:
 {{ .Files.Get "keycloak-theme/shop-manager/login/theme.properties" | indent 4 }}
 
   template.ftl: |
-{{ .Files.Get "keycloak-theme/shop-manager/login/template.ftl" | indent 4 }}
+{{ tpl (.Files.Get "keycloak-theme/shop-manager/login/template.ftl") . | indent 4 }}
 
   login.ftl: |
-{{ .Files.Get "keycloak-theme/shop-manager/login/login.ftl" | indent 4 }}
+{{ tpl (.Files.Get "keycloak-theme/shop-manager/login/login.ftl") . | indent 4 }}
 
   shop-manager.css: |
-{{ .Files.Get "keycloak-theme/shop-manager/login/resources/css/shop-manager.css" | indent 4 }}
+{{ tpl (.Files.Get "keycloak-theme/shop-manager/login/resources/css/shop-manager.css") . | indent 4 }}
 {{- end }}
