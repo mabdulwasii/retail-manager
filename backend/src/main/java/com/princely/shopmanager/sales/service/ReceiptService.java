@@ -27,7 +27,7 @@ public class ReceiptService {
     public Receipt generateReceipt(String transactionId) {
         log.debug("Generating receipt for transaction with Id {}", transactionId);
 
-        SalesTransaction transaction = salesTransactionService.findById(transactionId);
+        SalesTransaction transaction = salesTransactionService.getTransactionById(transactionId);
 
         // Check if receipt already exists
         Optional<Receipt> existingReceipt = receiptRepository.findByTransaction(transaction);

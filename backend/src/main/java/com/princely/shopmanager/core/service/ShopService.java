@@ -52,19 +52,21 @@ public class ShopService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final ShopStatusStateMachine stateMachine;
+    private final com.princely.shopmanager.shared.security.TenantSecurityValidator tenantSecurityValidator;
 
     /**
-     * Creates a new shop with automatic tenant ID generation.
+     * Creates a new shop for the current tenant.
      *
      * This method:
-     * - Generates a unique tenant ID based on shop name
+     * - Retrieves the tenant ID from the authenticated user's context
+     * - Associates the shop with the user's existing tenant
      * - Creates the shop entity with proper defaults
      * - Saves to database with audit logging
-     * - Sets up default shop configuration
      *
      * @param request Shop creation request with validation
      * @return Created shop response DTO
      * @throws IllegalArgumentException if shop name already exists
+     * @throws IllegalStateException if no tenant context or tenant not found
      */
     @Transactional
     public ShopResponse createShop(ShopCreateRequest request) {
@@ -75,7 +77,12 @@ public class ShopService {
             throw new IllegalArgumentException("Shop with name '" + request.getName() + "' already exists");
         }
 
-        // Build shop entity first (without tenant)
+        // Get tenant ID from logged-in user's context
+        String tenantId = TenantContext.requireCurrentTenant();
+        Tenant tenant = tenantRepository.findById(tenantId)
+            .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+
+        // Build shop entity
         Shop shop = Shop.builder()
             .name(request.getName())
             .description(request.getDescription())
@@ -89,22 +96,19 @@ public class ShopService {
             .taxId(request.getTaxId())
             .status(Shop.ShopStatus.ACTIVE)
             .openingDate(request.getOpeningDate() != null ? request.getOpeningDate() : LocalDateTime.now())
+            .tenant(tenant)
             .build();
-
-        // Create or get tenant using shop information
-        Tenant tenant = getOrCreateTenant(shop);
-        shop.setTenant(tenant);
 
         shop = shopRepository.save(shop);
 
         // Audit the creation
         auditService.logEntityCreation("Shop", shop.getId(),
-            "Shop created: " + shop.getName() + " with tenant ID: " + tenant.getId());
+            "Shop created: " + shop.getName() + " for tenant ID: " + tenant.getId());
 
         // Publish shop created event
         eventPublisher.publishEvent(new ShopCreatedEvent(shop.getId(), tenant.getId(), shop.getName()));
 
-        log.info("Successfully created shop with ID: {} and tenant ID: {}", shop.getId(), tenant.getId());
+        log.info("Successfully created shop with ID: {} for tenant ID: {}", shop.getId(), tenant.getId());
         return ShopResponse.fromEntity(shop);
     }
 
@@ -130,11 +134,8 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         // Store original values for audit
         String originalName = shop.getName();
@@ -172,11 +173,8 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         return ShopResponse.fromEntity(shop);
     }
@@ -269,11 +267,8 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         Shop.ShopStatus originalStatus = shop.getStatus();
 
@@ -307,11 +302,8 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         // Soft delete by changing status
         shop.setStatus(Shop.ShopStatus.CLOSED);
@@ -324,55 +316,4 @@ public class ShopService {
         log.info("Successfully deleted shop: {}", shopId);
     }
 
-    /**
-     * Creates or retrieves a tenant using shop information.
-     *
-     * @param shop Shop entity containing information to populate tenant
-     * @return Tenant entity
-     */
-    private Tenant getOrCreateTenant(Shop shop) {
-        String baseTenantId = shop.getName().toLowerCase()
-            .replaceAll("[^a-z0-9]", "-")
-            .replaceAll("-+", "-")
-            .replaceAll("^-|-$", "");
-
-        // Ensure uniqueness by appending UUID suffix if needed
-        String tenantId = "tenant-" + baseTenantId;
-        if (tenantRepository.existsById(tenantId)) {
-            tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
-        }
-
-        // Create a new tenant using shop information
-        Tenant tenant = tenantRepository.save(Tenant.builder()
-            .id(tenantId)
-            .name(shop.getName() + " Organization")
-            .description(shop.getDescription())
-            .contactEmail(shop.getEmail() != null ? shop.getEmail() : "admin@" + baseTenantId.replaceAll("-", "") + ".com")
-            .contactPhone(shop.getPhoneNumber())
-            .primaryAddress(shop.getAddress())
-            .city(shop.getCity())
-            .state(shop.getState())
-            .country(shop.getCountry())
-            .postalCode(shop.getPostalCode())
-            .taxId(shop.getTaxId())
-            .status(Tenant.TenantStatus.ACTIVE)
-            .build());
-
-        // Create a contact user for the tenant
-        String contactEmail = shop.getEmail() != null ? shop.getEmail() : "admin@" + baseTenantId.replaceAll("-", "") + ".com";
-        User contactUser = userRepository.save(User.builder()
-            .tenant(tenant)
-            .keycloakId("admin-" + tenantId)
-            .username("admin-" + shop.getName().toLowerCase().replaceAll("[^a-z0-9]", ""))
-            .email(contactEmail)
-            .firstName("Admin")
-            .lastName("User")
-            .phoneNumber(shop.getPhoneNumber())
-            .status(User.UserStatus.ACTIVE)
-            .build());
-
-        // Update tenant with contact user reference
-        tenant.setContactUser(contactUser);
-        return tenantRepository.save(tenant);
-    }
 }

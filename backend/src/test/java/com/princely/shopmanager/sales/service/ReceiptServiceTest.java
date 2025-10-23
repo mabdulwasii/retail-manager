@@ -114,7 +114,7 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
+        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
         Receipt result = receiptService.generateReceipt(testTransaction.getId());
@@ -141,7 +141,7 @@ class ReceiptServiceTest {
     void generateReceipt_WithExistingReceipt_ShouldReturnExisting() {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.of(testReceipt));
-        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
+        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
         Receipt result = receiptService.generateReceipt(testTransaction.getId());
@@ -162,7 +162,7 @@ class ReceiptServiceTest {
 
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
+        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
         Receipt result = receiptService.generateReceipt(testTransaction.getId());
@@ -185,7 +185,7 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.findById(any())).thenReturn(testTransaction);
+        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
         receiptService.generateReceipt(testTransaction.getId());
