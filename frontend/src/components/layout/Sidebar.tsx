@@ -34,13 +34,13 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: [],
+    roles: [], // Available to all authenticated users
   },
   {
     title: 'Shops',
     href: '/shops',
     icon: Store,
-    roles: ['SHOP_OWNER', 'MANAGER'],
+    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER'],
   },
   {
     title: 'Products',
@@ -52,13 +52,13 @@ const navItems: NavItem[] = [
     title: 'Inventory',
     href: '/inventory',
     icon: Warehouse,
-    roles: ['SHOP_OWNER', 'MANAGER'],
+    roles: ['SHOP_OWNER', 'MANAGER', 'INVENTORY_MANAGER'],
   },
   {
     title: 'Sales',
     href: '/sales',
     icon: ShoppingCart,
-    roles: ['SHOP_OWNER', 'MANAGER', 'CASHIER'],
+    roles: ['SHOP_OWNER', 'MANAGER', 'CASHIER', 'SALES_MANAGER'],
   },
   {
     title: 'Receipts',
@@ -76,13 +76,13 @@ const navItems: NavItem[] = [
     title: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    roles: ['SHOP_OWNER', 'MANAGER'],
+    roles: ['SHOP_OWNER', 'MANAGER', 'ACCOUNTANT'],
   },
   {
     title: 'Audit Logs',
     href: '/audit',
     icon: FileText,
-    roles: ['SHOP_OWNER', 'SYSTEM_ADMIN'],
+    roles: ['SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR'],
   },
 ]
 

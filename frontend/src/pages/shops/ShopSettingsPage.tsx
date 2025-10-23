@@ -27,7 +27,10 @@ import {
   CreditCard,
   Bell,
   Shield,
-  RefreshCw
+  RefreshCw,
+  Palette,
+  Upload,
+  CheckCircle
 } from 'lucide-react'
 import { useShopById } from '@/hooks/useShops'
 import {
@@ -35,6 +38,8 @@ import {
   useUpdateShopConfiguration,
   useShopCustomization,
   useUpdateShopCustomization,
+  useUpdateColors,
+  useUploadLogo,
 } from '@/hooks/useShopSettings'
 import { ThemeVariant, FontSize, DashboardLayout } from '@/services/shopConfigurationService'
 
@@ -81,6 +86,19 @@ export const ShopSettingsPage: React.FC = () => {
   const [enableAnimations, setEnableAnimations] = useState(true)
   const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false)
 
+  // Brand colors state
+  const [primaryColor, setPrimaryColor] = useState('#3B82F6')
+  const [secondaryColor, setSecondaryColor] = useState('#10B981')
+  const [accentColor, setAccentColor] = useState('#F59E0B')
+
+  // Logo state
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
+  // Additional mutations
+  const updateColorsMutation = useUpdateColors()
+  const uploadLogoMutation = useUploadLogo()
+
   useEffect(() => {
     if (configuration) {
       setInvestmentEnabled(configuration.investmentEnabled ?? false)
@@ -103,6 +121,9 @@ export const ShopSettingsPage: React.FC = () => {
       setDashboardLayout(customization.dashboardLayout || 'GRID')
       setEnableAnimations(customization.enableAnimations ?? true)
       setShowAdvancedFeatures(customization.showAdvancedFeatures ?? false)
+      setPrimaryColor(customization.primaryColor || '#3B82F6')
+      setSecondaryColor(customization.secondaryColor || '#10B981')
+      setAccentColor(customization.accentColor || '#F59E0B')
     }
   }, [customization])
 
@@ -212,12 +233,13 @@ export const ShopSettingsPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-4 h-auto gap-1">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="tax">Tax & Currency</TabsTrigger>
           <TabsTrigger value="receipts">Receipts</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="logo">Logo</TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -428,7 +450,7 @@ export const ShopSettingsPage: React.FC = () => {
         </TabsContent>
 
         {/* Appearance Settings */}
-        <TabsContent value="payments" className="space-y-4">
+        <TabsContent value="appearance" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -537,7 +559,267 @@ export const ShopSettingsPage: React.FC = () => {
           </Card>
         </TabsContent>
 
-        {/* Receipt Customization */}
+        {/* Brand Colors */}
+        <TabsContent value="branding" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Brand Colors
+              </CardTitle>
+              <CardDescription>
+                Choose colors that represent your shop's brand identity
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Primary Color */}
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="primaryColor"
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="h-10 w-20 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="flex-1 font-mono"
+                      placeholder="#3B82F6"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Used for main buttons and headers</p>
+                </div>
+
+                {/* Secondary Color */}
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="secondaryColor"
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      className="h-10 w-20 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      className="flex-1 font-mono"
+                      placeholder="#10B981"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Used for success states</p>
+                </div>
+
+                {/* Accent Color */}
+                <div className="space-y-2">
+                  <Label htmlFor="accentColor">Accent Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="accentColor"
+                      type="color"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="h-10 w-20 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="flex-1 font-mono"
+                      placeholder="#F59E0B"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Used for highlights and badges</p>
+                </div>
+              </div>
+
+              {/* Color Preview */}
+              <div className="space-y-2">
+                <Label>Preview</Label>
+                <div className="grid grid-cols-3 gap-4 p-4 border rounded-lg">
+                  <div className="space-y-2">
+                    <div 
+                      className="h-16 rounded-md"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                    <p className="text-xs text-center font-medium">Primary</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div 
+                      className="h-16 rounded-md"
+                      style={{ backgroundColor: secondaryColor }}
+                    />
+                    <p className="text-xs text-center font-medium">Secondary</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div 
+                      className="h-16 rounded-md"
+                      style={{ backgroundColor: accentColor }}
+                    />
+                    <p className="text-xs text-center font-medium">Accent</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => {
+                    if (!shopId) return
+                    updateColorsMutation.mutate({ 
+                      shopId, 
+                      colors: { primaryColor, secondaryColor, accentColor } 
+                    })
+                  }}
+                  disabled={updateColorsMutation.isPending}
+                >
+                  {updateColorsMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : updateColorsMutation.isSuccess ? (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Colors
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Logo Upload */}
+        <TabsContent value="logo" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Shop Logo
+              </CardTitle>
+              <CardDescription>
+                Upload your shop's logo (PNG, JPG, SVG - Max 2MB)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Current Logo */}
+              {customization?.logoUrl && (
+                <div className="space-y-2">
+                  <Label>Current Logo</Label>
+                  <div className="flex items-center gap-4 p-4 border rounded-lg">
+                    <img
+                      src={customization.logoUrl}
+                      alt="Shop Logo"
+                      className="h-20 w-20 object-contain border rounded"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">Active Logo</p>
+                      <p className="text-xs text-muted-foreground">
+                        Uploaded on {new Date(customization.updatedAt || '').toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Logo Preview (if new file selected) */}
+              {logoPreview && (
+                <div className="space-y-2">
+                  <Label>New Logo Preview</Label>
+                  <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted">
+                    <img
+                      src={logoPreview}
+                      alt="Logo Preview"
+                      className="h-20 w-20 object-contain border rounded bg-white"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{logoFile?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {logoFile && `${(logoFile.size / 1024).toFixed(2)} KB`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Section */}
+              <div className="space-y-2">
+                <Label htmlFor="logo">Upload New Logo</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+
+                      // Validate file type
+                      if (!file.type.startsWith('image/')) {
+                        alert('Please upload an image file')
+                        return
+                      }
+
+                      // Validate file size (max 2MB)
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB')
+                        return
+                      }
+
+                      setLogoFile(file)
+                      
+                      // Create preview
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setLogoPreview(reader.result as string)
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                    className="cursor-pointer"
+                  />
+                  {logoFile && (
+                    <Button 
+                      onClick={() => {
+                        if (!shopId || !logoFile) return
+                        uploadLogoMutation.mutate({ shopId, file: logoFile })
+                      }}
+                      disabled={uploadLogoMutation.isPending}
+                    >
+                      {uploadLogoMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Recommended size: 200x200px. Transparent background works best.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Receipt Customization - Removed, moved to Receipts tab */}
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>

@@ -123,7 +123,10 @@ export const ShopDetailPage: React.FC = () => {
                 <DropdownMenuLabel>Shop Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to={`/shops/${shopId}/settings`}>Shop Settings</Link>
+                  <Link to={`/shops/${shopId}/settings`}>
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Shop Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Change Status</DropdownMenuLabel>

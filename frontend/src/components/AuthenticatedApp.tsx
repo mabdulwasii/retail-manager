@@ -67,7 +67,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
               <ShopsPage />
             </ProtectedRoute>
           </Layout>
@@ -77,7 +77,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER"]}>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER"]}>
               <CreateShopPage />
             </ProtectedRoute>
           </Layout>
@@ -87,7 +87,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
               <ShopDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -97,7 +97,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId/edit"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
               <EditShopPage />
             </ProtectedRoute>
           </Layout>

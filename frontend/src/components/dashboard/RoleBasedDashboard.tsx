@@ -16,7 +16,8 @@ const hasPermissionForView = (viewType: string, userRoles: string[]): boolean =>
   
   const viewPermissions: Record<string, string[]> = {
     "admin": ["SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "multi-shop": ["SHOP_OWNER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
+    "tenant": ["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"],
+    "multi-shop": ["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
     "business": ["SHOP_OWNER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
     "operations": ["SHOP_OWNER", "MANAGER", "SALES_MANAGER", "INVENTORY_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
     "financial": ["ACCOUNTANT", "SHOP_OWNER", "MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
@@ -67,6 +68,7 @@ export const RoleBasedDashboard: React.FC = () => {
       switch (viewType) {
         case "admin":
           return <AdminDashboard />;
+        case "tenant":
         case "multi-shop":
         case "business":
         case "operations":
@@ -101,6 +103,7 @@ export const RoleBasedDashboard: React.FC = () => {
   const rolePriority = [
     "SYSTEM_ADMIN",
     "SUPER_ADMIN",
+    "TENANT_ADMIN",
     "SHOP_OWNER",
     "MANAGER",
     "SALES_MANAGER",
@@ -121,6 +124,7 @@ export const RoleBasedDashboard: React.FC = () => {
     case "SUPER_ADMIN":
       return <AdminDashboard />;
 
+    case "TENANT_ADMIN":
     case "SHOP_OWNER":
     case "MANAGER":
     case "SALES_MANAGER":
