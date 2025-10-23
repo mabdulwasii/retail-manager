@@ -19,6 +19,9 @@ spring:
         format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
         jdbc:
           time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:UTC}
+          batch_size: 0
+        order_inserts: false
+        order_updates: false
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
 
   flyway:

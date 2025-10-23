@@ -1,6 +1,6 @@
 global:
-  appName: "retail"
-  domain: "gomco.com"
+  appName: "sales"
+  domain: "benq.com"
 
 # Image pull secrets for private GitHub Container Registry
 imagePullSecrets:
@@ -10,7 +10,7 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.11
+    tag: backend-v0.0.15
     pullPolicy: Always
   podAnnotations:
     configVersion: "11"  # Force pod restart with fixed error messages and Keycloak protocol mappers
@@ -24,18 +24,18 @@ frontend:
     pullPolicy: Always
 
 branding:
-  platformName: "GOMCO Retail Pro"
-  companyName: "GOMCO Corporation"
-  platformDescription: "Advanced Retail Management System"
+  platformName: "Benq Sales"
+  companyName: "Benq Electronics"
+  platformDescription: "Advanced Electronics"
   colors:
-    primary: "#2E7D32"
-    secondary: "#FF6F00"
+    primary: "#2A6D32"
+    secondary: "#EE6F00"
 
 # TLS Configuration
 tls:
   enabled: true
   issuer: "local-ca-issuer"  # Use local-ca-issuer for local development
-  email: "admin@gomco.com"
+  email: "sales@benq.com"
   localCertInstallation:
     enabled: true
 
