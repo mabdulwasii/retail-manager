@@ -44,7 +44,7 @@ public class Tenant extends BaseEntity {
 
     @NotNull(message = "Contact user is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contact_user")
+    @JoinColumn(name = "contact_user_id")
     @JsonIgnoreProperties({"tenant", "roles"})
     private User contactUser;
 
