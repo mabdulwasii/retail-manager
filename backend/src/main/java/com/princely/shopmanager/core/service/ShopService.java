@@ -182,26 +182,20 @@ public class ShopService {
     /**
      * Retrieves shops accessible to the current user with pagination.
      *
-     * For users with tenant context, returns only shops within their tenant.
-     * Tenant isolation is automatically enforced.
+     * Returns only shops within the user's tenant. Tenant context is required.
+     * For system admin access to all shops, use getAllShopsSystemAdmin() instead.
      *
      * @param pageable Pagination parameters
      * @return Page of shop response DTOs
+     * @throws IllegalStateException if no tenant context is available
      */
     @Transactional(readOnly = true)
     public Page<ShopResponse> getShops(Pageable pageable) {
-        String currentTenantId = TenantContext.getCurrentTenantId();
+        // Require tenant context - system admins should use getAllShopsSystemAdmin()
+        String currentTenantId = TenantContext.requireCurrentTenant();
 
-        Page<Shop> shops;
-        if (currentTenantId == null) {
-            // No tenant context - return all shops (system admin)
-            shops = shopRepository.findAll(pageable);
-            log.debug("Retrieved {} shops total (system admin)", shops.getContent().size());
-        } else {
-            // Tenant user - can only see shops in their tenant
-            shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
-            log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
-        }
+        Page<Shop> shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
+        log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
 
         return shops.map(ShopResponse::fromEntity);
     }
