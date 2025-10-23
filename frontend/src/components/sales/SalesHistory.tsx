@@ -1,49 +1,30 @@
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useSales, SalesTransaction, SalesFilter } from '@/hooks/useSales'
+import { SalesTransaction } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
 import {
-  CalendarIcon,
-  SearchIcon,
   ReceiptIcon,
   PrinterIcon,
   EyeIcon,
-  FilterIcon,
-  RefreshCwIcon,
 } from 'lucide-react'
 
-export const SalesHistory: React.FC = () => {
-  const { sales, fetchSales, printReceipt, isLoading } = useSales()
+interface SalesHistoryProps {
+  transactions: SalesTransaction[]
+}
+
+export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
+  const navigate = useNavigate()
   const { formatCurrency } = useCurrency()
-  const [filter, setFilter] = useState<SalesFilter>({})
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTransaction, setSelectedTransaction] = useState<SalesTransaction | null>(null)
 
-  useEffect(() => {
-    fetchSales()
-  }, [fetchSales])
-
-  const handleFilterChange = (key: keyof SalesFilter, value: string) => {
-    const newFilter = { ...filter, [key]: value || undefined }
-    setFilter(newFilter)
+  const handleViewTransaction = (transactionId: string) => {
+    navigate(`/sales/${transactionId}`)
   }
 
-  const handleSearch = () => {
-    const searchFilter: SalesFilter = {
-      ...filter,
-      ...(searchQuery && { customerId: searchQuery })
-    }
-    fetchSales(searchFilter)
-  }
-
-  const handleClearFilters = () => {
-    setFilter({})
-    setSearchQuery('')
-    fetchSales()
+  const handlePrintReceipt = (transactionId: string) => {
+    // This will be handled by the parent component or service
+    console.log('Print receipt:', transactionId)
   }
 
   const getStatusBadge = (status: string) => {
@@ -86,170 +67,17 @@ export const SalesHistory: React.FC = () => {
     })
   }
 
-  const totalSales = sales.reduce((sum, sale) => sum + sale.totalAmount, 0)
-  const completedSales = sales.filter(sale => sale.status === 'COMPLETED').length
-
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Sales</p>
-                <p className="text-2xl font-bold">{sales.length}</p>
-              </div>
-              <ReceiptIcon className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold">{completedSales}</p>
-              </div>
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                <div className="h-4 w-4 rounded-full bg-green-600"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
-              </div>
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 font-bold">₦</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <FilterIcon className="h-5 w-5" />
-            <span>Filters</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-              </label>
-              <Input
-                type="date"
-                value={filter.startDate || ''}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
-              </label>
-              <Input
-                type="date"
-                value={filter.endDate || ''}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={filter.status || ''}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Status</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="PENDING">Pending</option>
-                <option value="CANCELLED">Cancelled</option>
-                <option value="REFUNDED">Refunded</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Method
-              </label>
-              <select
-                value={filter.paymentMethod || ''}
-                onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Methods</option>
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="mobile">Mobile Money</option>
-                <option value="bank_transfer">Bank Transfer</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Receipt number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex space-x-2 mt-4">
-            <Button onClick={handleSearch} disabled={isLoading}>
-              <SearchIcon className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-            <Button variant="outline" onClick={handleClearFilters}>
-              Clear Filters
-            </Button>
-            <Button variant="outline" onClick={() => fetchSales()}>
-              <RefreshCwIcon className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sales List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sales Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner size="md" />
-              <span className="ml-2">Loading sales...</span>
-            </div>
-          ) : sales.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <ReceiptIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-              <p>No sales found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sales.map((sale) => (
+    <div className="space-y-4">
+      {transactions.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <ReceiptIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+          <p>No sales found</p>
+          <p className="text-sm">Try adjusting your filters</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {transactions.map((sale) => (
                 <div key={sale.id} className="border rounded-lg p-4 hover:bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -300,7 +128,8 @@ export const SalesHistory: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedTransaction(sale)}
+                        onClick={() => handleViewTransaction(sale.id)}
+                        title="View Details"
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Button>
@@ -308,18 +137,17 @@ export const SalesHistory: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => printReceipt(sale.id)}
+                        onClick={() => handlePrintReceipt(sale.id)}
+                        title="Print Receipt"
                       >
                         <PrinterIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

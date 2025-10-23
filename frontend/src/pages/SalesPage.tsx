@@ -15,6 +15,8 @@ export const SalesPage: React.FC = () => {
   const {
     cart,
     cartSummary,
+    sales,
+    fetchSales,
     isLoading,
     error,
     addToCart,
@@ -29,15 +31,21 @@ export const SalesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos')
   const [barcodeInput, setBarcodeInput] = useState('')
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [scannerActive, setScannerActive] = useState(false)
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError()
-      }, 5000)
-      return () => clearTimeout(timer)
+    if (activeTab === 'history') {
+      fetchSales()
     }
+  }, [activeTab, fetchSales])
+
+  useEffect(() => {
+    if (!error) return
+
+    const timer = setTimeout(() => {
+      clearError()
+    }, 5000)
+    
+    return () => clearTimeout(timer)
   }, [error, clearError])
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
@@ -207,7 +215,7 @@ export const SalesPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <SalesHistory />
+        <SalesHistory transactions={sales} />
       )}
 
       {/* Payment Modal */}

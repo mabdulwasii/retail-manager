@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
+import { api } from '@/services/api'
 
 export interface Product {
   id: string
@@ -77,18 +78,10 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+      const data = await api.get<Product[]>(`/products/search`, {
+        params: { q: query }
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to search products')
-      }
-
-      const data = await response.json()
+      
       setProducts(data)
       return data
     } catch (err) {
@@ -105,23 +98,12 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/products/barcode/${encodeURIComponent(barcode)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null
-        }
-        throw new Error('Failed to find product by barcode')
-      }
-
-      const product = await response.json()
+      const product = await api.get<Product>(`/products/barcode/${encodeURIComponent(barcode)}`)
       return product
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return null
+      }
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return null
@@ -243,20 +225,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(saleData)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to process sale')
-      }
-
-      const sale = await response.json()
+      const sale = await api.post<SalesTransaction>('/sales', saleData)
 
       // Clear cart after successful sale
       clearCart()
@@ -280,27 +249,10 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const queryParams = new URLSearchParams()
-      if (filter?.startDate) queryParams.append('startDate', filter.startDate)
-      if (filter?.endDate) queryParams.append('endDate', filter.endDate)
-      if (filter?.customerId) queryParams.append('customerId', filter.customerId)
-      if (filter?.status) queryParams.append('status', filter.status)
-      if (filter?.paymentMethod) queryParams.append('paymentMethod', filter.paymentMethod)
-      if (filter?.minAmount) queryParams.append('minAmount', filter.minAmount.toString())
-      if (filter?.maxAmount) queryParams.append('maxAmount', filter.maxAmount.toString())
-
-      const response = await fetch(`/api/sales?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+      const salesData = await api.get<SalesTransaction[]>('/sales', {
+        params: filter
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch sales')
-      }
-
-      const salesData = await response.json()
+      
       setSales(salesData)
       return salesData
     } catch (err) {
@@ -317,23 +269,12 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/sales/${saleId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null
-        }
-        throw new Error('Failed to fetch sale')
-      }
-
-      const sale = await response.json()
+      const sale = await api.get<SalesTransaction>(`/sales/${saleId}`)
       return sale
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return null
+      }
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return null
@@ -348,17 +289,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/sales/${saleId}/receipt`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate receipt')
-      }
-
-      const blob = await response.blob()
+      const blob = await api.getBlob(`/sales/${saleId}/receipt`)
       const url = window.URL.createObjectURL(blob)
       return url
     } catch (err) {

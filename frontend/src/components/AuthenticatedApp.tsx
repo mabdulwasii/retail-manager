@@ -16,7 +16,8 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
-import { SalesPage } from "@/pages/sales/SalesPage";
+import { SalesPage, TransactionDetailPage } from "@/pages/sales";
+import { POSPage } from "@/pages/pos/POSPage";
 import { CreateShopPage } from "@/pages/shops/CreateShopPage";
 import { EditShopPage } from "@/pages/shops/EditShopPage";
 import { ShopDetailPage } from "@/pages/shops/ShopDetailPage";
@@ -179,7 +180,17 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
 
-      {/* Sales & Receipts */}
+      {/* Point of Sale & Sales */}
+      <Route
+        path="/pos"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "CASHIER"]}>
+              <POSPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
       <Route
         path="/sales"
         element={
@@ -188,6 +199,18 @@ export const AuthenticatedApp: React.FC = () => {
               roles={["SHOP_OWNER", "MANAGER", "CASHIER", "SALES_MANAGER"]}
             >
               <SalesPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/sales/:transactionId"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["SHOP_OWNER", "MANAGER", "CASHIER", "SALES_MANAGER"]}
+            >
+              <TransactionDetailPage />
             </ProtectedRoute>
           </Layout>
         }
