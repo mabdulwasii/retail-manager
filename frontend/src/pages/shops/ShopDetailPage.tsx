@@ -29,6 +29,8 @@ import {
 import { useShopById } from '@/hooks/useShops'
 import { useSalesSummary, useInventorySummary, useExpenseSummary } from '@/hooks/useDashboard'
 import { ShopStatusBadge, ShopMetricsCard } from '@/components/shops'
+import { useAuth } from '@/context/ManualAuthContext'
+import { RoleGroups } from '@/types/roles'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,12 +44,18 @@ import { useUpdateShopStatus } from '@/hooks/useShops'
 export const ShopDetailPage: React.FC = () => {
   const { shopId } = useParams<{ shopId: string }>()
   const navigate = useNavigate()
+  const { hasAnyRole } = useAuth()
   
   const { data: shop, isLoading, isError, error } = useShopById(shopId)
   const { data: salesSummary, isLoading: loadingSales } = useSalesSummary(shopId, 'month')
   const { data: inventorySummary, isLoading: loadingInventory } = useInventorySummary(shopId)
   const { data: expenseSummary, isLoading: loadingExpenses } = useExpenseSummary(shopId, 'month')
   const updateStatusMutation = useUpdateShopStatus()
+  
+  // Only TENANT_ADMIN, SHOP_OWNER, and MANAGER can edit shops
+  const canEditShop = hasAnyRole(RoleGroups.SHOP_MANAGERS)
+  // Only SHOP_OWNER and MANAGER can access settings
+  const canManageSettings = hasAnyRole(RoleGroups.SETTINGS_MANAGERS)
 
   const handleStatusChange = async (newStatus: string) => {
     if (!shopId) return
@@ -105,48 +113,54 @@ export const ShopDetailPage: React.FC = () => {
           </div>
 
           <div className="flex gap-2">
-            <Link to={`/shops/${shopId}/edit`}>
-              <Button>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Shop
-              </Button>
-            </Link>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <SettingsIcon className="mr-2 h-4 w-4" />
-                  Actions
+            {canEditShop && (
+              <Link to={`/shops/${shopId}/edit`}>
+                <Button>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Shop
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Shop Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={`/shops/${shopId}/settings`}>
+              </Link>
+            )}
+            
+            {canEditShop && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
                     <SettingsIcon className="mr-2 h-4 w-4" />
-                    Shop Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                {shop.status !== 'ACTIVE' && (
-                  <DropdownMenuItem onClick={() => handleStatusChange('ACTIVE')}>
-                    Set as Active
-                  </DropdownMenuItem>
-                )}
-                {shop.status !== 'INACTIVE' && (
-                  <DropdownMenuItem onClick={() => handleStatusChange('INACTIVE')}>
-                    Set as Inactive
-                  </DropdownMenuItem>
-                )}
-                {shop.status !== 'SUSPENDED' && (
-                  <DropdownMenuItem onClick={() => handleStatusChange('SUSPENDED')}>
-                    Suspend Shop
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Shop Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {canManageSettings && (
+                    <DropdownMenuItem asChild>
+                      <Link to={`/shops/${shopId}/settings`}>
+                        <SettingsIcon className="mr-2 h-4 w-4" />
+                        Shop Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                  {shop.status !== 'ACTIVE' && (
+                    <DropdownMenuItem onClick={() => handleStatusChange('ACTIVE')}>
+                      Set as Active
+                    </DropdownMenuItem>
+                  )}
+                  {shop.status !== 'INACTIVE' && (
+                    <DropdownMenuItem onClick={() => handleStatusChange('INACTIVE')}>
+                      Set as Inactive
+                    </DropdownMenuItem>
+                  )}
+                  {shop.status !== 'SUSPENDED' && (
+                    <DropdownMenuItem onClick={() => handleStatusChange('SUSPENDED')}>
+                      Suspend Shop
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
@@ -375,18 +389,22 @@ export const ShopDetailPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to={`/shops/${shopId}/edit`}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Shop Details
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to={`/shops/${shopId}/settings`}>
-                <SettingsIcon className="mr-2 h-4 w-4" />
-                Shop Settings
-              </Link>
-            </Button>
+            {canEditShop && (
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link to={`/shops/${shopId}/edit`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Shop Details
+                </Link>
+              </Button>
+            )}
+            {canManageSettings && (
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link to={`/shops/${shopId}/settings`}>
+                  <SettingsIcon className="mr-2 h-4 w-4" />
+                  Shop Settings
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" className="w-full justify-start" asChild>
               <Link to={`/inventory?shopId=${shopId}`}>
                 <Package className="mr-2 h-4 w-4" />

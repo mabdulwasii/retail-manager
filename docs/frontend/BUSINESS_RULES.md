@@ -80,6 +80,50 @@ export const expenseSchema = yup.object({
 });
 ```
 
+### Product Validation
+
+```typescript
+export const productSchema = yup.object({
+  name: yup.string()
+    .required('Product name is required')
+    .min(2, 'Product name must be at least 2 characters')
+    .max(200, 'Product name must be at most 200 characters'),
+  description: yup.string()
+    .optional()
+    .max(1000, 'Description must be at most 1000 characters'),
+  category: yup.string()
+    .required('Category is required')
+    .min(2, 'Category must be at least 2 characters'),
+  price: yup.number()
+    .typeError('Price must be a number')
+    .required('Price is required')
+    .min(0.01, 'Price must be greater than 0')
+    .max(1000000, 'Price must be less than 1,000,000'),
+  costPrice: yup.number()
+    .typeError('Cost price must be a number')
+    .min(0, 'Cost price must be 0 or greater')
+    .optional()
+    .nullable()
+    .transform((value, originalValue) => originalValue === '' ? null : value),
+  sku: yup.string()
+    .optional()
+    .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
+  barcode: yup.string()
+    .optional()
+    .matches(/^[0-9]+$/, 'Barcode must contain only numbers'),
+  status: yup.string()
+    .oneOf(['ACTIVE', 'INACTIVE', 'DISCONTINUED'])
+    .optional(),
+});
+```
+
+**Business Rules**:
+- Product name must be unique per tenant
+- SKU is auto-generated if not provided (format: `PRD-{timestamp}-{random}`)
+- Price must be greater than cost price (profit validation)
+- Status defaults to `ACTIVE` on creation
+- Barcode must be unique across all products if provided
+
 ### Shop Validation
 
 ```typescript
@@ -92,7 +136,7 @@ export const shopSchema = yup.object({
     .email('Invalid email format')
     .required('Email is required'),
   phoneNumber: yup.string()
-    .matches(/^\+?[1-9]\d{1,14}#/, 'Invalid phone number format')
+    .matches(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format')
     .required('Phone number is required'),
   address: yup.string().required('Address is required'),
   city: yup.string().required('City is required'),

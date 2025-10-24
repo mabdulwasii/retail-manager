@@ -20,6 +20,8 @@ import {
 import { useShops, useUpdateShopStatus } from '@/hooks/useShops'
 import { ShopResponse } from '@/services/shopService'
 import { ShopStatusBadge } from '@/components/shops'
+import { useAuth } from '@/context/ManualAuthContext'
+import { RoleGroups } from '@/types/roles'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,11 +32,15 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export const ShopsPage: React.FC = () => {
+  const { hasAnyRole } = useAuth()
   const [page] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   
   const { data: shopsData, isLoading, isError, error } = useShops(page, 20)
   const updateStatusMutation = useUpdateShopStatus()
+  
+  // Only TENANT_ADMIN and SHOP_OWNER can create shops
+  const canCreateShop = hasAnyRole(RoleGroups.SHOP_CREATORS)
 
   const shops = shopsData?.content || []
   const totalElements = shopsData?.totalElements || 0
@@ -71,12 +77,14 @@ export const ShopsPage: React.FC = () => {
             Manage your retail locations and shop settings
           </p>
         </div>
-        <Link to="/shops/create">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Shop
-          </Button>
-        </Link>
+        {canCreateShop && (
+          <Link to="/shops/create">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Shop
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -175,7 +183,7 @@ export const ShopsPage: React.FC = () => {
                 ? 'Try adjusting your search criteria' 
                 : 'Get started by creating your first shop'}
             </p>
-            {!searchQuery && (
+            {!searchQuery && canCreateShop && (
               <Link to="/shops/create">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
@@ -196,6 +204,7 @@ export const ShopsPage: React.FC = () => {
               shop={shop} 
               onStatusChange={handleStatusChange}
               isUpdatingStatus={updateStatusMutation.isPending}
+              canEditShop={canCreateShop}
             />
           ))}
         </div>
@@ -208,9 +217,10 @@ interface ShopCardProps {
   shop: ShopResponse
   onStatusChange: (shopId: string, status: string) => void
   isUpdatingStatus: boolean
+  canEditShop: boolean
 }
 
-const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingStatus }) => {
+const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingStatus, canEditShop }) => {
   const formatAddress = () => {
     const parts = [shop.address, shop.city, shop.state, shop.country].filter(Boolean)
     return parts.join(', ') || 'No address'
@@ -267,41 +277,43 @@ const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingSta
             </Button>
           </Link>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" disabled={isUpdatingStatus}>
-                {isUpdatingStatus ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Settings className="h-4 w-4" />
+          {canEditShop && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" disabled={isUpdatingStatus}>
+                  {isUpdatingStatus ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="h-4 w-4" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={`/shops/${shop.id}/edit`}>Edit Shop</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                {shop.status !== 'ACTIVE' && (
+                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'ACTIVE')}>
+                    Set as Active
+                  </DropdownMenuItem>
                 )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to={`/shops/${shop.id}/edit`}>Edit Shop</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-              {shop.status !== 'ACTIVE' && (
-                <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'ACTIVE')}>
-                  Set as Active
-                </DropdownMenuItem>
-              )}
-              {shop.status !== 'INACTIVE' && (
-                <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'INACTIVE')}>
-                  Set as Inactive
-                </DropdownMenuItem>
-              )}
-              {shop.status !== 'SUSPENDED' && (
-                <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'SUSPENDED')}>
-                  Suspend Shop
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {shop.status !== 'INACTIVE' && (
+                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'INACTIVE')}>
+                    Set as Inactive
+                  </DropdownMenuItem>
+                )}
+                {shop.status !== 'SUSPENDED' && (
+                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'SUSPENDED')}>
+                    Suspend Shop
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardContent>
     </Card>

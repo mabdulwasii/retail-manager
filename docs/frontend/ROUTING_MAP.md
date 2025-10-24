@@ -58,6 +58,15 @@
 | `/shops/:shopId/edit` | EditShopPage | TENANT_ADMIN, SHOP_OWNER, SHOP_MANAGER | Edit shop |
 | `/shops/:shopId/settings` | ShopSettings | SHOP_OWNER, SHOP_MANAGER | Shop configuration and customization |
 
+### Product Management Routes
+
+| Path | Component | Roles | Description |
+|------|-----------|-------|-------------|
+| `/products` | ProductsPage | SHOP_OWNER, SHOP_MANAGER | Product catalog |
+| `/products/create` | CreateProductPage | SHOP_OWNER, SHOP_MANAGER | Create new product |
+| `/products/:productId` | ProductDetailPage | SHOP_OWNER, SHOP_MANAGER, INVENTORY_MANAGER | Product details |
+| `/products/:productId/edit` | EditProductPage | SHOP_OWNER, SHOP_MANAGER | Edit product |
+
 ### Inventory Routes
 
 | Path | Component | Roles | Description |

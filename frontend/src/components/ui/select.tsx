@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface SelectContextType {
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string | undefined
+  onValueChange?: ((value: string) => void) | undefined
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -12,7 +12,7 @@ const SelectContext = createContext<SelectContextType | undefined>(undefined)
 
 interface SelectProps {
   children: React.ReactNode
-  value?: string
+  value?: string | undefined
   onValueChange?: (value: string) => void
   disabled?: boolean
 }

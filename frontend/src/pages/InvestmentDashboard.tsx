@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useInvestment, Investment } from '@/hooks/useInvestment'
+import { UserRole, RoleGroups } from '@/types/roles'
 
 // Investment components
 import { InvestmentSummaryCards } from '@/components/investment/InvestmentSummaryCards'
@@ -42,8 +43,8 @@ export const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({
     if (!user) return 'investor'
 
     const roles = user.roles || []
-    if (roles.includes('TENANT_ADMIN') || roles.includes('SHOP_OWNER')) return 'admin'
-    if (roles.includes('MANAGER')) return 'shop'
+    if (roles.includes(UserRole.TENANT_ADMIN) || roles.includes(UserRole.SHOP_OWNER)) return 'admin'
+    if (roles.includes(UserRole.MANAGER)) return 'shop'
     return 'investor'
   }
 

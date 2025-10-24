@@ -224,7 +224,7 @@ input[type="submit"] {
 
 button[type="submit"]:hover,
 input[type="submit"]:hover {
-    background-color: var(--sm-primary-dark);
+    opacity: 0.8;
 }
 
 button[type="submit"]:focus,

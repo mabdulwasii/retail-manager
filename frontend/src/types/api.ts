@@ -136,6 +136,26 @@ export enum ProductStatus {
   DISCONTINUED = 'DISCONTINUED'
 }
 
+export interface ProductCreateRequest {
+  name: string
+  description?: string | undefined
+  category: string
+  price: number
+  costPrice?: number | undefined
+  barcode?: string | undefined
+  sku?: string | undefined
+}
+
+export interface ProductUpdateRequest {
+  name?: string | undefined
+  description?: string | undefined
+  category?: string | undefined
+  price?: number | undefined
+  costPrice?: number | undefined
+  barcode?: string | undefined
+  status?: ProductStatus | undefined
+}
+
 export interface Inventory {
   id: string
   product: Product

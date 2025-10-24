@@ -95,7 +95,7 @@ export const shopConfigurationService = {
     config: ShopConfigurationRequest
   ): Promise<ShopConfiguration> {
     const { data } = await api.put(`/shops/${shopId}/configuration`, config);
-    return data.configuration; // API returns full shop response with configuration nested
+    return data;
   },
 
   // Customization endpoints

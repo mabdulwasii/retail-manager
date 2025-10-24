@@ -14,6 +14,9 @@ import {
 import { InvestmentsPage } from "@/pages/investments/InvestmentsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
+import { CreateProductPage } from "@/pages/products/CreateProductPage";
+import { EditProductPage } from "@/pages/products/EditProductPage";
+import { ProductDetailPage } from "@/pages/products/ProductDetailPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
 import { SalesPage, TransactionDetailPage } from "@/pages/sales";
@@ -127,6 +130,36 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
               <ProductsPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/products/create"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+              <CreateProductPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/products/:productId"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}>
+              <ProductDetailPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/products/:productId/edit"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+              <EditProductPage />
             </ProtectedRoute>
           </Layout>
         }

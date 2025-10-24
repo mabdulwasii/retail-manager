@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 
 interface BadgeProps {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline'
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success'
   className?: string
   children: React.ReactNode
 }
@@ -11,7 +11,8 @@ const badgeVariants = {
   default: 'bg-blue-500 text-white hover:bg-blue-600',
   secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
   destructive: 'bg-red-500 text-white hover:bg-red-600',
-  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
+  success: 'bg-green-500 text-white hover:bg-green-600'
 }
 
 export const Badge: React.FC<BadgeProps> = ({

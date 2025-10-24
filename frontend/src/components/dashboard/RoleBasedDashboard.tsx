@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/ManualAuthContext";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
+import { UserRole } from "@/types/roles";
 import { AccountantDashboard } from "./AccountantDashboard";
 import { AdminDashboard } from "./AdminDashboard";
 import { AuditorDashboard } from "./AuditorDashboard";
@@ -14,28 +15,28 @@ import { OwnerManagerDashboard } from "./OwnerManagerDashboard";
 const hasPermissionForView = (viewType: string, userRoles: string[]): boolean => {
   const roles = userRoles.map((role) => role.replace("ROLE_", ""));
   
-  const viewPermissions: Record<string, string[]> = {
-    "admin": ["SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "tenant": ["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "multi-shop": ["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "business": ["SHOP_OWNER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "operations": ["SHOP_OWNER", "MANAGER", "SALES_MANAGER", "INVENTORY_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "financial": ["ACCOUNTANT", "SHOP_OWNER", "MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "cashier": ["CASHIER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "pos": ["CASHIER", "MANAGER", "SALES_MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "investor": ["INVESTOR", "SHOP_OWNER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "investments": ["INVESTOR", "SHOP_OWNER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "employee": ["EMPLOYEE", "INVENTORY_MANAGER", "MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "inventory": ["INVENTORY_MANAGER", "EMPLOYEE", "MANAGER", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "audit": ["AUDITOR", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "compliance": ["AUDITOR", "SYSTEM_ADMIN", "SUPER_ADMIN"],
-    "customer": ["CUSTOMER"]
+  const viewPermissions: Record<string, UserRole[]> = {
+    "admin": [UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "tenant": [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "multi-shop": [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "business": [UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "operations": [UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.INVENTORY_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "financial": [UserRole.ACCOUNTANT, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "cashier": [UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "pos": [UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "investor": [UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "investments": [UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "employee": [UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "inventory": [UserRole.INVENTORY_MANAGER, UserRole.EMPLOYEE, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "audit": [UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "compliance": [UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "customer": [UserRole.CUSTOMER]
   };
 
   const allowedRoles = viewPermissions[viewType];
   if (!allowedRoles) return false;
   
-  return roles.some(role => allowedRoles.includes(role));
+  return roles.some(role => allowedRoles.includes(role as UserRole));
 };
 
 export const RoleBasedDashboard: React.FC = () => {
@@ -97,58 +98,58 @@ export const RoleBasedDashboard: React.FC = () => {
   }
 
   // Get the highest priority role for dashboard selection
-  const roles = user.roles.map((role) => role.replace("ROLE_", ""));
+  const roles = user.roles.map((role) => role.replace("ROLE_", "") as UserRole);
 
   // Priority order for dashboard selection (highest first)
-  const rolePriority = [
-    "SYSTEM_ADMIN",
-    "SUPER_ADMIN",
-    "TENANT_ADMIN",
-    "SHOP_OWNER",
-    "MANAGER",
-    "SALES_MANAGER",
-    "INVENTORY_MANAGER",
-    "ACCOUNTANT",
-    "AUDITOR",
-    "INVESTOR",
-    "CASHIER",
-    "EMPLOYEE",
-    "CUSTOMER",
+  const rolePriority: UserRole[] = [
+    UserRole.SYSTEM_ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.TENANT_ADMIN,
+    UserRole.SHOP_OWNER,
+    UserRole.MANAGER,
+    UserRole.SALES_MANAGER,
+    UserRole.INVENTORY_MANAGER,
+    UserRole.ACCOUNTANT,
+    UserRole.AUDITOR,
+    UserRole.INVESTOR,
+    UserRole.CASHIER,
+    UserRole.EMPLOYEE,
+    UserRole.CUSTOMER,
   ];
 
   const primaryRole =
-    rolePriority.find((role) => roles.includes(role)) || "CUSTOMER";
+    rolePriority.find((role) => roles.includes(role)) || UserRole.CUSTOMER;
 
   switch (primaryRole) {
-    case "SYSTEM_ADMIN":
-    case "SUPER_ADMIN":
+    case UserRole.SYSTEM_ADMIN:
+    case UserRole.SUPER_ADMIN:
       return <AdminDashboard />;
 
-    case "TENANT_ADMIN":
-    case "SHOP_OWNER":
-    case "MANAGER":
-    case "SALES_MANAGER":
+    case UserRole.TENANT_ADMIN:
+    case UserRole.SHOP_OWNER:
+    case UserRole.MANAGER:
+    case UserRole.SALES_MANAGER:
       return <OwnerManagerDashboard />;
 
-    case "INVENTORY_MANAGER":
+    case UserRole.INVENTORY_MANAGER:
       return <EmployeeDashboard />;
 
-    case "CASHIER":
+    case UserRole.CASHIER:
       return <CashierDashboard />;
 
-    case "INVESTOR":
+    case UserRole.INVESTOR:
       return <InvestorDashboard />;
 
-    case "ACCOUNTANT":
+    case UserRole.ACCOUNTANT:
       return <AccountantDashboard />;
 
-    case "AUDITOR":
+    case UserRole.AUDITOR:
       return <AuditorDashboard />;
 
-    case "EMPLOYEE":
+    case UserRole.EMPLOYEE:
       return <EmployeeDashboard />;
 
-    case "CUSTOMER":
+    case UserRole.CUSTOMER:
     default:
       return <CustomerDashboard />;
   }

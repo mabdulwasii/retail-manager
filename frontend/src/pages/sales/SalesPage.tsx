@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/context/ManualAuthContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { SalesFilter, useSales } from "@/hooks/useSales";
+import { PagedSalesResponse, SalesFilter, useSales } from "@/hooks/useSales";
 import {
   AlertCircle,
   Calendar,
@@ -44,22 +44,41 @@ export const SalesPage: React.FC = () => {
     startDate: "",
     endDate: "",
   });
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 20,
+    totalPages: 0,
+    totalElements: 0,
+  });
 
   // Fetch sales on mount
   useEffect(() => {
     loadSales();
   }, []);
 
-  const loadSales = async () => {
-    const filter: SalesFilter = {};
+  const loadSales = async (page: number = 0) => {
+    const filter: SalesFilter = {
+      page,
+      size: 20,
+      sort: 'transactionDate,desc',
+    };
 
+    if (user?.shopId) filter.shopId = user.shopId;
     if (statusFilter !== "all") filter.status = statusFilter;
     if (paymentMethodFilter !== "all")
       filter.paymentMethod = paymentMethodFilter;
     if (dateRange.startDate) filter.startDate = dateRange.startDate;
     if (dateRange.endDate) filter.endDate = dateRange.endDate;
 
-    await fetchSales(filter);
+    const response = await fetchSales(filter);
+    if (response) {
+      setPagination({
+        page: response.number,
+        size: response.size,
+        totalPages: response.totalPages,
+        totalElements: response.totalElements,
+      });
+    }
   };
 
   const handleSearch = () => {
@@ -71,7 +90,12 @@ export const SalesPage: React.FC = () => {
     setStatusFilter("all");
     setPaymentMethodFilter("all");
     setDateRange({ startDate: "", endDate: "" });
-    fetchSales();
+    setPagination({ page: 0, size: 20, totalPages: 0, totalElements: 0 });
+    loadSales(0);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    loadSales(newPage);
   };
 
   const handleExport = () => {
@@ -87,6 +111,62 @@ export const SalesPage: React.FC = () => {
   ).length;
   const averageTransaction =
     totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+  const renderSalesContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-12">
+          <div className="text-muted-foreground">Loading sales...</div>
+        </div>
+      );
+    }
+
+    if (sales.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <ShoppingBag className="w-16 h-16 text-muted-foreground/20 mb-4" />
+          <p className="text-muted-foreground font-medium">
+            No sales found
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sales transactions will appear here
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <SalesHistory transactions={sales} />
+        
+        {pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Page {pagination.page + 1} of {pagination.totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 0}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages - 1}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -275,28 +355,11 @@ export const SalesPage: React.FC = () => {
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
           <CardDescription>
-            {totalTransactions} transaction{totalTransactions !== 1 ? "s" : ""}{" "}
-            found
+            Showing {sales.length} of {pagination.totalElements} transaction{pagination.totalElements !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="text-muted-foreground">Loading sales...</div>
-            </div>
-          ) : sales.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <ShoppingBag className="w-16 h-16 text-muted-foreground/20 mb-4" />
-              <p className="text-muted-foreground font-medium">
-                No sales found
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Sales transactions will appear here
-              </p>
-            </div>
-          ) : (
-            <SalesHistory transactions={sales} />
-          )}
+          {renderSalesContent()}
         </CardContent>
       </Card>
     </div>

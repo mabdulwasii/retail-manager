@@ -54,6 +54,7 @@ export interface CreateSaleRequest {
 }
 
 export interface SalesFilter {
+  shopId?: string
   startDate?: string
   endDate?: string
   customerId?: string
@@ -61,6 +62,20 @@ export interface SalesFilter {
   paymentMethod?: string
   minAmount?: number
   maxAmount?: number
+  page?: number
+  size?: number
+  sort?: string
+}
+
+export interface PagedSalesResponse {
+  content: SalesTransaction[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  first: boolean
+  last: boolean
+  empty: boolean
 }
 
 export const useSales = () => {
@@ -243,22 +258,38 @@ export const useSales = () => {
     }
   }, [clearCart])
 
-  // Sales history
-  const fetchSales = useCallback(async (filter?: SalesFilter): Promise<SalesTransaction[]> => {
+  // Sales history with pagination
+  const fetchSales = useCallback(async (filter?: SalesFilter): Promise<PagedSalesResponse | null> => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const salesData = await api.get<SalesTransaction[]>('/sales', {
-        params: filter
+      // Build query params according to API spec
+      const params: Record<string, any> = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 20,
+        ...(filter?.shopId && { shopId: filter.shopId }),
+        ...(filter?.sort && { sort: filter.sort }),
+        ...(filter?.status && { status: filter.status }),
+        ...(filter?.paymentMethod && { paymentMethod: filter.paymentMethod }),
+        ...(filter?.startDate && { startDate: filter.startDate }),
+        ...(filter?.endDate && { endDate: filter.endDate }),
+        ...(filter?.customerId && { customerId: filter.customerId }),
+        ...(filter?.minAmount !== undefined && { minAmount: filter.minAmount }),
+        ...(filter?.maxAmount !== undefined && { maxAmount: filter.maxAmount }),
+      }
+
+      const response = await api.get<PagedSalesResponse>('/sales', {
+        params
       })
       
-      setSales(salesData)
-      return salesData
+      // Update local state with content array
+      setSales(response.content)
+      return response
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
-      return []
+      return null
     } finally {
       setIsLoading(false)
     }
