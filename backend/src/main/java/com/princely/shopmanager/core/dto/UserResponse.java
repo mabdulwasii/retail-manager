@@ -84,7 +84,7 @@ public class UserResponse {
             .status(user.getStatus() != null ? user.getStatus().name() : null)
             .keycloakId(user.getKeycloakId())
             .tenantId(user.getTenant() != null ? user.getTenant().getId() : null)
-            .shopId(user.getShop() != null ? user.getShop().getId() : null)
+            .shopId(null) // User entity doesn't have shop relationship
             .isInvestor(user.isInvestor())
             .roles(user.getRoles() != null ?
                 user.getRoles().stream()

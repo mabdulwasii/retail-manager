@@ -4,7 +4,7 @@ import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.RoleRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
-import com.princely.shopmanager.shared.domain.TenantContext;
+import com.princely.shopmanager.auth.context.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

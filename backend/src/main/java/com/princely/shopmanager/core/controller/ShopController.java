@@ -1,14 +1,10 @@
 package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.core.domain.Shop;
-import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
-import com.princely.shopmanager.core.dto.UserCreateRequest;
-import com.princely.shopmanager.core.dto.UserResponse;
 import com.princely.shopmanager.core.service.ShopService;
-import com.princely.shopmanager.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,7 +25,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 /**
  * REST Controller for shop management operations.
@@ -57,7 +53,6 @@ public class ShopController {
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final ShopService shopService;
-    private final UserService userService;
 
     /**
      * Creates a new shop in the system.
@@ -497,107 +492,4 @@ public class ShopController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Create a new user and assign to this shop.
-     *
-     * @param shopId Shop ID
-     * @param request User creation request
-     * @return Created user
-     */
-    @Operation(
-        summary = "Create user in shop",
-        description = "Creates a new user and assigns them to the specified shop."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "User created successfully",
-            content = @Content(schema = @Schema(implementation = UserResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid request data or username/email already exists"
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Shop not found"
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Authentication required"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Insufficient permissions"
-        )
-    })
-    @PostMapping("/{shopId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
-    public ResponseEntity<UserResponse> createUserInShop(
-        @Parameter(description = "Shop ID") @PathVariable String shopId,
-        @Valid @RequestBody UserCreateRequest request
-    ) {
-        log.info("Creating user {} in shop {}", request.getUsername(), shopId);
-
-        // Get shop to determine tenant ID
-        Shop shop = shopService.getShopById(shopId);
-
-        // Set shop ID in request
-        UserCreateRequest requestWithShop = UserCreateRequest.builder()
-            .username(request.getUsername())
-            .email(request.getEmail())
-            .firstName(request.getFirstName())
-            .lastName(request.getLastName())
-            .phoneNumber(request.getPhoneNumber())
-            .password(request.getPassword())
-            .shopId(shopId)
-            .roles(request.getRoles())
-            .isInvestor(request.getIsInvestor())
-            .build();
-
-        User user = userService.createUser(shop.getTenant().getId(), requestWithShop);
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.fromEntity(user));
-    }
-
-    /**
-     * Get all users assigned to a shop.
-     *
-     * @param shopId Shop ID
-     * @return List of users in the shop
-     */
-    @Operation(
-        summary = "Get shop users",
-        description = "Retrieves all users assigned to the specified shop."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Users retrieved successfully",
-            content = @Content(schema = @Schema(implementation = UserResponse.class))
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Shop not found"
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Authentication required"
-        ),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Insufficient permissions"
-        )
-    })
-    @GetMapping("/{shopId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
-    public ResponseEntity<List<UserResponse>> getShopUsers(
-        @Parameter(description = "Shop ID") @PathVariable String shopId
-    ) {
-        log.debug("Retrieving users for shop {}", shopId);
-        List<User> users = userService.getUsersByShop(shopId);
-        List<UserResponse> response = users.stream()
-            .map(UserResponse::fromEntity)
-            .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
-    }
 }

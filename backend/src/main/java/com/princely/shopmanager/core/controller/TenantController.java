@@ -1,10 +1,8 @@
 package com.princely.shopmanager.core.controller;
 
-import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.UserCreateRequest;
 import com.princely.shopmanager.core.dto.UserResponse;
-import com.princely.shopmanager.core.service.TenantService;
 import com.princely.shopmanager.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,7 +35,6 @@ import java.util.stream.Collectors;
 public class TenantController {
 
     private final UserService userService;
-    private final TenantService tenantService;
 
     /**
      * Create a new user in the tenant.

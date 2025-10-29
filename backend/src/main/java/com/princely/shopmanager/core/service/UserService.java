@@ -1,13 +1,11 @@
 package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.domain.Role;
-import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.UserCreateRequest;
 import com.princely.shopmanager.core.dto.UserUpdateRequest;
 import com.princely.shopmanager.core.repository.RoleRepository;
-import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +28,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
-    private final ShopRepository shopRepository;
     private final RoleRepository roleRepository;
 
     /**
@@ -132,18 +129,6 @@ public class UserService {
             throw new IllegalArgumentException("Email already exists: " + request.getEmail());
         }
 
-        // Get shop if provided
-        Shop shop = null;
-        if (request.getShopId() != null) {
-            shop = shopRepository.findById(request.getShopId())
-                .orElseThrow(() -> new IllegalArgumentException("Shop not found with ID: " + request.getShopId()));
-
-            // Validate shop belongs to tenant
-            if (!shop.getTenant().getId().equals(tenantId)) {
-                throw new IllegalArgumentException("Shop does not belong to the specified tenant");
-            }
-        }
-
         // Get roles
         Set<Role> roles = new HashSet<>();
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
@@ -163,7 +148,6 @@ public class UserService {
             .lastName(request.getLastName())
             .phoneNumber(request.getPhoneNumber())
             .tenant(tenant)
-            .shop(shop)
             .roles(roles)
             .isInvestor(request.getIsInvestor() != null ? request.getIsInvestor() : false)
             .status(User.UserStatus.ACTIVE)
@@ -255,41 +239,4 @@ public class UserService {
         return userRepository.findByTenantId(tenantId);
     }
 
-    /**
-     * Gets all users for a shop.
-     *
-     * @param shopId Shop ID
-     * @return List of users in the shop
-     */
-    public List<User> getUsersByShop(String shopId) {
-        log.debug("Retrieving users for shop {}", shopId);
-        return userRepository.findByShopId(shopId);
-    }
-
-    /**
-     * Assigns a user to a shop.
-     *
-     * @param userId User ID
-     * @param shopId Shop ID
-     */
-    @Transactional
-    public void assignUserToShop(String userId, String shopId) {
-        log.info("Assigning user {} to shop {}", userId, shopId);
-
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found with ID: " + shopId));
-
-        // Validate shop belongs to user's tenant
-        if (user.getTenant() != null && !user.getTenant().getId().equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Shop does not belong to user's tenant");
-        }
-
-        user.setShop(shop);
-        userRepository.save(user);
-
-        log.info("Successfully assigned user {} to shop {}", userId, shopId);
-    }
 }
