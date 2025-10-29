@@ -46,7 +46,9 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.supplierName = :supplierName")
     List<Product> findByShopIdAndSupplierName(@Param("shopId") String shopId, @Param("supplierName") String supplierName);
 
-    boolean existsBySkuAndShopId(String sku, String shopId);
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p WHERE p.sku = :sku AND p.shop.id = :shopId")
+    boolean existsBySkuAndShopId(@Param("sku") String sku, @Param("shopId") String shopId);
 
-    boolean existsByBarcodeAndShopId(String barcode, String shopId);
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p WHERE p.barcode = :barcode AND p.shop.id = :shopId")
+    boolean existsByBarcodeAndShopId(@Param("barcode") String barcode, @Param("shopId") String shopId);
 }
