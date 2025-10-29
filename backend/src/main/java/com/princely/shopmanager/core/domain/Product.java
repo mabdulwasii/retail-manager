@@ -55,22 +55,6 @@ public class Product extends BaseEntity {
     private BigDecimal costPrice;
 
     @Builder.Default
-    @Column(name = "quantity_in_stock", nullable = false)
-    private Integer quantityInStock = 0;
-
-    @Builder.Default
-    @Column(name = "minimum_stock_level")
-    private Integer minimumStockLevel = 0;
-
-    @Builder.Default
-    @Column(name = "maximum_stock_level")
-    private Integer maximumStockLevel = 1000;
-
-    @Builder.Default
-    @Column(name = "reorder_point")
-    private Integer reorderPoint = 10;
-
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductStatus status = ProductStatus.ACTIVE;
@@ -107,28 +91,6 @@ public class Product extends BaseEntity {
     public enum ProductStatus {
         ACTIVE,
         INACTIVE,
-        OUT_OF_STOCK,
         DISCONTINUED
-    }
-
-    public void decreaseStock(int quantity) {
-        if (this.quantityInStock < quantity) {
-            throw new IllegalArgumentException("Insufficient stock");
-        }
-        this.quantityInStock -= quantity;
-        if (this.quantityInStock == 0) {
-            this.status = ProductStatus.OUT_OF_STOCK;
-        }
-    }
-
-    public void increaseStock(int quantity) {
-        this.quantityInStock += quantity;
-        if (this.status == ProductStatus.OUT_OF_STOCK && this.quantityInStock > 0) {
-            this.status = ProductStatus.ACTIVE;
-        }
-    }
-
-    public boolean needsReorder() {
-        return this.quantityInStock <= this.reorderPoint;
     }
 }

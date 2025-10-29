@@ -1,0 +1,241 @@
+package com.princely.shopmanager.core.controller;
+
+import com.princely.shopmanager.core.domain.Product;
+import com.princely.shopmanager.core.dto.ProductCreateRequest;
+import com.princely.shopmanager.core.dto.ProductResponse;
+import com.princely.shopmanager.core.dto.ProductUpdateRequest;
+import com.princely.shopmanager.core.repository.ProductRepository;
+import com.princely.shopmanager.core.service.ProductService;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+
+/**
+ * REST Controller for product catalog management.
+ * Products represent the master catalog (what you sell).
+ * For stock management, use the Inventory API.
+ */
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@Slf4j
+@Tag(name = "Products", description = "Product catalog management operations")
+@SecurityRequirement(name = "bearerAuth")
+public class ProductController {
+
+    private final ProductService productService;
+    private final ProductRepository productRepository;
+
+    @Operation(
+        summary = "Create new product",
+        description = "Create a new product in the catalog. Stock is NOT created here - use Inventory API to add stock."
+    )
+    @ApiResponse(responseCode = "201", description = "Product created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data or SKU/barcode already exists")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @PostMapping("/shops/{shopId}/products")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<ProductResponse> createProduct(
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @Valid @RequestBody ProductCreateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Creating product for shop: {}, SKU: {}, user: {}",
+                shopId, request.getSku(), principal.getUsername());
+
+        // Ensure shopId from path matches request
+        request.setShopId(shopId);
+
+        ProductResponse response = productService.createProduct(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(
+        summary = "Get products",
+        description = "Retrieve products for a shop with filtering, searching, and pagination"
+    )
+    @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/shops/{shopId}/products")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<Page<ProductResponse>> getProducts(
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @Parameter(description = "Search query for product name or SKU") @RequestParam(required = false) String search,
+            @Parameter(description = "Filter by category ID") @RequestParam(required = false) String categoryId,
+            @Parameter(description = "Filter by status") @RequestParam(required = false) Product.ProductStatus status,
+            @Parameter(description = "Minimum price filter") @RequestParam(required = false) BigDecimal minPrice,
+            @Parameter(description = "Maximum price filter") @RequestParam(required = false) BigDecimal maxPrice,
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        // Build specification based on filters
+        Specification<Product> spec = (root, query, cb) ->
+            cb.equal(root.get("shop").get("id"), shopId);
+
+        if (search != null && !search.trim().isEmpty()) {
+            String searchPattern = "%" + search.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) ->
+                cb.or(
+                    cb.like(cb.lower(root.get("name")), searchPattern),
+                    cb.like(cb.lower(root.get("sku")), searchPattern),
+                    cb.like(cb.lower(root.get("barcode")), searchPattern)
+                )
+            );
+        }
+
+        if (categoryId != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.equal(root.get("category").get("id"), categoryId));
+        }
+
+        if (status != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.equal(root.get("status"), status));
+        }
+
+        if (minPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+        }
+
+        if (maxPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+        }
+
+        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ProductResponse> response = productService.getProducts(shopId, spec, pageable, includeInventory);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Get product by ID",
+        description = "Retrieve a specific product by its ID with inventory summary"
+    )
+    @ApiResponse(responseCode = "200", description = "Product retrieved successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @GetMapping("/products/{productId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<ProductResponse> getProductById(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        ProductResponse response = productService.getProductById(productId, includeInventory);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Update product",
+        description = "Update an existing product's catalog information (not stock - use Inventory API)"
+    )
+    @ApiResponse(responseCode = "200", description = "Product updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @PutMapping("/products/{productId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<ProductResponse> updateProduct(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @Valid @RequestBody ProductUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Updating product: {}, user: {}", productId, principal.getUsername());
+
+        ProductResponse response = productService.updateProduct(productId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Delete product",
+        description = "Soft delete a product by marking it as DISCONTINUED. Inventory records are not deleted."
+    )
+    @ApiResponse(responseCode = "204", description = "Product deleted successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @DeleteMapping("/products/{productId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<Void> deleteProduct(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Deleting product: {}, user: {}", productId, principal.getUsername());
+
+        productService.deleteProduct(productId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Get inventory summary for product",
+        description = "Get aggregated inventory summary across all batches/locations for a product"
+    )
+    @ApiResponse(responseCode = "200", description = "Inventory summary retrieved successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @GetMapping("/products/{productId}/inventory-summary")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<ProductService.InventorySummary> getInventorySummary(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        ProductService.InventorySummary summary = productService.getInventorySummary(productId);
+        return ResponseEntity.ok(summary);
+    }
+
+    @Operation(
+        summary = "Get products with low stock",
+        description = "Retrieve all products that have low stock in any inventory location"
+    )
+    @ApiResponse(responseCode = "200", description = "Low stock products retrieved successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/shops/{shopId}/products/low-stock")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<?> getProductsWithLowStock(
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        var response = productService.getProductsWithLowStock(shopId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Get products with no stock",
+        description = "Retrieve all products that have zero total inventory"
+    )
+    @ApiResponse(responseCode = "200", description = "Out of stock products retrieved successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/shops/{shopId}/products/out-of-stock")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<?> getProductsWithNoStock(
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        var response = productService.getProductsWithNoStock(shopId);
+        return ResponseEntity.ok(response);
+    }
+}

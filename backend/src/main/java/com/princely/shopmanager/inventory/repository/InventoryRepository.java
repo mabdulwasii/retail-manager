@@ -73,4 +73,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
 
     @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.currentStock - i.reservedStock) >= :quantity AND i.status = 'ACTIVE' AND (i.expiryDate IS NULL OR i.expiryDate > CURRENT_DATE)")
     List<Inventory> findAvailableForSale(@Param("shopId") String shopId, @Param("quantity") Integer quantity);
+
+    @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId")
+    List<Inventory> findByProductId(@Param("productId") String productId);
 }
