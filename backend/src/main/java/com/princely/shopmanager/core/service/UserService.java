@@ -1,13 +1,23 @@
 package com.princely.shopmanager.core.service;
 
+import com.princely.shopmanager.core.domain.Role;
+import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.dto.UserCreateRequest;
+import com.princely.shopmanager.core.dto.UserUpdateRequest;
+import com.princely.shopmanager.core.repository.RoleRepository;
+import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service for managing user operations and queries.
@@ -19,6 +29,9 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
+    private final ShopRepository shopRepository;
+    private final RoleRepository roleRepository;
 
     /**
      * Gets users by roles and tenant ID for notification purposes.
@@ -92,5 +105,191 @@ public class UserService {
             log.error("Error finding user by Keycloak ID {}: {}", keycloakId, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Creates a new user.
+     *
+     * @param tenantId Tenant ID
+     * @param request User creation request
+     * @return Created user
+     */
+    @Transactional
+    public User createUser(String tenantId, UserCreateRequest request) {
+        log.info("Creating user {} for tenant {}", request.getUsername(), tenantId);
+
+        // Validate tenant exists
+        Tenant tenant = tenantRepository.findById(tenantId)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
+
+        // Validate username uniqueness
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("Username already exists: " + request.getUsername());
+        }
+
+        // Validate email uniqueness
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email already exists: " + request.getEmail());
+        }
+
+        // Get shop if provided
+        Shop shop = null;
+        if (request.getShopId() != null) {
+            shop = shopRepository.findById(request.getShopId())
+                .orElseThrow(() -> new IllegalArgumentException("Shop not found with ID: " + request.getShopId()));
+
+            // Validate shop belongs to tenant
+            if (!shop.getTenant().getId().equals(tenantId)) {
+                throw new IllegalArgumentException("Shop does not belong to the specified tenant");
+            }
+        }
+
+        // Get roles
+        Set<Role> roles = new HashSet<>();
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            for (String roleIdentifier : request.getRoles()) {
+                Role role = roleRepository.findById(roleIdentifier)
+                    .or(() -> roleRepository.findByName(roleIdentifier))
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleIdentifier));
+                roles.add(role);
+            }
+        }
+
+        // Create user
+        User user = User.builder()
+            .username(request.getUsername())
+            .email(request.getEmail())
+            .firstName(request.getFirstName())
+            .lastName(request.getLastName())
+            .phoneNumber(request.getPhoneNumber())
+            .tenant(tenant)
+            .shop(shop)
+            .roles(roles)
+            .isInvestor(request.getIsInvestor() != null ? request.getIsInvestor() : false)
+            .status(User.UserStatus.ACTIVE)
+            .build();
+
+        User savedUser = userRepository.save(user);
+        log.info("Successfully created user {} with ID {}", savedUser.getUsername(), savedUser.getId());
+
+        return savedUser;
+    }
+
+    /**
+     * Updates an existing user.
+     *
+     * @param userId User ID
+     * @param request User update request
+     * @return Updated user
+     */
+    @Transactional
+    public User updateUser(String userId, UserUpdateRequest request) {
+        log.info("Updating user {}", userId);
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        // Update fields if provided
+        if (request.getEmail() != null) {
+            // Check email uniqueness
+            if (userRepository.existsByEmail(request.getEmail()) &&
+                !request.getEmail().equals(user.getEmail())) {
+                throw new IllegalArgumentException("Email already exists: " + request.getEmail());
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        if (request.getStatus() != null) {
+            user.setStatus(request.getStatus());
+        }
+
+        if (request.getIsInvestor() != null) {
+            user.setInvestor(request.getIsInvestor());
+        }
+
+        User updatedUser = userRepository.save(user);
+        log.info("Successfully updated user {}", userId);
+
+        return updatedUser;
+    }
+
+    /**
+     * Deletes (deactivates) a user.
+     *
+     * @param userId User ID
+     */
+    @Transactional
+    public void deleteUser(String userId) {
+        log.info("Deleting user {}", userId);
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        // Soft delete by setting status to INACTIVE
+        user.setStatus(User.UserStatus.INACTIVE);
+        userRepository.save(user);
+
+        log.info("Successfully deactivated user {}", userId);
+    }
+
+    /**
+     * Gets all users for a tenant.
+     *
+     * @param tenantId Tenant ID
+     * @return List of users in the tenant
+     */
+    public List<User> getUsersByTenant(String tenantId) {
+        log.debug("Retrieving users for tenant {}", tenantId);
+        return userRepository.findByTenantId(tenantId);
+    }
+
+    /**
+     * Gets all users for a shop.
+     *
+     * @param shopId Shop ID
+     * @return List of users in the shop
+     */
+    public List<User> getUsersByShop(String shopId) {
+        log.debug("Retrieving users for shop {}", shopId);
+        return userRepository.findByShopId(shopId);
+    }
+
+    /**
+     * Assigns a user to a shop.
+     *
+     * @param userId User ID
+     * @param shopId Shop ID
+     */
+    @Transactional
+    public void assignUserToShop(String userId, String shopId) {
+        log.info("Assigning user {} to shop {}", userId, shopId);
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        Shop shop = shopRepository.findById(shopId)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found with ID: " + shopId));
+
+        // Validate shop belongs to user's tenant
+        if (user.getTenant() != null && !user.getTenant().getId().equals(shop.getTenant().getId())) {
+            throw new IllegalArgumentException("Shop does not belong to user's tenant");
+        }
+
+        user.setShop(shop);
+        userRepository.save(user);
+
+        log.info("Successfully assigned user {} to shop {}", userId, shopId);
     }
 }
