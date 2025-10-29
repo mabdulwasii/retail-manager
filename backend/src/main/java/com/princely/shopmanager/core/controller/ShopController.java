@@ -289,7 +289,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -340,7 +340,7 @@ public class ShopController {
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -385,7 +385,7 @@ public class ShopController {
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
