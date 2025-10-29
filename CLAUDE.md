@@ -92,14 +92,54 @@ Shop Manager is a multi-tenant retail management platform:
 ### Module Structure
 ```
 backend/src/main/java/com/princely/shopmanager/
-├── core/         # Tenant, Shop, User, Role entities
-├── sales/        # Sales, Receipt management
-├── inventory/    # Stock tracking, reservations
+├── core/         # Tenant, Shop, User, Role, Product (catalog) entities
+├── sales/        # Sales, Receipt management with FEFO inventory deduction
+├── inventory/    # Stock tracking, batch management, reservations
 ├── investment/   # Investment tracking, profit sharing
 ├── analytics/    # Analytics engine with caching
 ├── auth/         # Authentication, JWT principal
 └── shared/       # Cross-cutting concerns
 ```
+
+### Product & Inventory Architecture (Two-Tier Model)
+
+**Implemented:** January 2025 (Migration V10)
+
+The system uses a **two-tier model** separating product catalog from inventory:
+
+#### **Product (Master Catalog)**
+- Represents **what you sell** (SKU, price, description, category)
+- **No stock fields** - stock tracking moved to Inventory
+- Status: ACTIVE, INACTIVE, DISCONTINUED (OUT_OF_STOCK removed)
+- Endpoints: `/api/shops/{shopId}/products`, `/api/products/{productId}`
+
+#### **Inventory (Stock Tracking)**
+- Represents **what you have** (batches, locations, expiry dates)
+- Fields: currentStock, reservedStock, batchNumber, expiryDate, location
+- Status: ACTIVE, INACTIVE, QUARANTINED, EXPIRED
+- One Product → Many Inventory records (multi-batch support)
+
+#### **Stock Aggregation**
+```java
+Product.totalStock = SUM(Inventory.currentStock) WHERE productId
+Product.availableStock = SUM(currentStock - reservedStock) WHERE productId AND status=ACTIVE
+```
+
+#### **FEFO Sales Strategy**
+Sales use **First Expiry, First Out (FEFO)** to minimize waste:
+1. Sort inventory by expiry date (ascending)
+2. Allocate from oldest expiring batches first
+3. FIFO for same expiry date (by creation date)
+4. Automatic deduction across multiple batches if needed
+
+**Benefits:**
+- ✅ Batch/lot tracking for compliance
+- ✅ Expiry date management
+- ✅ Multi-location inventory
+- ✅ Flexible unit costing per batch
+- ✅ Product recall traceability
+
+**Documentation:** See [docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)
 
 ---
 
