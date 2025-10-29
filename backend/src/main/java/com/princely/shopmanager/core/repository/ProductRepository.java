@@ -37,12 +37,6 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
         @Param("maxPrice") BigDecimal maxPrice
     );
 
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.quantityInStock <= p.reorderPoint")
-    List<Product> findProductsNeedingReorder(@Param("shopId") String shopId);
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.quantityInStock = 0")
-    List<Product> findOutOfStockProducts(@Param("shopId") String shopId);
-
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.location = :location")
     List<Product> findByShopIdAndLocation(@Param("shopId") String shopId, @Param("location") String location);
 
