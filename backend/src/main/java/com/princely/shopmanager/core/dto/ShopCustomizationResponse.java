@@ -102,6 +102,16 @@ public class ShopCustomizationResponse {
     @Schema(description = "Show advanced features", example = "false")
     private Boolean showAdvancedFeatures;
 
+    // Computed Fields
+    @Schema(description = "Whether dark theme is enabled", example = "false")
+    private Boolean isDarkTheme;
+
+    @Schema(description = "Whether custom logo is configured", example = "true")
+    private Boolean hasCustomLogo;
+
+    @Schema(description = "Whether custom styles are applied", example = "false")
+    private Boolean hasCustomStyles;
+
     /**
      * Factory method to create ShopCustomizationResponse from ShopCustomization entity.
      *
@@ -116,11 +126,12 @@ public class ShopCustomizationResponse {
         return ShopCustomizationResponse.builder()
             .id(customization.getId())
             .shopId(customization.getShop() != null ? customization.getShop().getId() : null)
-            .primaryColor(customization.getPrimaryColor())
-            .secondaryColor(customization.getSecondaryColor())
-            .accentColor(customization.getAccentColor())
-            .backgroundColor(customization.getBackgroundColor())
-            .textColor(customization.getTextColor())
+            // Use default getters for colors to ensure non-null values
+            .primaryColor(customization.getPrimaryColorWithDefault())
+            .secondaryColor(customization.getSecondaryColorWithDefault())
+            .accentColor(customization.getAccentColorWithDefault())
+            .backgroundColor(customization.getBackgroundColorWithDefault())
+            .textColor(customization.getTextColorWithDefault())
             .logoUrl(customization.getLogoUrl())
             .faviconUrl(customization.getFaviconUrl())
             .bannerImageUrl(customization.getBannerImageUrl())
@@ -139,6 +150,10 @@ public class ShopCustomizationResponse {
             .showBanner(customization.getShowBanner())
             .enableAnimations(customization.getEnableAnimations())
             .showAdvancedFeatures(customization.getShowAdvancedFeatures())
+            // Computed fields
+            .isDarkTheme(customization.isDarkTheme())
+            .hasCustomLogo(customization.hasCustomLogo())
+            .hasCustomStyles(customization.hasCustomStyles())
             .build();
     }
 }

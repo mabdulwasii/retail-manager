@@ -75,6 +75,10 @@ class ShopCustomizationResponseTest {
         assertThat(response.getShowBanner()).isFalse();
         assertThat(response.getEnableAnimations()).isTrue();
         assertThat(response.getShowAdvancedFeatures()).isFalse();
+        // Computed fields
+        assertThat(response.getIsDarkTheme()).isTrue();
+        assertThat(response.getHasCustomLogo()).isTrue();
+        assertThat(response.getHasCustomStyles()).isTrue();
     }
 
     @Test
@@ -86,7 +90,7 @@ class ShopCustomizationResponseTest {
     }
 
     @Test
-    @DisplayName("Should handle entity with null optional fields")
+    @DisplayName("Should handle entity with null optional fields and use default colors")
     void shouldHandleEntityWithNullFields() {
         ShopCustomization customization = new ShopCustomization();
         customization.setId("custom-123");
@@ -95,8 +99,18 @@ class ShopCustomizationResponseTest {
 
         assertThat(response.getId()).isEqualTo("custom-123");
         assertThat(response.getShopId()).isNull();
-        assertThat(response.getPrimaryColor()).isNull();
+        // Color fields should use defaults when null
+        assertThat(response.getPrimaryColor()).isEqualTo("#007bff");
+        assertThat(response.getSecondaryColor()).isEqualTo("#6c757d");
+        assertThat(response.getAccentColor()).isEqualTo("#28a745");
+        assertThat(response.getBackgroundColor()).isEqualTo("#ffffff");
+        assertThat(response.getTextColor()).isEqualTo("#212529");
+        // Other optional fields remain null
         assertThat(response.getLogoUrl()).isNull();
+        // Computed fields should work correctly with null values
+        assertThat(response.getIsDarkTheme()).isFalse(); // Default is LIGHT
+        assertThat(response.getHasCustomLogo()).isFalse();
+        assertThat(response.getHasCustomStyles()).isFalse();
         // Note: ThemeVariant, FontSize, and DashboardLayout have defaults from @Builder.Default
         // so they won't be null even when using builder
     }
