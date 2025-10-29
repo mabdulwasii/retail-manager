@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * REST controller for user profile operations.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "User Management", description = "User profile and management operations")
@@ -46,7 +46,7 @@ public class UserController {
      * @param principal The authenticated user principal
      * @return The user's profile information
      */
-    @GetMapping("/users/profile")
+    @GetMapping("/profile")
     @Operation(
         summary = "Get current user profile",
         description = "Retrieves the authenticated user's profile information including personal details and roles. Available to all authenticated users."
@@ -103,102 +103,6 @@ public class UserController {
             log.error("Error retrieving user profile for {}: {}", principal.getUsername(), e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
-    }
-
-    /**
-     * Create a new user for a tenant.
-     *
-     * @param tenantId Tenant ID
-     * @param request User creation request
-     * @return Created user
-     */
-    @Operation(
-        summary = "Create user in tenant",
-        description = "Creates a new user in a tenant. Available to TENANT_ADMIN and OWNER."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "User created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data"),
-        @ApiResponse(responseCode = "403", description = "Insufficient permissions")
-    })
-    @PostMapping("/tenants/{tenantId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
-    public ResponseEntity<UserResponse> createUserInTenant(
-        @Parameter(description = "Tenant ID") @PathVariable String tenantId,
-        @Valid @RequestBody UserCreateRequest request
-    ) {
-        log.info("Creating user in tenant {}", tenantId);
-        User user = userService.createUser(tenantId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.fromEntity(user));
-    }
-
-    /**
-     * Create a new user for a shop.
-     *
-     * @param shopId Shop ID
-     * @param request User creation request
-     * @return Created user
-     */
-    @Operation(
-        summary = "Create user in shop",
-        description = "Creates a new user in a shop. Available to MANAGER."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "User created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data"),
-        @ApiResponse(responseCode = "403", description = "Insufficient permissions")
-    })
-    @PostMapping("/shops/{shopId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
-    public ResponseEntity<UserResponse> createUserInShop(
-        @Parameter(description = "Shop ID") @PathVariable String shopId,
-        @Valid @RequestBody UserCreateRequest request
-    ) {
-        log.info("Creating user in shop {}", shopId);
-        request.setShopId(shopId);
-        // Get tenant ID from shop - this should be validated in service
-        User user = userService.createUser(null, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.fromEntity(user));
-    }
-
-    /**
-     * Get users for a tenant.
-     *
-     * @param tenantId Tenant ID
-     * @return List of users
-     */
-    @Operation(
-        summary = "Get tenant users",
-        description = "Retrieves all users in a tenant."
-    )
-    @GetMapping("/tenants/{tenantId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
-    public ResponseEntity<List<UserResponse>> getTenantUsers(
-        @Parameter(description = "Tenant ID") @PathVariable String tenantId
-    ) {
-        log.debug("Retrieving users for tenant {}", tenantId);
-        List<User> users = userService.getUsersByTenant(tenantId);
-        return ResponseEntity.ok(users.stream().map(UserResponse::fromEntity).collect(Collectors.toList()));
-    }
-
-    /**
-     * Get users for a shop.
-     *
-     * @param shopId Shop ID
-     * @return List of users
-     */
-    @Operation(
-        summary = "Get shop users",
-        description = "Retrieves all users in a shop."
-    )
-    @GetMapping("/shops/{shopId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
-    public ResponseEntity<List<UserResponse>> getShopUsers(
-        @Parameter(description = "Shop ID") @PathVariable String shopId
-    ) {
-        log.debug("Retrieving users for shop {}", shopId);
-        List<User> users = userService.getUsersByShop(shopId);
-        return ResponseEntity.ok(users.stream().map(UserResponse::fromEntity).collect(Collectors.toList()));
     }
 
     /**
