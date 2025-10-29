@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.15
+    tag: backend-v0.0.16
     pullPolicy: Always
   podAnnotations:
-    configVersion: "11"  # Force pod restart with fixed error messages and Keycloak protocol mappers
+    configVersion: "12"  # ShopCustomization utility methods and computed fields
 
 # Frontend configuration
 frontend:
