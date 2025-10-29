@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.16
+    tag: backend-v0.0.17
     pullPolicy: Always
   podAnnotations:
-    configVersion: "12"  # ShopCustomization utility methods and computed fields
+    configVersion: "13"  # User and role management APIs
 
 # Frontend configuration
 frontend:
