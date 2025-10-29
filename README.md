@@ -30,6 +30,7 @@ Use any of these pre-configured accounts:
 | **[KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md)** | ☸️ Complete Kubernetes deployment guide (Helm, SSL, Production) |
 | **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)** | 🐳 Docker Compose, Kubernetes, and local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
+| **[docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)** | 📦 Product & Inventory management (Two-Tier Model, FEFO) |
 | **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
 
 ## 🏗️ Architecture
@@ -37,10 +38,11 @@ Use any of these pre-configured accounts:
 **Multi-Tenant Retail Platform** with modular Spring Boot backend and React frontend:
 
 ### Core Modules
-- **🏢 Core**: Tenant/Shop management, users, roles
+- **🏢 Core**: Tenant/Shop management, users, roles, product catalog
+- **📦 Inventory**: Multi-batch stock tracking with FEFO, expiry management
+- **🛒 Sales**: Transactions with automatic inventory deduction
 - **💰 Investment**: Investment tracking and profit sharing
 - **📊 Analytics**: Real-time analytics with caching
-- **🛒 Sales**: Transactions, receipts, line items
 - **🔐 Auth**: Keycloak SSO integration
 - **🔍 Shared**: Logging, auditing, utilities
 
@@ -57,8 +59,16 @@ Use any of these pre-configured accounts:
 
 ### Business Capabilities
 - **Multi-Tenant Architecture**: Complete tenant isolation
-- **Shop Management**: Inventory, products, categories
-- **Sales Processing**: Transactions, receipts, reporting
+- **Product Catalog Management**: SKU, barcodes, pricing, categories
+- **Advanced Inventory Control**:
+  - Multi-batch tracking with expiry dates
+  - FEFO (First Expiry, First Out) automatic sales allocation
+  - Multi-location stock management
+  - Batch traceability for compliance
+- **Sales Processing**:
+  - Transactions with automatic inventory deduction
+  - PDF receipt generation
+  - Fraud detection
 - **Investment Tracking**: ROI analytics, profit distribution
 - **User Management**: RBAC with Keycloak roles
 - **Analytics Dashboard**: Real-time sales and performance metrics
@@ -121,10 +131,11 @@ docker-compose build
 **✅ Production Ready** - Complete authentication system deployed
 
 ### Latest Updates (January 2025)
+- **Product & Inventory Refactoring**: Two-tier model with FEFO sales (Migration V10)
 - **Authentication**: Full Keycloak SSO integration working
 - **Frontend**: React app with TypeScript compilation resolved
 - **Backend**: Spring Modulith with event store configured
-- **Database**: All migrations applied (V9 latest)
+- **Database**: All migrations applied (V10 latest)
 - **Testing**: Comprehensive test users and documentation
 
 ### Coverage & Quality
