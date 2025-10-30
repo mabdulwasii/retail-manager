@@ -4,6 +4,7 @@ import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.UserCreateRequest;
 import com.princely.shopmanager.core.dto.UserResponse;
 import com.princely.shopmanager.core.service.UserService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +26,9 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for tenant management operations.
+ *
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api/tenants")
@@ -71,7 +75,7 @@ public class TenantController {
         )
     })
     @PostMapping("/{tenantId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_CREATE)")
     public ResponseEntity<UserResponse> createUserInTenant(
         @Parameter(description = "Tenant ID") @PathVariable String tenantId,
         @Valid @RequestBody UserCreateRequest request
@@ -111,7 +115,7 @@ public class TenantController {
         )
     })
     @GetMapping("/{tenantId}/users")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_LIST)")
     public ResponseEntity<List<UserResponse>> getTenantUsers(
         @Parameter(description = "Tenant ID") @PathVariable String tenantId
     ) {

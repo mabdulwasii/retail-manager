@@ -5,6 +5,7 @@ import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.service.ShopService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,11 +37,8 @@ import java.util.List;
  * - Status management and business rule enforcement
  * - Pagination support for listing operations
  *
- * All endpoints are secured and require appropriate authentication and authorization.
- * Operations respect tenant boundaries and include comprehensive audit logging.
- *
- * @author Shop Manager Development Team
- * @version 1.0
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api/shops")
@@ -94,7 +92,7 @@ public class ShopController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_CREATE)")
     public ResponseEntity<ShopResponse> createShop(
         @Valid @RequestBody ShopCreateRequest request
     ) {
@@ -133,7 +131,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
     public ResponseEntity<ShopResponse> getShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -168,7 +166,7 @@ public class ShopController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST)")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -208,7 +206,7 @@ public class ShopController {
         )
     })
     @GetMapping("/all")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST_ALL)")
     public ResponseEntity<Page<ShopResponse>> getAllShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -290,7 +288,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -341,7 +339,7 @@ public class ShopController {
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -386,7 +384,7 @@ public class ShopController {
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_DELETE)")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -426,7 +424,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}/configuration")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
     public ResponseEntity<com.princely.shopmanager.core.dto.ShopConfigurationResponse> getConfiguration(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -475,7 +473,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}/configuration")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> updateConfiguration(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
