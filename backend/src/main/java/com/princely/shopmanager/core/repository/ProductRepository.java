@@ -51,4 +51,7 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p WHERE p.barcode = :barcode AND p.shop.id = :shopId")
     boolean existsByBarcodeAndShopId(@Param("barcode") String barcode, @Param("shopId") String shopId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId")
+    Long countByCategory_Id(@Param("categoryId") String categoryId);
 }

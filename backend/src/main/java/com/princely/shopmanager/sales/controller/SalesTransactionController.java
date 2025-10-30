@@ -3,6 +3,7 @@ package com.princely.shopmanager.sales.controller;
 import com.princely.shopmanager.sales.dto.SalesTransactionCreateRequest;
 import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.sales.service.SalesTransactionService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +29,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * REST Controller for sales transaction management.
+ * Sales transactions represent completed purchases with automatic FEFO inventory deduction.
+ *
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
+ */
 @RestController
 @RequestMapping("/api/sales")
 @RequiredArgsConstructor
@@ -42,7 +50,7 @@ public class SalesTransactionController {
 
     @Operation(
         summary = "Create a new sales transaction",
-        description = "Creates a new sales transaction for the specified shop. Requires CASHIER or MANAGER role."
+        description = "Creates a new sales transaction with automatic FEFO inventory deduction."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -65,7 +73,7 @@ public class SalesTransactionController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_CREATE)")
     public ResponseEntity<SalesTransactionResponse> createTransaction(
         @Valid @RequestBody SalesTransactionCreateRequest request
     ) {
@@ -95,7 +103,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
     public ResponseEntity<SalesTransactionResponse> getTransaction(
         @Parameter(description = "Transaction ID", example = "txn-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String id
@@ -120,7 +128,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
     public ResponseEntity<Page<SalesTransactionResponse>> getTransactions(
         @Parameter(description = "Shop ID", required = true)
         @RequestParam String shopId,
@@ -146,7 +154,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping("/by-date-range")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
     public ResponseEntity<List<SalesTransactionResponse>> getTransactionsByDateRange(
         @Parameter(description = "Shop ID", required = true)
         @RequestParam String shopId,
@@ -162,7 +170,7 @@ public class SalesTransactionController {
 
     @Operation(
         summary = "Void a sales transaction",
-        description = "Voids a sales transaction. Requires MANAGER or OWNER role."
+        description = "Voids a sales transaction and restores inventory."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -183,7 +191,7 @@ public class SalesTransactionController {
         )
     })
     @PostMapping("/{id}/void")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_VOID)")
     public ResponseEntity<Void> voidTransaction(
         @Parameter(description = "Transaction ID")
         @PathVariable String id,

@@ -19,4 +19,6 @@ public interface CategoryRepository extends JpaRepository<Category, String> {
 
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Category c WHERE c.name = :name AND c.shop.id = :shopId")
     boolean existsByNameAndShopId(@Param("name") String name, @Param("shopId") String shopId);
+
+    boolean existsByNameAndShop_Id(String name, String shopId);
 }

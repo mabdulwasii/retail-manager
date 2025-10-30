@@ -6,6 +6,7 @@ import com.princely.shopmanager.core.dto.ProductResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.service.ProductService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +33,9 @@ import java.math.BigDecimal;
  * REST Controller for product catalog management.
  * Products represent the master catalog (what you sell).
  * For stock management, use the Inventory API.
+ *
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api")
@@ -52,7 +56,7 @@ public class ProductController {
     @ApiResponse(responseCode = "400", description = "Invalid request data or SKU/barcode already exists")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/shops/{shopId}/products")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_CREATE)")
     public ResponseEntity<ProductResponse> createProduct(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody ProductCreateRequest request,
@@ -75,7 +79,7 @@ public class ProductController {
     @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/products")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_LIST)")
     public ResponseEntity<Page<ProductResponse>> getProducts(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Search query for product name or SKU") @RequestParam(required = false) String search,
@@ -140,7 +144,7 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @GetMapping("/products/{productId}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_READ)")
     public ResponseEntity<ProductResponse> getProductById(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
@@ -159,7 +163,7 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @PutMapping("/products/{productId}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_UPDATE)")
     public ResponseEntity<ProductResponse> updateProduct(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @Valid @RequestBody ProductUpdateRequest request,
@@ -179,7 +183,7 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @DeleteMapping("/products/{productId}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_DELETE)")
     public ResponseEntity<Void> deleteProduct(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -198,7 +202,7 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @GetMapping("/products/{productId}/inventory-summary")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('EMPLOYEE') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<ProductService.InventorySummary> getInventorySummary(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -214,7 +218,7 @@ public class ProductController {
     @ApiResponse(responseCode = "200", description = "Low stock products retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/products/low-stock")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithLowStock(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -230,7 +234,7 @@ public class ProductController {
     @ApiResponse(responseCode = "200", description = "Out of stock products retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/products/out-of-stock")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithNoStock(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {

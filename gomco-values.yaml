@@ -10,17 +10,17 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.20
+    tag: backend-v0.0.21
     pullPolicy: Always
   podAnnotations:
-    configVersion: "16"  # Add shop relationship to Category entity
+    configVersion: "17"  # Add granular permissions and Category API
 
 # Frontend configuration
 frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.4
+    tag: frontend-v0.0.5
     pullPolicy: Always
 
 branding:
