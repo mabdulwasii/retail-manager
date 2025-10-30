@@ -14,13 +14,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"products", "parent", "children"})
-@EqualsAndHashCode(callSuper = true, exclude = {"products", "parent", "children"})
+@ToString(exclude = {"products", "parent", "children", "shop"})
+@EqualsAndHashCode(callSuper = true, exclude = {"products", "parent", "children", "shop"})
 public class Category extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shop_id", nullable = false)
+    private Shop shop;
 
     @Column(nullable = false)
     private String name;

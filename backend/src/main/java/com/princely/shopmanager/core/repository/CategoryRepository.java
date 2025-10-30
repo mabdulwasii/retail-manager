@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, String> {
 
-    Optional<Category> findByName(String name);
+    Optional<Category> findByNameAndShop_Id(String name, String shopId);
 
     @Query("SELECT c FROM Category c WHERE c.shop.id = :shopId")
     List<Category> findByShopId(@Param("shopId") String shopId);
