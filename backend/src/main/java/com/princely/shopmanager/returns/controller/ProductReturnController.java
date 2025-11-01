@@ -3,6 +3,7 @@ package com.princely.shopmanager.returns.controller;
 import com.princely.shopmanager.returns.dto.ProductReturnCreateRequest;
 import com.princely.shopmanager.returns.dto.ProductReturnResponse;
 import com.princely.shopmanager.returns.service.ProductReturnService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,6 +34,8 @@ import org.springframework.web.bind.annotation.*;
  *
  * All endpoints are secured and require appropriate authentication and authorization.
  * Operations respect tenant boundaries and include comprehensive audit logging.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  *
  * @author Shop Manager Development Team
  * @version 1.0
@@ -93,7 +96,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_CREATE)")
     public ResponseEntity<ProductReturnResponse> createReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -142,7 +145,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping("/{returnId}/process")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_APPROVE)")
     public ResponseEntity<ProductReturnResponse> processReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -187,7 +190,7 @@ public class ProductReturnController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('OWNER') or hasRole('MANAGER') or hasRole('CASHIER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_LIST)")
     public ResponseEntity<Page<ProductReturnResponse>> getReturns(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,

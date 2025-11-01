@@ -1,5 +1,6 @@
 package com.princely.shopmanager.investment.controller;
 
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.investment.domain.Investment;
 import com.princely.shopmanager.investment.dto.*;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST Controller for investment and profit sharing operations
+ * REST Controller for investment and profit sharing operations.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api")
@@ -46,7 +49,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Shop or products not found")
     @PostMapping("/investments")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_CREATE)")
     public ResponseEntity<InvestmentResponse> createInvestment(
             @Valid @RequestBody InvestmentCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -64,7 +67,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "200", description = "Investments retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/investments")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_LIST)")
     public ResponseEntity<Page<InvestmentResponse>> getShopInvestments(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -87,7 +90,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "200", description = "Investments retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/my-investments")
-    @PreAuthorize("hasRole('INVESTOR')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_LIST)")
     public ResponseEntity<Page<InvestmentResponse>> getMyInvestments(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
@@ -110,7 +113,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @GetMapping("/investments/{investmentId}")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_READ)")
     public ResponseEntity<InvestmentResponse> getInvestment(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -128,7 +131,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @PutMapping("/investments/{investmentId}/status")
-    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_UPDATE)")
     public ResponseEntity<InvestmentResponse> updateInvestmentStatus(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @Parameter(description = "New status") @RequestParam Investment.InvestmentStatus status,
@@ -150,7 +153,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @PostMapping("/investments/{investmentId}/withdraw")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_CLOSE)")
     public ResponseEntity<InvestmentResponse> processWithdrawal(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @Valid @RequestBody WithdrawalRequest request,
@@ -171,7 +174,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Investment not found")
     @GetMapping("/investments/{investmentId}/distributions")
-    @PreAuthorize("hasRole('INVESTOR') or hasRole('MANAGER') or hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_READ)")
     public ResponseEntity<List<InvestorDistributionResponse>> getInvestmentDistributions(
             @Parameter(description = "Investment ID") @PathVariable String investmentId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -187,7 +190,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "200", description = "Distributions retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/my-distributions")
-    @PreAuthorize("hasRole('INVESTOR')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_READ)")
     public ResponseEntity<List<InvestorDistributionResponse>> getMyDistributions(
             @AuthenticationPrincipal JwtPrincipal principal) {
 
@@ -204,7 +207,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Distribution not found")
     @PostMapping("/distributions/{distributionId}/approve")
-    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_PROFIT_DISTRIBUTE)")
     public ResponseEntity<InvestorDistributionResponse> approveDistribution(
             @Parameter(description = "Distribution ID") @PathVariable String distributionId,
             @Parameter(description = "Approval notes") @RequestParam(required = false) String notes,
@@ -225,7 +228,7 @@ public class InvestmentController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Distribution not found")
     @PostMapping("/distributions/{distributionId}/mark-paid")
-    @PreAuthorize("hasRole('OWNER') or hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_PROFIT_DISTRIBUTE)")
     public ResponseEntity<InvestorDistributionResponse> markDistributionAsPaid(
             @Parameter(description = "Distribution ID") @PathVariable String distributionId,
             @Parameter(description = "Payment reference") @RequestParam String paymentReference,

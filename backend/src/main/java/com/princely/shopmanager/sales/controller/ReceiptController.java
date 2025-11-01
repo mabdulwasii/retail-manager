@@ -2,6 +2,7 @@ package com.princely.shopmanager.sales.controller;
 
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.service.ReceiptService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,11 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * REST Controller for receipt management operations.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
+ */
 @RestController
 @RequestMapping("/api/receipts")
 @RequiredArgsConstructor
@@ -28,7 +34,7 @@ public class ReceiptController {
     private final ReceiptService receiptService;
 
     @PostMapping("/generate/{transactionId}")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_CREATE)")
     public ResponseEntity<Receipt> generateReceipt(@PathVariable String transactionId) {
 
         Receipt receipt = receiptService.generateReceipt(transactionId);
@@ -36,7 +42,7 @@ public class ReceiptController {
     }
 
     @GetMapping("/{receiptId}")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<Receipt> getReceipt(@PathVariable String receiptId) {
         Optional<Receipt> receipt = receiptService.getReceipt(receiptId);
         return receipt.map(ResponseEntity::ok)
@@ -44,7 +50,7 @@ public class ReceiptController {
     }
 
     @GetMapping("/by-number/{receiptNumber}")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<Receipt> getReceiptByNumber(@PathVariable String receiptNumber) {
         Optional<Receipt> receipt = receiptService.getReceiptByNumber(receiptNumber);
         return receipt.map(ResponseEntity::ok)
@@ -52,7 +58,7 @@ public class ReceiptController {
     }
 
     @GetMapping("/transaction/{transactionId}")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<Receipt> getReceiptByTransaction(@PathVariable String transactionId) {
         Optional<Receipt> receipt = receiptService.getReceipt(transactionId);
         return receipt.map(ResponseEntity::ok)
@@ -60,7 +66,7 @@ public class ReceiptController {
     }
 
     @GetMapping("/{receiptId}/content")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<String> getReceiptContent(@PathVariable String receiptId) {
         Optional<Receipt> receipt = receiptService.getReceipt(receiptId);
 
@@ -79,7 +85,7 @@ public class ReceiptController {
     }
 
     @GetMapping("/{receiptId}/printable")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<String> getPrintableContent(@PathVariable String receiptId) {
         Optional<Receipt> receipt = receiptService.getReceipt(receiptId);
 
@@ -97,7 +103,7 @@ public class ReceiptController {
     }
 
     @PostMapping("/{receiptId}/mark-printed")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_CREATE)")
     public ResponseEntity<Receipt> markAsPrinted(@PathVariable String receiptId,
                                                @RequestParam String printedBy) {
         Receipt receipt = receiptService.markAsPrinted(receiptId, printedBy);
@@ -105,7 +111,7 @@ public class ReceiptController {
     }
 
     @PostMapping("/{receiptId}/mark-emailed")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_EMAIL)")
     public ResponseEntity<Receipt> markAsEmailed(@PathVariable String receiptId,
                                                @RequestParam String emailAddress) {
         Receipt receipt = receiptService.markAsEmailed(receiptId, emailAddress);
@@ -113,7 +119,7 @@ public class ReceiptController {
     }
 
     @PostMapping("/regenerate/{transactionId}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_CREATE)")
     public ResponseEntity<Void> regenerateReceipt(@PathVariable String transactionId) {
         receiptService.regenerateReceipt(transactionId);
         return ResponseEntity.ok().build();

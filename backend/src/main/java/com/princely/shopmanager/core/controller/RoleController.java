@@ -4,6 +4,7 @@ import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.dto.RoleAssignmentRequest;
 import com.princely.shopmanager.core.dto.RoleResponse;
 import com.princely.shopmanager.core.service.RoleService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 /**
  * REST Controller for role management operations.
  * Provides endpoints for viewing roles and managing role assignments.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api")
@@ -59,7 +62,7 @@ public class RoleController {
         )
     })
     @GetMapping("/roles")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
     public ResponseEntity<List<RoleResponse>> getAllRoles() {
         log.debug("Retrieving all roles");
         List<Role> roles = roleService.getAllRoles();
@@ -95,7 +98,7 @@ public class RoleController {
         )
     })
     @GetMapping("/roles/{roleId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_READ)")
     public ResponseEntity<RoleResponse> getRoleById(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId
@@ -131,7 +134,7 @@ public class RoleController {
         )
     })
     @GetMapping("/users/{userId}/roles")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
     public ResponseEntity<Set<RoleResponse>> getUserRoles(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId
@@ -180,7 +183,7 @@ public class RoleController {
         )
     })
     @PostMapping("/users/{userId}/roles")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
     public ResponseEntity<Void> assignRoleToUser(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId,
@@ -221,7 +224,7 @@ public class RoleController {
         )
     })
     @DeleteMapping("/users/{userId}/roles/{roleId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
     public ResponseEntity<Void> removeRoleFromUser(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId,

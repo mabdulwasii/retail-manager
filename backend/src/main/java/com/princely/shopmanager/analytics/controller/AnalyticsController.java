@@ -5,6 +5,7 @@ import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
 import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
 import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.service.AnalyticsService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * REST Controller for analytics operations.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
+ */
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
@@ -23,7 +29,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @GetMapping("/sales-summary")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
     public ResponseEntity<SalesSummaryDto> getSalesSummary(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -34,7 +40,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/investment-roi")
-    @PreAuthorize("hasRole('OWNER') or hasRole('INVESTOR')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
     public ResponseEntity<InvestmentRoiDto> getInvestmentROI(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -45,7 +51,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/fraud-statistics")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
     public ResponseEntity<FraudStatisticsDto> getFraudStatistics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -56,7 +62,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/revenue-analytics")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
     public ResponseEntity<RevenueAnalyticsDto> getRevenueAnalytics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -67,7 +73,7 @@ public class AnalyticsController {
     }
 
     @PostMapping("/clear-cache/{shopId}")
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_EXPORT)")
     public ResponseEntity<Void> clearCacheForShop(@PathVariable String shopId) {
         analyticsService.clearCacheForShop(shopId);
         return ResponseEntity.ok().build();

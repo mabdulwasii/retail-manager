@@ -1,5 +1,6 @@
 package com.princely.shopmanager.expenses.controller;
 
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
 import com.princely.shopmanager.expenses.dto.*;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +29,9 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * REST Controller for expense management operations
+ * REST Controller for expense management operations.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api")
@@ -47,6 +51,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "400", description = "Invalid request data")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/shops/{shopId}/expenses")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_CREATE)")
     public ResponseEntity<ExpenseResponse> createExpense(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody ExpenseCreateRequest request,
@@ -67,6 +72,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PutMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_UPDATE)")
     public ResponseEntity<ExpenseResponse> updateExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody ExpenseUpdateRequest request,
@@ -86,6 +92,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @GetMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_READ)")
     public ResponseEntity<ExpenseResponse> getExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -101,6 +108,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_LIST)")
     public ResponseEntity<Page<ExpenseResponse>> getExpenses(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date filter") @RequestParam(required = false)
@@ -150,6 +158,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PostMapping("/expenses/{expenseId}/approve")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_APPROVE)")
     public ResponseEntity<ExpenseResponse> approveExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody(required = false) ExpenseApprovalRequest request,
@@ -174,6 +183,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PostMapping("/expenses/{expenseId}/reject")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_APPROVE)")
     public ResponseEntity<ExpenseResponse> rejectExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody(required = false) ExpenseApprovalRequest request,
@@ -198,6 +208,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @DeleteMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_DELETE)")
     public ResponseEntity<Void> deleteExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -215,6 +226,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "200", description = "Summary retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses/summary")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_LIST)")
     public ResponseEntity<ExpenseSummaryDto> getExpenseSummary(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date for summary") @RequestParam(required = false)

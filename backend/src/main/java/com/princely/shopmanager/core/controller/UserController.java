@@ -6,6 +6,7 @@ import com.princely.shopmanager.core.dto.UserProfileResponse;
 import com.princely.shopmanager.core.dto.UserResponse;
 import com.princely.shopmanager.core.dto.UserUpdateRequest;
 import com.princely.shopmanager.core.service.UserService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +30,9 @@ import java.util.stream.Collectors;
 
 /**
  * REST controller for user profile operations.
+ *
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -116,7 +120,7 @@ public class UserController {
         description = "Retrieves details of a specific user."
     )
     @GetMapping("/users/{userId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_READ)")
     public ResponseEntity<UserResponse> getUserById(
         @Parameter(description = "User ID") @PathVariable String userId
     ) {
@@ -140,7 +144,7 @@ public class UserController {
         description = "Updates an existing user."
     )
     @PutMapping("/users/{userId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_UPDATE)")
     public ResponseEntity<UserResponse> updateUser(
         @Parameter(description = "User ID") @PathVariable String userId,
         @Valid @RequestBody UserUpdateRequest request
@@ -161,7 +165,7 @@ public class UserController {
         description = "Soft deletes a user by setting status to INACTIVE."
     )
     @DeleteMapping("/users/{userId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_DELETE)")
     public ResponseEntity<Void> deleteUser(
         @Parameter(description = "User ID") @PathVariable String userId
     ) {
