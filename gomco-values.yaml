@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.21
+    tag: backend-v0.0.22
     pullPolicy: Always
   podAnnotations:
-    configVersion: "17"  # Add granular permissions and Category API
+    configVersion: "18"  # Complete all controllers with granular permissions
 
 # Frontend configuration
 frontend:
