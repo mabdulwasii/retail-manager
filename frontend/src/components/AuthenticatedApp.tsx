@@ -12,6 +12,9 @@ import {
   ExpiringItemsPage
 } from "@/pages/inventory";
 import { InvestmentsPage } from "@/pages/investments/InvestmentsPage";
+import { InvestmentDetailPage } from "@/pages/investments/InvestmentDetailPage";
+import { CreateInvestmentPage } from "@/pages/investments/CreateInvestmentPage";
+import { DistributionListPage } from "@/pages/investments/DistributionListPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
 import { CreateProductPage } from "@/pages/products/CreateProductPage";
@@ -264,8 +267,38 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR"]}>
+            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "MANAGER", "TENANT_ADMIN"]}>
               <InvestmentsPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/investments/create"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "TENANT_ADMIN"]}>
+              <CreateInvestmentPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/investments/distributions"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN", "INVESTOR"]}>
+              <DistributionListPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/investments/:id"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "MANAGER", "TENANT_ADMIN"]}>
+              <InvestmentDetailPage />
             </ProtectedRoute>
           </Layout>
         }

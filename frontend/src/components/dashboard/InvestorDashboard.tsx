@@ -1,149 +1,126 @@
 import React from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
-import { useInvestmentROI } from '@/hooks/useDashboard'
+import { useInvestments } from '@/hooks/investment/useInvestments'
+import { useDistributions } from '@/hooks/investment/useDistributions'
+import { usePortfolioSummary } from '@/hooks/investment/usePortfolioSummary'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Badge } from '@/components/ui/badge'
 import {
   TrendingUp,
   DollarSign,
-  PieChart,
   Target,
   ArrowUpRight,
   Coins,
-  BarChart3
+  BarChart3,
+  TrendingDown
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-
-interface Investment {
-  id: string
-  name: string
-  amount: number
-  currentValue: number
-  roi: number
-  status: 'active' | 'completed' | 'pending'
-  startDate: string
-  category: string
-}
-
-interface Distribution {
-  id: string
-  amount: number
-  date: string
-  source: string
-  type: 'dividend' | 'profit_share' | 'return'
-}
+import { useCurrency } from '@/hooks/useCurrency'
+import { format } from 'date-fns'
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { data: investmentROI, isLoading: roiLoading } = useInvestmentROI()
-  const statsLoading = roiLoading
+  const { formatCurrency } = useCurrency()
+  
+  // Fetch real data
+  const { data: investmentsData, isLoading: investmentsLoading } = useInvestments({
+    page: 0,
+    size: 5,
+    sortBy: 'investmentDate',
+    sortDir: 'desc'
+  })
+  
+  const { data: distributionsData, isLoading: distributionsLoading } = useDistributions({
+    page: 0,
+    size: 5
+  })
+  
+  // Extract investments array from paginated response
+  const investments = investmentsData?.content || []
+  const portfolioSummary = usePortfolioSummary(investments)
+  const statsLoading = investmentsLoading || distributionsLoading
 
-  // Calculate portfolio stats from real data
+  // Portfolio stats from real data
   const portfolioStats = [
     {
       title: 'Total Invested',
-      value: investmentROI ? `$${(investmentROI.totalInvestment || 0).toLocaleString()}` : '$0',
+      value: formatCurrency(portfolioSummary.totalInvested),
       description: 'Across all investments',
       icon: DollarSign,
       color: 'text-blue-600'
     },
     {
-      title: 'Current Value',
-      value: investmentROI ? `$${(investmentROI.totalReturn || 0).toLocaleString()}` : '$0',
-      description: 'Portfolio worth',
+      title: 'Total Returns',
+      value: formatCurrency(portfolioSummary.totalReturns),
+      description: 'Profit generated',
       icon: TrendingUp,
       color: 'text-green-600'
     },
     {
-      title: 'Total Returns',
-      value: investmentROI ? `$${((investmentROI.totalReturn || 0) - (investmentROI.totalInvestment || 0)).toLocaleString()}` : '$0',
-      description: 'Profit generated',
+      title: 'Available Balance',
+      value: formatCurrency(portfolioSummary.availableBalance),
+      description: 'Ready to withdraw',
       icon: ArrowUpRight,
       color: 'text-emerald-600'
     },
     {
-      title: 'ROI',
-      value: investmentROI ? `${(investmentROI.roi || 0).toFixed(1)}%` : '0%',
+      title: 'Average ROI',
+      value: `${portfolioSummary.averageROI.toFixed(1)}%`,
       description: 'Return on investment',
       icon: Target,
       color: 'text-purple-600'
     }
   ]
 
-  const investments: Investment[] = [
-    {
-      id: '1',
-      name: 'Tech Electronics Store',
-      amount: 50000,
-      currentValue: 62500,
-      roi: 25.0,
-      status: 'active',
-      startDate: '2024-01-15',
-      category: 'Electronics'
-    },
-    {
-      id: '2',
-      name: 'Fashion Retail Chain',
-      amount: 35000,
-      currentValue: 42000,
-      roi: 20.0,
-      status: 'active',
-      startDate: '2024-02-01',
-      category: 'Fashion'
-    },
-    {
-      id: '3',
-      name: 'Grocery Expansion',
-      amount: 25000,
-      currentValue: 31250,
-      roi: 25.0,
-      status: 'active',
-      startDate: '2024-03-10',
-      category: 'Grocery'
-    },
-    {
-      id: '4',
-      name: 'Sports Equipment',
-      amount: 15000,
-      currentValue: 21000,
-      roi: 40.0,
-      status: 'completed',
-      startDate: '2023-10-15',
-      category: 'Sports'
+  // Get status badge color
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      ACTIVE: 'bg-green-100 text-green-800',
+      MATURED: 'bg-blue-100 text-blue-800',
+      WITHDRAWN: 'bg-gray-100 text-gray-800',
+      DEFAULTED: 'bg-red-100 text-red-800',
     }
-  ]
+    return colors[status] || 'bg-gray-100 text-gray-800'
+  }
 
-  const recentDistributions: Distribution[] = [
-    {
-      id: '1',
-      amount: 2500,
-      date: '2024-01-01',
-      source: 'Tech Electronics Store',
-      type: 'profit_share'
-    },
-    {
-      id: '2',
-      amount: 1800,
-      date: '2023-12-01',
-      source: 'Fashion Retail Chain',
-      type: 'dividend'
-    },
-    {
-      id: '3',
-      amount: 3200,
-      date: '2023-11-15',
-      source: 'Sports Equipment',
-      type: 'return'
-    }
-  ]
+  // Calculate ROI for individual investment
+  const calculateROI = (totalReturns: number, amount: number) => {
+    if (amount === 0) return 0
+    return ((totalReturns / amount) * 100)
+  }
 
+  // Performance metrics from real data
   const performanceMetrics = [
-    { label: 'Best Performing', value: 'Sports Equipment', change: '+40%' },
-    { label: 'Highest Volume', value: 'Tech Electronics', change: '$62.5K' },
-    { label: 'Most Recent', value: 'Grocery Expansion', change: 'Mar 2024' },
-    { label: 'Total Active', value: '3 Investments', change: '$135.75K' }
+    { 
+      label: 'Active Investments', 
+      value: portfolioSummary.activeCount.toString(),
+      change: `${portfolioSummary.totalCount} Total` 
+    },
+    { 
+      label: 'Best ROI', 
+      value: investments.length > 0 
+        ? `${Math.max(...investments.map(inv => calculateROI(inv.totalProfitEarned, inv.amount))).toFixed(1)}%`
+        : '0%',
+      change: 'Top performer' 
+    },
+    { 
+      label: 'Total Withdrawn', 
+      value: formatCurrency(portfolioSummary.totalWithdrawn),
+      change: 'All time' 
+    },
+    { 
+      label: 'Portfolio Value', 
+      value: formatCurrency(portfolioSummary.totalInvested + portfolioSummary.totalReturns),
+      change: 'Current worth' 
+    }
   ]
+  
+  // Handle both array and paginated response for distributions
+  const recentDistributions = Array.isArray(distributionsData) 
+    ? distributionsData 
+    : (distributionsData?.content || [])
 
   if (statsLoading) {
     return (
@@ -173,7 +150,7 @@ export const InvestorDashboard: React.FC = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/investments/new">
+            <Link to="/investments/create">
               <Coins className="mr-2 h-4 w-4" />
               New Investment
             </Link>
@@ -230,45 +207,72 @@ export const InvestorDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {investments.map((investment) => (
-                <div key={investment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-3 h-3 rounded-full ${
-                      investment.status === 'active' ? 'bg-green-500' :
-                      investment.status === 'completed' ? 'bg-blue-500' :
-                      'bg-yellow-500'
-                    }`}></div>
-                    <div>
-                      <p className="font-medium">{investment.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {investment.category} • Started {new Date(investment.startDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-muted-foreground">
-                        ${investment.amount.toLocaleString()}
-                      </span>
-                      <ArrowUpRight className="h-3 w-3" />
-                      <span className="font-semibold">
-                        ${investment.currentValue.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-end space-x-1">
-                      <TrendingUp className="h-3 w-3 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">
-                        +{investment.roi}%
-                      </span>
-                    </div>
-                  </div>
+            {investments.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No investments yet</p>
+                <Button asChild>
+                  <Link to="/investments/create">Create Your First Investment</Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {investments.slice(0, 5).map((investment) => {
+                    const roi = calculateROI(investment.totalProfitEarned, investment.amount)
+                    return (
+                      <Link 
+                        key={investment.id} 
+                        to={`/investments/${investment.id}`}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <Badge className={getStatusColor(investment.status)}>
+                            {investment.status}
+                          </Badge>
+                          <div>
+                            <p className="font-medium">{investment.shopName}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {investment.investmentType.replace(/_/g, ' ')} • {format(new Date(investment.investmentDate), 'MMM dd, yyyy')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-muted-foreground">
+                              {formatCurrency(investment.amount)}
+                            </span>
+                            <ArrowUpRight className="h-3 w-3" />
+                            <span className="font-semibold">
+                              {formatCurrency(investment.amount + investment.totalProfitEarned)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-end space-x-1">
+                            {roi >= 0 ? (
+                              <>
+                                <TrendingUp className="h-3 w-3 text-green-600" />
+                                <span className="text-sm font-medium text-green-600">
+                                  +{roi.toFixed(1)}%
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <TrendingDown className="h-3 w-3 text-red-600" />
+                                <span className="text-sm font-medium text-red-600">
+                                  {roi.toFixed(1)}%
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/investments">View All Investments</Link>
-            </Button>
+                <Button variant="outline" className="w-full mt-4" asChild>
+                  <Link to="/investments">View All Investments</Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -281,137 +285,85 @@ export const InvestorDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentDistributions.map((distribution) => (
-                <div key={distribution.id} className="flex items-start space-x-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    distribution.type === 'profit_share' ? 'bg-green-500' :
-                    distribution.type === 'dividend' ? 'bg-blue-500' :
-                    'bg-purple-500'
-                  }`}></div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      ${distribution.amount.toLocaleString()} {distribution.type.replace('_', ' ')}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {distribution.source}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(distribution.date).toLocaleDateString()}
-                    </p>
-                  </div>
+            {recentDistributions.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No distributions yet</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {recentDistributions.slice(0, 5).map((distribution) => (
+                    <div key={distribution.id} className="flex items-start justify-between p-3 border-b last:border-0">
+                      <div className="flex items-start space-x-3">
+                        <Badge className={
+                          distribution.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                          distribution.status === 'APPROVED' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }>
+                          {distribution.status}
+                        </Badge>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {formatCurrency(distribution.distributionAmount)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {distribution.investmentNumber}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {distribution.distributionDate 
+                              ? format(new Date(distribution.distributionDate), 'MMM dd, yyyy')
+                              : format(new Date(distribution.periodEnd), 'MMM dd, yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/distributions">View All Distributions</Link>
-            </Button>
+                <Button variant="outline" className="w-full mt-4" asChild>
+                  <Link to="/investments/distributions">View All Distributions</Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Investment Allocation Chart */}
+      {/* Investment Allocation by Type */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <PieChart className="h-5 w-5" />
-            <span>Portfolio Allocation</span>
-          </CardTitle>
+          <CardTitle>Investment Breakdown</CardTitle>
           <CardDescription>
-            Distribution of investments by category
+            Your investments by type
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              {investments.reduce((acc, investment) => {
-                const existingCategory = acc.find(item => item.category === investment.category)
-                if (existingCategory) {
-                  existingCategory.amount += investment.currentValue
-                } else {
-                  acc.push({
-                    category: investment.category,
-                    amount: investment.currentValue,
-                    percentage: 0
-                  })
-                }
-                return acc
-              }, [] as Array<{ category: string; amount: number; percentage: number }>)
-              .map(item => {
-                const totalValue = investments.reduce((sum, inv) => sum + inv.currentValue, 0)
-                item.percentage = (item.amount / totalValue) * 100
-                return item
-              })
-              .map((allocation, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded ${
-                      index === 0 ? 'bg-blue-500' :
-                      index === 1 ? 'bg-green-500' :
-                      index === 2 ? 'bg-purple-500' :
-                      'bg-orange-500'
-                    }`}></div>
-                    <span className="text-sm font-medium">{allocation.category}</span>
+          {investments.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No investment data available</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(
+                investments.reduce((acc, inv) => {
+                  const type = inv.investmentType
+                  if (!acc[type]) {
+                    acc[type] = { count: 0, amount: 0 }
+                  }
+                  acc[type].count++
+                  acc[type].amount += inv.amount
+                  return acc
+                }, {} as Record<string, { count: number; amount: number }>)
+              ).map(([type, data]) => (
+                <div key={type} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{type.replace(/_/g, ' ')}</p>
+                    <p className="text-sm text-muted-foreground">{data.count} investment{data.count > 1 ? 's' : ''}</p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">
-                      ${allocation.amount.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {allocation.percentage.toFixed(1)}%
-                    </div>
-                  </div>
+                  <p className="font-semibold">{formatCurrency(data.amount)}</p>
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-center">
-              <div className="text-muted-foreground text-center">
-                <PieChart className="h-16 w-16 mx-auto mb-2" />
-                <p>Portfolio allocation chart would be rendered here</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Investment Goals */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Target className="h-5 w-5" />
-            <span>Investment Goals</span>
-          </CardTitle>
-          <CardDescription>
-            Track progress towards your financial objectives
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-blue-900">Portfolio Growth Target</h4>
-                <span className="text-blue-600 font-semibold">78%</span>
-              </div>
-              <div className="w-full bg-blue-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '78%' }}></div>
-              </div>
-              <p className="text-sm text-blue-800 mt-1">
-                $156,750 of $200,000 target reached
-              </p>
-            </div>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-green-900">Annual ROI Target</h4>
-                <span className="text-green-600 font-semibold">127%</span>
-              </div>
-              <div className="w-full bg-green-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full w-full"></div>
-              </div>
-              <p className="text-sm text-green-800 mt-1">
-                25.4% ROI exceeds 20% target
-              </p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,50 +1,11 @@
 import api from "@/lib/axios";
+import type { 
+  Investment, 
+  InvestorDistribution 
+} from "@/types/investment";
 
-export interface Investment {
-  id: string;
-  investmentNumber: string;
-  investorId: string;
-  investorName: string;
-  investorEmail: string;
-  shopId: string;
-  shopName: string;
-  investmentType: string;
-  amount: number;
-  profitSharingModel: string;
-  profitPercentage?: number;
-  fixedShares?: number;
-  investmentDate: string;
-  maturityDate?: string;
-  status: string;
-  totalProfitEarned: number;
-  totalWithdrawn: number;
-  availableBalance: number;
-  lastProfitCalculation?: string;
-  products: any[];
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface InvestorDistribution {
-  id: string;
-  investmentId: string;
-  investmentNumber: string;
-  investorName: string;
-  periodStart: string;
-  periodEnd: string;
-  totalSalesRevenue: number;
-  totalProfit: number;
-  investorSharePercentage: number;
-  investorProfitAmount: number;
-  distributionAmount: number;
-  status: string;
-  distributionDate?: string;
-  paymentReference?: string;
-  notes?: string;
-  calculationDetails?: string;
-  createdAt: string;
-}
+// Re-export types for backward compatibility
+export type { Investment, InvestorDistribution };
 
 export interface CreateInvestmentRequest {
   shopId: string;
@@ -147,8 +108,13 @@ export const investmentService = {
     return data;
   },
 
-  async getMyDistributions(): Promise<InvestorDistribution[]> {
-    const { data } = await api.get("/my-distributions");
+  async getMyDistributions(
+    page = 0,
+    size = 20
+  ): Promise<PaginatedResponse<InvestorDistribution>> {
+    const { data } = await api.get("/my-distributions", {
+      params: { page, size },
+    });
     return data;
   },
 
