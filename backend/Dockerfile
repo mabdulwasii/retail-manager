@@ -10,13 +10,16 @@ COPY pom.xml .
 # Download dependencies (cached layer)
 RUN mvn dependency:go-offline -B
 
-# Copy source code
+# Copy source code and docs
 COPY src ./src
 
-# Build the application with lenient compilation (skip problematic classes)
-RUN mvn clean package -DskipTests -B -Dmaven.compiler.failOnError=false || \
-    mvn clean package -DskipTests -B -Dmaven.compiler.excludes="**/expenses/**,**/investment/**,**/analytics/**,**/returns/**" || \
-    mvn clean compile exec:java -Dexec.mainClass="com.princely.shopmanager.ShopManagerApplication" -jar
+# Build the application and generate documentation
+# Note: This generates manual docs without auto-generated API specs (app not running)
+# For full API docs, build locally with app running before Docker build
+RUN mvn clean package -DskipTests -B && \
+    mvn asciidoctor:process-asciidoc -B && \
+    mkdir -p target/classes/static/docs && \
+    cp -r target/generated-docs/* target/classes/static/docs/ 2>/dev/null || true
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine

@@ -8,6 +8,7 @@ import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
 import com.princely.shopmanager.inventory.service.InventoryService;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.test.security.WithMockPermissions;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -280,7 +280,7 @@ class InventoryControllerTest {
 
     @Test
     @DisplayName("Should deny access for unauthorized user")
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockPermissions(role = "CUSTOMER")
     void shouldDenyAccessForUnauthorizedUser() throws Exception {
         ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory")
             .with(withJwtPrincipal("customer", "CUSTOMER")));

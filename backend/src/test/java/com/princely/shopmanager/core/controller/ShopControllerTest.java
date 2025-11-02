@@ -6,6 +6,7 @@ import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.service.ShopService;
+import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,7 +22,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -128,7 +128,7 @@ class ShopControllerTest {
     class CreateShopTests {
 
         @Test
-        @WithMockUser(roles = "SYSTEM_ADMIN")
+        @WithMockPermissions(role = "SYSTEM_ADMIN")
         @DisplayName("Should create shop successfully with SYSTEM_ADMIN role")
         void shouldCreateShopWithSystemAdminRole() throws Exception {
             // Given
@@ -152,7 +152,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should create shop successfully with OWNER role")
         void shouldCreateShopWithShopOwnerRole() throws Exception {
             // Given
@@ -169,7 +169,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -181,7 +181,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SYSTEM_ADMIN")
+        @WithMockPermissions(role = "SYSTEM_ADMIN")
         @DisplayName("Should validate required fields")
         void shouldValidateRequiredFields() throws Exception {
             // Given - Create request with missing required fields
@@ -198,7 +198,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "SYSTEM_ADMIN")
+        @WithMockPermissions(role = "SYSTEM_ADMIN")
         @DisplayName("Should validate email format")
         void shouldValidateEmailFormat() throws Exception {
             // Given
@@ -229,7 +229,7 @@ class ShopControllerTest {
     class GetShopTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should get shop successfully")
         void shouldGetShopSuccessfully() throws Exception {
             // Given
@@ -246,7 +246,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should allow access with CASHIER role")
         void shouldAllowAccessWithCashierRole() throws Exception {
             // Given
@@ -258,7 +258,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should handle shop not found")
         void shouldHandleShopNotFound() throws Exception {
             // Given
@@ -282,7 +282,7 @@ class ShopControllerTest {
     class GetShopsTests {
 
         @Test
-        @WithMockUser(roles = "SYSTEM_ADMIN")
+        @WithMockPermissions(role = "SYSTEM_ADMIN")
         @DisplayName("Should get shops with pagination")
         void shouldGetShopsWithPagination() throws Exception {
             // Given
@@ -303,7 +303,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should allow access with MANAGER role")
         void shouldAllowAccessWithShopManagerRole() throws Exception {
             // Given
@@ -316,7 +316,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -330,7 +330,7 @@ class ShopControllerTest {
     class GetActiveShopsTests {
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should get active shops")
         void shouldGetActiveShops() throws Exception {
             // Given
@@ -353,7 +353,7 @@ class ShopControllerTest {
     class UpdateShopTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should update shop successfully")
         void shouldUpdateShopSuccessfully() throws Exception {
             // Given
@@ -380,7 +380,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -397,7 +397,7 @@ class ShopControllerTest {
     class ChangeShopStatusTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should change shop status successfully")
         void shouldChangeShopStatusSuccessfully() throws Exception {
             // Given
@@ -421,7 +421,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -437,7 +437,7 @@ class ShopControllerTest {
     class DeleteShopTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should delete shop successfully")
         void shouldDeleteShopSuccessfully() throws Exception {
             // Given
@@ -452,7 +452,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -491,7 +491,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "INVALID_ROLE")
+        @WithMockPermissions(role = "INVALID_ROLE")
         @DisplayName("Should deny access with invalid roles")
         void shouldDenyAccessWithInvalidRoles() throws Exception {
             // Test endpoints with invalid role
@@ -514,7 +514,7 @@ class ShopControllerTest {
     class GetConfigurationTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should get shop configuration successfully")
         void shouldGetConfiguration() throws Exception {
             // Given
@@ -553,7 +553,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             mockMvc.perform(get("/api/shops/shop-123/configuration"))
@@ -566,7 +566,7 @@ class ShopControllerTest {
     class UpdateConfigurationTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should update shop configuration successfully")
         void shouldUpdateConfiguration() throws Exception {
             // Given
@@ -613,7 +613,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should allow MANAGER role")
         void shouldAllowManagerRole() throws Exception {
             // Given
@@ -634,7 +634,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             com.princely.shopmanager.core.dto.ShopConfigurationRequest configRequest =
@@ -650,7 +650,7 @@ class ShopControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should validate configuration request")
         void shouldValidateConfigurationRequest() throws Exception {
             // Given - Invalid tax rate over 100%

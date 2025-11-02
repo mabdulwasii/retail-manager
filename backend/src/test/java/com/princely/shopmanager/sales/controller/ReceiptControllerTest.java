@@ -4,6 +4,7 @@ import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 import com.princely.shopmanager.sales.service.ReceiptService;
+import com.princely.shopmanager.test.security.WithMockPermissions;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -83,7 +83,7 @@ class ReceiptControllerTest {
     class GetReceiptTests {
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should get receipt successfully")
         void shouldGetReceiptSuccessfully() throws Exception {
             // Given

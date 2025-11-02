@@ -2,6 +2,7 @@ package com.princely.shopmanager.analytics.controller;
 
 import com.princely.shopmanager.analytics.dto.*;
 import com.princely.shopmanager.analytics.service.AnalyticsService;
+import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,7 +12,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -115,7 +115,7 @@ class AnalyticsControllerTest {
     class GetSalesSummaryTests {
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should get sales summary successfully with date range")
         void shouldGetSalesSummaryWithDateRange() throws Exception {
             // Given
@@ -139,7 +139,7 @@ class AnalyticsControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should allow access with OWNER role")
         void shouldAllowAccessWithShopOwnerRole() throws Exception {
             // Given
@@ -155,7 +155,7 @@ class AnalyticsControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny access with insufficient role")
         void shouldDenyAccessWithInsufficientRole() throws Exception {
             // When & Then
@@ -172,7 +172,7 @@ class AnalyticsControllerTest {
     class GetInvestmentRoiTests {
 
         @Test
-        @WithMockUser(roles = "INVESTOR")
+        @WithMockPermissions(role = "INVESTOR")
         @DisplayName("Should get investment ROI successfully")
         void shouldGetInvestmentRoiSuccessfully() throws Exception {
             // Given
@@ -196,7 +196,7 @@ class AnalyticsControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should allow access with OWNER role")
         void shouldAllowAccessWithShopOwnerRole() throws Exception {
             // Given
@@ -217,7 +217,7 @@ class AnalyticsControllerTest {
     class GetFraudStatisticsTests {
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should get fraud statistics successfully")
         void shouldGetFraudStatisticsSuccessfully() throws Exception {
             // Given
@@ -247,7 +247,7 @@ class AnalyticsControllerTest {
     class GetRevenueAnalyticsTests {
 
         @Test
-        @WithMockUser(roles = "MANAGER")
+        @WithMockPermissions(role = "MANAGER")
         @DisplayName("Should get revenue analytics successfully")
         void shouldGetRevenueAnalyticsSuccessfully() throws Exception {
             // Given
@@ -278,7 +278,7 @@ class AnalyticsControllerTest {
     class ClearCacheTests {
 
         @Test
-        @WithMockUser(roles = "OWNER")
+        @WithMockPermissions(role = "OWNER")
         @DisplayName("Should clear cache successfully with OWNER role")
         void shouldClearCacheWithShopOwnerRole() throws Exception {
             // Given
@@ -308,7 +308,7 @@ class AnalyticsControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "CASHIER")
+        @WithMockPermissions(role = "CASHIER")
         @DisplayName("Should deny analytics access to CASHIER role")
         void shouldDenyAnalyticsAccessToCashierRole() throws Exception {
             mockMvc.perform(get("/api/analytics/sales-summary")

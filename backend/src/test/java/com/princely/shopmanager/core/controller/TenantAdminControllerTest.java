@@ -6,6 +6,7 @@ import com.princely.shopmanager.core.dto.registration.PendingTenantResponse;
 import com.princely.shopmanager.core.service.TenantRegistrationService;
 import com.princely.shopmanager.shared.service.FeatureFlagService;
 import com.princely.shopmanager.auth.principal.UserPrincipal;
+import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -62,7 +62,7 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should return pending registrations for super admin")
-    @WithMockUser(roles = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SUPER_ADMIN")
     void shouldReturnPendingRegistrationsForSuperAdmin() throws Exception {
         // Given
         List<PendingTenantResponse> pendingTenants = List.of(
@@ -102,7 +102,7 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should deny access to pending registrations for non-super admin")
-    @WithMockUser(roles = "TENANT_ADMIN")
+    @WithMockPermissions(role = "TENANT_ADMIN")
     void shouldDenyAccessToPendingRegistrationsForNonSuperAdmin() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/admin/tenants/pending"))
@@ -189,7 +189,7 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should return tenant details for super admin")
-    @WithMockUser(roles = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SUPER_ADMIN")
     void shouldReturnTenantDetailsForSuperAdmin() throws Exception {
         // Given
         String tenantId = "tenant-1";
@@ -227,7 +227,7 @@ class TenantAdminControllerTest {
 
     @Test
     @DisplayName("Should deny access to tenant details for non-super admin")
-    @WithMockUser(roles = "TENANT_ADMIN")
+    @WithMockPermissions(role = "TENANT_ADMIN")
     void shouldDenyAccessToTenantDetailsForNonSuperAdmin() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/admin/tenants/tenant-1"))
