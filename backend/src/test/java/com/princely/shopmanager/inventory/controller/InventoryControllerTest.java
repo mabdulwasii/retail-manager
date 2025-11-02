@@ -125,6 +125,7 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should create inventory item successfully")
     void shouldCreateInventorySuccessfully() throws Exception {
         when(inventoryService.createInventory(any(InventoryCreateRequest.class)))
@@ -132,8 +133,7 @@ class InventoryControllerTest {
 
         ResultActions result = mockMvc.perform(post("/api/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(createRequest))
-            .with(withJwtPrincipal("manager", "MANAGER")));
+            .content(objectMapper.writeValueAsString(createRequest)));
 
         result.andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -144,6 +144,7 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should return validation errors for invalid create request")
     void shouldReturnValidationErrorsForInvalidCreateRequest() throws Exception {
         InventoryCreateRequest invalidRequest = InventoryCreateRequest.builder()
@@ -153,13 +154,13 @@ class InventoryControllerTest {
 
         ResultActions result = mockMvc.perform(post("/api/shops/shop-1/inventory")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(invalidRequest))
-            .with(withJwtPrincipal("manager", "MANAGER")));
+            .content(objectMapper.writeValueAsString(invalidRequest)));
 
         result.andExpect(status().isBadRequest());
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should get inventory items with pagination")
     void shouldGetInventoryWithPagination() throws Exception {
         Page<InventoryResponse> inventoryPage = new PageImpl<>(
@@ -175,8 +176,7 @@ class InventoryControllerTest {
             .param("page", "0")
             .param("size", "20")
             .param("sortBy", "lastStockUpdate")
-            .param("sortDir", "desc")
-            .with(withJwtPrincipal("manager", "MANAGER")));
+            .param("sortDir", "desc"));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value("inventory-1"))
@@ -187,13 +187,13 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should get inventory item by ID")
     void shouldGetInventoryById() throws Exception {
         when(inventoryService.getInventoryById("inventory-1"))
             .thenReturn(inventoryResponse);
 
-        ResultActions result = mockMvc.perform(get("/api/inventory/inventory-1")
-            .with(withJwtPrincipal("manager", "MANAGER")));
+        ResultActions result = mockMvc.perform(get("/api/inventory/inventory-1"));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("inventory-1"))
@@ -203,6 +203,7 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should adjust stock successfully")
     void shouldAdjustStockSuccessfully() throws Exception {
         InventoryResponse adjustedResponse = InventoryResponse.builder()
@@ -234,8 +235,7 @@ class InventoryControllerTest {
 
         ResultActions result = mockMvc.perform(put("/api/inventory/inventory-1/adjust-stock")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(adjustmentRequest))
-            .with(withJwtPrincipal("manager", "MANAGER")));
+            .content(objectMapper.writeValueAsString(adjustmentRequest)));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.currentStock").value(150))
@@ -245,6 +245,7 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "MANAGER")
     @DisplayName("Should get inventory summary successfully")
     void shouldGetInventorySummarySuccessfully() throws Exception {
         InventorySummaryDto summary = InventorySummaryDto.builder()
@@ -266,8 +267,7 @@ class InventoryControllerTest {
         when(inventoryService.getInventorySummary("shop-1"))
             .thenReturn(summary);
 
-        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory/summary")
-            .with(withJwtPrincipal("manager", "MANAGER")));
+        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory/summary"));
 
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.totalItems").value(50))
@@ -279,11 +279,10 @@ class InventoryControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "INVESTOR")
     @DisplayName("Should deny access for unauthorized user")
-    @WithMockPermissions(role = "CUSTOMER")
     void shouldDenyAccessForUnauthorizedUser() throws Exception {
-        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory")
-            .with(withJwtPrincipal("customer", "CUSTOMER")));
+        ResultActions result = mockMvc.perform(get("/api/shops/shop-1/inventory"));
 
         result.andExpect(status().isForbidden());
     }

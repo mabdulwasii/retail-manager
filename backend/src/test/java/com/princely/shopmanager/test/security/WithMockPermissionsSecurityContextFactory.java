@@ -1,5 +1,6 @@
 package com.princely.shopmanager.test.security;
 
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,8 +41,19 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
                 .forEach(authorities::add);
         }
 
+        // Create JwtPrincipal to match controller expectations
+        JwtPrincipal principal = JwtPrincipal.builder()
+            .subject("test-user-id")
+            .preferredUsername(annotation.username())
+            .email(annotation.username() + "@example.com")
+            .firstName(annotation.username())
+            .lastName("User")
+            .tenantId(annotation.tenantId())
+            .shopId(annotation.shopId())
+            .build();
+
         Authentication auth = new UsernamePasswordAuthenticationToken(
-            annotation.username(),
+            principal,
             "password",
             authorities
         );

@@ -18,9 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -110,6 +107,7 @@ class TenantAdminControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "SUPER_ADMIN")
     @DisplayName("Should activate tenant successfully")
     void shouldActivateTenantSuccessfully() throws Exception {
         // Given
@@ -125,7 +123,6 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
-                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -138,6 +135,7 @@ class TenantAdminControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "SUPER_ADMIN")
     @DisplayName("Should reject tenant with reason")
     void shouldRejectTenantWithReason() throws Exception {
         // Given
@@ -153,7 +151,6 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", tenantId)
                 .with(csrf())
-                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -166,6 +163,7 @@ class TenantAdminControllerTest {
     }
 
     @Test
+    @WithMockPermissions(role = "SUPER_ADMIN")
     @DisplayName("Should return 400 when tenant ID mismatch")
     void shouldReturn400WhenTenantIdMismatch() throws Exception {
         // Given
@@ -181,7 +179,6 @@ class TenantAdminControllerTest {
         // When & Then
         mockMvc.perform(post("/api/admin/tenants/{tenantId}/activate", pathTenantId)
                 .with(csrf())
-                .with(withUserPrincipal("admin", "SUPER_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
@@ -241,20 +238,5 @@ class TenantAdminControllerTest {
         public TenantAdminController tenantAdminController(TenantRegistrationService tenantRegistrationService) {
             return new TenantAdminController(tenantRegistrationService);
         }
-    }
-
-    private static org.springframework.test.web.servlet.request.RequestPostProcessor withUserPrincipal(String username, String... roles) {
-        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(
-            new UsernamePasswordAuthenticationToken(
-                UserPrincipal.of(
-                    "user-id",
-                    username + "@example.com",
-                    username,
-                    List.of(roles)
-                ),
-                "password",
-                List.of(roles).stream().map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role)).toList()
-            )
-        );
     }
 }

@@ -1,10 +1,11 @@
 package com.princely.shopmanager.core.controller;
 
-import com.princely.shopmanager.auth.principal.UserPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.core.dto.registration.TenantActivationRequest;
 import com.princely.shopmanager.core.dto.activation.TenantActivationResponse;
 import com.princely.shopmanager.core.dto.registration.PendingTenantResponse;
 import com.princely.shopmanager.core.service.TenantRegistrationService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -44,7 +45,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_LIST)")
     public ResponseEntity<List<PendingTenantResponse>> getPendingRegistrations() {
         log.info("Retrieving pending tenant registrations");
 
@@ -65,11 +66,11 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/{tenantId}/activate")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_UPDATE)")
     public ResponseEntity<TenantActivationResponse> activateTenant(
             @PathVariable String tenantId,
             @Valid @RequestBody TenantActivationRequest request,
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
         log.info("Processing tenant activation request for tenant: {} by admin: {}",
                 tenantId, principal.getUsername());
@@ -80,7 +81,7 @@ public class TenantAdminController {
         }
 
         try {
-            tenantRegistrationService.activateTenant(request, principal.getUserId());
+            tenantRegistrationService.activateTenant(request, principal.getSubject());
 
             TenantActivationResponse response = request.approved()
                 ? TenantActivationResponse.approved(tenantId, null, principal.getUsername())
@@ -105,7 +106,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_READ)")
     public ResponseEntity<PendingTenantResponse> getTenantDetails(@PathVariable String tenantId) {
         log.info("Retrieving tenant details for: {}", tenantId);
 
