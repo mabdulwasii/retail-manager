@@ -1,0 +1,313 @@
+= Shop Manager API Documentation
+Shop Manager Team <dev@shopmanager.com>
+v{project-version}
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectnums:
+
+== Introduction
+
+Welcome to the Shop Manager API documentation. This is a comprehensive multi-tenant retail management platform built with Spring Boot 3.3 and Java 21.
+
+=== Features
+
+* *Multi-Tenant Architecture*: Complete tenant and shop-level data isolation
+* *Granular Permissions*: 94 fine-grained permissions across 18 resource types
+* *Product & Inventory*: Two-tier model with batch tracking and FEFO sales
+* *Sales Management*: Transaction processing with PDF receipt generation
+* *Investment Tracking*: ROI analytics and profit distribution
+* *Analytics Engine*: Real-time sales and investment analytics with caching
+* *Fraud Detection*: Automated anomaly detection and investigation workflow
+* *Audit Logging*: Complete audit trail for compliance
+
+=== Technology Stack
+
+* *Backend*: Spring Boot 3.3, Java 21, Spring Modulith
+* *Database*: PostgreSQL with Flyway migrations
+* *Authentication*: Keycloak OAuth2/OpenID Connect
+* *API Documentation*: OpenAPI 3.0 (SpringDoc)
+* *Messaging*: Apache Kafka (KRaft mode)
+
+=== Base URL
+
+[source]
+----
+http://localhost:8081/api
+----
+
+=== Authentication
+
+All API endpoints require authentication via Keycloak OAuth2 Bearer token.
+
+[source,bash]
+----
+Authorization: Bearer <access_token>
+----
+
+== Security & Permissions
+
+include::permission-matrix.adoc[leveloffset=+1]
+
+== API Endpoints
+
+This section contains auto-generated API documentation from the OpenAPI specification.
+
+=== Interactive Documentation
+
+For interactive API testing, visit: http://localhost:8081/swagger-ui.html
+
+=== OpenAPI Specification
+
+Download the OpenAPI 3.0 specification: http://localhost:8081/v3/api-docs
+
+=== Auto-Generated API Documentation
+
+The following sections are automatically generated from the application's OpenAPI specification:
+
+ifdef::generated[]
+include::{generated}/overview.adoc[leveloffset=+2]
+include::{generated}/paths.adoc[leveloffset=+2]
+include::{generated}/definitions.adoc[leveloffset=+2]
+endif::[]
+
+ifndef::generated[]
+NOTE: Auto-generated API documentation is not available. Run `./mvnw clean verify` with the application running to generate complete API docs.
+
+==== Manual API Reference
+
+=== Health Check
+
+[source,bash]
+----
+GET /actuator/health
+----
+
+Returns the health status of the application.
+endif::[]
+
+== Multi-Tenancy
+
+=== Tenant Context
+
+All requests are scoped to a tenant via JWT claims:
+
+[source,json]
+----
+{
+  "tenant_id": "tenant-123",
+  "shop_id": "shop-456",
+  "sub": "user-789"
+}
+----
+
+=== Data Isolation
+
+* *Complete Isolation*: Each tenant's data is completely isolated
+* *Shop Context*: Most operations are shop-scoped
+* *Cross-Tenant Access*: Only SYSTEM_ADMIN role has cross-tenant access
+
+== Product & Inventory Architecture
+
+=== Two-Tier Model
+
+==== Product (Master Catalog)
+* Represents *what you sell* (SKU, price, description, category)
+* No stock fields - stock tracking moved to Inventory
+* Status: ACTIVE, INACTIVE, DISCONTINUED
+
+==== Inventory (Stock Tracking)
+* Represents *what you have* (batches, locations, expiry dates)
+* Fields: currentStock, reservedStock, batchNumber, expiryDate, location
+* Status: ACTIVE, INACTIVE, QUARANTINED, EXPIRED
+* One Product → Many Inventory records (multi-batch support)
+
+==== Stock Aggregation
+[source,sql]
+----
+Product.totalStock = SUM(Inventory.currentStock) WHERE productId
+Product.availableStock = SUM(currentStock - reservedStock)
+                         WHERE productId AND status=ACTIVE
+----
+
+=== FEFO Sales Strategy
+
+Sales use *First Expiry, First Out (FEFO)* to minimize waste:
+
+1. Sort inventory by expiry date (ascending)
+2. Allocate from oldest expiring batches first
+3. FIFO for same expiry date (by creation date)
+4. Automatic deduction across multiple batches if needed
+
+== Error Handling
+
+=== Standard Error Response
+
+[source,json]
+----
+{
+  "timestamp": "2025-01-15T10:30:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/products"
+}
+----
+
+=== HTTP Status Codes
+
+[cols="1,3"]
+|===
+|Code |Description
+
+|200
+|OK - Request succeeded
+
+|201
+|Created - Resource created successfully
+
+|204
+|No Content - Request succeeded with no response body
+
+|400
+|Bad Request - Invalid request parameters
+
+|401
+|Unauthorized - Missing or invalid authentication
+
+|403
+|Forbidden - Insufficient permissions
+
+|404
+|Not Found - Resource not found
+
+|409
+|Conflict - Resource conflict (e.g., duplicate)
+
+|500
+|Internal Server Error - Server error
+|===
+
+== Rate Limiting
+
+Currently not implemented. Future versions will include rate limiting per tenant/shop.
+
+== Pagination
+
+List endpoints support pagination:
+
+[source,bash]
+----
+GET /api/products?page=0&size=20&sort=name,asc
+----
+
+Parameters:
+* `page`: Page number (0-indexed)
+* `size`: Page size (default: 20, max: 100)
+* `sort`: Sort field and direction
+
+== Filtering
+
+Many list endpoints support filtering:
+
+[source,bash]
+----
+GET /api/products?status=ACTIVE&categoryId=cat-123
+----
+
+== Audit Logging
+
+All significant operations are automatically logged:
+
+* User actions (create, update, delete)
+* Financial transactions
+* Role assignments
+* Configuration changes
+
+View audit logs via:
+[source,bash]
+----
+GET /api/audit-logs?shopId={shopId}
+GET /api/audit-logs?tenantId={tenantId}
+----
+
+== Analytics
+
+=== Sales Analytics
+
+[source,bash]
+----
+GET /api/analytics/sales?shopId={shopId}&startDate={date}&endDate={date}
+----
+
+Returns sales metrics including revenue, transactions, and trends.
+
+=== Investment Analytics
+
+[source,bash]
+----
+GET /api/analytics/investments?shopId={shopId}
+----
+
+Returns investment ROI, profit distribution, and performance metrics.
+
+=== Cache Management
+
+Analytics are cached for performance. Cache TTL: 1 hour for aggregated data.
+
+== Database Schema
+
+=== Key Tables
+
+* `tenants`, `shops` - Tenant-shop hierarchy
+* `users`, `roles`, `permissions` - Tenant-scoped RBAC
+* `products`, `categories` - Product catalog
+* `inventory` - Stock tracking with batch support
+* `sales_transactions`, `sales_items` - Sales records
+* `investments`, `investor_shares` - Investment tracking
+* `receipts` - PDF receipt metadata
+* `product_returns` - Return management
+* `audit_logs` - Audit trail
+* `feature_flags` - Feature toggles
+* `expenses`, `expense_categories` - Expense tracking
+
+=== Flyway Migrations
+
+Schema changes are managed via Flyway:
+
+* `V1__complete_schema.sql` - Initial schema
+* `V10__refactor_product_inventory_model.sql` - Two-tier product/inventory
+* `V12__add_granular_permissions.sql` - Permission system
+* `V13__add_missing_permissions_and_fix_role_assignments.sql` - Permission updates
+
+== Support & Resources
+
+* *GitHub Repository*: TBD
+* *Issue Tracker*: TBD
+* *Deployment Guide*: See DEPLOYMENT_GUIDE.md
+* *Developer Guide*: See DEVELOPER_GUIDE.md
+* *Testing Guide*: See TESTING-GUIDE.md
+
+== Changelog
+
+=== v0.0.22 (Current)
+
+* Added investment management routes
+* Enhanced dashboard analytics
+* Granular permission-based authorization
+* Category API improvements
+
+=== v0.0.21
+
+* Product/Inventory two-tier refactor
+* FEFO inventory allocation
+* Multi-batch support
+
+=== v0.0.20
+
+* Initial release
+* Multi-tenant architecture
+* Basic CRUD operations

@@ -194,7 +194,7 @@ class UserSyncServiceTest {
             .email("test@example.com")
             .firstName("Test")
             .lastName("User")
-            .phoneNumber("")
+            .phoneNumber("N/A") // Use N/A instead of empty to match the sync behavior
             .tenant(testTenant)
             .status(User.UserStatus.ACTIVE)
             .roles(new HashSet<>(Set.of(testRole)))

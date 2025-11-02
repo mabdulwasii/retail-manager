@@ -34,6 +34,7 @@ public final class PermissionConstants {
     public static final String SHOP_CREATE = "SHOP_CREATE";
     public static final String SHOP_READ = "SHOP_READ";
     public static final String SHOP_LIST = "SHOP_LIST";
+    public static final String SHOP_LIST_ALL = "SHOP_LIST_ALL";
     public static final String SHOP_UPDATE = "SHOP_UPDATE";
     public static final String SHOP_DELETE = "SHOP_DELETE";
 
@@ -54,6 +55,7 @@ public final class PermissionConstants {
     public static final String ROLE_LIST = "ROLE_LIST";
     public static final String ROLE_UPDATE = "ROLE_UPDATE";
     public static final String ROLE_DELETE = "ROLE_DELETE";
+    public static final String ROLE_ASSIGN = "ROLE_ASSIGN";
 
     // ==========================================
     // PERMISSION PERMISSIONS
@@ -88,6 +90,10 @@ public final class PermissionConstants {
     public static final String INVENTORY_UPDATE = "INVENTORY_UPDATE";
     public static final String INVENTORY_DELETE = "INVENTORY_DELETE";
     public static final String INVENTORY_HISTORY_VIEW = "INVENTORY_HISTORY_VIEW";
+    public static final String INVENTORY_ADJUST = "INVENTORY_ADJUST";
+    public static final String INVENTORY_RESERVE = "INVENTORY_RESERVE";
+    public static final String INVENTORY_HISTORY = "INVENTORY_HISTORY";
+    public static final String INVENTORY_FORECAST = "INVENTORY_FORECAST";
 
     // ==========================================
     // SALES PERMISSIONS
@@ -97,6 +103,7 @@ public final class PermissionConstants {
     public static final String SALES_LIST = "SALES_LIST";
     public static final String SALES_UPDATE = "SALES_UPDATE";
     public static final String SALES_DELETE = "SALES_DELETE";
+    public static final String SALES_VOID = "SALES_VOID";
 
     // ==========================================
     // RECEIPT PERMISSIONS
@@ -105,6 +112,7 @@ public final class PermissionConstants {
     public static final String RECEIPT_READ = "RECEIPT_READ";
     public static final String RECEIPT_LIST = "RECEIPT_LIST";
     public static final String RECEIPT_SEND = "RECEIPT_SEND";
+    public static final String RECEIPT_EMAIL = "RECEIPT_EMAIL";
 
     // ==========================================
     // EXPENSE PERMISSIONS
@@ -114,6 +122,7 @@ public final class PermissionConstants {
     public static final String EXPENSE_LIST = "EXPENSE_LIST";
     public static final String EXPENSE_UPDATE = "EXPENSE_UPDATE";
     public static final String EXPENSE_DELETE = "EXPENSE_DELETE";
+    public static final String EXPENSE_APPROVE = "EXPENSE_APPROVE";
 
     // ==========================================
     // EXPENSE CATEGORY PERMISSIONS
@@ -132,6 +141,8 @@ public final class PermissionConstants {
     public static final String INVESTMENT_LIST = "INVESTMENT_LIST";
     public static final String INVESTMENT_UPDATE = "INVESTMENT_UPDATE";
     public static final String INVESTMENT_DELETE = "INVESTMENT_DELETE";
+    public static final String INVESTMENT_CLOSE = "INVESTMENT_CLOSE";
+    public static final String INVESTMENT_PROFIT_DISTRIBUTE = "INVESTMENT_PROFIT_DISTRIBUTE";
 
     // ==========================================
     // RETURN PERMISSIONS
@@ -141,6 +152,7 @@ public final class PermissionConstants {
     public static final String RETURN_LIST = "RETURN_LIST";
     public static final String RETURN_UPDATE = "RETURN_UPDATE";
     public static final String RETURN_DELETE = "RETURN_DELETE";
+    public static final String RETURN_APPROVE = "RETURN_APPROVE";
 
     // ==========================================
     // AUDIT LOG PERMISSIONS
@@ -149,14 +161,19 @@ public final class PermissionConstants {
     public static final String AUDIT_LOG_VIEW_TENANT = "AUDIT_LOG_VIEW_TENANT";
 
     // ==========================================
-    // ANALYTICS PERMISSIONS
+    // ANALYTICS PERMISSIONS (Feature-based)
     // ==========================================
-    public static final String ANALYTICS_VIEW_SHOP = "ANALYTICS_VIEW_SHOP";
-    public static final String ANALYTICS_VIEW_TENANT = "ANALYTICS_VIEW_TENANT";
+    public static final String ANALYTICS_SALES_VIEW = "ANALYTICS_SALES_VIEW";
+    public static final String ANALYTICS_INVESTMENT_VIEW = "ANALYTICS_INVESTMENT_VIEW";
+    public static final String ANALYTICS_MANAGE = "ANALYTICS_MANAGE";
 
     // ==========================================
     // FRAUD PERMISSIONS
     // ==========================================
     public static final String FRAUD_VIEW = "FRAUD_VIEW";
     public static final String FRAUD_MANAGE = "FRAUD_MANAGE";
+    public static final String FRAUD_LIST = "FRAUD_LIST";
+    public static final String FRAUD_INVESTIGATE = "FRAUD_INVESTIGATE";
+    public static final String FRAUD_RESOLVE = "FRAUD_RESOLVE";
+    public static final String FRAUD_DETECT = "FRAUD_DETECT";
 }

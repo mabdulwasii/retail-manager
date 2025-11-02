@@ -81,7 +81,7 @@ public class UserSyncService {
             .email(principal.getEmail())
             .firstName(principal.getFirstName() != null ? principal.getFirstName() : "")
             .lastName(principal.getLastName() != null ? principal.getLastName() : "")
-            .phoneNumber("") // Will be updated from Keycloak attributes if available
+            .phoneNumber(principal.getPhoneNumber() != null ? principal.getPhoneNumber() : "N/A")
             .tenant(tenant)
             .status(User.UserStatus.ACTIVE)
             .isInvestor(false)
@@ -109,13 +109,33 @@ public class UserSyncService {
             updated = true;
         }
 
-        if (principal.getFirstName() != null && !principal.getFirstName().equals(user.getFirstName())) {
+        // Only update firstName if JWT has a value, or if DB value is null/empty
+        if (principal.getFirstName() != null && !principal.getFirstName().isEmpty()
+            && !principal.getFirstName().equals(user.getFirstName())) {
             user.setFirstName(principal.getFirstName());
+            updated = true;
+        } else if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
+            user.setFirstName(principal.getFirstName() != null ? principal.getFirstName() : "");
             updated = true;
         }
 
-        if (principal.getLastName() != null && !principal.getLastName().equals(user.getLastName())) {
+        // Only update lastName if JWT has a value, or if DB value is null/empty
+        if (principal.getLastName() != null && !principal.getLastName().isEmpty()
+            && !principal.getLastName().equals(user.getLastName())) {
             user.setLastName(principal.getLastName());
+            updated = true;
+        } else if (user.getLastName() == null || user.getLastName().isEmpty()) {
+            user.setLastName(principal.getLastName() != null ? principal.getLastName() : "");
+            updated = true;
+        }
+
+        // Only update phoneNumber if JWT has a value, or if DB value is null/empty/N/A
+        if (principal.getPhoneNumber() != null && !principal.getPhoneNumber().isEmpty()
+            && !principal.getPhoneNumber().equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(principal.getPhoneNumber());
+            updated = true;
+        } else if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
+            user.setPhoneNumber("N/A");
             updated = true;
         }
 

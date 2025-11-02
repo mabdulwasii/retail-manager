@@ -24,6 +24,7 @@ public class JwtPrincipal {
     private String email;
     private String firstName;
     private String lastName;
+    private String phoneNumber;
     private List<String> roles;
     private Map<String, Object> claims;
     private Instant issuedAt;
@@ -61,6 +62,7 @@ public class JwtPrincipal {
             .email(jwt.getClaimAsString("email"))
             .firstName(jwt.getClaimAsString("given_name"))
             .lastName(jwt.getClaimAsString("family_name"))
+            .phoneNumber(jwt.getClaimAsString("phone_number"))
             .roles(roles)
             .claims(jwt.getClaims())
             .issuedAt(jwt.getIssuedAt())

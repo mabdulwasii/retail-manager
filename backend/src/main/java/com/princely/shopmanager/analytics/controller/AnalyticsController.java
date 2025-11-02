@@ -29,7 +29,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @GetMapping("/sales-summary")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_SALES_VIEW)")
     public ResponseEntity<SalesSummaryDto> getSalesSummary(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -40,7 +40,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/investment-roi")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_INVESTMENT_VIEW)")
     public ResponseEntity<InvestmentRoiDto> getInvestmentROI(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -51,7 +51,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/fraud-statistics")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).FRAUD_VIEW)")
     public ResponseEntity<FraudStatisticsDto> getFraudStatistics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -62,7 +62,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/revenue-analytics")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_VIEW)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_SALES_VIEW)")
     public ResponseEntity<RevenueAnalyticsDto> getRevenueAnalytics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -73,7 +73,7 @@ public class AnalyticsController {
     }
 
     @PostMapping("/clear-cache/{shopId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_EXPORT)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_MANAGE)")
     public ResponseEntity<Void> clearCacheForShop(@PathVariable String shopId) {
         analyticsService.clearCacheForShop(shopId);
         return ResponseEntity.ok().build();

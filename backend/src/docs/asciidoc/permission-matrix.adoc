@@ -1,0 +1,934 @@
+= Permission Matrix
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== Overview
+
+This document provides a complete reference of all permissions in the Shop Manager system and their default role assignments.
+
+=== Permission Naming Convention
+
+Permissions follow the pattern: `{RESOURCE}_{ACTION}`
+
+*Examples:*
+
+* `PRODUCT_CREATE` - Create products
+* `SALES_READ` - View sales details
+* `INVENTORY_UPDATE` - Update inventory
+
+=== Default Role Hierarchy
+
+[cols="1,3"]
+|===
+|Role |Description
+
+|*SYSTEM_ADMIN*
+|Full system access across all tenants
+
+|*OWNER*
+|Tenant-wide administrative access
+
+|*MANAGER*
+|Shop-level management access
+
+|*EMPLOYEE*
+|Operational access for daily tasks
+
+|*INVESTOR*
+|Read-only investment analytics access
+|===
+
+== System Permissions
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|SYSTEM_ADMIN
+|System-level administrative access
+^|✓
+^|
+^|
+^|
+^|
+|===
+
+== Tenant Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|TENANT_CREATE
+|Create new tenants
+^|✓
+^|
+^|
+^|
+^|
+
+|TENANT_READ
+|View tenant details
+^|✓
+^|✓
+^|
+^|
+^|
+
+|TENANT_LIST
+|List all tenants
+^|✓
+^|
+^|
+^|
+^|
+
+|TENANT_UPDATE
+|Update tenant information
+^|✓
+^|
+^|
+^|
+^|
+
+|TENANT_DELETE
+|Delete tenants
+^|✓
+^|
+^|
+^|
+^|
+|===
+
+== Shop Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|SHOP_CREATE
+|Create new shops
+^|✓
+^|✓
+^|
+^|
+^|
+
+|SHOP_READ
+|View shop details
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|SHOP_LIST
+|List shops within context
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|SHOP_LIST_ALL
+|List all shops across tenant
+^|✓
+^|✓
+^|
+^|
+^|
+
+|SHOP_UPDATE
+|Update shop configuration
+^|✓
+^|✓
+^|
+^|
+^|
+
+|SHOP_DELETE
+|Delete shops
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== User Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|USER_CREATE
+|Create new users
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|USER_READ
+|View user details
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|USER_LIST
+|List users
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|USER_UPDATE
+|Update user information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|USER_DELETE
+|Delete users
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Role & Permission Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|ROLE_CREATE
+|Create custom roles
+^|✓
+^|✓
+^|
+^|
+^|
+
+|ROLE_READ
+|View role details
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|ROLE_LIST
+|List available roles
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|ROLE_UPDATE
+|Update role permissions
+^|✓
+^|✓
+^|
+^|
+^|
+
+|ROLE_DELETE
+|Delete custom roles
+^|✓
+^|✓
+^|
+^|
+^|
+
+|ROLE_ASSIGN
+|Assign roles to users
+^|✓
+^|✓
+^|
+^|
+^|
+
+|PERMISSION_READ
+|View permission details
+^|✓
+^|✓
+^|
+^|
+^|
+
+|PERMISSION_LIST
+|List all permissions
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Product Catalog
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|PRODUCT_CREATE
+|Create new products
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|PRODUCT_READ
+|View product details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|PRODUCT_LIST
+|List and search products
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|PRODUCT_UPDATE
+|Edit product information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|PRODUCT_DELETE
+|Delete products
+^|✓
+^|✓
+^|
+^|
+^|
+
+|CATEGORY_CREATE
+|Create product categories
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|CATEGORY_READ
+|View category details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|CATEGORY_LIST
+|List and search categories
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|CATEGORY_UPDATE
+|Update category information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|CATEGORY_DELETE
+|Delete categories
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Inventory Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|INVENTORY_CREATE
+|Add stock to inventory
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|INVENTORY_READ
+|View inventory details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|INVENTORY_LIST
+|List and search inventory
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|INVENTORY_UPDATE
+|Update inventory records
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVENTORY_DELETE
+|Remove inventory records
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVENTORY_ADJUST
+|Adjust inventory stock levels
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVENTORY_RESERVE
+|Reserve inventory stock
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVENTORY_HISTORY
+|View inventory history
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|INVENTORY_HISTORY_VIEW
+|View inventory history and movements
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|INVENTORY_FORECAST
+|View inventory forecasts
+^|✓
+^|✓
+^|✓
+^|
+^|
+|===
+
+== Sales & Receipts
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|SALES_CREATE
+|Process sales transactions
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|SALES_READ
+|View sale transaction details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|SALES_LIST
+|List and search sales
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|SALES_UPDATE
+|Update sales information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|SALES_DELETE
+|Delete sales transactions
+^|✓
+^|✓
+^|
+^|
+^|
+
+|SALES_VOID
+|Void sales transactions
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|RECEIPT_CREATE
+|Create receipts
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RECEIPT_READ
+|View receipt details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RECEIPT_LIST
+|List receipts
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RECEIPT_SEND
+|Send receipts to customers
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RECEIPT_EMAIL
+|Mark receipts as emailed
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+|===
+
+== Expense Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|EXPENSE_CREATE
+|Create expense records
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|EXPENSE_READ
+|View expense details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|EXPENSE_LIST
+|List and search expenses
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|EXPENSE_UPDATE
+|Update expense information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|EXPENSE_DELETE
+|Delete expense records
+^|✓
+^|✓
+^|
+^|
+^|
+
+|EXPENSE_APPROVE
+|Approve or reject expenses
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|EXPENSE_CATEGORY_CREATE
+|Create expense categories
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|EXPENSE_CATEGORY_READ
+|View expense category details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|EXPENSE_CATEGORY_LIST
+|List expense categories
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|EXPENSE_CATEGORY_UPDATE
+|Update expense categories
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|EXPENSE_CATEGORY_DELETE
+|Delete expense categories
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Investment Management
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|INVESTMENT_CREATE
+|Create investment records
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVESTMENT_READ
+|View investment details
+^|✓
+^|✓
+^|✓
+^|
+^|✓
+
+|INVESTMENT_LIST
+|List and search investments
+^|✓
+^|✓
+^|✓
+^|
+^|✓
+
+|INVESTMENT_UPDATE
+|Update investment information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|INVESTMENT_DELETE
+|Delete investment records
+^|✓
+^|✓
+^|
+^|
+^|
+
+|INVESTMENT_CLOSE
+|Close investments
+^|✓
+^|✓
+^|
+^|
+^|
+
+|INVESTMENT_PROFIT_DISTRIBUTE
+|Distribute investment profits
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Product Returns
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|RETURN_CREATE
+|Create product return records
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RETURN_READ
+|View return details
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RETURN_LIST
+|List product returns
+^|✓
+^|✓
+^|✓
+^|✓
+^|
+
+|RETURN_UPDATE
+|Update return information
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|RETURN_DELETE
+|Delete return records
+^|✓
+^|✓
+^|
+^|
+^|
+
+|RETURN_APPROVE
+|Approve product returns
+^|✓
+^|✓
+^|✓
+^|
+^|
+|===
+
+== Audit Logs
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|AUDIT_LOG_VIEW_SHOP
+|View shop-level audit logs
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|AUDIT_LOG_VIEW_TENANT
+|View tenant-level audit logs
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Analytics
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|ANALYTICS_SALES_VIEW
+|View sales and revenue analytics
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|ANALYTICS_INVESTMENT_VIEW
+|View investment ROI analytics
+^|✓
+^|✓
+^|✓
+^|
+^|✓
+
+|ANALYTICS_MANAGE
+|Manage analytics cache and exports
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Fraud Detection
+
+[cols="2,4,1,1,1,1,1", options="header"]
+|===
+|Permission |Description |SYSTEM_ADMIN |OWNER |MANAGER |EMPLOYEE |INVESTOR
+
+|FRAUD_VIEW
+|View fraud alerts
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|FRAUD_MANAGE
+|Manage fraud detection
+^|✓
+^|✓
+^|
+^|
+^|
+
+|FRAUD_LIST
+|List fraud alerts and assessments
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|FRAUD_INVESTIGATE
+|Investigate fraud alerts
+^|✓
+^|✓
+^|✓
+^|
+^|
+
+|FRAUD_RESOLVE
+|Resolve fraud alerts and assessments
+^|✓
+^|✓
+^|
+^|
+^|
+
+|FRAUD_DETECT
+|Manage fraud detection rules
+^|✓
+^|✓
+^|
+^|
+^|
+|===
+
+== Permission Summary
+
+[cols="1,1", options="header"]
+|===
+|Role |Total Permissions
+
+|SYSTEM_ADMIN
+|94 (all)
+
+|OWNER
+|77
+
+|MANAGER
+|62
+
+|EMPLOYEE
+|26
+
+|INVESTOR
+|3
+|===
+
+== Implementation Details
+
+=== Code Reference
+
+All permission constants are defined in:
+
+[source,java]
+----
+com.princely.shopmanager.shared.constants.PermissionConstants
+----
+
+=== Usage Example
+
+[source,java]
+----
+@PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_CREATE)")
+public ProductResponse createProduct(@RequestBody ProductCreateRequest request) {
+    // Implementation
+}
+----
+
+=== Database Schema
+
+Permissions are stored in the `permissions` table and linked to roles via the `role_permissions` join table.
+
+Default permissions are seeded via Flyway migrations:
+
+* `V12__add_granular_permissions.sql` - Initial permission setup
+* `V13__add_missing_permissions_and_fix_role_assignments.sql` - Additional permissions and role updates
+
+=== Multi-Role Support
+
+NOTE: Users can have multiple roles simultaneously. Effective permissions are the union of all assigned roles.
+
+=== Custom Roles
+
+OWNER and SYSTEM_ADMIN can create custom roles with specific permission combinations.
+
+=== System Roles
+
+Default roles (SYSTEM_ADMIN, OWNER, MANAGER, EMPLOYEE, INVESTOR) are marked as `is_system=true` and cannot be deleted.
+
+=== Tenant Isolation
+
+IMPORTANT: All permissions respect tenant boundaries. SYSTEM_ADMIN is the only role with cross-tenant access.
