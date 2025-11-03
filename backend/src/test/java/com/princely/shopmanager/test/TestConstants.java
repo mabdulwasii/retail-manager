@@ -1,12 +1,30 @@
 package com.princely.shopmanager.test;
 
 /**
- * Test constants for integration and unit testing.
+ * Test constants for integration and unit testing with UUID identifiers.
  * These constants match the IDs and names defined in test-data.sql.
+ *
+ * All IDs use UUID format with sequential patterns for easy identification:
+ * - 550e84XX... = Tenants
+ * - 650e84XX... = Shops
+ * - 750e84XX... = Users
+ * - 850e84XX... = Products
+ * - 950e84XX... = Categories
+ * - a50e84XX... = Inventory
+ * - b50e84XX... = Expense Categories
+ * - c50e84XX... = Sales Transactions
+ * - d50e84XX... = Transaction Items
+ * - e50e84XX... = Receipts
+ * - f50e84XX... = Expenses
+ * - 050e84XX... = Investments
+ * - 150e84XX... = Investor Shares
+ * - 250e84XX... = Returns
+ * - 350e84XX... = Return Items
+ * - 450e84XX... = Inventory Movements
  *
  * Usage:
  * <pre>
- * assertEquals(TestConstants.TEST_TENANT_ID, tenant.getId());
+ * assertEquals(TestConstants.TEST_TENANT_001, tenant.getId());
  * assertEquals(TestConstants.EXPECTED_PRODUCT_COUNT, products.size());
  * </pre>
  */
@@ -17,26 +35,26 @@ public final class TestConstants {
     }
 
     // ==========================================
-    // TENANT IDs
+    // TENANT UUIDs
     // ==========================================
-    public static final String TEST_TENANT_001 = "test-tenant-001";
-    public static final String TEST_TENANT_002 = "test-tenant-002";
+    public static final String TEST_TENANT_001 = "550e8400-e29b-41d4-a716-446655440001";
+    public static final String TEST_TENANT_002 = "550e8400-e29b-41d4-a716-446655440002";
 
     // ==========================================
-    // SHOP IDs
+    // SHOP UUIDs
     // ==========================================
-    public static final String TEST_SHOP_001 = "test-shop-001";
-    public static final String TEST_SHOP_002 = "test-shop-002";
-    public static final String TEST_SHOP_003 = "test-shop-003";
+    public static final String TEST_SHOP_001 = "650e8400-e29b-41d4-a716-446655440001";
+    public static final String TEST_SHOP_002 = "650e8400-e29b-41d4-a716-446655440002";
+    public static final String TEST_SHOP_003 = "650e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
-    // USER IDs
+    // USER UUIDs
     // ==========================================
-    public static final String USER_ADMIN_001 = "user-admin-001";
-    public static final String USER_OWNER_001 = "user-owner-001";
-    public static final String USER_MANAGER_001 = "user-manager-001";
-    public static final String USER_EMPLOYEE_001 = "user-employee-001";
-    public static final String USER_INVESTOR_001 = "user-investor-001";
+    public static final String USER_ADMIN_001 = "750e8400-e29b-41d4-a716-446655440001";
+    public static final String USER_OWNER_001 = "750e8400-e29b-41d4-a716-446655440002";
+    public static final String USER_MANAGER_001 = "750e8400-e29b-41d4-a716-446655440003";
+    public static final String USER_EMPLOYEE_001 = "750e8400-e29b-41d4-a716-446655440004";
+    public static final String USER_INVESTOR_001 = "750e8400-e29b-41d4-a716-446655440005";
 
     // ==========================================
     // USER EMAILS
@@ -57,19 +75,19 @@ public final class TestConstants {
     public static final String KC_INVESTOR_001 = "kc-investor-001";
 
     // ==========================================
-    // CATEGORY IDs
+    // CATEGORY UUIDs
     // ==========================================
-    public static final String CAT_ELECTRONICS = "cat-001";
-    public static final String CAT_CLOTHING = "cat-002";
-    public static final String CAT_FOOD_BEVERAGE = "cat-003";
+    public static final String CAT_ELECTRONICS = "950e8400-e29b-41d4-a716-446655440001";
+    public static final String CAT_CLOTHING = "950e8400-e29b-41d4-a716-446655440002";
+    public static final String CAT_FOOD_BEVERAGE = "950e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
-    // PRODUCT IDs
+    // PRODUCT UUIDs
     // ==========================================
-    public static final String PROD_WIRELESS_MOUSE = "prod-001";
-    public static final String PROD_USB_KEYBOARD = "prod-002";
-    public static final String PROD_COTTON_TSHIRT = "prod-003";
-    public static final String PROD_ENERGY_DRINK = "prod-004";
+    public static final String PROD_WIRELESS_MOUSE = "850e8400-e29b-41d4-a716-446655440001";
+    public static final String PROD_USB_KEYBOARD = "850e8400-e29b-41d4-a716-446655440002";
+    public static final String PROD_COTTON_TSHIRT = "850e8400-e29b-41d4-a716-446655440003";
+    public static final String PROD_ENERGY_DRINK = "850e8400-e29b-41d4-a716-446655440004";
 
     // ==========================================
     // PRODUCT SKUs
@@ -80,26 +98,26 @@ public final class TestConstants {
     public static final String SKU_ENERGY_DRINK = "DRINK-001";
 
     // ==========================================
-    // INVENTORY IDs
+    // INVENTORY UUIDs
     // ==========================================
-    public static final String INV_001 = "inv-001";
-    public static final String INV_002 = "inv-002";
-    public static final String INV_003 = "inv-003";
-    public static final String INV_004 = "inv-004";
+    public static final String INV_001 = "a50e8400-e29b-41d4-a716-446655440001";
+    public static final String INV_002 = "a50e8400-e29b-41d4-a716-446655440002";
+    public static final String INV_003 = "a50e8400-e29b-41d4-a716-446655440003";
+    public static final String INV_004 = "a50e8400-e29b-41d4-a716-446655440004";
 
     // ==========================================
-    // EXPENSE CATEGORY IDs
+    // EXPENSE CATEGORY UUIDs
     // ==========================================
-    public static final String EXP_CAT_UTILITIES = "exp-cat-001";
-    public static final String EXP_CAT_RENT = "exp-cat-002";
-    public static final String EXP_CAT_SALARIES = "exp-cat-003";
+    public static final String EXP_CAT_UTILITIES = "b50e8400-e29b-41d4-a716-446655440001";
+    public static final String EXP_CAT_RENT = "b50e8400-e29b-41d4-a716-446655440002";
+    public static final String EXP_CAT_SALARIES = "b50e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
-    // SALES TRANSACTION IDs
+    // SALES TRANSACTION UUIDs
     // ==========================================
-    public static final String TXN_001 = "txn-001";
-    public static final String TXN_002 = "txn-002";
-    public static final String TXN_003 = "txn-003";
+    public static final String TXN_001 = "c50e8400-e29b-41d4-a716-446655440001";
+    public static final String TXN_002 = "c50e8400-e29b-41d4-a716-446655440002";
+    public static final String TXN_003 = "c50e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
     // TRANSACTION NUMBERS
@@ -109,10 +127,17 @@ public final class TestConstants {
     public static final String TXN_NUMBER_003 = "TXN-2024-003";
 
     // ==========================================
-    // RECEIPT IDs
+    // TRANSACTION ITEM UUIDs
     // ==========================================
-    public static final String RCP_001 = "rcp-001";
-    public static final String RCP_002 = "rcp-002";
+    public static final String TXN_ITEM_001 = "d50e8400-e29b-41d4-a716-446655440001";
+    public static final String TXN_ITEM_002 = "d50e8400-e29b-41d4-a716-446655440002";
+    public static final String TXN_ITEM_003 = "d50e8400-e29b-41d4-a716-446655440003";
+
+    // ==========================================
+    // RECEIPT UUIDs
+    // ==========================================
+    public static final String RCP_001 = "e50e8400-e29b-41d4-a716-446655440001";
+    public static final String RCP_002 = "e50e8400-e29b-41d4-a716-446655440002";
 
     // ==========================================
     // RECEIPT NUMBERS
@@ -121,53 +146,53 @@ public final class TestConstants {
     public static final String RCP_NUMBER_002 = "RCP-2024-002";
 
     // ==========================================
-    // EXPENSE IDs
+    // EXPENSE UUIDs
     // ==========================================
-    public static final String EXP_001 = "exp-001";
-    public static final String EXP_002 = "exp-002";
-    public static final String EXP_003 = "exp-003";
+    public static final String EXP_001 = "f50e8400-e29b-41d4-a716-446655440001";
+    public static final String EXP_002 = "f50e8400-e29b-41d4-a716-446655440002";
+    public static final String EXP_003 = "f50e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
-    // INVESTMENT IDs
+    // INVESTMENT UUIDs
     // ==========================================
-    public static final String INVESTMENT_001 = "inv-001";
-    public static final String INVESTMENT_002 = "inv-002";
+    public static final String INVESTMENT_001 = "050e8400-e29b-41d4-a716-446655440001";
+    public static final String INVESTMENT_002 = "050e8400-e29b-41d4-a716-446655440002";
 
     // ==========================================
-    // INVESTOR SHARE IDs
+    // INVESTOR SHARE UUIDs
     // ==========================================
-    public static final String SHARE_001 = "share-001";
-    public static final String SHARE_002 = "share-002";
-    public static final String SHARE_003 = "share-003";
-    public static final String SHARE_004 = "share-004";
+    public static final String SHARE_001 = "150e8400-e29b-41d4-a716-446655440001";
+    public static final String SHARE_002 = "150e8400-e29b-41d4-a716-446655440002";
+    public static final String SHARE_003 = "150e8400-e29b-41d4-a716-446655440003";
+    public static final String SHARE_004 = "150e8400-e29b-41d4-a716-446655440004";
 
     // ==========================================
-    // RETURN IDs
+    // RETURN UUIDs
     // ==========================================
-    public static final String RET_001 = "ret-001";
-    public static final String RET_ITEM_001 = "ret-item-001";
+    public static final String RET_001 = "250e8400-e29b-41d4-a716-446655440001";
+    public static final String RET_ITEM_001 = "350e8400-e29b-41d4-a716-446655440001";
 
     // ==========================================
-    // INVENTORY MOVEMENT IDs
+    // INVENTORY MOVEMENT UUIDs
     // ==========================================
-    public static final String MOV_001 = "mov-001";
-    public static final String MOV_002 = "mov-002";
-    public static final String MOV_003 = "mov-003";
-    public static final String MOV_004 = "mov-004";
+    public static final String MOV_001 = "450e8400-e29b-41d4-a716-446655440001";
+    public static final String MOV_002 = "450e8400-e29b-41d4-a716-446655440002";
+    public static final String MOV_003 = "450e8400-e29b-41d4-a716-446655440003";
+    public static final String MOV_004 = "450e8400-e29b-41d4-a716-446655440004";
 
     // ==========================================
-    // AUDIT LOG IDs
+    // AUDIT LOG UUIDs
     // ==========================================
-    public static final String AUDIT_001 = "audit-001";
-    public static final String AUDIT_002 = "audit-002";
-    public static final String AUDIT_003 = "audit-003";
+    public static final String AUDIT_001 = "550e8400-e29b-41d4-a716-446655440011";
+    public static final String AUDIT_002 = "550e8400-e29b-41d4-a716-446655440012";
+    public static final String AUDIT_003 = "550e8400-e29b-41d4-a716-446655440013";
 
     // ==========================================
-    // FEATURE FLAG IDs
+    // FEATURE FLAG UUIDs
     // ==========================================
-    public static final String FLAG_ANALYTICS = "flag-001";
-    public static final String FLAG_INVESTMENT = "flag-002";
-    public static final String FLAG_FRAUD_DETECTION = "flag-003";
+    public static final String FLAG_ANALYTICS = "650e8400-e29b-41d4-a716-446655440011";
+    public static final String FLAG_INVESTMENT = "650e8400-e29b-41d4-a716-446655440012";
+    public static final String FLAG_FRAUD_DETECTION = "650e8400-e29b-41d4-a716-446655440013";
 
     // ==========================================
     // ENTITY COUNTS (for test assertions)
@@ -221,8 +246,39 @@ public final class TestConstants {
     // ==========================================
     // MOCK SECURITY CONTEXT DEFAULTS
     // ==========================================
-    public static final String MOCK_USER_ID = "test-user-id";
+    public static final String MOCK_USER_ID = "750e8400-e29b-41d4-a716-446655440000";
     public static final String MOCK_USERNAME = "test-user";
     public static final String MOCK_TENANT_ID = TEST_TENANT_001;
     public static final String MOCK_SHOP_ID = TEST_SHOP_001;
+
+    // ==========================================
+    // INVENTORY STOCK LEVELS (from test-data.sql)
+    // ==========================================
+    public static final int MOUSE_CURRENT_STOCK = 100;
+    public static final int MOUSE_RESERVED_STOCK = 5;
+    public static final int KEYBOARD_CURRENT_STOCK = 75;
+    public static final int TSHIRT_CURRENT_STOCK = 200;
+    public static final int DRINK_CURRENT_STOCK = 500;
+
+    // ==========================================
+    // TRANSACTION AMOUNTS (from test-data.sql)
+    // ==========================================
+    public static final double TXN_001_AMOUNT = 51.98;  // 2 mice
+    public static final double TXN_002_AMOUNT = 25.99;  // 1 mouse
+    public static final double TXN_003_AMOUNT = 19.99;  // 1 t-shirt
+    public static final double TOTAL_SALES_AMOUNT = 97.96;
+
+    // ==========================================
+    // EXPENSE AMOUNTS (from test-data.sql)
+    // ==========================================
+    public static final double EXP_001_AMOUNT = 250.00;   // Utilities
+    public static final double EXP_002_AMOUNT = 2000.00;  // Rent
+    public static final double EXP_003_AMOUNT = 5000.00;  // Salaries
+    public static final double TOTAL_APPROVED_EXPENSES = 5250.00; // Utilities + Salaries
+
+    // ==========================================
+    // INVESTMENT AMOUNTS (from test-data.sql)
+    // ==========================================
+    public static final double INV_001_AMOUNT = 50000.00;
+    public static final double INV_002_AMOUNT = 25000.00;
 }

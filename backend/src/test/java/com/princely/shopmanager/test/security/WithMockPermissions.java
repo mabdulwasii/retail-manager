@@ -1,5 +1,6 @@
 package com.princely.shopmanager.test.security;
 
+import com.princely.shopmanager.test.TestConstants;
 import org.springframework.security.test.context.support.WithSecurityContext;
 
 import java.lang.annotation.Retention;
@@ -10,6 +11,8 @@ import java.lang.annotation.RetentionPolicy;
  *
  * This annotation allows tests to mock authentication with specific permissions
  * instead of roles, matching the production authorization model.
+ *
+ * Uses TestConstants for default tenant/shop IDs to match test-data.sql.
  *
  * Example usage:
  * <pre>
@@ -39,22 +42,22 @@ public @interface WithMockPermissions {
 
     /**
      * Predefined role to use. Grants all permissions for that role.
-     * Options: SYSTEM_ADMIN, OWNER, MANAGER, EMPLOYEE, INVESTOR
+     * Options: SYSTEM_ADMIN, SUPER_ADMIN, OWNER, MANAGER, EMPLOYEE, CASHIER, INVESTOR
      */
     String role() default "";
 
     /**
      * Username for the mock user.
      */
-    String username() default "test-user";
+    String username() default TestConstants.MOCK_USERNAME;
 
     /**
-     * Tenant ID for multi-tenant context.
+     * Tenant ID for multi-tenant context (defaults to test-tenant-001 from test-data.sql).
      */
-    String tenantId() default "test-tenant-001";
+    String tenantId() default TestConstants.MOCK_TENANT_ID;
 
     /**
-     * Shop ID for shop-scoped operations.
+     * Shop ID for shop-scoped operations (defaults to test-shop-001 from test-data.sql).
      */
-    String shopId() default "test-shop-001";
+    String shopId() default TestConstants.MOCK_SHOP_ID;
 }
