@@ -1,9 +1,11 @@
 package com.princely.shopmanager.auth.service;
 
 import com.princely.shopmanager.core.domain.Role;
+import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.RoleRepository;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
@@ -28,6 +30,7 @@ public class UserSyncService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final RoleRepository roleRepository;
+    private final ShopRepository shopRepository;
 
     /**
      * Syncs a user from Keycloak JWT to the database.
@@ -74,6 +77,19 @@ public class UserSyncService {
             throw new UserSyncException(error, null);
         }
 
+        // Get shop from database if shopId is provided
+        Shop shop = null;
+        if (principal.getShopId() != null && !principal.getShopId().trim().isEmpty()) {
+            shop = shopRepository.findById(principal.getShopId()).orElse(null);
+            if (shop == null) {
+                log.warn("Shop {} not found for user {}. User will be created without shop assignment.",
+                    principal.getShopId(), principal.getUsername());
+            }
+        } else {
+            log.debug("No shop ID in JWT for user {}. User will be created without shop assignment.",
+                principal.getUsername());
+        }
+
         // Create user entity
         User user = User.builder()
             .keycloakId(principal.getSubject())
@@ -83,8 +99,8 @@ public class UserSyncService {
             .lastName(principal.getLastName() != null ? principal.getLastName() : "")
             .phoneNumber(principal.getPhoneNumber() != null ? principal.getPhoneNumber() : "N/A")
             .tenant(tenant)
+            .shop(shop)
             .status(User.UserStatus.ACTIVE)
-            .isInvestor(false)
             .roles(new HashSet<>())
             .build();
 
@@ -92,7 +108,8 @@ public class UserSyncService {
         syncRolesFromJwt(user, principal.getRoles());
 
         user = userRepository.save(user);
-        log.info("Created new user in database: {} (Keycloak ID: {})", user.getUsername(), user.getKeycloakId());
+        log.info("Created new user in database: {} (Keycloak ID: {}, Shop: {})",
+            user.getUsername(), user.getKeycloakId(), shop != null ? shop.getId() : "none");
 
         return user;
     }

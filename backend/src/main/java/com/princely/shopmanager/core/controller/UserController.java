@@ -76,7 +76,7 @@ public class UserController {
                     .fullName(principal.getFullName())
                     .roles(principal.getRoles())
                     .tenantId(principal.getTenantId())
-                    .shopId(principal.getClaimAsString("shop_id"))
+                    .shopId(principal.getShopId())
                     .build();
 
                 return ResponseEntity.ok(response);
@@ -92,10 +92,9 @@ public class UserController {
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
                 .status(user.getStatus().name())
-                .isInvestor(user.isInvestor())
                 .roles(principal.getRoles()) // Use roles from JWT for latest info
                 .tenantId(principal.getTenantId())
-                .shopId(principal.getClaimAsString("shop_id"))
+                .shopId(principal.getShopId())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
