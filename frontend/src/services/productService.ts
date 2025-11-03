@@ -25,8 +25,8 @@ export interface ProductListResponse {
 }
 
 export const productService = {
-  async getProducts(params: ProductListParams = {}): Promise<ProductListResponse> {
-    const response = await api.get('/products', { params })
+  async getProducts(shopId: string, params: ProductListParams = {}): Promise<ProductListResponse> {
+    const response = await api.get(`/shops/${shopId}/products`, { params })
     return response.data
   },
 
@@ -35,8 +35,8 @@ export const productService = {
     return response.data
   },
 
-  async createProduct(data: ProductCreateRequest): Promise<Product> {
-    const response = await api.post('/products', data)
+  async createProduct(shopId: string, data: ProductCreateRequest): Promise<Product> {
+    const response = await api.post(`/shops/${shopId}/products`, data)
     return response.data
   },
 
@@ -56,24 +56,6 @@ export const productService = {
     return response.data
   },
 
-  async getCategories(): Promise<string[]> {
-    try {
-      // Try to fetch from a dedicated endpoint if it exists
-      const response = await api.get<string[]>('/products/categories')
-      return response.data
-    } catch (error) {
-      // Fallback: Extract categories from products list
-      const response = await api.get<ProductListResponse>('/products', { 
-        params: { size: 1000 } 
-      })
-      const categories = [...new Set(
-        response.data.content
-          .map((p: Product) => p.category)
-          .filter((cat): cat is string => Boolean(cat))
-      )] as string[]
-      return categories.sort()
-    }
-  },
 
   generateSKU(): string {
     const timestamp = Date.now().toString(36).toUpperCase()
@@ -81,8 +63,8 @@ export const productService = {
     return `PRD-${timestamp}-${random}`
   },
 
-  async searchProducts(query: string): Promise<Product[]> {
-    const response = await api.get('/products', {
+  async searchProducts(shopId: string, query: string): Promise<Product[]> {
+    const response = await api.get(`/shops/${shopId}/products`, {
       params: { search: query, size: 50 }
     })
     return response.data.content

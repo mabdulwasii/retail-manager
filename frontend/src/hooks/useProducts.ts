@@ -2,19 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productService, ProductListParams } from '@/services/productService'
 import { ProductCreateRequest, ProductUpdateRequest } from '@/types/api'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/ManualAuthContext'
 
 /**
  * Hook to fetch paginated product list with filters
  */
 export const useProducts = (params: ProductListParams = {}) => {
+  const { user } = useAuth()
+  const shopId = user?.shopId || params.shopId
+
   const {
     data: productsData,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['products', params],
-    queryFn: () => productService.getProducts(params),
+    queryKey: ['products', shopId, params],
+    queryFn: () => productService.getProducts(shopId!, params),
+    enabled: !!shopId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
@@ -46,12 +51,22 @@ export const useProduct = (productId: string | undefined) => {
 
 /**
  * Hook to fetch product categories
+ * @deprecated Use useCategories or useCategoryNames from @/hooks/useCategories instead
+ * This hook is kept for backward compatibility with existing components
  */
 export const useProductCategories = () => {
+  const { user } = useAuth()
+  const shopId = user?.shopId
+
   return useQuery({
-    queryKey: ['productCategories'],
-    queryFn: () => productService.getCategories(),
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    queryKey: ['productCategories', shopId],
+    queryFn: async () => {
+      // Fetch from the proper categories endpoint
+      const { categoryService } = await import('@/services/categoryService')
+      return categoryService.getCategoryNames(shopId!)
+    },
+    enabled: !!shopId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
   })
 }
 
@@ -60,12 +75,18 @@ export const useProductCategories = () => {
  */
 export const useCreateProduct = () => {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const shopId = user?.shopId
 
   return useMutation({
-    mutationFn: (data: ProductCreateRequest) => productService.createProduct(data),
+    mutationFn: (data: ProductCreateRequest) => {
+      if (!shopId) throw new Error('Shop ID not found')
+      return productService.createProduct(shopId, data)
+    },
     onSuccess: (newProduct) => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['productCategories'] })
+      queryClient.invalidateQueries({ queryKey: ['categoryNames'] })
       toast.success('Product created successfully', {
         description: `${newProduct.name} has been added to your catalog`
       })
@@ -94,6 +115,7 @@ export const useUpdateProduct = () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['product', variables.productId] })
       queryClient.invalidateQueries({ queryKey: ['productCategories'] })
+      queryClient.invalidateQueries({ queryKey: ['categoryNames'] })
       toast.success('Product updated successfully', {
         description: `${updatedProduct.name} has been updated`
       })
@@ -162,10 +184,13 @@ export const useUpdateProductStatus = () => {
  * Hook to search products
  */
 export const useProductSearch = (query: string) => {
+  const { user } = useAuth()
+  const shopId = user?.shopId
+
   return useQuery({
-    queryKey: ['productSearch', query],
-    queryFn: () => productService.searchProducts(query),
-    enabled: query.length > 2,
+    queryKey: ['productSearch', shopId, query],
+    queryFn: () => productService.searchProducts(shopId!, query),
+    enabled: !!shopId && query.length > 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 }
