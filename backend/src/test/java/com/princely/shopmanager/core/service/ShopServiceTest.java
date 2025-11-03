@@ -200,20 +200,16 @@ class ShopServiceTest {
         Page<Shop> mockPage = new PageImpl<>(List.of(testShop));
         when(shopRepository.findAll(pageable)).thenReturn(mockPage);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn(null);
+        // Act - System admin uses dedicated method
+        Page<ShopResponse> result = shopService.getAllShopsSystemAdmin(pageable);
 
-            // Act
-            Page<ShopResponse> result = shopService.getShops(pageable);
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo("shop-1");
 
-            // Assert
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getId()).isEqualTo("shop-1");
-
-            verify(shopRepository).findAll(pageable);
-            verify(shopRepository, never()).findByTenant_Id(anyString(), any());
-        }
+        verify(shopRepository).findAll(pageable);
+        verify(shopRepository, never()).findByTenant_Id(anyString(), any());
     }
 
     @Test
@@ -224,7 +220,7 @@ class ShopServiceTest {
         when(shopRepository.findByTenant_Id("tenant-test-shop", pageable)).thenReturn(mockPage);
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+            mockedTenantContext.when(TenantContext::requireCurrentTenant).thenReturn("tenant-test-shop");
 
             // Act
             Page<ShopResponse> result = shopService.getShops(pageable);

@@ -209,7 +209,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(1);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactly("ROLE_MANAGER");
+            .containsExactly("ROLE_SHOP_MANAGER");
     }
 
     @Test
@@ -217,7 +217,7 @@ class JwtAuthConverterTest {
         // Arrange
         Map<String, Object> resourceAccess = new HashMap<>();
         Map<String, Object> clientResource = new HashMap<>();
-        List<String> roles = Arrays.asList("Admin", "User", "MANAGER", "shop_owner");
+        List<String> roles = Arrays.asList("Admin", "User", "MANAGER", "owner");
         clientResource.put("roles", roles);
         resourceAccess.put("shop-manager", clientResource);
 

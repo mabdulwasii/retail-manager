@@ -1,9 +1,11 @@
 package com.princely.shopmanager.auth.service;
 
 import com.princely.shopmanager.core.domain.Role;
+import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.RoleRepository;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
@@ -39,12 +41,16 @@ class UserSyncServiceTest {
     @Mock
     private RoleRepository roleRepository;
 
+    @Mock
+    private ShopRepository shopRepository;
+
     @InjectMocks
     private UserSyncService userSyncService;
 
     private JwtPrincipal testPrincipal;
     private Tenant testTenant;
     private Role testRole;
+    private Shop testShop;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +65,13 @@ class UserSyncServiceTest {
         testTenant.setCountry("Test Country");
         testTenant.setPostalCode("12345");
         testTenant.setStatus(Tenant.TenantStatus.ACTIVE);
+
+        // Setup test shop
+        testShop = new Shop();
+        testShop.setId("shop-456");
+        testShop.setName("Test Shop");
+        testShop.setTenant(testTenant);
+        testShop.setStatus(Shop.ShopStatus.ACTIVE);
 
         // Setup test role
         testRole = Role.builder()
@@ -86,6 +99,7 @@ class UserSyncServiceTest {
         // Given
         when(userRepository.findByKeycloakId(testPrincipal.getSubject())).thenReturn(Optional.empty());
         when(tenantRepository.findById("tenant-123")).thenReturn(Optional.of(testTenant));
+        when(shopRepository.findById("shop-456")).thenReturn(Optional.of(testShop));
         when(roleRepository.findByNameIn(anyList())).thenReturn(List.of(testRole));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
@@ -223,6 +237,7 @@ class UserSyncServiceTest {
 
         when(userRepository.findByKeycloakId(testPrincipal.getSubject())).thenReturn(Optional.empty());
         when(tenantRepository.findById("tenant-123")).thenReturn(Optional.of(testTenant));
+        when(shopRepository.findById("shop-456")).thenReturn(Optional.of(testShop));
         when(roleRepository.findByNameIn(anyList())).thenReturn(List.of(role1, role2));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -272,6 +287,7 @@ class UserSyncServiceTest {
         // Given
         when(userRepository.findByKeycloakId(testPrincipal.getSubject())).thenReturn(Optional.empty());
         when(tenantRepository.findById("tenant-123")).thenReturn(Optional.of(testTenant));
+        when(shopRepository.findById("shop-456")).thenReturn(Optional.of(testShop));
         when(roleRepository.findByNameIn(anyList())).thenReturn(List.of(testRole));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
