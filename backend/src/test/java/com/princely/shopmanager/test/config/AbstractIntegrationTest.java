@@ -1,6 +1,6 @@
 package com.princely.shopmanager.test.config;
 
-import com.princely.shopmanager.auth.service.CreateKeycloakUserRequest;
+import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
 import com.princely.shopmanager.auth.service.KeycloakUserService;
 
 import org.junit.jupiter.api.BeforeEach;

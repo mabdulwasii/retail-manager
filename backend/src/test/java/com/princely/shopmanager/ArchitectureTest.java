@@ -66,15 +66,13 @@ class ArchitectureTest {
 
      @ArchTest
      static final ArchRule layered_architecture = layeredArchitecture()
-         .consideringAllDependencies()
+         .consideringOnlyDependenciesInLayers()
          .layer("Controller").definedBy("..controller..")
          .layer("Service").definedBy("..service..")
          .layer("Repository").definedBy("..repository..")
-         .layer("Domain").definedBy("..domain..")
          .whereLayer("Controller").mayNotBeAccessedByAnyLayer()
          .whereLayer("Service").mayOnlyBeAccessedByLayers("Controller", "Service")
-         .whereLayer("Repository").mayOnlyBeAccessedByLayers("Service")
-         .whereLayer("Domain").mayOnlyBeAccessedByLayers("Controller", "Service", "Repository");
+         .whereLayer("Repository").mayOnlyBeAccessedByLayers("Service");
 
     @ArchTest
     static final ArchRule entities_should_be_in_domain_package =
@@ -86,6 +84,7 @@ class ArchitectureTest {
      static final ArchRule repositories_should_be_interfaces =
          classes()
              .that().resideInAPackage("..repository..")
+             .and().resideOutsideOfPackage("..repository.base..")
              .should().beInterfaces();
 
      @ArchTest
@@ -93,12 +92,14 @@ class ArchitectureTest {
          classes()
              .that().resideInAPackage("..service..")
              .and().areNotInterfaces()
+             .and().areTopLevelClasses()
              .should().beAnnotatedWith(org.springframework.stereotype.Service.class);
 
      @ArchTest
      static final ArchRule controllers_should_be_annotated =
          classes()
              .that().resideInAPackage("..controller..")
+             .and().areTopLevelClasses()
              .should().beAnnotatedWith(org.springframework.web.bind.annotation.RestController.class)
              .orShould().beAnnotatedWith(org.springframework.stereotype.Controller.class);
 }

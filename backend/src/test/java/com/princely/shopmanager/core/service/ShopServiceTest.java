@@ -10,6 +10,7 @@ import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
+import com.princely.shopmanager.core.statemachine.ShopStatusStateMachine;
 import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.springframework.context.ApplicationEventPublisher;

@@ -4,7 +4,6 @@ import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.dto.ProductCreateRequest;
 import com.princely.shopmanager.core.dto.ProductResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
-import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.service.ProductService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
@@ -46,7 +45,6 @@ import java.math.BigDecimal;
 public class ProductController {
 
     private final ProductService productService;
-    private final ProductRepository productRepository;
 
     @Operation(
         summary = "Create new product",
