@@ -1,7 +1,11 @@
 package com.princely.shopmanager.core.service;
 
+import com.princely.shopmanager.core.domain.Permission;
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.dto.RoleCreateRequest;
+import com.princely.shopmanager.core.dto.RoleUpdateRequest;
+import com.princely.shopmanager.core.repository.PermissionRepository;
 import com.princely.shopmanager.core.repository.RoleRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
@@ -10,8 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service for managing roles and role assignments.
@@ -24,6 +30,7 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
 
     /**
      * Get all available roles.
@@ -174,5 +181,202 @@ public class RoleService {
 
         return user.getRoles().stream()
             .anyMatch(role -> role.getName().equals(roleName));
+    }
+
+    // ============= ROLE CRUD OPERATIONS =============
+
+    /**
+     * Create a new custom role.
+     * System roles cannot be created via API.
+     *
+     * @param request Role creation request
+     * @return Created role
+     * @throws IllegalArgumentException if role name already exists or is reserved
+     */
+    @Transactional
+    public Role createRole(RoleCreateRequest request) {
+        log.info("Creating custom role: {}", request.getName());
+
+        // Validate role name doesn't exist
+        if (roleRepository.findByName(request.getName()).isPresent()) {
+            throw new IllegalArgumentException("Role with name '" + request.getName() + "' already exists");
+        }
+
+        // Validate role name format (uppercase, no spaces)
+        if (!request.getName().matches("^[A-Z_]+$")) {
+            throw new IllegalArgumentException("Role name must be uppercase letters and underscores only");
+        }
+
+        // Build role
+        Role role = Role.builder()
+            .name(request.getName())
+            .description(request.getDescription())
+            .isSystem(false) // Custom roles are never system roles
+            .permissions(new HashSet<>())
+            .build();
+
+        // Add permissions if provided
+        if (request.getPermissionIdentifiers() != null && !request.getPermissionIdentifiers().isEmpty()) {
+            Set<Permission> permissions = resolvePermissions(request.getPermissionIdentifiers());
+            role.setPermissions(permissions);
+        }
+
+        Role savedRole = roleRepository.save(role);
+        log.info("Successfully created custom role: {}", savedRole.getName());
+
+        return savedRole;
+    }
+
+    /**
+     * Update a role's details.
+     * System roles cannot be updated.
+     *
+     * @param roleId Role ID
+     * @param request Update request
+     * @return Updated role
+     * @throws IllegalArgumentException if role not found or is a system role
+     */
+    @Transactional
+    public Role updateRole(String roleId, RoleUpdateRequest request) {
+        log.info("Updating role: {}", roleId);
+
+        Role role = roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // System roles cannot be updated
+        if (role.isSystem()) {
+            throw new SecurityException("System roles cannot be modified");
+        }
+
+        // Update description if provided
+        if (request.getDescription() != null && !request.getDescription().isBlank()) {
+            role.setDescription(request.getDescription());
+        }
+
+        Role updatedRole = roleRepository.save(role);
+        log.info("Successfully updated role: {}", updatedRole.getName());
+
+        return updatedRole;
+    }
+
+    /**
+     * Delete a custom role.
+     * System roles cannot be deleted.
+     * Roles currently assigned to users cannot be deleted.
+     *
+     * @param roleId Role ID
+     * @throws IllegalArgumentException if role not found or is a system role
+     * @throws IllegalStateException if role is assigned to users
+     */
+    @Transactional
+    public void deleteRole(String roleId) {
+        log.info("Deleting role: {}", roleId);
+
+        Role role = roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // System roles cannot be deleted
+        if (role.isSystem()) {
+            throw new SecurityException("System roles cannot be deleted");
+        }
+
+        // Check if role is assigned to any users
+        if (!role.getUsers().isEmpty()) {
+            throw new IllegalStateException("Cannot delete role '" + role.getName() +
+                "' because it is assigned to " + role.getUsers().size() + " user(s)");
+        }
+
+        roleRepository.delete(role);
+        log.info("Successfully deleted role: {}", role.getName());
+    }
+
+    // ============= PERMISSION MANAGEMENT =============
+
+    /**
+     * Add a permission to a role.
+     *
+     * @param roleId Role ID
+     * @param permissionIdentifier Permission ID or name
+     * @throws IllegalArgumentException if role or permission not found
+     */
+    @Transactional
+    public void addPermissionToRole(String roleId, String permissionIdentifier) {
+        log.info("Adding permission {} to role {}", permissionIdentifier, roleId);
+
+        Role role = roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        Permission permission = permissionRepository.findById(permissionIdentifier)
+            .or(() -> permissionRepository.findByName(permissionIdentifier))
+            .orElseThrow(() -> new IllegalArgumentException("Permission not found: " + permissionIdentifier));
+
+        role.getPermissions().add(permission);
+        roleRepository.save(role);
+
+        log.info("Successfully added permission {} to role {}", permission.getName(), role.getName());
+    }
+
+    /**
+     * Remove a permission from a role.
+     *
+     * @param roleId Role ID
+     * @param permissionId Permission ID
+     * @throws IllegalArgumentException if role or permission not found
+     */
+    @Transactional
+    public void removePermissionFromRole(String roleId, String permissionId) {
+        log.info("Removing permission {} from role {}", permissionId, roleId);
+
+        Role role = roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        Permission permission = permissionRepository.findById(permissionId)
+            .orElseThrow(() -> new IllegalArgumentException("Permission not found with ID: " + permissionId));
+
+        role.getPermissions().remove(permission);
+        roleRepository.save(role);
+
+        log.info("Successfully removed permission {} from role {}", permission.getName(), role.getName());
+    }
+
+    /**
+     * Bulk update role permissions (replaces all existing permissions).
+     *
+     * @param roleId Role ID
+     * @param permissionIdentifiers Set of permission IDs or names
+     * @throws IllegalArgumentException if role not found or any permission not found
+     */
+    @Transactional
+    public void bulkUpdateRolePermissions(String roleId, Set<String> permissionIdentifiers) {
+        log.info("Bulk updating permissions for role {}: {} permissions", roleId, permissionIdentifiers.size());
+
+        Role role = roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // Resolve all permissions
+        Set<Permission> permissions = resolvePermissions(permissionIdentifiers);
+
+        // Replace all permissions
+        role.getPermissions().clear();
+        role.getPermissions().addAll(permissions);
+
+        roleRepository.save(role);
+
+        log.info("Successfully updated permissions for role {}", role.getName());
+    }
+
+    /**
+     * Resolve permission identifiers to Permission entities.
+     *
+     * @param identifiers Set of permission IDs or names
+     * @return Set of Permission entities
+     * @throws IllegalArgumentException if any permission not found
+     */
+    private Set<Permission> resolvePermissions(Set<String> identifiers) {
+        return identifiers.stream()
+            .map(id -> permissionRepository.findById(id)
+                .or(() -> permissionRepository.findByName(id))
+                .orElseThrow(() -> new IllegalArgumentException("Permission not found: " + id)))
+            .collect(Collectors.toSet());
     }
 }

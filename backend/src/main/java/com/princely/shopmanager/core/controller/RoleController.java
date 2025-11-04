@@ -2,7 +2,10 @@ package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.dto.RoleAssignmentRequest;
+import com.princely.shopmanager.core.dto.RoleCreateRequest;
+import com.princely.shopmanager.core.dto.RolePermissionUpdateRequest;
 import com.princely.shopmanager.core.dto.RoleResponse;
+import com.princely.shopmanager.core.dto.RoleUpdateRequest;
 import com.princely.shopmanager.core.service.RoleService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -234,5 +237,247 @@ public class RoleController {
         log.info("Removing role {} from user {}", roleId, userId);
         roleService.removeRoleFromUser(userId, roleId);
         return ResponseEntity.noContent().build();
+    }
+
+    // ============== Role CRUD Operations ==============
+
+    /**
+     * Create a new custom role.
+     * System roles cannot be created via API.
+     *
+     * @param request Role creation request
+     * @return Created role response
+     */
+    @Operation(
+        summary = "Create custom role",
+        description = "Create a new custom role with specific permissions. OWNER and SYSTEM_ADMIN only."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Role created successfully",
+            content = @Content(schema = @Schema(implementation = RoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request or role name already exists"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions"
+        )
+    })
+    @PostMapping("/roles")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_CREATE)")
+    public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest request) {
+        log.info("Creating custom role: {}", request.getName());
+        Role role = roleService.createRole(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(RoleResponse.fromEntity(role));
+    }
+
+    /**
+     * Update a role's details.
+     * System roles cannot be updated.
+     *
+     * @param roleId Role ID
+     * @param request Update request
+     * @return Updated role response
+     */
+    @Operation(
+        summary = "Update role",
+        description = "Update a custom role's details. System roles cannot be modified."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Role updated successfully",
+            content = @Content(schema = @Schema(implementation = RoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions or attempting to modify system role"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role not found"
+        )
+    })
+    @PutMapping("/roles/{roleId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<RoleResponse> updateRole(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Valid @RequestBody RoleUpdateRequest request
+    ) {
+        log.info("Updating role: {}", roleId);
+        Role role = roleService.updateRole(roleId, request);
+        return ResponseEntity.ok(RoleResponse.fromEntity(role));
+    }
+
+    /**
+     * Delete a custom role.
+     * System roles cannot be deleted.
+     * Roles assigned to users cannot be deleted.
+     *
+     * @param roleId Role ID
+     * @return No content response
+     */
+    @Operation(
+        summary = "Delete custom role",
+        description = "Delete a custom role. System roles and roles assigned to users cannot be deleted."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Role deleted successfully"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Role is assigned to users"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions or attempting to delete system role"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role not found"
+        )
+    })
+    @DeleteMapping("/roles/{roleId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_DELETE)")
+    public ResponseEntity<Void> deleteRole(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId
+    ) {
+        log.info("Deleting role: {}", roleId);
+        roleService.deleteRole(roleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============== Permission Management ==============
+
+    /**
+     * Add a permission to a role.
+     *
+     * @param roleId Role ID
+     * @param permissionId Permission ID or name
+     * @return No content response
+     */
+    @Operation(
+        summary = "Add permission to role",
+        description = "Add a single permission to a role"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Permission added successfully"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role or permission not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions"
+        )
+    })
+    @PostMapping("/roles/{roleId}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<Void> addPermissionToRole(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Parameter(description = "Permission ID or name", example = "PRODUCT_CREATE")
+        @PathVariable String permissionId
+    ) {
+        log.info("Adding permission {} to role {}", permissionId, roleId);
+        roleService.addPermissionToRole(roleId, permissionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Remove a permission from a role.
+     *
+     * @param roleId Role ID
+     * @param permissionId Permission ID
+     * @return No content response
+     */
+    @Operation(
+        summary = "Remove permission from role",
+        description = "Remove a permission from a role"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Permission removed successfully"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role or permission not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions"
+        )
+    })
+    @DeleteMapping("/roles/{roleId}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<Void> removePermissionFromRole(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Parameter(description = "Permission ID", example = "perm-product-create")
+        @PathVariable String permissionId
+    ) {
+        log.info("Removing permission {} from role {}", permissionId, roleId);
+        roleService.removePermissionFromRole(roleId, permissionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Bulk update role permissions.
+     * Replaces all existing permissions with the provided set.
+     *
+     * @param roleId Role ID
+     * @param request Permission update request
+     * @return Updated role response
+     */
+    @Operation(
+        summary = "Bulk update role permissions",
+        description = "Replace all role permissions with a new set of permissions"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Permissions updated successfully",
+            content = @Content(schema = @Schema(implementation = RoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid permission identifiers"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions"
+        )
+    })
+    @PutMapping("/roles/{roleId}/permissions")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<RoleResponse> bulkUpdateRolePermissions(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Valid @RequestBody RolePermissionUpdateRequest request
+    ) {
+        log.info("Bulk updating permissions for role {}", roleId);
+        roleService.bulkUpdateRolePermissions(roleId, request.getPermissionIdentifiers());
+        Role role = roleService.getRoleById(roleId);
+        return ResponseEntity.ok(RoleResponse.fromEntity(role));
     }
 }
