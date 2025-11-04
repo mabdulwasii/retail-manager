@@ -8,6 +8,7 @@ import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
+import com.princely.shopmanager.core.statemachine.ShopStatusStateMachine;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.events.ShopCreatedEvent;

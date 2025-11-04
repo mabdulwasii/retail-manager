@@ -7,16 +7,12 @@ WORKDIR /app
 # Copy pom.xml first for dependency caching
 COPY pom.xml .
 
-# Download dependencies (cached layer)
-RUN mvn dependency:go-offline -B
-
 # Copy source code and docs
 COPY src ./src
 
-# Build the application and generate documentation
-# Note: This generates manual docs without auto-generated API specs (app not running)
-# For full API docs, build locally with app running before Docker build
-RUN mvn clean package -DskipTests -B && \
+# Build the application WITH TESTS and generate documentation
+# Tests MUST pass before image is created - ensures quality
+RUN mvn clean package -B && \
     mvn asciidoctor:process-asciidoc -B && \
     mkdir -p target/classes/static/docs && \
     cp -r target/generated-docs/* target/classes/static/docs/ 2>/dev/null || true

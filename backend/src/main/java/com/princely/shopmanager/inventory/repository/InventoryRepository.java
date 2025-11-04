@@ -2,7 +2,7 @@ package com.princely.shopmanager.inventory.repository;
 
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.domain.InventoryHistory;
-import com.princely.shopmanager.shared.repository.TenantAwareRepository;
+import com.princely.shopmanager.shared.repository.base.TenantAwareRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

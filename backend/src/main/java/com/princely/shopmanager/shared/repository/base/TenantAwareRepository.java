@@ -1,4 +1,4 @@
-package com.princely.shopmanager.shared.repository;
+package com.princely.shopmanager.shared.repository.base;
 
 import com.princely.shopmanager.auth.context.TenantContext;
 import jakarta.persistence.EntityManager;

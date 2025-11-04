@@ -1,4 +1,4 @@
-package com.princely.shopmanager.core.service;
+package com.princely.shopmanager.core.exception;
 
 /**
  * Exception thrown during tenant registration process

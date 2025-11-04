@@ -2,7 +2,7 @@ package com.princely.shopmanager.expenses.repository;
 
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
-import com.princely.shopmanager.shared.repository.TenantAwareRepository;
+import com.princely.shopmanager.shared.repository.base.TenantAwareRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

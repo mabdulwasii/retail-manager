@@ -1,4 +1,4 @@
-package com.princely.shopmanager.shared.service;
+package com.princely.shopmanager.shared.util;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

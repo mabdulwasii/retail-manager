@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
+import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
+import com.princely.shopmanager.auth.exception.KeycloakUserException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.princely.shopmanager.expenses.repository;
 
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
-import com.princely.shopmanager.shared.repository.TenantAwareRepository;
+import com.princely.shopmanager.shared.repository.base.TenantAwareRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

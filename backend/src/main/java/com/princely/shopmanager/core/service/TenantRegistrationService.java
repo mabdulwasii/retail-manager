@@ -1,6 +1,7 @@
 package com.princely.shopmanager.core.service;
 
-import com.princely.shopmanager.auth.service.CreateKeycloakUserRequest;
+import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
+import com.princely.shopmanager.core.exception.TenantRegistrationException;
 import com.princely.shopmanager.auth.service.KeycloakUserService;
 import com.princely.shopmanager.core.domain.*;
 import com.princely.shopmanager.core.dto.registration.*;

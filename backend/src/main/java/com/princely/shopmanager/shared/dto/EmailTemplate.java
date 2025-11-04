@@ -1,4 +1,4 @@
-package com.princely.shopmanager.shared.service;
+package com.princely.shopmanager.shared.dto;
 
 import lombok.Builder;
 

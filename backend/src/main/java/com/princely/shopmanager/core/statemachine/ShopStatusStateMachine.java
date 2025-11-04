@@ -1,4 +1,4 @@
-package com.princely.shopmanager.core.service;
+package com.princely.shopmanager.core.statemachine;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;

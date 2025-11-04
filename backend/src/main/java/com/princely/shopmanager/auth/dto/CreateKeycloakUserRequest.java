@@ -1,4 +1,4 @@
-package com.princely.shopmanager.auth.service;
+package com.princely.shopmanager.auth.dto;
 
 import java.util.List;
 

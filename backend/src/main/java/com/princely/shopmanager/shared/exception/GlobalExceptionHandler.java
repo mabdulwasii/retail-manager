@@ -1,7 +1,7 @@
 package com.princely.shopmanager.shared.exception;
 
-import com.princely.shopmanager.auth.service.KeycloakUserException;
-import com.princely.shopmanager.core.service.TenantRegistrationException;
+import com.princely.shopmanager.auth.exception.KeycloakUserException;
+import com.princely.shopmanager.core.exception.TenantRegistrationException;
 import com.princely.shopmanager.shared.dto.ErrorResponse;
 import com.princely.shopmanager.shared.service.MessageService;
 import jakarta.persistence.EntityNotFoundException;
