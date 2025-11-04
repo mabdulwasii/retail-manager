@@ -149,7 +149,6 @@ public class UserService {
             .phoneNumber(request.getPhoneNumber())
             .tenant(tenant)
             .roles(roles)
-            .isInvestor(request.getIsInvestor() != null ? request.getIsInvestor() : false)
             .status(User.UserStatus.ACTIVE)
             .build();
 
@@ -197,10 +196,6 @@ public class UserService {
 
         if (request.getStatus() != null) {
             user.setStatus(request.getStatus());
-        }
-
-        if (request.getIsInvestor() != null) {
-            user.setInvestor(request.getIsInvestor());
         }
 
         User updatedUser = userRepository.save(user);

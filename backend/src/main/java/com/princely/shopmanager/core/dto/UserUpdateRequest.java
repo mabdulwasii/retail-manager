@@ -38,7 +38,4 @@ public class UserUpdateRequest {
 
     @Schema(description = "User's status", example = "ACTIVE")
     private User.UserStatus status;
-
-    @Schema(description = "Whether the user is an investor", example = "false")
-    private Boolean isInvestor;
 }

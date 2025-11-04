@@ -8,6 +8,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * Service for managing users in Keycloak using the admin client
  */
 @Service
+@ConditionalOnProperty(prefix = "app.keycloak", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class KeycloakUserService {
@@ -70,25 +72,26 @@ public class KeycloakUserService {
 
         try {
             UsersResource usersResource = realmResource.users();
-            Response response = usersResource.create(user);
+            try (Response response = usersResource.create(user)) {
 
-            if (response.getStatus() == 201) {
-                String userId = extractUserIdFromLocation(response.getLocation().toString());
-                log.info("User created successfully with ID: {}", userId);
+                if (response.getStatus() == 201) {
+                    String userId = extractUserIdFromLocation(response.getLocation().toString());
+                    log.info("User created successfully with ID: {}", userId);
 
-                // Set password
-                if (request.password() != null) {
-                    setUserPassword(userId, request.password(), request.temporaryPassword());
+                    // Set password
+                    if (request.password() != null) {
+                        setUserPassword(userId, request.password(), request.temporaryPassword());
+                    }
+
+                    // Assign roles
+                    if (request.roles() != null && !request.roles().isEmpty()) {
+                        assignRolesToUser(userId, request.roles());
+                    }
+
+                    return userId;
+                } else {
+                    throw new KeycloakUserException("Failed to create user. Status: " + response.getStatus());
                 }
-
-                // Assign roles
-                if (request.roles() != null && !request.roles().isEmpty()) {
-                    assignRolesToUser(userId, request.roles());
-                }
-
-                return userId;
-            } else {
-                throw new KeycloakUserException("Failed to create user. Status: " + response.getStatus());
             }
         } catch (Exception e) {
             log.error("Error creating user in Keycloak: {}", request.username(), e);

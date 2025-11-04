@@ -44,8 +44,8 @@ Shop Manager uses a **two-tier model** for product and inventory management:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         PRODUCT                              │
-│  (Master Catalog - What You Sell)                          │
+│                         PRODUCT                             │
+│  (Master Catalog - What You Sell)                           │
 ├─────────────────────────────────────────────────────────────┤
 │ • id, sku, barcode                                          │
 │ • name, description, category                               │
@@ -53,14 +53,14 @@ Shop Manager uses a **two-tier model** for product and inventory management:
 │ • supplier info, image                                      │
 │ • status (ACTIVE, INACTIVE, DISCONTINUED)                   │
 │                                                             │
-│ NO STOCK FIELDS - Stock is in Inventory table              │
+│ NO STOCK FIELDS - Stock is in Inventory table               │
 └─────────────────────────────────────────────────────────────┘
                            │
                            │ 1 Product → N Inventory Records
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                       INVENTORY                             │
-│  (Stock Tracking - What You Have)                          │
+│  (Stock Tracking - What You Have)                           │
 ├─────────────────────────────────────────────────────────────┤
 │ • product_id (FK to Product)                                │
 │ • shop_id, location                                         │

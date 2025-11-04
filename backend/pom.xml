@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
+        <version>3.5.6</version>
         <relativePath/>
     </parent>
 
@@ -20,7 +20,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-modulith.version>1.2.0</spring-modulith.version>
+        <spring-modulith.version>1.4.3</spring-modulith.version>
         <keycloak.version>24.0.1</keycloak.version>
         <testcontainers.version>1.19.7</testcontainers.version>
         <archunit.version>1.2.1</archunit.version>
@@ -83,6 +83,7 @@
         </dependency>
 
         <!-- Spring Modulith -->
+        <!-- Full Modulith setup for event-driven architecture with proper JPA integration -->
         <dependency>
             <groupId>org.springframework.modulith</groupId>
             <artifactId>spring-modulith-starter-core</artifactId>
@@ -90,19 +91,8 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-starter-jpa</artifactId>
+            <artifactId>spring-modulith-starter-jdbc</artifactId>
             <version>${spring-modulith.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-events-api</artifactId>
-            <version>${spring-modulith.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-actuator</artifactId>
-            <version>${spring-modulith.version}</version>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Keycloak -->

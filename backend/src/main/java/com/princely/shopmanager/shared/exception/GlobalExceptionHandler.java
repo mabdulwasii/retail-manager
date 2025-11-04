@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     private final MessageService messageService;
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         String message;
         HttpStatus status;
 
@@ -53,21 +53,21 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TenantAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleTenantAccessDeniedException(TenantAccessDeniedException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleTenantAccessDeniedException(TenantAccessDeniedException e) {
         logger.warn("Tenant access denied: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(new ErrorResponse(e.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
         logger.warn("Spring Access denied: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(new ErrorResponse("FORBIDDEN", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
             .map(error -> error.getField() + ": " + error.getDefaultMessage())
             .collect(Collectors.joining(", "));
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
         String message = e.getConstraintViolations().stream()
             .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
             .collect(Collectors.joining(", "));
@@ -89,14 +89,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         logger.warn("Illegal argument: {}", e.getMessage());
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("INVALID_ARGUMENT", e.getMessage()));
     }
 
     @ExceptionHandler(ConversionFailedException.class)
-    public ResponseEntity<ErrorResponse> handleConversionFailedException(ConversionFailedException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleConversionFailedException(ConversionFailedException e) {
         logger.warn("Conversion failed: {}", e.getMessage());
         String message = "Invalid parameter format";
 
@@ -113,28 +113,28 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e) {
         logger.warn("Illegal state: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(new ErrorResponse("INVALID_STATE", e.getMessage()));
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException e) {
         logger.warn("Entity not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
         logger.warn("Element not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ErrorResponse("NOT_FOUND", "Requested resource not found"));
     }
 
     @ExceptionHandler(OptimisticLockException.class)
-    public ResponseEntity<ErrorResponse> handleOptimisticLockException(OptimisticLockException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleOptimisticLockException(OptimisticLockException e) {
         logger.warn("Concurrent modification detected: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(new ErrorResponse("CONCURRENT_UPDATE",
@@ -142,8 +142,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e, WebRequest request) {
-        logger.warn("Data integrity violation: {}", e.getMessage());
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        logger.error("Data integrity violation: {}", e.getMessage(), e);
 
         String message = "Database constraint violation";
         String code = "DATA_INTEGRITY_ERROR";
@@ -217,7 +217,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException e) {
         logger.error("Database access error", e);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .body(new ErrorResponse("DATABASE_ERROR",
@@ -225,7 +225,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(KeycloakUserException.class)
-    public ResponseEntity<ErrorResponse> handleKeycloakUserException(KeycloakUserException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleKeycloakUserException(KeycloakUserException e) {
         logger.error("Keycloak user operation failed: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
             .body(new ErrorResponse("EXTERNAL_SERVICE_ERROR",
@@ -233,14 +233,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TenantRegistrationException.class)
-    public ResponseEntity<ErrorResponse> handleTenantRegistrationException(TenantRegistrationException e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleTenantRegistrationException(TenantRegistrationException e) {
         logger.warn("Tenant registration failed: {}", e.getMessage());
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("REGISTRATION_ERROR", e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception e, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
         logger.error("Unexpected error occurred", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"));

@@ -148,9 +148,10 @@ public class TenantRegistrationService {
             }
 
             // Create audit log
+            int activatedShopCount = (request.shopIdsToActivate() != null) ? request.shopIdsToActivate().size() : 0;
             auditService.logEvent("TENANT_ACTIVATION",
                 "Tenant activated by admin: " + tenant.getName(),
-                Map.of("tenantId", tenant.getId(), "adminUserId", adminUserId, "activatedShops", request.shopIdsToActivate().size()));
+                Map.of("tenantId", tenant.getId(), "adminUserId", adminUserId, "activatedShops", activatedShopCount));
 
             // Publish activation notification event
             publishActivationNotificationEvent(tenant, true, null, adminUserId);

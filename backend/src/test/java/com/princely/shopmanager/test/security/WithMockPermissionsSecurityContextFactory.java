@@ -1,6 +1,7 @@
 package com.princely.shopmanager.test.security;
 
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.test.TestConstants;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,7 +17,6 @@ import java.util.stream.Stream;
 
 /**
  * Security context factory for {@link WithMockPermissions} annotation.
- *
  * Creates a mock security context with granular permissions for testing.
  */
 public class WithMockPermissionsSecurityContextFactory implements WithSecurityContextFactory<WithMockPermissions> {
@@ -43,7 +43,7 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
 
         // Create JwtPrincipal to match controller expectations
         JwtPrincipal principal = JwtPrincipal.builder()
-            .subject("test-user-id")
+            .subject(TestConstants.MOCK_USER_ID)
             .preferredUsername(annotation.username())
             .email(annotation.username() + "@example.com")
             .firstName(annotation.username())

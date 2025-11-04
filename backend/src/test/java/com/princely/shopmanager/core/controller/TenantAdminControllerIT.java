@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
@@ -21,13 +20,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests for TenantAdminController using TestContainers with PostgreSQL.
- * Tests use real database with test-data.sql for realistic scenarios.
+ * Tests use real database with test-data.sql for realistic end-to-end scenarios.
  */
-@DisplayName("Tenant Admin Controller Tests")
-class TenantAdminControllerTest extends AbstractIntegrationTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+@DisplayName("Tenant Admin Controller Integration Tests")
+class TenantAdminControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;

@@ -54,9 +54,6 @@ public class UserResponse {
     @Schema(description = "Shop ID", example = "shop-123")
     private String shopId;
 
-    @Schema(description = "Whether user is an investor", example = "false")
-    private Boolean isInvestor;
-
     @Schema(description = "User's assigned roles")
     private Set<RoleResponse> roles;
 
@@ -84,8 +81,7 @@ public class UserResponse {
             .status(user.getStatus() != null ? user.getStatus().name() : null)
             .keycloakId(user.getKeycloakId())
             .tenantId(user.getTenant() != null ? user.getTenant().getId() : null)
-            .shopId(null) // User entity doesn't have shop relationship
-            .isInvestor(user.isInvestor())
+            .shopId(user.getShop() != null ? user.getShop().getId() : null)
             .roles(user.getRoles() != null ?
                 user.getRoles().stream()
                     .map(RoleResponse::fromEntity)

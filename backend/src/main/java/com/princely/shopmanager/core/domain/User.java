@@ -18,8 +18,8 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"tenant", "roles"})
-@EqualsAndHashCode(callSuper = true, exclude = {"tenant", "roles"})
+@ToString(exclude = {"tenant", "shop", "roles"})
+@EqualsAndHashCode(callSuper = true, exclude = {"tenant", "shop", "roles"})
 public class User extends BaseEntity {
 
     @Id
@@ -30,6 +30,11 @@ public class User extends BaseEntity {
     @JoinColumn(name = "tenant_id", nullable = false)
     @JsonIgnoreProperties({"contactUser", "users", "shops"})
     private Tenant tenant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shop_id")
+    @JsonIgnoreProperties({"tenant", "users"})
+    private Shop shop;
 
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
@@ -70,10 +75,6 @@ public class User extends BaseEntity {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-
-    @Builder.Default
-    @Column(name = "is_investor")
-    private boolean isInvestor = false;
 
     public enum UserStatus {
         ACTIVE,

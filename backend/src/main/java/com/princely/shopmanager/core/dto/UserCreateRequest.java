@@ -56,8 +56,4 @@ public class UserCreateRequest {
 
     @Schema(description = "Set of role IDs or role names to assign to the user", example = "[\"MANAGER\", \"CASHIER\"]")
     private Set<String> roles;
-
-    @Schema(description = "Whether the user is an investor", example = "false")
-    @Builder.Default
-    private Boolean isInvestor = false;
 }

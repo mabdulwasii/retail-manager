@@ -39,9 +39,6 @@ public class UserProfileResponse {
     @Schema(description = "User status", example = "ACTIVE")
     private String status;
 
-    @Schema(description = "Whether user is an investor", example = "false")
-    private boolean isInvestor;
-
     @Schema(description = "User roles", example = "[\"MANAGER\", \"EMPLOYEE\"]")
     private List<String> roles;
 

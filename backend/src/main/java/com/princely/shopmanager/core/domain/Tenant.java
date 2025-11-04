@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"shops", "users"})
+@ToString(exclude = {"shops", "users", "contactUser"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shops", "users"})
 public class Tenant extends BaseEntity {
 
@@ -42,7 +41,6 @@ public class Tenant extends BaseEntity {
     @Column(nullable = false)
     private String contactEmail;
 
-    @NotNull(message = "Contact user is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_user_id")
     @JsonIgnoreProperties({"tenant", "roles"})
@@ -87,32 +85,5 @@ public class Tenant extends BaseEntity {
         INACTIVE,
         SUSPENDED,
         TERMINATED
-    }
-
-    /**
-     * Get the contact email - either from the User entity or the legacy field
-     */
-    public String getEffectiveContactEmail() {
-        if (contactUser != null && contactUser.getEmail() != null) {
-            return contactUser.getEmail();
-        }
-        return contactEmail;
-    }
-
-    /**
-     * Get the contact user's full name if available
-     */
-    public String getContactUserFullName() {
-        if (contactUser != null) {
-            return contactUser.getFullName();
-        }
-        return null;
-    }
-
-    /**
-     * Check if this tenant has a proper User entity as contact
-     */
-    public boolean hasContactUser() {
-        return contactUser != null;
     }
 }
