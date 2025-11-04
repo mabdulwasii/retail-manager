@@ -1,4 +1,4 @@
-package com.princely.shopmanager.core.repository;
+package com.princely.shopmanager.core.specification;
 
 import com.princely.shopmanager.core.domain.Shop;
 import org.springframework.data.jpa.domain.Specification;

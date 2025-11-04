@@ -257,6 +257,22 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 ^|
 ^|
 
+|ROLE_PERMISSION_ADD
+|Add permissions to roles
+^|✓
+^|✓
+^|
+^|
+^|
+
+|ROLE_PERMISSION_REMOVE
+|Remove permissions from roles
+^|✓
+^|✓
+^|
+^|
+^|
+
 |PERMISSION_READ
 |View permission details
 ^|✓

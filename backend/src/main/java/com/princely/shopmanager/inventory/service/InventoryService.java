@@ -14,7 +14,7 @@ import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
-import com.princely.shopmanager.inventory.repository.InventorySpecifications;
+import com.princely.shopmanager.inventory.specification.InventorySpecifications;
 import com.princely.shopmanager.shared.events.InventoryLowStockEvent;
 import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;

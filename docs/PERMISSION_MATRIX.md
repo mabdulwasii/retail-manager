@@ -1,8 +1,8 @@
 # Permission Matrix
 
-**Version**: 1.0.0
-**Last Updated**: 2025-10-30
-**Migration**: V12
+**Version**: 1.1.0
+**Last Updated**: 2025-11-04
+**Migration**: V19
 
 This document provides a comprehensive overview of all permissions, resources, and role assignments in the Shop Manager system.
 
@@ -96,11 +96,14 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 | USER_LIST | USER | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ 🔒 | ❌ | ❌ |
 | USER_UPDATE | USER | UPDATE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | USER_DELETE | USER | DELETE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
-| ROLE_CREATE | ROLE | CREATE | ✅ | ✅ 🏢 | ❌ | ❌ | ❌ | ❌ |
-| ROLE_READ | ROLE | READ | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
-| ROLE_LIST | ROLE | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
-| ROLE_UPDATE | ROLE | UPDATE | ✅ | ✅ 🏢 | ❌ | ❌ | ❌ | ❌ |
-| ROLE_DELETE | ROLE | DELETE | ✅ | ✅ 🏢 | ❌ | ❌ | ❌ | ❌ |
+| ROLE_CREATE | ROLE | CREATE | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
+| ROLE_READ | ROLE | READ | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ | ❌ | ❌ |
+| ROLE_LIST | ROLE | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ | ❌ | ❌ |
+| ROLE_UPDATE | ROLE | UPDATE | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
+| ROLE_DELETE | ROLE | DELETE | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
+| ROLE_ASSIGN | ROLE | ASSIGN | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
+| ROLE_PERMISSION_ADD | ROLE | PERMISSION_ADD | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
+| ROLE_PERMISSION_REMOVE | ROLE | PERMISSION_REMOVE | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |
 | PERMISSION_READ | PERMISSION | READ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | PERMISSION_LIST | PERMISSION | LIST | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 
@@ -288,12 +291,32 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 |----------|--------|-------------------|
 | Create Role | POST `/api/roles` | `ROLE_CREATE` |
 | List Roles | GET `/api/roles` | `ROLE_LIST` |
-| Update Role Permissions | PUT `/api/roles/{id}/permissions` | `ROLE_UPDATE` |
+| Get Role by ID | GET `/api/roles/{roleId}` | `ROLE_READ` |
+| Update Role | PUT `/api/roles/{roleId}` | `ROLE_UPDATE` |
+| Delete Role | DELETE `/api/roles/{roleId}` | `ROLE_DELETE` |
+| Assign Role to User | POST `/api/users/{userId}/roles` | `ROLE_ASSIGN` |
+| Remove Role from User | DELETE `/api/users/{userId}/roles/{roleId}` | `ROLE_ASSIGN` |
+| Get User Roles | GET `/api/users/{userId}/roles` | `ROLE_LIST` |
+| Add Permission to Role | POST `/api/roles/{roleId}/permissions/{permissionId}` | `ROLE_PERMISSION_ADD` |
+| Remove Permission from Role | DELETE `/api/roles/{roleId}/permissions/{permissionId}` | `ROLE_PERMISSION_REMOVE` |
+| Bulk Update Role Permissions | PUT `/api/roles/{roleId}/permissions` | `ROLE_UPDATE` |
 | List Permissions | GET `/api/permissions` | `PERMISSION_LIST` |
+| List Permissions Grouped | GET `/api/permissions/grouped` | `PERMISSION_LIST` |
 
 ---
 
 ## Changelog
+
+### Version 1.1.0 (2025-11-04) - Migration V19
+- Added granular role permission management permissions
+- `ROLE_PERMISSION_ADD` - Add individual permissions to roles
+- `ROLE_PERMISSION_REMOVE` - Remove individual permissions from roles
+- Enhanced RoleController with complete CRUD operations
+- Created PermissionController for permission listing and grouping
+- Added new API endpoints:
+  - POST `/api/roles/{roleId}/permissions/{permissionId}`
+  - DELETE `/api/roles/{roleId}/permissions/{permissionId}`
+  - GET `/api/permissions/grouped`
 
 ### Version 1.0.0 (2025-10-30) - Migration V12
 - Initial granular permission system

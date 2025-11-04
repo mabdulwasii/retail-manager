@@ -387,7 +387,7 @@ public class RoleController {
         )
     })
     @PostMapping("/roles/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_ADD)")
     public ResponseEntity<Void> addPermissionToRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,
@@ -425,7 +425,7 @@ public class RoleController {
         )
     })
     @DeleteMapping("/roles/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_REMOVE)")
     public ResponseEntity<Void> removePermissionFromRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,

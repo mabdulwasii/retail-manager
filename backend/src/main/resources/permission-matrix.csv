@@ -22,6 +22,8 @@ ROLE,ROLE_LIST,List available roles,✓,✓,✓,,,ROLE_LIST
 ROLE,ROLE_UPDATE,Update role permissions,✓,✓,,,, ROLE_UPDATE
 ROLE,ROLE_DELETE,Delete custom roles,✓,✓,,,, ROLE_DELETE
 ROLE,ROLE_ASSIGN,Assign roles to users,✓,✓,,,, ROLE_ASSIGN
+ROLE,ROLE_PERMISSION_ADD,Add permissions to roles,✓,✓,,,, ROLE_PERMISSION_ADD
+ROLE,ROLE_PERMISSION_REMOVE,Remove permissions from roles,✓,✓,,,, ROLE_PERMISSION_REMOVE
 PERMISSION,PERMISSION_READ,View permission details,✓,✓,,,, PERMISSION_READ
 PERMISSION,PERMISSION_LIST,List all permissions,✓,✓,,,, PERMISSION_LIST
 PRODUCT,PRODUCT_CREATE,Create new products,✓,✓,✓,,,PRODUCT_CREATE

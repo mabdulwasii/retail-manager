@@ -58,6 +58,34 @@ Shop Manager is a multi-tenant retail management platform:
 - Code style, formatting, and maintainability
 - Docker Compose and Helm chart updates
 
+### Critical Conventions
+
+**IMPORTANT**: These conventions MUST be followed for all code changes:
+
+1. **Permission Matrix Updates**
+   - **ALWAYS update `backend/src/main/resources/permission-matrix.csv`** whenever a new API endpoint is added, edited, or deleted
+   - The permission-matrix.csv is the single source of truth for all permissions and role assignments
+   - After updating CSV, also update:
+     - `docs/PERMISSION_MATRIX.md`
+     - `src/docs/asciidoc/permission-matrix.adoc`
+   - Create a new migration file to add the permissions to the database
+
+2. **Test Naming Convention**
+   - Integration tests **MUST** end with `*IT.java` (e.g., `RoleControllerIT.java`)
+   - Unit tests **MUST** end with `*Test.java` (e.g., `RoleServiceTest.java`)
+   - This convention is enforced in architecture tests
+
+3. **Permission Granularity**
+   - Make permission constants as granular as possible without making them excessive
+   - CREATE, READ, UPDATE, DELETE should ALWAYS be distinct permission constants
+   - Never reuse a permission for multiple distinct operations
+   - Example: `ROLE_PERMISSION_ADD` and `ROLE_PERMISSION_REMOVE` are separate from `ROLE_UPDATE`
+
+4. **Database Migrations**
+   - **NEVER modify existing migration files** in `src/main/resources/db/migration/`
+   - Always create a new versioned migration file (e.g., V19, V20, etc.)
+   - Migrations are immutable once committed
+
 ---
 
 ## Testing Strategy

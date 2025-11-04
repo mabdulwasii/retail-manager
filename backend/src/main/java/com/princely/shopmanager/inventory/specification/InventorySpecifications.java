@@ -1,4 +1,4 @@
-package com.princely.shopmanager.inventory.repository;
+package com.princely.shopmanager.inventory.specification;
 
 import com.princely.shopmanager.inventory.domain.Inventory;
 import org.springframework.data.jpa.domain.Specification;

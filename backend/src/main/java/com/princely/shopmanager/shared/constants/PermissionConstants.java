@@ -56,6 +56,8 @@ public final class PermissionConstants {
     public static final String ROLE_UPDATE = "ROLE_UPDATE";
     public static final String ROLE_DELETE = "ROLE_DELETE";
     public static final String ROLE_ASSIGN = "ROLE_ASSIGN";
+    public static final String ROLE_PERMISSION_ADD = "ROLE_PERMISSION_ADD";
+    public static final String ROLE_PERMISSION_REMOVE = "ROLE_PERMISSION_REMOVE";
 
     // ==========================================
     // PERMISSION PERMISSIONS

@@ -9,7 +9,7 @@ import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
-import com.princely.shopmanager.inventory.repository.InventorySpecifications;
+import com.princely.shopmanager.inventory.specification.InventorySpecifications;
 import com.princely.shopmanager.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
