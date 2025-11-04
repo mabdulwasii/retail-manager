@@ -220,7 +220,7 @@ public class ExpenseService {
 
         Expense expense = findExpenseForUser(expenseId, principal);
 
-        if (!expense.canBeApproved()) {
+        if (expense.cannotBeApproved()) {
             throw new BusinessRuleViolationException("Expense cannot be approved in current status: " + expense.getStatus());
         }
 
@@ -249,7 +249,7 @@ public class ExpenseService {
 
         Expense expense = findExpenseForUser(expenseId, principal);
 
-        if (!expense.canBeApproved()) {
+        if (expense.cannotBeApproved()) {
             throw new BusinessRuleViolationException("Expense cannot be rejected in current status: " + expense.getStatus());
         }
 
