@@ -73,7 +73,7 @@ public class SalesTransactionController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_CREATE)")
     public ResponseEntity<SalesTransactionResponse> createTransaction(
         @Valid @RequestBody SalesTransactionCreateRequest request
     ) {
@@ -103,7 +103,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
     public ResponseEntity<SalesTransactionResponse> getTransaction(
         @Parameter(description = "Transaction ID", example = "txn-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String id
@@ -128,7 +128,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
     public ResponseEntity<Page<SalesTransactionResponse>> getTransactions(
         @Parameter(description = "Shop ID", required = true)
         @RequestParam String shopId,
@@ -154,7 +154,7 @@ public class SalesTransactionController {
         )
     })
     @GetMapping("/by-date-range")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_LIST)")
     public ResponseEntity<List<SalesTransactionResponse>> getTransactionsByDateRange(
         @Parameter(description = "Shop ID", required = true)
         @RequestParam String shopId,
@@ -191,7 +191,7 @@ public class SalesTransactionController {
         )
     })
     @PostMapping("/{id}/void")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_VOID)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_VOID)")
     public ResponseEntity<Void> voidTransaction(
         @Parameter(description = "Transaction ID")
         @PathVariable String id,

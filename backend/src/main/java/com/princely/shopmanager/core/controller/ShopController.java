@@ -92,7 +92,7 @@ public class ShopController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_CREATE)")
     public ResponseEntity<ShopResponse> createShop(
         @Valid @RequestBody ShopCreateRequest request
     ) {
@@ -131,7 +131,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
     public ResponseEntity<ShopResponse> getShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -166,7 +166,7 @@ public class ShopController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST)")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -206,7 +206,7 @@ public class ShopController {
         )
     })
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST_ALL)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST_ALL)")
     public ResponseEntity<Page<ShopResponse>> getAllShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -288,7 +288,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -339,7 +339,7 @@ public class ShopController {
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -384,7 +384,7 @@ public class ShopController {
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_DELETE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_DELETE)")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -424,7 +424,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}/configuration")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
     public ResponseEntity<com.princely.shopmanager.core.dto.ShopConfigurationResponse> getConfiguration(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -473,7 +473,7 @@ public class ShopController {
         )
     })
     @PutMapping("/{shopId}/configuration")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> updateConfiguration(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,

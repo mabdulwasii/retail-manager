@@ -65,7 +65,7 @@ public class RoleController {
         )
     })
     @GetMapping("/roles")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
     public ResponseEntity<List<RoleResponse>> getAllRoles() {
         log.debug("Retrieving all roles");
         List<Role> roles = roleService.getAllRoles();
@@ -101,7 +101,7 @@ public class RoleController {
         )
     })
     @GetMapping("/roles/{roleId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_READ)")
     public ResponseEntity<RoleResponse> getRoleById(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId
@@ -137,7 +137,7 @@ public class RoleController {
         )
     })
     @GetMapping("/users/{userId}/roles")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_LIST)")
     public ResponseEntity<Set<RoleResponse>> getUserRoles(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId
@@ -186,7 +186,7 @@ public class RoleController {
         )
     })
     @PostMapping("/users/{userId}/roles")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
     public ResponseEntity<Void> assignRoleToUser(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId,
@@ -227,7 +227,7 @@ public class RoleController {
         )
     })
     @DeleteMapping("/users/{userId}/roles/{roleId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_ASSIGN)")
     public ResponseEntity<Void> removeRoleFromUser(
         @Parameter(description = "User ID", example = "user-123")
         @PathVariable String userId,
@@ -268,7 +268,7 @@ public class RoleController {
         )
     })
     @PostMapping("/roles")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_CREATE)")
     public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest request) {
         log.info("Creating custom role: {}", request.getName());
         Role role = roleService.createRole(request);
@@ -307,7 +307,7 @@ public class RoleController {
         )
     })
     @PutMapping("/roles/{roleId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
     public ResponseEntity<RoleResponse> updateRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,
@@ -349,7 +349,7 @@ public class RoleController {
         )
     })
     @DeleteMapping("/roles/{roleId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_DELETE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_DELETE)")
     public ResponseEntity<Void> deleteRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId
@@ -387,7 +387,7 @@ public class RoleController {
         )
     })
     @PostMapping("/roles/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_ADD)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_ADD)")
     public ResponseEntity<Void> addPermissionToRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,
@@ -425,7 +425,7 @@ public class RoleController {
         )
     })
     @DeleteMapping("/roles/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_REMOVE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_PERMISSION_REMOVE)")
     public ResponseEntity<Void> removePermissionFromRole(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,
@@ -469,7 +469,7 @@ public class RoleController {
         )
     })
     @PutMapping("/roles/{roleId}/permissions")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
     public ResponseEntity<RoleResponse> bulkUpdateRolePermissions(
         @Parameter(description = "Role ID", example = "role-123")
         @PathVariable String roleId,

@@ -43,4 +43,25 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByUsernameIgnoreCase(String username);
+
+    /**
+     * Find user by email with roles and permissions eagerly loaded.
+     *
+     * This method is specifically optimized for permission evaluation to avoid N+1 queries.
+     * It uses JOIN FETCH to load the entire permission hierarchy in a single database query:
+     * User → Roles → Permissions
+     *
+     * WARNING: Only use this method when you KNOW you need the permissions data.
+     * For other use cases, use findByEmail() to benefit from lazy loading.
+     *
+     * Primary use case: CustomPermissionEvaluator.checkUserPermission()
+     *
+     * @param email User's email address
+     * @return Optional containing user with eagerly loaded roles and permissions
+     */
+    @Query("SELECT DISTINCT u FROM User u " +
+           "LEFT JOIN FETCH u.roles r " +
+           "LEFT JOIN FETCH r.permissions " +
+           "WHERE u.email = :email")
+    Optional<User> findByEmailWithPermissions(@Param("email") String email);
 }

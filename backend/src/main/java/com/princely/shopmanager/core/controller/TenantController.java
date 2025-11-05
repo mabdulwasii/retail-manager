@@ -75,7 +75,7 @@ public class TenantController {
         )
     })
     @PostMapping("/{tenantId}/users")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_CREATE)")
     public ResponseEntity<UserResponse> createUserInTenant(
         @Parameter(description = "Tenant ID") @PathVariable String tenantId,
         @Valid @RequestBody UserCreateRequest request
@@ -115,7 +115,7 @@ public class TenantController {
         )
     })
     @GetMapping("/{tenantId}/users")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_LIST)")
     public ResponseEntity<List<UserResponse>> getTenantUsers(
         @Parameter(description = "Tenant ID") @PathVariable String tenantId
     ) {

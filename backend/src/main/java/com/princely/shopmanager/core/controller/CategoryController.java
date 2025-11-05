@@ -47,7 +47,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "400", description = "Invalid request data or duplicate category name")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @PostMapping("/shops/{shopId}/categories")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_CREATE)")
     public ResponseEntity<CategoryResponse> createCategory(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody CategoryCreateRequest request,
@@ -70,7 +70,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @GetMapping("/shops/{shopId}/categories")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_LIST)")
     public ResponseEntity<List<CategoryResponse>> getCategories(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Include hierarchical tree structure") @RequestParam(defaultValue = "false") boolean tree,
@@ -91,7 +91,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "404", description = "Category not found")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @GetMapping("/categories/{id}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_READ)")
     public ResponseEntity<CategoryResponse> getCategoryById(
             @Parameter(description = "Category ID") @PathVariable String id,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -111,7 +111,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "404", description = "Category not found")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @PutMapping("/categories/{id}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_UPDATE)")
     public ResponseEntity<CategoryResponse> updateCategory(
             @Parameter(description = "Category ID") @PathVariable String id,
             @Valid @RequestBody CategoryUpdateRequest request,
@@ -132,7 +132,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "400", description = "Category has products or children - cannot delete")
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @DeleteMapping("/categories/{id}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_DELETE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_DELETE)")
     public ResponseEntity<Void> deleteCategory(
             @Parameter(description = "Category ID") @PathVariable String id,
             @AuthenticationPrincipal JwtPrincipal principal) {

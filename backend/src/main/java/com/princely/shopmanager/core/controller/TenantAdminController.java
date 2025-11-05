@@ -45,7 +45,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/pending")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_LIST)")
     public ResponseEntity<List<PendingTenantResponse>> getPendingRegistrations() {
         log.info("Retrieving pending tenant registrations");
 
@@ -66,7 +66,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/{tenantId}/activate")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_UPDATE)")
     public ResponseEntity<TenantActivationResponse> activateTenant(
             @PathVariable String tenantId,
             @Valid @RequestBody TenantActivationRequest request,
@@ -106,7 +106,7 @@ public class TenantAdminController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_READ)")
     public ResponseEntity<PendingTenantResponse> getTenantDetails(@PathVariable String tenantId) {
         log.info("Retrieving tenant details for: {}", tenantId);
 

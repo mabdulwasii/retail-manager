@@ -11,6 +11,7 @@ import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +89,7 @@ public class RoleService {
     /**
      * Assign a role to a user.
      * Validates that the role can be assigned based on the current user's permissions.
+     * Evicts the user's permission cache to immediately reflect new permissions.
      *
      * @param userId User ID to assign role to
      * @param roleIdentifier Role ID or role name
@@ -95,6 +97,7 @@ public class RoleService {
      * @throws SecurityException if current user cannot assign this role
      */
     @Transactional
+    @CacheEvict(value = "userPermissions", key = "#root.target.getUserEmail(#userId)")
     public void assignRoleToUser(String userId, String roleIdentifier) {
         log.info("Assigning role {} to user {}", roleIdentifier, userId);
 
@@ -113,17 +116,29 @@ public class RoleService {
         user.getRoles().add(role);
         userRepository.save(user);
 
-        log.info("Successfully assigned role {} to user {}", role.getName(), userId);
+        log.info("Successfully assigned role {} to user {} - Permission cache evicted",
+            role.getName(), user.getEmail());
+    }
+
+    /**
+     * Helper method to get user email by ID (for cache eviction).
+     */
+    public String getUserEmail(String userId) {
+        return userRepository.findById(userId)
+            .map(User::getEmail)
+            .orElse(null);
     }
 
     /**
      * Remove a role from a user.
+     * Evicts the user's permission cache to immediately reflect permission changes.
      *
      * @param userId User ID
      * @param roleId Role ID
      * @throws IllegalArgumentException if user or role not found
      */
     @Transactional
+    @CacheEvict(value = "userPermissions", key = "#root.target.getUserEmail(#userId)")
     public void removeRoleFromUser(String userId, String roleId) {
         log.info("Removing role {} from user {}", roleId, userId);
 
@@ -140,7 +155,8 @@ public class RoleService {
         user.getRoles().remove(role);
         userRepository.save(user);
 
-        log.info("Successfully removed role {} from user {}", role.getName(), userId);
+        log.info("Successfully removed role {} from user {} - Permission cache evicted",
+            role.getName(), user.getEmail());
     }
 
     /**
@@ -294,12 +310,14 @@ public class RoleService {
 
     /**
      * Add a permission to a role.
+     * Evicts permission cache for all users with this role.
      *
      * @param roleId Role ID
      * @param permissionIdentifier Permission ID or name
      * @throws IllegalArgumentException if role or permission not found
      */
     @Transactional
+    @CacheEvict(value = "userPermissions", allEntries = true)
     public void addPermissionToRole(String roleId, String permissionIdentifier) {
         log.info("Adding permission {} to role {}", permissionIdentifier, roleId);
 
@@ -313,17 +331,20 @@ public class RoleService {
         role.getPermissions().add(permission);
         roleRepository.save(role);
 
-        log.info("Successfully added permission {} to role {}", permission.getName(), role.getName());
+        log.info("Successfully added permission {} to role {} - Permission cache evicted",
+            permission.getName(), role.getName());
     }
 
     /**
      * Remove a permission from a role.
+     * Evicts permission cache for all users with this role.
      *
      * @param roleId Role ID
      * @param permissionId Permission ID
      * @throws IllegalArgumentException if role or permission not found
      */
     @Transactional
+    @CacheEvict(value = "userPermissions", allEntries = true)
     public void removePermissionFromRole(String roleId, String permissionId) {
         log.info("Removing permission {} from role {}", permissionId, roleId);
 
@@ -336,7 +357,8 @@ public class RoleService {
         role.getPermissions().remove(permission);
         roleRepository.save(role);
 
-        log.info("Successfully removed permission {} from role {}", permission.getName(), role.getName());
+        log.info("Successfully removed permission {} from role {} - Permission cache evicted",
+            permission.getName(), role.getName());
     }
 
     /**

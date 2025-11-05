@@ -59,7 +59,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Product not found")
     @PostMapping("/shops/{shopId}/inventory")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_CREATE)")
     public ResponseEntity<InventoryResponse> createInventory(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody InventoryCreateRequest request,
@@ -79,7 +79,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Inventory items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<Page<InventoryResponse>> getInventory(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Search query for product name or SKU") @RequestParam(required = false) String search,
@@ -144,7 +144,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @GetMapping("/inventory/{inventoryId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<InventoryResponse> getInventoryById(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -162,7 +162,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PutMapping("/inventory/{inventoryId}/adjust-stock")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_ADJUST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_ADJUST)")
     public ResponseEntity<InventoryResponse> adjustStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Valid @RequestBody InventoryAdjustmentRequest request,
@@ -184,7 +184,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PostMapping("/inventory/{inventoryId}/reserve")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_RESERVE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_RESERVE)")
     public ResponseEntity<Void> reserveStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Valid @RequestBody StockReservationRequest request,
@@ -207,7 +207,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PostMapping("/inventory/{inventoryId}/release")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_RESERVE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_RESERVE)")
     public ResponseEntity<Void> releaseReservedStock(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Parameter(description = "Quantity to release") @RequestParam int quantity,
@@ -230,7 +230,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @PutMapping("/inventory/{inventoryId}/status")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_UPDATE)")
     public ResponseEntity<InventoryResponse> updateInventoryStatus(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @Parameter(description = "New status") @RequestParam Inventory.InventoryStatus status,
@@ -251,7 +251,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Inventory item not found")
     @GetMapping("/inventory/{inventoryId}/history")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_HISTORY)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_HISTORY)")
     public ResponseEntity<List<InventoryHistory>> getInventoryHistory(
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -267,7 +267,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Low stock items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/low-stock")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<List<InventoryResponse>> getLowStockItems(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -283,7 +283,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Expiring items retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/expiring")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<List<InventoryResponse>> getExpiringItems(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Days threshold for expiry warning") @RequestParam(defaultValue = "30") int daysThreshold,
@@ -300,7 +300,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Total inventory value calculated successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/total-value")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<BigDecimal> getTotalInventoryValue(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -316,7 +316,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Demand forecasting triggered successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/products/{productId}/forecast")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_FORECAST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_FORECAST)")
     public ResponseEntity<Void> forecastDemand(
             @Parameter(description = "Product ID") @PathVariable String productId,
             @Parameter(description = "Forecast period in days") @RequestParam(defaultValue = "30") int forecastDays,
@@ -336,7 +336,7 @@ public class InventoryController {
     @ApiResponse(responseCode = "200", description = "Summary retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/inventory/summary")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<InventorySummaryDto> getInventorySummary(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {

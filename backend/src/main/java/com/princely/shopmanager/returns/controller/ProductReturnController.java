@@ -96,7 +96,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_CREATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_CREATE)")
     public ResponseEntity<ProductReturnResponse> createReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -145,7 +145,7 @@ public class ProductReturnController {
         )
     })
     @PostMapping("/{returnId}/process")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_APPROVE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_APPROVE)")
     public ResponseEntity<ProductReturnResponse> processReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -190,7 +190,7 @@ public class ProductReturnController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RETURN_LIST)")
     public ResponseEntity<Page<ProductReturnResponse>> getReturns(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,

@@ -62,7 +62,7 @@ public class PermissionController {
         )
     })
     @GetMapping("/permissions")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PERMISSION_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PERMISSION_LIST)")
     public ResponseEntity<List<PermissionResponse>> getAllPermissions() {
         log.debug("Retrieving all permissions");
         List<Permission> permissions = permissionService.getAllPermissions();
@@ -97,7 +97,7 @@ public class PermissionController {
         )
     })
     @GetMapping("/permissions/grouped")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).PERMISSION_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PERMISSION_LIST)")
     public ResponseEntity<List<PermissionGroupResponse>> getPermissionsGrouped() {
         log.debug("Retrieving permissions grouped by resource");
         List<PermissionGroupResponse> response = permissionService.getPermissionGroupsAsResponse();
