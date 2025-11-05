@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.27
+    tag: backend-v0.0.29
     pullPolicy: Always
   podAnnotations:
-    configVersion: "20"  # Performance improvements: N+1 fix, better caching, detailed logging, cache eviction
+    configVersion: "21"  # Add /docs/** to security whitelist + AsciiDoc generation fix
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 

@@ -11,10 +11,14 @@ COPY pom.xml .
 COPY src ./src
 
 # Build the application (skip tests - they run in CI/CD pipeline)
+# First generate AsciiDoc documentation
+RUN mvn asciidoctor:process-asciidoc -B && \
+    mkdir -p src/main/resources/static/docs && \
+    cp -r target/generated-docs/* src/main/resources/static/docs/ 2>/dev/null || true && \
+    ls -lh target/generated-docs/ 2>/dev/null || echo "No docs generated yet"
+
+# Then build the JAR with the docs included
 RUN mvn clean package -DskipTests -B && \
-    mvn asciidoctor:process-asciidoc -B && \
-    mkdir -p target/classes/static/docs && \
-    cp -r target/generated-docs/* target/classes/static/docs/ 2>/dev/null || true && \
     ls -lh target/*.jar
 
 # Runtime stage
