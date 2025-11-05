@@ -14,6 +14,8 @@ backend:
     pullPolicy: Always
   podAnnotations:
     configVersion: "20"  # Performance improvements: N+1 fix, better caching, detailed logging, cache eviction
+  env:
+    SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
 # Frontend configuration
 frontend:
