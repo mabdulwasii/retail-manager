@@ -39,8 +39,8 @@ public class UserProfileResponse {
     @Schema(description = "User status", example = "ACTIVE")
     private String status;
 
-    @Schema(description = "User roles", example = "[\"MANAGER\", \"EMPLOYEE\"]")
-    private List<String> roles;
+    @Schema(description = "User roles with permissions from database")
+    private List<RoleResponse> roles;
 
     @Schema(description = "Tenant ID", example = "tenant-123")
     private String tenantId;

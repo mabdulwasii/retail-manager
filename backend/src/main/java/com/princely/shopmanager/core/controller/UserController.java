@@ -1,6 +1,7 @@
 package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.dto.RoleResponse;
 import com.princely.shopmanager.core.dto.UserCreateRequest;
 import com.princely.shopmanager.core.dto.UserProfileResponse;
 import com.princely.shopmanager.core.dto.UserResponse;
@@ -26,7 +27,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST controller for user profile operations.
@@ -53,7 +53,7 @@ public class UserController {
     @GetMapping("/profile")
     @Operation(
         summary = "Get current user profile",
-        description = "Retrieves the authenticated user's profile information including personal details and roles. Available to all authenticated users."
+        description = "Retrieves the authenticated user's profile information including personal details, roles, and permissions from the database. Available to all authenticated users."
     )
     public ResponseEntity<UserProfileResponse> getCurrentUserProfile(
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -66,7 +66,7 @@ public class UserController {
 
             if (user == null) {
                 log.warn("User not found in database for Keycloak ID: {}", principal.getSubject());
-                // Return profile info from JWT token if user not in database
+                // Return minimal profile info from JWT token if user not in database
                 UserProfileResponse response = UserProfileResponse.builder()
                     .id(principal.getSubject())
                     .username(principal.getUsername())
@@ -74,13 +74,18 @@ public class UserController {
                     .firstName(principal.getFirstName())
                     .lastName(principal.getLastName())
                     .fullName(principal.getFullName())
-                    .roles(principal.getRoles())
+                    .roles(List.of())
                     .tenantId(principal.getTenantId())
                     .shopId(principal.getShopId())
                     .build();
 
                 return ResponseEntity.ok(response);
             }
+
+            // Convert database roles to RoleResponse DTOs
+            List<RoleResponse> roleResponses = user.getRoles().stream()
+                .map(RoleResponse::fromEntity)
+                .toList();
 
             // Convert User entity to response DTO
             UserProfileResponse response = UserProfileResponse.builder()
@@ -92,14 +97,15 @@ public class UserController {
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
                 .status(user.getStatus().name())
-                .roles(principal.getRoles()) // Use roles from JWT for latest info
+                .roles(roleResponses) // Database roles with permissions
                 .tenantId(principal.getTenantId())
                 .shopId(principal.getShopId())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
 
-            log.debug("Successfully retrieved profile for user: {}", user.getUsername());
+            log.debug("Successfully retrieved profile for user: {} with {} roles",
+                user.getUsername(), roleResponses.size());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -119,7 +125,7 @@ public class UserController {
         description = "Retrieves details of a specific user."
     )
     @GetMapping("/users/{userId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_READ)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_READ)")
     public ResponseEntity<UserResponse> getUserById(
         @Parameter(description = "User ID") @PathVariable String userId
     ) {
@@ -143,7 +149,7 @@ public class UserController {
         description = "Updates an existing user."
     )
     @PutMapping("/users/{userId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_UPDATE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_UPDATE)")
     public ResponseEntity<UserResponse> updateUser(
         @Parameter(description = "User ID") @PathVariable String userId,
         @Valid @RequestBody UserUpdateRequest request
@@ -164,7 +170,7 @@ public class UserController {
         description = "Soft deletes a user by setting status to INACTIVE."
     )
     @DeleteMapping("/users/{userId}")
-    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_DELETE)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_DELETE)")
     public ResponseEntity<Void> deleteUser(
         @Parameter(description = "User ID") @PathVariable String userId
     ) {
