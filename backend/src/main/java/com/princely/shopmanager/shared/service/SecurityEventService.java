@@ -7,7 +7,6 @@ import com.princely.shopmanager.shared.domain.AuditLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.event.AbstractAuthenticationEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
@@ -18,7 +17,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -74,14 +72,14 @@ public class SecurityEventService {
         String ipAddress = getClientIpAddress();
 
         log.warn("Authorization denied for user: {} accessing: {} from IP: {}",
-            userName, event.getAuthorizationDecision(), ipAddress);
+            userName, event.getAuthorizationResult(), ipAddress);
 
         auditService.logSecurityEvent(
             getCurrentShop(),
             userId,
             userName,
             AuditLog.ActionType.PERMISSION_DENIED,
-            "Access denied to resource: " + event.getAuthorizationDecision(),
+            "Access denied to resource: " + event.getAuthorizationResult(),
             ipAddress,
             false
         );

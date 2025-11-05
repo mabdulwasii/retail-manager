@@ -10,7 +10,7 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.26
+    tag: backend-v0.0.27
     pullPolicy: Always
   podAnnotations:
     configVersion: "20"  # Performance improvements: N+1 fix, better caching, detailed logging, cache eviction
