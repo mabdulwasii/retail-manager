@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -47,9 +48,24 @@ type ShopFormData = yup.InferType<typeof shopSchema>
 export const EditShopPage: React.FC = () => {
   const { shopId } = useParams<{ shopId: string }>()
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   
   const { data: shop, isLoading: loadingShop, isError, error } = useShopById(shopId)
   const updateShopMutation = useUpdateShop()
+
+  // Check if user has permission to update shops
+  const canUpdateShop = hasPermission('SHOP_UPDATE')
+  
+  // Redirect if no permission
+  useEffect(() => {
+    if (!canUpdateShop) {
+      navigate(`/shops/${shopId || ''}`)
+    }
+  }, [canUpdateShop, navigate, shopId])
+
+  if (!canUpdateShop) {
+    return null
+  }
 
   const {
     register,

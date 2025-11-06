@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useInvestments } from '@/hooks/investment/useInvestments'
 import { useDistributions } from '@/hooks/investment/useDistributions'
 import { usePortfolioSummary } from '@/hooks/investment/usePortfolioSummary'
@@ -22,6 +23,7 @@ import { format } from 'date-fns'
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth()
+  const permissions = usePermissions()
   const { formatCurrency } = useCurrency()
   
   // Fetch real data
@@ -143,18 +145,22 @@ export const InvestorDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link to="/analytics">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Analytics
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/investments/create">
-              <Coins className="mr-2 h-4 w-4" />
-              New Investment
-            </Link>
-          </Button>
+          {permissions.canViewAnalytics() && (
+            <Button variant="outline" asChild>
+              <Link to="/analytics">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analytics
+              </Link>
+            </Button>
+          )}
+          {permissions.canCreateInvestment() && (
+            <Button asChild>
+              <Link to="/investments/create">
+                <Coins className="mr-2 h-4 w-4" />
+                New Investment
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -210,9 +216,11 @@ export const InvestorDashboard: React.FC = () => {
             {investments.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground mb-4">No investments yet</p>
-                <Button asChild>
-                  <Link to="/investments/create">Create Your First Investment</Link>
-                </Button>
+                {permissions.canCreateInvestment() && (
+                  <Button asChild>
+                    <Link to="/investments/create">Create Your First Investment</Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <>
@@ -268,9 +276,11 @@ export const InvestorDashboard: React.FC = () => {
                     )
                   })}
                 </div>
-                <Button variant="outline" className="w-full mt-4" asChild>
-                  <Link to="/investments">View All Investments</Link>
-                </Button>
+                {permissions.canViewInvestments() && (
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link to="/investments">View All Investments</Link>
+                  </Button>
+                )}
               </>
             )}
           </CardContent>
@@ -319,9 +329,11 @@ export const InvestorDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full mt-4" asChild>
-                  <Link to="/investments/distributions">View All Distributions</Link>
-                </Button>
+                {permissions.canViewInvestments() && (
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link to="/investments/distributions">View All Distributions</Link>
+                  </Button>
+                )}
               </>
             )}
           </CardContent>

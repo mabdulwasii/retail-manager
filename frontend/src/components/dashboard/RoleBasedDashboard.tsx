@@ -12,24 +12,24 @@ import { InvestorDashboard } from "./InvestorDashboard";
 import { OwnerManagerDashboard } from "./OwnerManagerDashboard";
 
 // Helper function to check if user has permission for a specific view
-const hasPermissionForView = (viewType: string, userRoles: string[]): boolean => {
-  const roles = userRoles.map((role) => role.replace("ROLE_", ""));
+const hasPermissionForView = (viewType: string, userRoles: { name: string }[]): boolean => {
+  const roles = userRoles.map((role) => role.name.replace("ROLE_", ""));
   
   const viewPermissions: Record<string, UserRole[]> = {
     "admin": [UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
     "tenant": [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
     "multi-shop": [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "business": [UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "operations": [UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.INVENTORY_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "financial": [UserRole.ACCOUNTANT, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "cashier": [UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "pos": [UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "investor": [UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "investments": [UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "employee": [UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "inventory": [UserRole.INVENTORY_MANAGER, UserRole.EMPLOYEE, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "audit": [UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
-    "compliance": [UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "business": [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "operations": [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.INVENTORY_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "financial": [UserRole.TENANT_ADMIN, UserRole.ACCOUNTANT, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "cashier": [UserRole.TENANT_ADMIN, UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "pos": [UserRole.TENANT_ADMIN, UserRole.CASHIER, UserRole.MANAGER, UserRole.SALES_MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "investor": [UserRole.TENANT_ADMIN, UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "investments": [UserRole.TENANT_ADMIN, UserRole.INVESTOR, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "employee": [UserRole.TENANT_ADMIN, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "inventory": [UserRole.TENANT_ADMIN, UserRole.INVENTORY_MANAGER, UserRole.EMPLOYEE, UserRole.MANAGER, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "audit": [UserRole.TENANT_ADMIN, UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    "compliance": [UserRole.TENANT_ADMIN, UserRole.AUDITOR, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
     "customer": [UserRole.CUSTOMER]
   };
 
@@ -98,7 +98,7 @@ export const RoleBasedDashboard: React.FC = () => {
   }
 
   // Get the highest priority role for dashboard selection
-  const roles = user.roles.map((role) => role.replace("ROLE_", "") as UserRole);
+  const roles = user.roles.map((role) => role.name.replace("ROLE_", "") as UserRole);
 
   // Priority order for dashboard selection (highest first)
   const rolePriority: UserRole[] = [

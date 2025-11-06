@@ -33,9 +33,15 @@ import {
 import React, { useEffect, useState } from "react";
 
 export const SalesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { formatCurrency } = useCurrency();
   const { sales, fetchSales, isLoading, error } = useSales();
+
+  // Check permissions based on backend permission matrix
+  const canViewSales = hasPermission('SALES_READ');        // EMPLOYEE and above
+  const canUpdateSales = hasPermission('SALES_UPDATE');    // MANAGER and above
+  const canDeleteSales = hasPermission('SALES_DELETE');    // OWNER and above
+  const canCreateSales = hasPermission('SALES_CREATE');    // EMPLOYEE and above
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");

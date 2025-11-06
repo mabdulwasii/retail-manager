@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
+import { usePermissions } from '@/hooks/usePermissions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -29,6 +30,7 @@ import { useDashboardData, useAllShopsPerformance } from '@/hooks/useDashboard'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
+  const permissions = usePermissions()
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month')
 
   const {
@@ -202,12 +204,14 @@ export const OwnerManagerDashboard: React.FC = () => {
               Analytics
             </Link>
           </Button>
-          <Button asChild>
-            <Link to="/shops/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Shop
-            </Link>
-          </Button>
+          {permissions.canCreateShop() && (
+            <Button asChild>
+              <Link to="/shops/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Shop
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -242,30 +246,38 @@ export const OwnerManagerDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/sales">
-                <ShoppingCart className="h-6 w-6 mb-2" />
-                New Sale
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/products">
-                <Package className="h-6 w-6 mb-2" />
-                Add Product
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/investments">
-                <Coins className="h-6 w-6 mb-2" />
-                Track Investments
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/receipts">
-                <Receipt className="h-6 w-6 mb-2" />
-                View Receipts
-              </Link>
-            </Button>
+            {permissions.canCreateSale() && (
+              <Button variant="outline" className="h-20 flex-col" asChild>
+                <Link to="/sales">
+                  <ShoppingCart className="h-6 w-6 mb-2" />
+                  New Sale
+                </Link>
+              </Button>
+            )}
+            {permissions.canCreateProduct() && (
+              <Button variant="outline" className="h-20 flex-col" asChild>
+                <Link to="/products">
+                  <Package className="h-6 w-6 mb-2" />
+                  Add Product
+                </Link>
+              </Button>
+            )}
+            {permissions.canViewInvestments() && (
+              <Button variant="outline" className="h-20 flex-col" asChild>
+                <Link to="/investments">
+                  <Coins className="h-6 w-6 mb-2" />
+                  Track Investments
+                </Link>
+              </Button>
+            )}
+            {permissions.canViewReceipts() && (
+              <Button variant="outline" className="h-20 flex-col" asChild>
+                <Link to="/receipts">
+                  <Receipt className="h-6 w-6 mb-2" />
+                  View Receipts
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -409,9 +421,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/expenses?status=pending">Review</Link>
-                </Button>
+                {permissions.canApproveExpenses() && (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/expenses?status=pending">Review</Link>
+                  </Button>
+                )}
               </div>
             )}
 
@@ -427,9 +441,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/inventory?filter=lowStock">Restock</Link>
-                </Button>
+                {permissions.canUpdateInventory() && (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/inventory?filter=lowStock">Restock</Link>
+                  </Button>
+                )}
               </div>
             )}
 
@@ -445,9 +461,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/inventory?filter=expired">Remove</Link>
-                </Button>
+                {permissions.canUpdateInventory() && (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/inventory?filter=expired">Remove</Link>
+                  </Button>
+                )}
               </div>
             )}
 
@@ -547,9 +565,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/inventory">Manage Inventory</Link>
-              </Button>
+              {permissions.canViewInventory() && (
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to="/inventory">Manage Inventory</Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -591,9 +611,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/expenses">View All Expenses</Link>
-              </Button>
+              {permissions.canViewExpenses() && (
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to="/expenses">View All Expenses</Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -626,9 +648,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                 <p className="text-2xl font-bold text-emerald-600">+{investmentROI.roiPercentage?.toFixed(1) || '0'}%</p>
               </div>
             </div>
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/investments">View Full Portfolio</Link>
-            </Button>
+            {permissions.canViewInvestments() && (
+              <Button variant="outline" className="w-full mt-4" asChild>
+                <Link to="/investments">View Full Portfolio</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -676,9 +700,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/fraud-detection">View Details</Link>
-                </Button>
+                {permissions.canViewFraudDetection() && (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/fraud-detection">View Details</Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -691,9 +717,11 @@ export const OwnerManagerDashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="destructive" asChild>
-                  <Link to="/fraud-detection">Review Now</Link>
-                </Button>
+                {permissions.canViewFraudDetection() && (
+                  <Button size="sm" variant="destructive" asChild>
+                    <Link to="/fraud-detection">Review Now</Link>
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

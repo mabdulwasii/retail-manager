@@ -29,8 +29,7 @@ import {
 import { useShopById } from '@/hooks/useShops'
 import { useSalesSummary, useInventorySummary, useExpenseSummary } from '@/hooks/useDashboard'
 import { ShopStatusBadge, ShopMetricsCard } from '@/components/shops'
-import { useAuth } from '@/context/ManualAuthContext'
-import { RoleGroups } from '@/types/roles'
+import { usePermissions } from '@/hooks/usePermissions'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +43,7 @@ import { useUpdateShopStatus } from '@/hooks/useShops'
 export const ShopDetailPage: React.FC = () => {
   const { shopId } = useParams<{ shopId: string }>()
   const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const permissions = usePermissions()
   
   const { data: shop, isLoading, isError, error } = useShopById(shopId)
   const { data: salesSummary, isLoading: loadingSales } = useSalesSummary(shopId, 'month')
@@ -52,10 +51,9 @@ export const ShopDetailPage: React.FC = () => {
   const { data: expenseSummary, isLoading: loadingExpenses } = useExpenseSummary(shopId, 'month')
   const updateStatusMutation = useUpdateShopStatus()
   
-  // Only TENANT_ADMIN, SHOP_OWNER, and MANAGER can edit shops
-  const canEditShop = hasAnyRole(RoleGroups.SHOP_MANAGERS)
-  // Only SHOP_OWNER and MANAGER can access settings
-  const canManageSettings = hasAnyRole(RoleGroups.SETTINGS_MANAGERS)
+  // Permission-based checks
+  const canEditShop = permissions.canEditShop()
+  const canManageSettings = permissions.canEditShop() // Settings also requires shop update permission
 
   const handleStatusChange = async (newStatus: string) => {
     if (!shopId) return
@@ -405,18 +403,22 @@ export const ShopDetailPage: React.FC = () => {
                 </Link>
               </Button>
             )}
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to={`/inventory?shopId=${shopId}`}>
-                <Package className="mr-2 h-4 w-4" />
-                View Inventory
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to={`/sales?shopId=${shopId}`}>
-                <Activity className="mr-2 h-4 w-4" />
-                View Sales
-              </Link>
-            </Button>
+            {permissions.canViewInventory() && (
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link to={`/inventory?shopId=${shopId}`}>
+                  <Package className="mr-2 h-4 w-4" />
+                  View Inventory
+                </Link>
+              </Button>
+            )}
+            {permissions.canViewSales() && (
+              <Button variant="outline" className="w-full justify-start" asChild>
+                <Link to={`/sales?shopId=${shopId}`}>
+                  <Activity className="mr-2 h-4 w-4" />
+                  View Sales
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -21,7 +21,6 @@ import { useShops, useUpdateShopStatus } from '@/hooks/useShops'
 import { ShopResponse } from '@/services/shopService'
 import { ShopStatusBadge } from '@/components/shops'
 import { useAuth } from '@/context/ManualAuthContext'
-import { RoleGroups } from '@/types/roles'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,15 +31,17 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export const ShopsPage: React.FC = () => {
-  const { hasAnyRole } = useAuth()
+  const { hasPermission } = useAuth()
   const [page] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   
   const { data: shopsData, isLoading, isError, error } = useShops(page, 20)
   const updateStatusMutation = useUpdateShopStatus()
   
-  // Only TENANT_ADMIN and SHOP_OWNER can create shops
-  const canCreateShop = hasAnyRole(RoleGroups.SHOP_CREATORS)
+  // Check permissions based on backend permission matrix
+  const canCreateShop = hasPermission('SHOP_CREATE')       // TENANT_ADMIN and above
+  const canUpdateShop = hasPermission('SHOP_UPDATE')       // OWNER and above
+  const canDeleteShop = hasPermission('SHOP_DELETE')       // TENANT_ADMIN and above
 
   const shops = shopsData?.content || []
   const totalElements = shopsData?.totalElements || 0
@@ -204,7 +205,8 @@ export const ShopsPage: React.FC = () => {
               shop={shop} 
               onStatusChange={handleStatusChange}
               isUpdatingStatus={updateStatusMutation.isPending}
-              canEditShop={canCreateShop}
+              canUpdateShop={canUpdateShop}
+              canDeleteShop={canDeleteShop}
             />
           ))}
         </div>
@@ -217,10 +219,11 @@ interface ShopCardProps {
   shop: ShopResponse
   onStatusChange: (shopId: string, status: string) => void
   isUpdatingStatus: boolean
-  canEditShop: boolean
+  canUpdateShop: boolean
+  canDeleteShop: boolean
 }
 
-const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingStatus, canEditShop }) => {
+const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingStatus, canUpdateShop, canDeleteShop }) => {
   const formatAddress = () => {
     const parts = [shop.address, shop.city, shop.state, shop.country].filter(Boolean)
     return parts.join(', ') || 'No address'
@@ -277,7 +280,7 @@ const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingSta
             </Button>
           </Link>
           
-          {canEditShop && (
+          {(canUpdateShop || canDeleteShop) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" disabled={isUpdatingStatus}>
@@ -291,25 +294,30 @@ const ShopCard: React.FC<ShopCardProps> = ({ shop, onStatusChange, isUpdatingSta
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={`/shops/${shop.id}/edit`}>Edit Shop</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                {shop.status !== 'ACTIVE' && (
-                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'ACTIVE')}>
-                    Set as Active
-                  </DropdownMenuItem>
-                )}
-                {shop.status !== 'INACTIVE' && (
-                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'INACTIVE')}>
-                    Set as Inactive
-                  </DropdownMenuItem>
-                )}
-                {shop.status !== 'SUSPENDED' && (
-                  <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'SUSPENDED')}>
-                    Suspend Shop
-                  </DropdownMenuItem>
+                
+                {canUpdateShop && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/shops/${shop.id}/edit`}>Edit Shop</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                    {shop.status !== 'ACTIVE' && (
+                      <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'ACTIVE')}>
+                        Set as Active
+                      </DropdownMenuItem>
+                    )}
+                    {shop.status !== 'INACTIVE' && (
+                      <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'INACTIVE')}>
+                        Set as Inactive
+                      </DropdownMenuItem>
+                    )}
+                    {shop.status !== 'SUSPENDED' && (
+                      <DropdownMenuItem onClick={() => onStatusChange(shop.id, 'SUSPENDED')}>
+                        Suspend Shop
+                      </DropdownMenuItem>
+                    )}
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

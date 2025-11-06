@@ -363,18 +363,13 @@ export const useInventory = () => {
     setError(null)
   }, [])
 
-  // Permission checks
-  const canManageInventory = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
-  ) || false
-
-  const canViewInventory = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER', 'ROLE_CASHIER', 'ROLE_EMPLOYEE'].includes(role)
-  ) || false
-
-  const canAdjustStock = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
-  ) || false
+  // Permission checks based on backend permission matrix
+  const { hasPermission } = useAuth();
+  const canManageInventory = hasPermission('INVENTORY_CREATE') || hasPermission('INVENTORY_UPDATE');  // MANAGER and above
+  const canViewInventory = hasPermission('INVENTORY_LIST');        // EMPLOYEE and above
+  const canAdjustStock = hasPermission('INVENTORY_UPDATE');        // MANAGER and above
+  const canDeleteInventory = hasPermission('INVENTORY_DELETE');    // OWNER and above
+  const canViewHistory = hasPermission('INVENTORY_HISTORY_VIEW');  // MANAGER and above
 
   return {
     // State
@@ -389,6 +384,8 @@ export const useInventory = () => {
     canManageInventory,
     canViewInventory,
     canAdjustStock,
+    canDeleteInventory,
+    canViewHistory,
 
     // Operations
     fetchInventory,

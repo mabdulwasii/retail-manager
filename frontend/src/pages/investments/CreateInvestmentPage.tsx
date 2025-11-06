@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, DollarSign, InfoIcon } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
   SelectContent,
@@ -32,7 +31,7 @@ const investmentSchema = yup.object().shape({
     .min(1000, 'Minimum investment is $1,000')
     .max(1000000, 'Maximum investment is $1,000,000')
     .required(),
-  profitSharingModel: yup.string().oneOf(Object.values(ProfitSharingModel)).required(),
+  profitSharingModel: yup.string().required('Profit sharing model is required'),
   profitPercentage: yup.number()
     .min(1, 'Minimum share is 1%')
     .max(50, 'Maximum share is 50%')
@@ -74,7 +73,7 @@ export const CreateInvestmentPage: React.FC = () => {
       shopId: '',
       investmentType: InvestmentType.SHOP_WIDE,
       amount: 0,
-      profitSharingModel: ProfitSharingModel.PROPORTIONAL_BY_AMOUNT,
+      profitSharingModel: 'PROPORTIONAL_BY_AMOUNT' as any,
       profitPercentage: 15,
       duration: 24,
       productIds: [],
@@ -132,9 +131,9 @@ export const CreateInvestmentPage: React.FC = () => {
       // Build payload with only defined optional fields (exactOptionalPropertyTypes compliance)
       const payload: InvestmentCreateRequest = {
         shopId: data.shopId,
-        investmentType: data.investmentType,
+        investmentType: data.investmentType as InvestmentType,
         amount: data.amount,
-        profitSharingModel: data.profitSharingModel,
+        profitSharingModel: data.profitSharingModel as any, // Allow custom values
       }
 
       // Conditionally add optional fields only if they have values
@@ -270,56 +269,83 @@ export const CreateInvestmentPage: React.FC = () => {
               {/* Investment Type */}
               <div className="space-y-3">
                 <Label>Investment Type *</Label>
-                <RadioGroup
-                  value={investmentType}
-                  onValueChange={(value) => setValue('investmentType', value as InvestmentType)}
-                >
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
-                    <RadioGroupItem value={InvestmentType.SHOP_WIDE} id="shop_wide" />
-                    <Label htmlFor="shop_wide" className="cursor-pointer flex-1">
+                <div className="grid grid-cols-1 gap-3">
+                  <label
+                    className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition ${
+                      investmentType === InvestmentType.SHOP_WIDE ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={InvestmentType.SHOP_WIDE}
+                      checked={investmentType === InvestmentType.SHOP_WIDE}
+                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      className="text-blue-600"
+                    />
+                    <div className="flex-1">
                       <div className="font-medium">Shop-Wide Investment</div>
                       <div className="text-sm text-muted-foreground">
-                        Investment applies to all products and sales in the shop
+                        Invest in the entire shop performance
                       </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
-                    <RadioGroupItem value={InvestmentType.PRODUCT_SPECIFIC} id="product_specific" />
-                    <Label htmlFor="product_specific" className="cursor-pointer flex-1">
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition ${
+                      investmentType === InvestmentType.PRODUCT_SPECIFIC ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={InvestmentType.PRODUCT_SPECIFIC}
+                      checked={investmentType === InvestmentType.PRODUCT_SPECIFIC}
+                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      className="text-blue-600"
+                    />
+                    <div className="flex-1">
                       <div className="font-medium">Product-Specific</div>
                       <div className="text-sm text-muted-foreground">
-                        Investment limited to specific products
+                        Invest in specific products
                       </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
-                    <RadioGroupItem value={InvestmentType.CATEGORY_BASED} id="category_based" />
-                    <Label htmlFor="category_based" className="cursor-pointer flex-1">
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition ${
+                      investmentType === InvestmentType.CATEGORY_BASED ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={InvestmentType.CATEGORY_BASED}
+                      checked={investmentType === InvestmentType.CATEGORY_BASED}
+                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      className="text-blue-600"
+                    />
+                    <div className="flex-1">
                       <div className="font-medium">Category-Based</div>
                       <div className="text-sm text-muted-foreground">
-                        Investment applies to a specific product category
+                        Invest in product categories
                       </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {/* Investment Amount */}
               <div className="space-y-2">
                 <Label htmlFor="amount">Investment Amount *</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    $
-                  </span>
+                  <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="amount"
                     type="number"
+                    min="100"
+                    step="0.01"
                     placeholder="50000"
-                    className="pl-7"
+                    className="pl-10"
                     {...register('amount', { valueAsNumber: true })}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">Min: $1,000 | Max: $1,000,000</p>
+                <p className="text-sm text-muted-foreground">Minimum: $1,000</p>
                 {errors.amount && (
                   <p className="text-sm text-red-600">{errors.amount.message}</p>
                 )}
@@ -344,46 +370,115 @@ export const CreateInvestmentPage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Profit Sharing Model */}
-              <div className="space-y-2">
-                <Label htmlFor="profitSharingModel">Profit Sharing Model *</Label>
-                <Select
-                  value={watch('profitSharingModel')}
-                  onValueChange={(value) =>
-                    setValue('profitSharingModel', value as ProfitSharingModel)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ProfitSharingModel.PROPORTIONAL_BY_AMOUNT}>
-                      Proportional by Amount
-                    </SelectItem>
-                    <SelectItem value={ProfitSharingModel.FIXED_PERCENTAGE}>
-                      Fixed Percentage
-                    </SelectItem>
-                    <SelectItem value={ProfitSharingModel.FIXED_AMOUNT}>Fixed Amount</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <Label>Profit Sharing Model</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  <label
+                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      watch('profitSharingModel') === 'PROPORTIONAL_BY_AMOUNT' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value="PROPORTIONAL_BY_AMOUNT"
+                      checked={watch('profitSharingModel') === 'PROPORTIONAL_BY_AMOUNT'}
+                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      className="text-blue-600"
+                    />
+                    <div>
+                      <div className="font-medium">Proportional by Amount</div>
+                      <div className="text-sm text-gray-600">Profits shared based on investment amount</div>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      watch('profitSharingModel') === 'FIXED_SHARES' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value="FIXED_SHARES"
+                      checked={watch('profitSharingModel') === 'FIXED_SHARES'}
+                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      className="text-blue-600"
+                    />
+                    <div>
+                      <div className="font-medium">Fixed Shares</div>
+                      <div className="text-sm text-gray-600">Fixed number of profit shares</div>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      watch('profitSharingModel') === 'TIME_WEIGHTED' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value="TIME_WEIGHTED"
+                      checked={watch('profitSharingModel') === 'TIME_WEIGHTED'}
+                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      className="text-blue-600"
+                    />
+                    <div>
+                      <div className="font-medium">Time-Weighted</div>
+                      <div className="text-sm text-gray-600">Profits based on investment duration</div>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      watch('profitSharingModel') === 'TIERED' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value="TIERED"
+                      checked={watch('profitSharingModel') === 'TIERED'}
+                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      className="text-blue-600"
+                    />
+                    <div>
+                      <div className="font-medium">Tiered System</div>
+                      <div className="text-sm text-gray-600">Different rates for different tiers</div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
-              {/* Profit Percentage */}
-              <div className="space-y-2">
-                <Label htmlFor="profitPercentage">Profit Share Percentage *</Label>
-                <div className="flex items-center gap-4">
+              {/* Conditional Fields Based on Profit Sharing Model */}
+              {(watch('profitSharingModel') === 'PROPORTIONAL_BY_AMOUNT' || watch('profitSharingModel') === 'TIERED') && (
+                <div className="space-y-2">
+                  <Label htmlFor="profitPercentage">Expected Profit Percentage (%)</Label>
                   <Input
                     id="profitPercentage"
                     type="number"
-                    placeholder="15"
+                    min="0.1"
+                    max="100"
+                    step="0.1"
+                    placeholder="Enter expected profit percentage"
                     {...register('profitPercentage', { valueAsNumber: true })}
                   />
-                  <span className="text-2xl font-semibold">%</span>
+                  {errors.profitPercentage && (
+                    <p className="text-sm text-red-600">{errors.profitPercentage.message}</p>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground">Range: 1% - 50%</p>
-                {errors.profitPercentage && (
-                  <p className="text-sm text-red-600">{errors.profitPercentage.message}</p>
-                )}
-              </div>
+              )}
+
+              {watch('profitSharingModel') === 'FIXED_SHARES' && (
+                <div className="space-y-2">
+                  <Label htmlFor="fixedShares">Number of Fixed Shares</Label>
+                  <Input
+                    id="fixedShares"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Enter number of shares"
+                    {...register('fixedShares', { valueAsNumber: true })}
+                  />
+                  {errors.fixedShares && (
+                    <p className="text-sm text-red-600">{errors.fixedShares.message}</p>
+                  )}
+                </div>
+              )}
 
               {/* Duration */}
               <div className="space-y-2">
@@ -403,13 +498,26 @@ export const CreateInvestmentPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Maturity Date Preview */}
-              {investmentPreview.maturityDate && (
-                <div className="bg-muted rounded-lg p-4">
-                  <p className="text-sm font-medium mb-1">Maturity Date</p>
-                  <p className="text-lg font-semibold">
-                    {format(investmentPreview.maturityDate, 'MMMM dd, yyyy')}
-                  </p>
+              {/* Estimated Returns Preview */}
+              {amount > 0 && profitPercentage && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <InfoIcon className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-blue-900">Estimated Returns</h4>
+                      <div className="text-sm text-blue-800 mt-1 space-y-1">
+                        <p>Investment Amount: <strong>{formatCurrency(amount)}</strong></p>
+                        <p>Expected Monthly Return: <strong>{formatCurrency(investmentPreview.monthlyExpectedReturn.average)}</strong></p>
+                        <p>Expected Annual Return: <strong>{formatCurrency(investmentPreview.monthlyExpectedReturn.average * 12)}</strong></p>
+                        {investmentPreview.maturityDate && (
+                          <p>Maturity Date: <strong>{format(investmentPreview.maturityDate, 'MMMM dd, yyyy')}</strong></p>
+                        )}
+                      </div>
+                      <p className="text-xs text-blue-600 mt-2">
+                        * These are estimates based on your profit percentage. Actual returns may vary.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -435,20 +543,53 @@ export const CreateInvestmentPage: React.FC = () => {
               <CardDescription>Choose which products this investment applies to</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <RadioGroup defaultValue="all">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="all" id="all" />
-                  <Label htmlFor="all">All Products</Label>
+              <div className="space-y-3">
+                <Label>Product Scope *</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  <label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition border-blue-500 bg-blue-50">
+                    <input
+                      type="radio"
+                      value="all"
+                      defaultChecked
+                      className="text-blue-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">All Products</div>
+                      <div className="text-sm text-muted-foreground">
+                        Investment applies to all products in the shop
+                      </div>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition border-gray-200">
+                    <input
+                      type="radio"
+                      value="specific"
+                      className="text-blue-600"
+                      disabled
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">Specific Products</div>
+                      <div className="text-sm text-muted-foreground">
+                        Choose specific products (Coming soon)
+                      </div>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition border-gray-200">
+                    <input
+                      type="radio"
+                      value="category"
+                      className="text-blue-600"
+                      disabled
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">Product Category</div>
+                      <div className="text-sm text-muted-foreground">
+                        Filter by category (Coming soon)
+                      </div>
+                    </div>
+                  </label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="specific" id="specific" />
-                  <Label htmlFor="specific">Specific Products</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="category" id="category" />
-                  <Label htmlFor="category">Product Category</Label>
-                </div>
-              </RadioGroup>
+              </div>
 
               {/* Notes */}
               <div className="space-y-2">

@@ -1,7 +1,16 @@
 import configService from "@/config/runtime-config";
-import { setTokenProvider } from "@/lib/axios";
+import api, { setTokenProvider } from "@/lib/axios";
 import Keycloak from "keycloak-js";
 import React, { createContext, useCallback, useContext, useState } from "react";
+
+// Role with Permissions
+interface Role {
+  id: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  permissions: string[];
+}
 
 // User Profile Type
 interface UserProfile {
@@ -11,9 +20,13 @@ interface UserProfile {
   firstName?: string;
   lastName?: string;
   fullName?: string;
-  roles: string[];
+  phoneNumber?: string;
+  status?: string;
+  roles: Role[];
   tenantId?: string;
   shopId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Auth Context Type
@@ -28,7 +41,11 @@ interface AuthContextType {
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   hasAllRoles: (roles: string[]) => boolean;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
   getToken: () => string | undefined;
+  refreshUserProfile: () => Promise<void>;
 }
 
 // Create Auth Context
@@ -44,13 +61,35 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<UserProfile | null>(null);
   const initializingRef = React.useRef(false);
 
-  // Extract user profile from token
-  const getUserProfile = useCallback((kc: Keycloak): UserProfile | null => {
+  // Fetch full user profile from backend API with roles and permissions
+  const fetchUserProfile = useCallback(async (): Promise<UserProfile | null> => {
+    try {
+      const response = await api.get('/users/profile');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      return null;
+    }
+  }, []);
+
+  // Extract basic user info from token (for initial load)
+  const getUserProfileFromToken = useCallback((kc: Keycloak): UserProfile | null => {
     if (!kc.tokenParsed) return null;
 
     const token = kc.tokenParsed as any;
     const realmRoles = token.realm_access?.roles || [];
     const resourceRoles = token.resource_access?.[kc.clientId!]?.roles || [];
+    const roleNames = [...realmRoles, ...resourceRoles];
+
+    // Create temporary role objects without permissions
+    // These will be replaced with full roles from backend
+    const tempRoles: Role[] = roleNames.map(name => ({
+      id: `temp-${name}`,
+      name,
+      description: '',
+      isSystem: true,
+      permissions: []
+    }));
 
     return {
       id: token.sub,
@@ -59,7 +98,7 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       firstName: token.given_name,
       lastName: token.family_name,
       fullName: token.name,
-      roles: [...realmRoles, ...resourceRoles],
+      roles: tempRoles,
       tenantId: token.tenant_id,
       shopId: token.shop_id,
     };
@@ -105,7 +144,8 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (authenticated) {
           setIsAuthenticated(true);
-          setUser(getUserProfile(kc));
+          // Set basic user info from token first (for immediate UI update)
+          setUser(getUserProfileFromToken(kc));
           setTokenProvider(() => kc.token);
 
           // Store tokens
@@ -115,6 +155,14 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.setItem("keycloak_refresh_token", kc.refreshToken);
             localStorage.setItem("keycloak_id_token", kc.idToken || "");
           }
+
+          // Fetch full profile with roles and permissions from backend
+          fetchUserProfile().then(profile => {
+            if (profile) {
+              setUser(profile);
+              console.log('User profile loaded with permissions:', profile.roles);
+            }
+          });
 
           // Set up token refresh with cleanup
           const refreshInterval = setInterval(async () => {
@@ -137,7 +185,10 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 localStorage.setItem("keycloak_access_token", kc.token);
                 localStorage.setItem("keycloak_refresh_token", kc.refreshToken);
                 localStorage.setItem("keycloak_id_token", kc.idToken || "");
-                setUser(getUserProfile(kc));
+                // Refresh user profile from backend
+                fetchUserProfile().then(profile => {
+                  if (profile) setUser(profile);
+                });
               }
             } catch (error) {
               console.error(
@@ -178,7 +229,7 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     init();
-  }, [getUserProfile]);
+  }, [getUserProfileFromToken, fetchUserProfile]);
 
   // Get or wait for Keycloak instance
   const initializeKeycloak = useCallback(async (): Promise<Keycloak> => {
@@ -239,10 +290,18 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.removeItem("keycloak_id_token");
   }, [keycloak]);
 
+  // Refresh user profile from backend
+  const refreshUserProfile = useCallback(async () => {
+    const profile = await fetchUserProfile();
+    if (profile) {
+      setUser(profile);
+    }
+  }, [fetchUserProfile]);
+
   // Role checking functions
   const hasRole = useCallback(
     (role: string): boolean => {
-      return user?.roles.includes(role) || false;
+      return user?.roles?.some(r => r.name === role) || false;
     },
     [user]
   );
@@ -261,6 +320,39 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [hasRole]
   );
 
+  // Permission checking functions
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!user?.roles) return false;
+      
+      // Check if user has SYSTEM_ADMIN permission (has all permissions)
+      const hasSystemAdmin = user.roles.some(role => 
+        role.permissions.includes('SYSTEM_ADMIN')
+      );
+      if (hasSystemAdmin) return true;
+
+      // Check if any of user's roles has this permission
+      return user.roles.some(role => 
+        role.permissions.includes(permission)
+      );
+    },
+    [user]
+  );
+
+  const hasAnyPermission = useCallback(
+    (permissions: string[]): boolean => {
+      return permissions.some((permission) => hasPermission(permission));
+    },
+    [hasPermission]
+  );
+
+  const hasAllPermissions = useCallback(
+    (permissions: string[]): boolean => {
+      return permissions.every((permission) => hasPermission(permission));
+    },
+    [hasPermission]
+  );
+
   const getToken = useCallback((): string | undefined => {
     return keycloak?.token;
   }, [keycloak]);
@@ -276,7 +368,11 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     hasRole,
     hasAnyRole,
     hasAllRoles,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
     getToken,
+    refreshUserProfile,
   };
 
   return (
@@ -292,6 +388,9 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+// Export types
+export type { Role, UserProfile, AuthContextType };
 
 // Export for backward compatibility
 export const AuthProvider = ManualAuthProvider;

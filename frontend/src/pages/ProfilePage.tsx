@@ -73,16 +73,20 @@ export const ProfilePage: React.FC = () => {
     }
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role?.toUpperCase()) {
+  const getRoleBadgeColor = (roleName: string) => {
+    switch (roleName?.toUpperCase()) {
       case 'TENANT_ADMIN':
         return 'bg-purple-100 text-purple-800'
+      case 'SHOP_OWNER':
+        return 'bg-indigo-100 text-indigo-800'
       case 'MANAGER':
         return 'bg-blue-100 text-blue-800'
       case 'EMPLOYEE':
         return 'bg-green-100 text-green-800'
       case 'INVESTOR':
         return 'bg-yellow-100 text-yellow-800'
+      case 'CASHIER':
+        return 'bg-cyan-100 text-cyan-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -233,11 +237,11 @@ export const ProfilePage: React.FC = () => {
               <div className="mt-2 flex flex-wrap gap-2">
                 {displayProfile?.roles?.map((role) => (
                   <Badge
-                    key={role}
+                    key={typeof role === 'string' ? role : role.name}
                     variant="secondary"
-                    className={getRoleBadgeColor(role)}
+                    className={getRoleBadgeColor(typeof role === 'string' ? role : role.name)}
                   >
-                    {role.replace('_', ' ')}
+                    {(typeof role === 'string' ? role : role.name).replace(/_/g, ' ')}
                   </Badge>
                 )) || (
                   <span className="text-sm text-gray-500">No roles assigned</span>

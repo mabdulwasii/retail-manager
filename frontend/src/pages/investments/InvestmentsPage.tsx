@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, Download } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useInvestments } from '@/hooks/investment/useInvestments'
 import { usePortfolioSummary } from '@/hooks/investment/usePortfolioSummary'
 import { InvestmentSummaryCards } from '@/components/investment/InvestmentSummaryCards'
@@ -11,23 +12,30 @@ import type { InvestmentFilters } from '@/types/investment'
 
 export const InvestmentsPage: React.FC = () => {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
+
+  // Check permissions based on backend permission matrix
+  const canCreateInvestment = hasPermission('INVESTMENT_CREATE')  // OWNER and above
+  const canUpdateInvestment = hasPermission('INVESTMENT_UPDATE')  // OWNER and above
+  const canDeleteInvestment = hasPermission('INVESTMENT_DELETE')  // OWNER and above
+  const canViewInvestments = hasPermission('INVESTMENT_LIST')     // MANAGER, INVESTOR and above
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [sortBy, setSortBy] = useState('investmentDate')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
-  const [filters, setFilters] = useState<InvestmentFilters>({
-    status: [],
-    type: [],
-    dateRange: {
-      start: undefined,
-      end: undefined,
-    },
-    amountRange: {
-      min: undefined,
-      max: undefined,
-    },
-    search: '',
-  })
+  // const [filters, setFilters] = useState<InvestmentFilters>({
+  //   status: [],
+  //   type: [],
+  //   dateRange: {
+  //     start: undefined,
+  //     end: undefined,
+  //   },
+  //   amountRange: {
+  //     min: undefined,
+  //     max: undefined,
+  //   },
+  //   search: '',
+  // })
 
   // Fetch investments
   const { data: investmentsData, isLoading } = useInvestments({
@@ -90,10 +98,12 @@ export const InvestmentsPage: React.FC = () => {
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>
-          <Button onClick={handleCreateInvestment}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Investment
-          </Button>
+          {canCreateInvestment && (
+            <Button onClick={handleCreateInvestment}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Investment
+            </Button>
+          )}
         </div>
       </div>
 

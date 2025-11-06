@@ -401,18 +401,13 @@ export const useExpenses = () => {
     setError(null)
   }, [])
 
-  // Permission checks
-  const canCreateExpense = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_ACCOUNTANT'].includes(role)
-  ) || false
-
-  const canApproveExpense = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER'].includes(role)
-  ) || false
-
-  const canViewAllExpenses = user?.roles.some((role: string) =>
-    ['ROLE_SHOP_OWNER', 'ROLE_MANAGER', 'ROLE_ACCOUNTANT', 'ROLE_AUDITOR'].includes(role)
-  ) || false
+  // Permission checks based on backend permission matrix
+  const { hasPermission } = useAuth();
+  const canCreateExpense = hasPermission('EXPENSE_CREATE');    // MANAGER and above
+  const canUpdateExpense = hasPermission('EXPENSE_UPDATE');    // MANAGER and above
+  const canDeleteExpense = hasPermission('EXPENSE_DELETE');    // OWNER and above
+  const canApproveExpense = hasPermission('EXPENSE_APPROVE');  // MANAGER and above
+  const canViewAllExpenses = hasPermission('EXPENSE_LIST');    // MANAGER and above
 
   return {
     // State
@@ -425,6 +420,8 @@ export const useExpenses = () => {
 
     // Permissions
     canCreateExpense,
+    canUpdateExpense,
+    canDeleteExpense,
     canApproveExpense,
     canViewAllExpenses,
 

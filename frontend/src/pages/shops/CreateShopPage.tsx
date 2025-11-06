@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useAuth } from '@/context/ManualAuthContext'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -46,7 +47,22 @@ type ShopFormData = yup.InferType<typeof shopSchema>
 
 export const CreateShopPage: React.FC = () => {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   const createShopMutation = useCreateShop()
+
+  // Check if user has permission to create shops
+  const canCreateShop = hasPermission('SHOP_CREATE')
+  
+  // Redirect if no permission
+  React.useEffect(() => {
+    if (!canCreateShop) {
+      navigate('/shops')
+    }
+  }, [canCreateShop, navigate])
+
+  if (!canCreateShop) {
+    return null
+  }
 
   const {
     register,

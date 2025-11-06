@@ -9,27 +9,29 @@ export interface Category {
   slug?: string
   displayOrder?: number
   isActive: boolean
+  imageUrl?: string
   children?: Category[]
   createdAt: string
   updatedAt: string
 }
 
 export interface CategoryCreateRequest {
+  shopId: string
   name: string
   description?: string
   parentId?: string
-  slug?: string
   displayOrder?: number
   isActive?: boolean
+  imageUrl?: string
 }
 
 export interface CategoryUpdateRequest {
   name?: string
   description?: string
   parentId?: string
-  slug?: string
   displayOrder?: number
   isActive?: boolean
+  imageUrl?: string
 }
 
 export const categoryService = {

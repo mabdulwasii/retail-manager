@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/ManualAuthContext'
-import { RoleGroups } from '@/types/roles'
 import {
   Pagination,
   PaginationContent,
@@ -11,7 +10,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { Plus } from 'lucide-react'
+import { Plus, Tag } from 'lucide-react'
 import { ProductList } from '@/components/products/ProductList'
 import { ProductFilters, ProductFilterValues } from '@/components/products/ProductFilters'
 import { ProductStats } from '@/components/products/ProductStats'
@@ -30,12 +29,16 @@ import {
 
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const { hasPermission } = useAuth()
   
   const [currentPage, setCurrentPage] = useState(0)
   
-  // Only SHOP_OWNER and MANAGER can create/edit/delete products
-  const canManageProducts = hasAnyRole(RoleGroups.PRODUCT_MANAGERS)
+  // Check permissions based on backend permission matrix
+  const canCreateProduct = hasPermission('PRODUCT_CREATE')  // MANAGER and above
+  const canUpdateProduct = hasPermission('PRODUCT_UPDATE')  // MANAGER and above
+  const canDeleteProduct = hasPermission('PRODUCT_DELETE')  // MANAGER and above
+  const canListProducts = hasPermission('PRODUCT_LIST')     // EMPLOYEE and above
+  const canViewCategories = hasPermission('CATEGORY_LIST')  // EMPLOYEE and above
   const [filters, setFilters] = useState<ProductFilterValues>({
     search: '',
     category: '',
@@ -115,12 +118,20 @@ export const ProductsPage: React.FC = () => {
             Manage your product catalog and inventory
           </p>
         </div>
-        {canManageProducts && (
-          <Button onClick={() => navigate('/products/create')}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Product
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {canViewCategories && (
+            <Button variant="outline" onClick={() => navigate('/categories')}>
+              <Tag className="h-4 w-4 mr-2" />
+              Manage Categories
+            </Button>
+          )}
+          {canCreateProduct && (
+            <Button onClick={() => navigate('/products/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Product
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -144,9 +155,9 @@ export const ProductsPage: React.FC = () => {
       {/* Product List */}
       <ProductList
         products={products}
-        onEdit={canManageProducts ? handleEdit : undefined}
-        onDelete={canManageProducts ? handleDelete : undefined}
-        onToggleStatus={canManageProducts ? handleToggleStatus : undefined}
+        {...(canUpdateProduct && { onEdit: handleEdit })}
+        {...(canDeleteProduct && { onDelete: handleDelete })}
+        {...(canUpdateProduct && { onToggleStatus: handleToggleStatus })}
         isLoading={isLoading}
       />
 

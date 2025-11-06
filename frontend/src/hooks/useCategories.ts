@@ -55,9 +55,10 @@ export const useCreateCategory = () => {
   const shopId = user?.shopId
 
   return useMutation({
-    mutationFn: (data: CategoryCreateRequest) => {
+    mutationFn: (data: Omit<CategoryCreateRequest, 'shopId'>) => {
       if (!shopId) throw new Error('Shop ID not found')
-      return categoryService.createCategory(shopId, data)
+      // Add shopId to the request data
+      return categoryService.createCategory(shopId, { ...data, shopId })
     },
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })

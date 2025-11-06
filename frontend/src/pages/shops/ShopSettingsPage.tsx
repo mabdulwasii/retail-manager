@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/ManualAuthContext'
+import { RoleGroups } from '@/types/roles'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,6 +48,21 @@ import { ThemeVariant, FontSize, DashboardLayout } from '@/services/shopConfigur
 export const ShopSettingsPage: React.FC = () => {
   const { shopId } = useParams<{ shopId: string }>()
   const navigate = useNavigate()
+  const { hasAnyRole } = useAuth()
+  
+  // Check if user can manage settings (SHOP_OWNER, MANAGER, or higher)
+  const canManageSettings = hasAnyRole(RoleGroups.SETTINGS_MANAGERS)
+  
+  // Redirect if no permission
+  useEffect(() => {
+    if (!canManageSettings) {
+      navigate(`/shops/${shopId || ''}`)
+    }
+  }, [canManageSettings, navigate, shopId])
+
+  if (!canManageSettings) {
+    return null
+  }
   
   // Fetch shop data
   const { data: shop, isLoading: loadingShop, isError, error } = useShopById(shopId)
