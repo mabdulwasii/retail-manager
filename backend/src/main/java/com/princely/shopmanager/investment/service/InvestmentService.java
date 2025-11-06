@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -53,9 +54,7 @@ public class InvestmentService {
         // Validate products if specified
         Set<Product> products = Set.of();
         if (request.getProductIds() != null && !request.getProductIds().isEmpty()) {
-            products = productRepository.findAllById(request.getProductIds())
-                .stream()
-                .collect(Collectors.toSet());
+            products = new HashSet<>(productRepository.findAllById(request.getProductIds()));
 
             if (products.size() != request.getProductIds().size()) {
                 throw new IllegalArgumentException("Some specified products were not found");

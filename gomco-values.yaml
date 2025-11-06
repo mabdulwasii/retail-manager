@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.29
+    tag: backend-v0.0.31
     pullPolicy: Always
   podAnnotations:
-    configVersion: "21"  # Add /docs/** to security whitelist + AsciiDoc generation fix
+    configVersion: "23"  # Fix null/empty parentId handling in CategoryService
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
