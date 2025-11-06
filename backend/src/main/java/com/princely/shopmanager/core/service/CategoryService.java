@@ -51,7 +51,7 @@ public class CategoryService {
 
         // Validate and fetch parent category if provided
         Category parent = null;
-        if (request.getParentId() != null) {
+        if (request.getParentId() != null && !request.getParentId().trim().isEmpty()) {
             parent = categoryRepository.findById(request.getParentId())
                 .orElseThrow(() -> new IllegalArgumentException("Parent category not found with ID: " + request.getParentId()));
 
@@ -159,20 +159,25 @@ public class CategoryService {
         }
 
         if (request.getParentId() != null) {
-            // Validate parent exists and belongs to same shop
-            Category parent = categoryRepository.findById(request.getParentId())
-                .orElseThrow(() -> new IllegalArgumentException("Parent category not found with ID: " + request.getParentId()));
+            if (request.getParentId().trim().isEmpty()) {
+                // Empty string means remove parent (make it a root category)
+                category.setParent(null);
+            } else {
+                // Validate parent exists and belongs to same shop
+                Category parent = categoryRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent category not found with ID: " + request.getParentId()));
 
-            if (!parent.getShop().getId().equals(category.getShop().getId())) {
-                throw new IllegalArgumentException("Parent category must belong to the same shop");
+                if (!parent.getShop().getId().equals(category.getShop().getId())) {
+                    throw new IllegalArgumentException("Parent category must belong to the same shop");
+                }
+
+                // Prevent circular references
+                if (wouldCreateCircularReference(request.getParentId(), categoryId)) {
+                    throw new IllegalArgumentException("Cannot set parent - would create circular reference");
+                }
+
+                category.setParent(parent);
             }
-
-            // Prevent circular references
-            if (wouldCreateCircularReference(request.getParentId(), categoryId)) {
-                throw new IllegalArgumentException("Cannot set parent - would create circular reference");
-            }
-
-            category.setParent(parent);
         }
 
         if (request.getDisplayOrder() != null) {
