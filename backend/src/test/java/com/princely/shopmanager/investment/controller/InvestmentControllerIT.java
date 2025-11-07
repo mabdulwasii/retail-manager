@@ -42,6 +42,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
     @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
     void ownerShouldCreateInvestment() throws Exception {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(50000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -68,6 +69,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
     @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
     void managerShouldCreateInvestment() throws Exception {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(25000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -91,6 +93,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
     void employeeShouldNotCreateInvestment() throws Exception {
 
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(10000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -112,6 +115,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
     void investorShouldCreateInvestment() throws Exception {
 
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(75000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -178,6 +182,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
         // First create an investment
 
         InvestmentCreateRequest createRequest = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(10000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -219,6 +224,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
         // Create investment first
 
         InvestmentCreateRequest createRequest = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(15000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -263,6 +269,7 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
         // Create investment first
 
         InvestmentCreateRequest createRequest = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
             .shopId(TestConstants.TEST_SHOP_001)
             .amount(BigDecimal.valueOf(20000.00))
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
@@ -358,5 +365,233 @@ class InvestmentControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/my-distributions"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", isA(Iterable.class)));
+    }
+
+    // ============== Validation Tests ==============
+
+    @Test
+    @DisplayName("Should reject investment without investor ID")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectInvestmentWithoutInvestorId() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should reject PRODUCT_SPECIFIC investment without product IDs")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectProductSpecificInvestmentWithoutProducts() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.PRODUCT_SPECIFIC)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should accept PRODUCT_SPECIFIC investment with product IDs")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldAcceptProductSpecificInvestmentWithProducts() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.PRODUCT_SPECIFIC)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .productIds(List.of(TestConstants.PROD_WIRELESS_MOUSE, TestConstants.PROD_USB_KEYBOARD).stream()
+                    .collect(java.util.stream.Collectors.toSet()))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.investmentType").value("PRODUCT_SPECIFIC"));
+    }
+
+    @Test
+    @DisplayName("Should reject CATEGORY_SPECIFIC investment without category filter")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectCategorySpecificInvestmentWithoutCategory() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.CATEGORY_SPECIFIC)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should accept CATEGORY_SPECIFIC investment with category filter")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldAcceptCategorySpecificInvestmentWithCategory() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.CATEGORY_SPECIFIC)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .categoryFilter(TestConstants.CAT_ELECTRONICS)
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.investmentType").value("CATEGORY_SPECIFIC"));
+    }
+
+    @Test
+    @DisplayName("Should reject SHOP_WIDE investment with product IDs")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectShopWideInvestmentWithProducts() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(30.00))
+            .productIds(List.of(TestConstants.PROD_WIRELESS_MOUSE).stream()
+                    .collect(java.util.stream.Collectors.toSet()))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should reject PROPORTIONAL_BY_AMOUNT without profit percentage")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectProportionalByAmountWithoutProfitPercentage() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should reject FIXED_SHARES without fixed shares value")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectFixedSharesWithoutSharesValue() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.FIXED_SHARES)
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should accept FIXED_SHARES with valid shares value")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldAcceptFixedSharesWithSharesValue() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.FIXED_SHARES)
+            .fixedShares(10)
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.profitSharingModel").value("FIXED_SHARES"))
+            .andExpect(jsonPath("$.fixedShares").value(10));
+    }
+
+    @Test
+    @DisplayName("Should reject TIME_WEIGHTED without profit percentage")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectTimeWeightedWithoutProfitPercentage() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.TIME_WEIGHTED)
+            .maturityDate(LocalDateTime.now().plusMonths(6))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should reject profit percentage above 100")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void shouldRejectProfitPercentageAbove100() throws Exception {
+        InvestmentCreateRequest request = InvestmentCreateRequest.builder()
+            .investorId(TestConstants.USER_INVESTOR_001)
+            .shopId(TestConstants.TEST_SHOP_001)
+            .amount(BigDecimal.valueOf(50000.00))
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .profitPercentage(BigDecimal.valueOf(150.00))
+            .build();
+
+        mockMvc.perform(post("/api/investments")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
     }
 }

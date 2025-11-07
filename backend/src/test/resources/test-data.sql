@@ -51,14 +51,77 @@ ON CONFLICT (id) DO NOTHING;
 -- 4. ROLES (System roles for testing)
 -- ========================================
 -- Insert system roles with same IDs as migrations for consistency
-INSERT INTO roles (id, name, description, is_system, created_at, updated_at, created_by, updated_by, version)
+INSERT INTO roles (id, name, description, is_system, created_at, updated_at, version)
 VALUES
-    ('super-admin-role-id', 'SYSTEM_ADMIN', 'System Administrator with full access to all tenants', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system', 0),
-    ('tenant-admin-role-id', 'TENANT_ADMIN', 'Tenant Administrator with full access to tenant resources', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system', 0),
-    ('owner-role-id', 'OWNER', 'Shop Owner with full business control', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system', 0),
-    ('manager-role-id', 'MANAGER', 'Shop Manager with operational access', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system', 0),
-    ('employee-role-id', 'EMPLOYEE', 'Shop Employee with basic access', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system', 0)
+    ('super-admin-role-id', 'SYSTEM_ADMIN', 'System Administrator with full access to all tenants', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('tenant-admin-role-id', 'TENANT_ADMIN', 'Tenant Administrator with full access to tenant resources', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('owner-role-id', 'OWNER', 'Shop Owner with full business control', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('manager-role-id', 'MANAGER', 'Shop Manager with operational access', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('employee-role-id', 'EMPLOYEE', 'Shop Employee with basic access', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('investor-role-id', 'INVESTOR', 'Investor with investment management access', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
+
+-- ========================================
+-- 4.5. PERMISSIONS AND ROLE-PERMISSION ASSIGNMENTS
+-- ========================================
+-- NOTE: In tests, Flyway migrations run but their data is not visible within test transactions.
+-- We must explicitly insert permissions and role_permissions here for tests to work.
+
+-- Insert investment-related permissions needed for tests
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('perm-investment-create', 'INVESTMENT_CREATE', 'Create investments', 'INVESTMENT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-read', 'INVESTMENT_READ', 'View investment details', 'INVESTMENT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-list', 'INVESTMENT_LIST', 'List investments', 'INVESTMENT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-update', 'INVESTMENT_UPDATE', 'Edit investment records', 'INVESTMENT', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-delete', 'INVESTMENT_DELETE', 'Delete investment records', 'INVESTMENT', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-close', 'INVESTMENT_CLOSE', 'Close investments', 'INVESTMENT', 'CLOSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-investment-profit-distribute', 'INVESTMENT_PROFIT_DISTRIBUTE', 'Distribute investment profits', 'INVESTMENT', 'PROFIT_DISTRIBUTE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-analytics-investment-view', 'ANALYTICS_INVESTMENT_VIEW', 'View investment ROI analytics', 'ANALYTICS', 'INVESTMENT_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Grant permissions to SYSTEM_ADMIN role (all investment permissions)
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'SYSTEM_ADMIN'
+AND p.name IN (
+    'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST', 'INVESTMENT_UPDATE', 'INVESTMENT_DELETE',
+    'INVESTMENT_CLOSE', 'INVESTMENT_PROFIT_DISTRIBUTE', 'ANALYTICS_INVESTMENT_VIEW'
+)
+ON CONFLICT DO NOTHING;
+
+-- Grant permissions to OWNER role
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'OWNER'
+AND p.name IN (
+    'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST', 'INVESTMENT_UPDATE', 'INVESTMENT_DELETE',
+    'INVESTMENT_CLOSE', 'INVESTMENT_PROFIT_DISTRIBUTE', 'ANALYTICS_INVESTMENT_VIEW'
+)
+ON CONFLICT DO NOTHING;
+
+-- Grant permissions to MANAGER role
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'MANAGER'
+AND p.name IN (
+    'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST', 'INVESTMENT_UPDATE',
+    'ANALYTICS_INVESTMENT_VIEW'
+)
+ON CONFLICT DO NOTHING;
+
+-- Grant permissions to INVESTOR role
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r, permissions p
+WHERE r.name = 'INVESTOR'
+AND p.name IN (
+    'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST', 'ANALYTICS_INVESTMENT_VIEW'
+)
+ON CONFLICT DO NOTHING;
 
 -- ========================================
 -- 5. USER-ROLE ASSIGNMENTS
@@ -70,7 +133,7 @@ WHERE (u.id = '750e8400-e29b-41d4-a716-446655440001' AND r.name = 'SYSTEM_ADMIN'
    OR (u.id = '750e8400-e29b-41d4-a716-446655440002' AND r.name = 'OWNER')
    OR (u.id = '750e8400-e29b-41d4-a716-446655440003' AND r.name = 'MANAGER')
    OR (u.id = '750e8400-e29b-41d4-a716-446655440004' AND r.name = 'EMPLOYEE')
-   OR (u.id = '750e8400-e29b-41d4-a716-446655440005' AND r.name = 'OWNER')
+   OR (u.id = '750e8400-e29b-41d4-a716-446655440005' AND r.name = 'INVESTOR')
 ON CONFLICT DO NOTHING;
 
 -- ========================================

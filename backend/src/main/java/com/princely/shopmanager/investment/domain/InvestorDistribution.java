@@ -68,12 +68,19 @@ public class InvestorDistribution extends BaseEntity {
     @Column(name = "calculation_details", length = 2000)
     private String calculationDetails;
 
+    @Getter
     public enum DistributionStatus {
-        CALCULATED,
-        APPROVED,
-        PAID,
-        FAILED,
-        CANCELLED
+        CALCULATED("Calculated"),
+        APPROVED("Approved"),
+        PAID("Paid"),
+        FAILED("Failed"),
+        CANCELLED("Cancelled");
+
+        private final String displayName;
+
+        DistributionStatus(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
     public void markAsPaid(String paymentReference) {

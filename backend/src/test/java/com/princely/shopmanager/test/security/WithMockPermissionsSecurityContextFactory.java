@@ -41,11 +41,14 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
                 .forEach(authorities::add);
         }
 
+        // Determine email based on role or explicit username
+        String userEmail = getUserEmailForRole(annotation);
+
         // Create JwtPrincipal to match controller expectations
         JwtPrincipal principal = JwtPrincipal.builder()
             .subject(TestConstants.MOCK_USER_ID)
             .preferredUsername(annotation.username())
-            .email(annotation.username() + "@example.com")
+            .email(userEmail)
             .firstName(annotation.username())
             .lastName("User")
             .tenantId(annotation.tenantId())
@@ -199,12 +202,36 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
 
             case "INVESTOR" -> Stream.of(
                 // Investment
-                "INVESTMENT_READ", "INVESTMENT_LIST",
+                "INVESTMENT_CREATE", "INVESTMENT_READ", "INVESTMENT_LIST",
                 // Analytics
                 "ANALYTICS_INVESTMENT_VIEW"
             );
 
             default -> Stream.empty();
+        };
+    }
+
+    /**
+     * Get the email address for a test user based on their role.
+     * Maps role names to actual test data user emails to enable database permission checks.
+     *
+     * @param annotation The WithMockPermissions annotation
+     * @return Email address for the role, or custom email if no role specified
+     */
+    private String getUserEmailForRole(WithMockPermissions annotation) {
+        // If no role specified, use the custom username
+        if (annotation.role().isEmpty()) {
+            return annotation.username() + "@example.com";
+        }
+
+        // Map role to test data user email
+        return switch (annotation.role().toUpperCase()) {
+            case "SYSTEM_ADMIN", "SUPER_ADMIN" -> TestConstants.ADMIN_EMAIL;
+            case "OWNER" -> TestConstants.OWNER_EMAIL;
+            case "MANAGER" -> TestConstants.MANAGER_EMAIL;
+            case "EMPLOYEE", "CASHIER" -> TestConstants.EMPLOYEE_EMAIL;
+            case "INVESTOR" -> TestConstants.INVESTOR_EMAIL;
+            default -> annotation.username() + "@example.com";
         };
     }
 }

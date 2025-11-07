@@ -54,9 +54,10 @@ public class InvestmentController {
             @Valid @RequestBody InvestmentCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        log.info("Creating investment for shop: {}, user: {}", request.getShopId(), principal.getUsername());
+        log.info("Creating investment for shop: {}, investor: {}, user: {}",
+                request.getShopId(), request.getInvestorId(), principal.getUsername());
 
-        InvestmentResponse response = investmentService.createInvestment(request, principal.getSubject());
+        InvestmentResponse response = investmentService.createInvestment(request, request.getInvestorId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

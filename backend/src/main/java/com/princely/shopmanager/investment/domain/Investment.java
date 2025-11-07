@@ -120,26 +120,47 @@ public class Investment extends BaseEntity {
     @Column(name = "notes", length = 1000)
     private String notes;
 
+    @Getter
     public enum InvestmentType {
-        SHOP_WIDE,
-        PRODUCT_SPECIFIC,
-        CATEGORY_SPECIFIC
+        SHOP_WIDE("Shop Wide"),
+        PRODUCT_SPECIFIC("Product Specific"),
+        CATEGORY_SPECIFIC("Category Specific");
+
+        private final String displayName;
+
+        InvestmentType(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
+    @Getter
     public enum ProfitSharingModel {
-        PROPORTIONAL_BY_AMOUNT,
-        FIXED_SHARES,
-        TIME_WEIGHTED,
-        TIERED
+        PROPORTIONAL_BY_AMOUNT("Proportional by Amount"),
+        FIXED_SHARES("Fixed Shares"),
+        TIME_WEIGHTED("Time Weighted"),
+        TIERED("Tiered");
+
+        private final String displayName;
+
+        ProfitSharingModel(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
+    @Getter
     public enum InvestmentStatus {
-        PENDING,
-        ACTIVE,
-        INACTIVE,
-        MATURED,
-        WITHDRAWN,
-        CANCELLED
+        PENDING("Pending"),
+        ACTIVE("Active"),
+        INACTIVE("Inactive"),
+        MATURED("Matured"),
+        WITHDRAWN("Withdrawn"),
+        CANCELLED("Cancelled");
+
+        private final String displayName;
+
+        InvestmentStatus(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
     public BigDecimal getAvailableBalance() {

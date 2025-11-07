@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -68,13 +70,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
-            .collect(Collectors.joining(", "));
+        Map<String, String> fieldErrors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(error ->
+            fieldErrors.put(error.getField(), error.getDefaultMessage())
+        );
 
-        logger.warn("Validation error: {}", message);
+        String message = "Validation failed for " + e.getBindingResult().getObjectName();
+        logger.warn("Validation error: {}", fieldErrors);
+
         return ResponseEntity.badRequest()
-            .body(new ErrorResponse("VALIDATION_ERROR", message));
+            .body(new ErrorResponse("VALIDATION_ERROR", message, fieldErrors));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

@@ -47,6 +47,10 @@ app:
   security:
     tenant-isolation: false  # Disable for testing flexibility
 
+  bootstrap:
+    superadmin:
+      enabled: false  # Disable bootstrap in tests - test-data.sql handles user creation
+
   keycloak:
     enabled: false  # Disable Keycloak for tests
     realm: test
