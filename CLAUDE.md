@@ -49,6 +49,7 @@ Shop Manager is a multi-tenant retail management platform:
 - Update test cases for every code change and run tests
 - Prefer static imports over fully qualified names
 - Use conventional commits (feat:, fix:, docs:, test:, refactor:)
+- **NEVER add "Generated with Claude Code" or "Co-Authored-By: Claude" to commit messages** - keep commits professional
 
 ### Code Review Focus
 - Business logic correctness and security
