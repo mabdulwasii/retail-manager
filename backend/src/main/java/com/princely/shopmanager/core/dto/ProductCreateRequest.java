@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.dto;
 
+import com.princely.shopmanager.core.domain.Product.ProductStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -105,6 +106,10 @@ public class ProductCreateRequest {
     @Schema(description = "Is product eligible for discounts", example = "true")
     @Builder.Default
     private Boolean isDiscountable = true;
+
+    @Schema(description = "Product status", example = "ACTIVE")
+    @Builder.Default
+    private ProductStatus status = ProductStatus.ACTIVE;
 
     @Schema(description = "Additional metadata (JSON format)")
     private Map<String, Object> metadata;

@@ -118,7 +118,7 @@ public class ProductService {
             .isTaxable(request.getIsTaxable() != null ? request.getIsTaxable() : true)
             .isDiscountable(request.getIsDiscountable() != null ? request.getIsDiscountable() : true)
             .metadata(request.getMetadata())
-            .status(Product.ProductStatus.ACTIVE)
+            .status(request.getStatus() != null ? request.getStatus() : Product.ProductStatus.ACTIVE)
             .build();
 
         product = productRepository.save(product);
