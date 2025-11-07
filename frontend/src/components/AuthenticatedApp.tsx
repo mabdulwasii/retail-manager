@@ -23,6 +23,10 @@ import { ProductDetailPage } from "@/pages/products/ProductDetailPage";
 import { CategoriesPage } from "@/pages/categories";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
+import { RolesPage } from "@/pages/admin/RolesPage";
+import { CreateRolePage } from "@/pages/admin/CreateRolePage";
+import { EditRolePage } from "@/pages/admin/EditRolePage";
+import { PermissionsMatrixPage } from "@/pages/admin/PermissionsMatrixPage";
 import { SalesPage, TransactionDetailPage } from "@/pages/sales";
 import { POSPage } from "@/pages/pos/POSPage";
 import { CreateShopPage } from "@/pages/shops/CreateShopPage";
@@ -339,6 +343,58 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "SYSTEM_ADMIN", "AUDITOR"]}>
               <AuditPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      {/* Admin - Role & Permission Management */}
+      <Route
+        path="/admin/roles"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <RolesPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/admin/roles/create"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <CreateRolePage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/admin/roles/:roleId/edit"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <EditRolePage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/admin/roles/:roleId"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <EditRolePage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/admin/permissions"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <PermissionsMatrixPage />
             </ProtectedRoute>
           </Layout>
         }

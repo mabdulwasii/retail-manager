@@ -119,7 +119,8 @@ export interface Product {
   id: string
   name: string
   description?: string
-  category: string
+  categoryId: string
+  category: string // Category name for display
   price: number
   costPrice?: number
   barcode?: string
@@ -139,17 +140,28 @@ export enum ProductStatus {
 export interface ProductCreateRequest {
   name: string
   description?: string | undefined
-  category: string
+  sku?: string | undefined
+  barcode?: string | undefined
+  shopId: string
+  categoryId: string
   price: number
   costPrice?: number | undefined
-  barcode?: string | undefined
-  sku?: string | undefined
+  unit?: string | undefined
+  weightInGrams?: number | undefined
+  location?: string | undefined
+  dimensions?: string | undefined
+  supplierName?: string | undefined
+  supplierContact?: string | undefined
+  imageUrl?: string | undefined
+  isTaxable?: boolean | undefined
+  isDiscountable?: boolean | undefined
+  metadata?: Record<string, any> | undefined
 }
 
 export interface ProductUpdateRequest {
   name?: string | undefined
   description?: string | undefined
-  category?: string | undefined
+  categoryId?: string | undefined
   price?: number | undefined
   costPrice?: number | undefined
   barcode?: string | undefined

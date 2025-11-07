@@ -4,17 +4,35 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProductForm, ProductFormData } from '@/components/products/ProductForm'
 import { useCreateProduct } from '@/hooks/useProducts'
+import { useAuth } from '@/context/ManualAuthContext'
+import { toast } from 'sonner'
 
 export const CreateProductPage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const createProductMutation = useCreateProduct()
 
   const handleSubmit = async (data: ProductFormData) => {
+    if (!user?.shopId) {
+      toast.error('Shop ID not found. Please log in again.')
+      return
+    }
+
     try {
-      // Transform null to undefined for API compatibility
+      // Build product data with shopId and proper type handling
       const productData = {
         ...data,
+        shopId: user.shopId, // Add shopId from current user
         costPrice: data.costPrice ?? undefined,
+        weightInGrams: data.weightInGrams ?? undefined,
+        unit: data.unit || undefined,
+        location: data.location || undefined,
+        dimensions: data.dimensions || undefined,
+        supplierName: data.supplierName || undefined,
+        supplierContact: data.supplierContact || undefined,
+        imageUrl: data.imageUrl || undefined,
+        isTaxable: data.isTaxable ?? true,
+        isDiscountable: data.isDiscountable ?? true,
       }
       const newProduct = await createProductMutation.mutateAsync(productData)
       navigate(`/products/${newProduct.id}`)

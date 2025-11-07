@@ -21,6 +21,7 @@ import {
   Settings,
   Moon,
   Sun,
+  Shield,
 } from 'lucide-react'
 
 interface NavItem {
@@ -90,6 +91,12 @@ const navItems: NavItem[] = [
     href: '/audit',
     icon: FileText,
     roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR'],
+  },
+  {
+    title: 'Role Management',
+    href: '/admin/roles',
+    icon: Shield,
+    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN'],
   },
 ]
 

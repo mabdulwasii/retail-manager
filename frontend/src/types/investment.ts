@@ -10,7 +10,7 @@ export enum InvestmentStatus {
 export enum InvestmentType {
   SHOP_WIDE = 'SHOP_WIDE',
   PRODUCT_SPECIFIC = 'PRODUCT_SPECIFIC',
-  CATEGORY_BASED = 'CATEGORY_BASED'
+  CATEGORY_SPECIFIC = 'CATEGORY_SPECIFIC'
 }
 
 export enum ProfitSharingModel {
@@ -81,6 +81,7 @@ export interface InvestorDistribution {
 }
 
 export interface InvestmentCreateRequest {
+  investorId: string
   shopId: string
   investmentType: InvestmentType
   amount: number

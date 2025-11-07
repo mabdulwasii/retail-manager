@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { ArrowLeft, ArrowRight, Check, DollarSign, InfoIcon } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, DollarSign, InfoIcon, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,29 +21,80 @@ import { useCreateInvestment } from '@/hooks/investment/useInvestmentMutations'
 import { InvestmentType, ProfitSharingModel, InvestmentCreateRequest } from '@/types/investment'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useActiveShops } from '@/hooks/useShops'
+import { useAuth } from '@/context/ManualAuthContext'
 import { addMonths, format } from 'date-fns'
+import { toast } from 'sonner'
 
-// Validation schema
+// Validation schema matching backend requirements
 const investmentSchema = yup.object().shape({
   shopId: yup.string().required('Shop is required'),
-  investmentType: yup.string().oneOf(Object.values(InvestmentType)).required(),
+  investmentType: yup.string().oneOf(Object.values(InvestmentType)).required('Investment type is required'),
   amount: yup.number()
-    .min(1000, 'Minimum investment is $1,000')
-    .max(1000000, 'Maximum investment is $1,000,000')
-    .required(),
+    .min(1000, 'Minimum investment is ₦1,000')
+    .max(1000000, 'Maximum investment is ₦1,000,000')
+    .required('Investment amount is required'),
   profitSharingModel: yup.string().required('Profit sharing model is required'),
   profitPercentage: yup.number()
-    .min(1, 'Minimum share is 1%')
-    .max(50, 'Maximum share is 50%')
-    .optional(),
-  fixedShares: yup.number().positive().optional(),
+    .transform((value, originalValue) => {
+      // Skip validation if empty or not needed
+      return originalValue === '' || originalValue === null ? undefined : value
+    })
+    .nullable()
+    .optional()
+    .min(0, 'Percentage must be at least 0%')
+    .max(100, 'Percentage cannot exceed 100%')
+    .when('profitSharingModel', {
+      is: (val: string) => ['PROPORTIONAL_BY_AMOUNT', 'TIME_WEIGHTED', 'TIERED'].includes(val),
+      then: (schema) => schema.required('Profit percentage is required for this model'),
+    }),
+  fixedShares: yup.number()
+    .transform((value, originalValue) => {
+      return originalValue === '' || originalValue === null ? undefined : value
+    })
+    .nullable()
+    .optional()
+    .positive('Fixed shares must be positive')
+    .when('profitSharingModel', {
+      is: 'FIXED_SHARES',
+      then: (schema) => schema.required('Fixed shares is required for this model'),
+    }),
   duration: yup.number()
     .min(3, 'Minimum duration is 3 months')
     .max(60, 'Maximum duration is 60 months')
-    .required(),
-  productIds: yup.array().of(yup.string()).optional(),
-  categoryFilter: yup.string().optional(),
-  notes: yup.string().max(1000).optional(),
+    .required('Duration is required'),
+  productIds: yup.array().of(yup.string())
+    .when('investmentType', {
+      is: InvestmentType.PRODUCT_SPECIFIC,
+      then: (schema) => schema.min(1, 'At least one product must be selected for product-specific investment').required('Products are required for product-specific investment'),
+      otherwise: (schema) => schema.test(
+        'no-products-for-shop-wide',
+        'Shop-wide investments cannot have product selection',
+        function(value) {
+          const investmentType = this.parent.investmentType
+          if (investmentType === InvestmentType.SHOP_WIDE && value && value.length > 0) {
+            return false
+          }
+          return true
+        }
+      ),
+    }),
+  categoryFilter: yup.string()
+    .when('investmentType', {
+      is: InvestmentType.CATEGORY_SPECIFIC,
+      then: (schema) => schema.required('Category is required for category-specific investment').min(1, 'Category cannot be empty'),
+      otherwise: (schema) => schema.test(
+        'no-category-for-shop-wide',
+        'Shop-wide investments cannot have category filter',
+        function(value) {
+          const investmentType = this.parent.investmentType
+          if (investmentType === InvestmentType.SHOP_WIDE && value && value.length > 0) {
+            return false
+          }
+          return true
+        }
+      ),
+    }),
+  notes: yup.string().max(1000, 'Notes cannot exceed 1000 characters').optional(),
   agreedToTerms: yup.boolean()
     .oneOf([true], 'You must agree to the terms')
     .required('You must agree to the terms'),
@@ -61,11 +112,15 @@ const STEPS = [
 export const CreateInvestmentPage: React.FC = () => {
   const navigate = useNavigate()
   const { formatCurrency } = useCurrency()
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const createInvestment = useCreateInvestment()
   
   // Fetch active shops
   const { data: shops = [], isLoading: shopsLoading } = useActiveShops()
+  
+  // Get investor ID from current user
+  const investorId = user?.id
 
   const form = useForm<InvestmentFormValues>({
     resolver: yupResolver(investmentSchema),
@@ -97,7 +152,7 @@ export const CreateInvestmentPage: React.FC = () => {
   const investmentType = watch('investmentType')
   const shopId = watch('shopId')
   
-  // Get selected shop name
+  // Get selected shop for display in review section
   const selectedShop = shops.find(shop => shop.id === shopId)
 
   // Calculate investment preview
@@ -123,6 +178,12 @@ export const CreateInvestmentPage: React.FC = () => {
   }, [amount, profitPercentage, duration])
 
   const onSubmit = async (data: InvestmentFormValues) => {
+    if (!investorId) {
+      toast.error('User ID not found. Please log in again.')
+      console.error('User ID not found')
+      return
+    }
+
     try {
       const maturityDate = investmentPreview.maturityDate
         ? investmentPreview.maturityDate.toISOString()
@@ -130,6 +191,7 @@ export const CreateInvestmentPage: React.FC = () => {
 
       // Build payload with only defined optional fields (exactOptionalPropertyTypes compliance)
       const payload: InvestmentCreateRequest = {
+        investorId, // Add investor ID from current user
         shopId: data.shopId,
         investmentType: data.investmentType as InvestmentType,
         amount: data.amount,
@@ -160,11 +222,24 @@ export const CreateInvestmentPage: React.FC = () => {
       }
 
       await createInvestment.mutateAsync(payload)
-
+      toast.success('Investment created successfully!')
       navigate('/investments')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create investment:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to create investment'
+      toast.error(errorMessage)
     }
+  }
+
+  // Handle form errors and show toast
+  const onError = (errors: any) => {
+    console.log('Form validation errors:', errors)
+    
+    // Get first error message
+    const firstError = Object.values(errors)[0] as any
+    const errorMessage = firstError?.message || 'Please fix the form errors'
+    
+    toast.error(errorMessage)
   }
 
   const handleNext = () => {
@@ -227,7 +302,7 @@ export const CreateInvestmentPage: React.FC = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit, onError)}>
         {/* Step 1: Basic Information */}
         {currentStep === 1 && (
           <Card>
@@ -240,7 +315,7 @@ export const CreateInvestmentPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="shopId">Shop *</Label>
                 <Select
-                  value={watch('shopId')}
+                  value={shopId || undefined}
                   onValueChange={(value) => setValue('shopId', value)}
                   disabled={shopsLoading}
                 >
@@ -279,7 +354,11 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value={InvestmentType.SHOP_WIDE}
                       checked={investmentType === InvestmentType.SHOP_WIDE}
-                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      onChange={(e) => {
+                        setValue('investmentType', e.target.value as InvestmentType)
+                        setValue('productIds', []) // Clear products
+                        setValue('categoryFilter', '') // Clear category
+                      }}
                       className="text-blue-600"
                     />
                     <div className="flex-1">
@@ -298,7 +377,10 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value={InvestmentType.PRODUCT_SPECIFIC}
                       checked={investmentType === InvestmentType.PRODUCT_SPECIFIC}
-                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      onChange={(e) => {
+                        setValue('investmentType', e.target.value as InvestmentType)
+                        setValue('categoryFilter', '') // Clear category
+                      }}
                       className="text-blue-600"
                     />
                     <div className="flex-1">
@@ -310,20 +392,23 @@ export const CreateInvestmentPage: React.FC = () => {
                   </label>
                   <label
                     className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition ${
-                      investmentType === InvestmentType.CATEGORY_BASED ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      investmentType === InvestmentType.CATEGORY_SPECIFIC ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                     }`}
                   >
                     <input
                       type="radio"
-                      value={InvestmentType.CATEGORY_BASED}
-                      checked={investmentType === InvestmentType.CATEGORY_BASED}
-                      onChange={(e) => setValue('investmentType', e.target.value as InvestmentType)}
+                      value={InvestmentType.CATEGORY_SPECIFIC}
+                      checked={investmentType === InvestmentType.CATEGORY_SPECIFIC}
+                      onChange={(e) => {
+                        setValue('investmentType', e.target.value as InvestmentType)
+                        setValue('productIds', []) // Clear products
+                      }}
                       className="text-blue-600"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">Category-Based</div>
+                      <div className="font-medium">Category-Specific</div>
                       <div className="text-sm text-muted-foreground">
-                        Invest in product categories
+                        Invest in specific product categories
                       </div>
                     </div>
                   </label>
@@ -345,7 +430,7 @@ export const CreateInvestmentPage: React.FC = () => {
                     {...register('amount', { valueAsNumber: true })}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">Minimum: $1,000</p>
+                <p className="text-sm text-muted-foreground">Minimum: ₦1,000</p>
                 {errors.amount && (
                   <p className="text-sm text-red-600">{errors.amount.message}</p>
                 )}
@@ -382,7 +467,10 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value="PROPORTIONAL_BY_AMOUNT"
                       checked={watch('profitSharingModel') === 'PROPORTIONAL_BY_AMOUNT'}
-                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      onChange={(e) => {
+                        setValue('profitSharingModel', e.target.value as any)
+                        setValue('fixedShares', undefined) // Clear fixed shares
+                      }}
                       className="text-blue-600"
                     />
                     <div>
@@ -399,7 +487,10 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value="FIXED_SHARES"
                       checked={watch('profitSharingModel') === 'FIXED_SHARES'}
-                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      onChange={(e) => {
+                        setValue('profitSharingModel', e.target.value as any)
+                        setValue('profitPercentage', undefined) // Clear percentage
+                      }}
                       className="text-blue-600"
                     />
                     <div>
@@ -416,7 +507,10 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value="TIME_WEIGHTED"
                       checked={watch('profitSharingModel') === 'TIME_WEIGHTED'}
-                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      onChange={(e) => {
+                        setValue('profitSharingModel', e.target.value as any)
+                        setValue('fixedShares', undefined) // Clear fixed shares
+                      }}
                       className="text-blue-600"
                     />
                     <div>
@@ -433,7 +527,10 @@ export const CreateInvestmentPage: React.FC = () => {
                       type="radio"
                       value="TIERED"
                       checked={watch('profitSharingModel') === 'TIERED'}
-                      onChange={(e) => setValue('profitSharingModel', e.target.value as any)}
+                      onChange={(e) => {
+                        setValue('profitSharingModel', e.target.value as any)
+                        setValue('fixedShares', undefined) // Clear fixed shares
+                      }}
                       className="text-blue-600"
                     />
                     <div>
@@ -714,8 +811,19 @@ export const CreateInvestmentPage: React.FC = () => {
                   <Button type="button" variant="outline">
                     Save as Draft
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Investment'}
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting || createInvestment.isPending}
+                    className="min-w-[160px]"
+                  >
+                    {(isSubmitting || createInvestment.isPending) ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit Investment'
+                    )}
                   </Button>
                 </div>
               </div>

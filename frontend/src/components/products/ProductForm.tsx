@@ -14,10 +14,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Sparkles } from 'lucide-react'
 import { Product, ProductStatus } from '@/types/api'
 import { productService } from '@/services/productService'
-import { useProductCategories } from '@/hooks/useProducts'
+import { useCategories } from '@/hooks/useCategories'
 
 const productSchema = yup.object({
   name: yup.string()
@@ -27,9 +28,9 @@ const productSchema = yup.object({
   description: yup.string()
     .optional()
     .max(1000, 'Description must be at most 1000 characters'),
-  category: yup.string()
-    .required('Category is required')
-    .min(2, 'Category must be at least 2 characters'),
+  categoryId: yup.string()
+    .required('Category is required'),
+  category: yup.string().optional(), // For display only
   price: yup.number()
     .typeError('Price must be a number')
     .required('Price is required')
@@ -41,6 +42,20 @@ const productSchema = yup.object({
     .optional()
     .nullable()
     .transform((value, originalValue) => originalValue === '' ? null : value),
+  unit: yup.string().optional(),
+  weightInGrams: yup.number()
+    .typeError('Weight must be a number')
+    .min(0, 'Weight must be 0 or greater')
+    .optional()
+    .nullable()
+    .transform((value, originalValue) => originalValue === '' ? null : value),
+  location: yup.string().optional(),
+  dimensions: yup.string().optional(),
+  supplierName: yup.string().optional(),
+  supplierContact: yup.string().optional(),
+  imageUrl: yup.string().url('Must be a valid URL').optional(),
+  isTaxable: yup.boolean().optional(),
+  isDiscountable: yup.boolean().optional(),
   sku: yup.string()
     .optional()
     .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
@@ -67,7 +82,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onCancel,
   isSubmitting = false,
 }) => {
-  const { data: categories = [], isLoading: categoriesLoading } = useProductCategories()
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories()
 
   const {
     register,
@@ -80,16 +95,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     defaultValues: {
       name: product?.name || '',
       description: product?.description || '',
-      category: product?.category || '',
+      categoryId: product?.categoryId || '',
+      category: product?.category || '', // For display
       price: product?.price || 0,
       costPrice: product?.costPrice || undefined,
+      unit: '',
+      weightInGrams: undefined,
+      location: '',
+      dimensions: '',
+      supplierName: '',
+      supplierContact: '',
+      imageUrl: '',
+      isTaxable: true,
+      isDiscountable: true,
       sku: product?.sku || '',
       barcode: product?.barcode || '',
       status: product?.status || ProductStatus.ACTIVE,
     },
   })
 
-  const category = watch('category')
+  const categoryId = watch('categoryId')
   const status = watch('status')
 
   const handleGenerateSKU = () => {
@@ -144,7 +169,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category">
+            <Label htmlFor="categoryId">
               Category <span className="text-red-500">*</span>
             </Label>
             {categoriesLoading ? (
@@ -152,36 +177,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading categories...
               </div>
+            ) : categories.length === 0 ? (
+              <div className="text-sm text-gray-500">
+                No categories available. Please create a category first.
+              </div>
             ) : (
-              <>
-                <Select
-                  value={category}
-                  onValueChange={(value) => setValue('category', value)}
-                  disabled={isSubmitting}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="__new__">+ Add New Category</SelectItem>
-                  </SelectContent>
-                </Select>
-                {category === '__new__' && (
-                  <Input
-                    placeholder="Enter new category name"
-                    onChange={(e) => setValue('category', e.target.value)}
-                    disabled={isSubmitting}
-                  />
-                )}
-              </>
+              <Select
+                value={categoryId}
+                onValueChange={(value) => {
+                  setValue('categoryId', value)
+                  const selectedCat = categories.find(c => c.id === value)
+                  if (selectedCat) {
+                    setValue('category', selectedCat.name)
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            {errors.category && (
-              <p className="text-sm text-red-500">{errors.category.message}</p>
+            {errors.categoryId && (
+              <p className="text-sm text-red-500">{errors.categoryId.message}</p>
             )}
           </div>
 
@@ -267,6 +292,137 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             {errors.barcode && (
               <p className="text-sm text-red-500">{errors.barcode.message}</p>
             )}
+          </div>
+
+          {/* Unit and Weight */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="unit">Unit</Label>
+              <Input
+                id="unit"
+                {...register('unit')}
+                placeholder="e.g., bottle, pack, kg"
+                disabled={isSubmitting}
+              />
+              {errors.unit && (
+                <p className="text-sm text-red-500">{errors.unit.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="weightInGrams">Weight (grams)</Label>
+              <Input
+                id="weightInGrams"
+                type="number"
+                step="0.01"
+                {...register('weightInGrams')}
+                placeholder="520.5"
+                disabled={isSubmitting}
+              />
+              {errors.weightInGrams && (
+                <p className="text-sm text-red-500">{errors.weightInGrams.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Location and Dimensions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                {...register('location')}
+                placeholder="Aisle 3, Shelf B"
+                disabled={isSubmitting}
+              />
+              {errors.location && (
+                <p className="text-sm text-red-500">{errors.location.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dimensions">Dimensions</Label>
+              <Input
+                id="dimensions"
+                {...register('dimensions')}
+                placeholder="20cm x 10cm x 25cm"
+                disabled={isSubmitting}
+              />
+              {errors.dimensions && (
+                <p className="text-sm text-red-500">{errors.dimensions.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Supplier Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="supplierName">Supplier Name</Label>
+              <Input
+                id="supplierName"
+                {...register('supplierName')}
+                placeholder="Coca-Cola Bottling Company"
+                disabled={isSubmitting}
+              />
+              {errors.supplierName && (
+                <p className="text-sm text-red-500">{errors.supplierName.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplierContact">Supplier Contact</Label>
+              <Input
+                id="supplierContact"
+                {...register('supplierContact')}
+                placeholder="+234-800-COCA-COLA"
+                disabled={isSubmitting}
+              />
+              {errors.supplierContact && (
+                <p className="text-sm text-red-500">{errors.supplierContact.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Image URL */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              {...register('imageUrl')}
+              placeholder="https://cdn.example.com/products/product-image.jpg"
+              disabled={isSubmitting}
+            />
+            {errors.imageUrl && (
+              <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
+            )}
+          </div>
+
+          {/* Tax and Discount Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isTaxable"
+                checked={watch('isTaxable') ?? true}
+                onCheckedChange={(checked) => setValue('isTaxable', checked === true)}
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="isTaxable" className="cursor-pointer">
+                Taxable Product
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isDiscountable"
+                checked={watch('isDiscountable') ?? true}
+                onCheckedChange={(checked) => setValue('isDiscountable', checked === true)}
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="isDiscountable" className="cursor-pointer">
+                Discountable Product
+              </Label>
+            </div>
           </div>
 
           {/* Status (only show for edit mode) */}
