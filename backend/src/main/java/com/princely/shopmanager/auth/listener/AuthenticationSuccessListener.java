@@ -47,13 +47,15 @@ public class AuthenticationSuccessListener {
     }
 
     /**
-     * Syncs user to database.
+     * Syncs user to database and enriches the principal with database User ID.
      * This could be made truly async with @Async if needed.
      */
     private void syncUserAsync(JwtPrincipal principal) {
         try {
-            userSyncService.syncUserFromKeycloak(principal);
-            log.debug("User synced successfully: {}", principal.getUsername());
+            var user = userSyncService.syncUserFromKeycloak(principal);
+            // Enrich principal with database User ID
+            principal.setUserId(user.getId());
+            log.debug("User synced successfully: {}, userId: {}", principal.getUsername(), user.getId());
         } catch (Exception e) {
             log.error("Failed to sync user {}: {}", principal.getUsername(), e.getMessage(), e);
         }

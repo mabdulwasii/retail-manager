@@ -17,7 +17,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class JwtPrincipal {
 
-    private String subject;
+    private String subject; // Keycloak user ID from JWT 'sub' claim
+    private String userId; // Database User ID (set after user lookup/sync)
     private String preferredUsername;
     private String tenantId;
     private String shopId;
@@ -120,7 +121,14 @@ public class JwtPrincipal {
         return preferredUsername != null ? preferredUsername : email;
     }
 
+    /**
+     * Get the database User ID.
+     * This is set after user lookup/sync and represents the internal database user ID.
+     * For Keycloak ID, use getSubject().
+     *
+     * @return Database user ID, or null if not yet set
+     */
     public String getUserId() {
-        return subject;
+        return userId;
     }
 }

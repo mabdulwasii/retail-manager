@@ -102,7 +102,7 @@ public class InvestmentController {
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<InvestmentResponse> response = investmentService.getInvestmentsByInvestor(principal.getSubject(), pageable);
+        Page<InvestmentResponse> response = investmentService.getInvestmentsByInvestor(principal.getUserId(), pageable);
         return ResponseEntity.ok(response);
     }
 

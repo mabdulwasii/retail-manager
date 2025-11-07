@@ -120,56 +120,11 @@ public class UserSyncService {
     private User updateUserFromJwt(User user, JwtPrincipal principal) {
         boolean updated = false;
 
-        // Update basic profile information
-        if (!principal.getEmail().equals(user.getEmail())) {
-            user.setEmail(principal.getEmail());
-            updated = true;
-        }
-
-        // Only update firstName if JWT has a value, or if DB value is null/empty
-        if (principal.getFirstName() != null && !principal.getFirstName().isEmpty()
-            && !principal.getFirstName().equals(user.getFirstName())) {
-            user.setFirstName(principal.getFirstName());
-            updated = true;
-        } else if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
-            user.setFirstName(principal.getFirstName() != null ? principal.getFirstName() : "");
-            updated = true;
-        }
-
-        // Only update lastName if JWT has a value, or if DB value is null/empty
-        if (principal.getLastName() != null && !principal.getLastName().isEmpty()
-            && !principal.getLastName().equals(user.getLastName())) {
-            user.setLastName(principal.getLastName());
-            updated = true;
-        } else if (user.getLastName() == null || user.getLastName().isEmpty()) {
-            user.setLastName(principal.getLastName() != null ? principal.getLastName() : "");
-            updated = true;
-        }
-
-        // Only update phoneNumber if JWT has a value, or if DB value is null/empty/N/A
-        if (principal.getPhoneNumber() != null && !principal.getPhoneNumber().isEmpty()
-            && !principal.getPhoneNumber().equals(user.getPhoneNumber())) {
-            user.setPhoneNumber(principal.getPhoneNumber());
-            updated = true;
-        } else if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
-            user.setPhoneNumber("N/A");
-            updated = true;
-        }
-
-        if (!principal.getUsername().equals(user.getUsername())) {
-            user.setUsername(principal.getUsername());
-            updated = true;
-        }
-
-        // Ensure user is active
-        if (user.getStatus() != User.UserStatus.ACTIVE) {
-            user.setStatus(User.UserStatus.ACTIVE);
-            updated = true;
-        }
-
-        // Sync roles from JWT
-        boolean rolesUpdated = syncRolesFromJwt(user, principal.getRoles());
-        updated = updated || rolesUpdated;
+        updated |= updateBasicProfile(user, principal);
+        updated |= updateName(user, principal);
+        updated |= updatePhoneNumber(user, principal);
+        updated |= updateStatus(user);
+        updated |= syncRolesFromJwt(user, principal.getRoles());
 
         if (updated) {
             user = userRepository.save(user);
@@ -179,6 +134,82 @@ public class UserSyncService {
         }
 
         return user;
+    }
+
+    /**
+     * Updates basic profile fields (email, username).
+     */
+    private boolean updateBasicProfile(User user, JwtPrincipal principal) {
+        boolean updated = false;
+
+        if (!principal.getEmail().equals(user.getEmail())) {
+            user.setEmail(principal.getEmail());
+            updated = true;
+        }
+
+        if (!principal.getUsername().equals(user.getUsername())) {
+            user.setUsername(principal.getUsername());
+            updated = true;
+        }
+
+        return updated;
+    }
+
+    /**
+     * Updates name fields (firstName, lastName).
+     * Only updates if JWT has a value, or if DB value is null/empty.
+     */
+    private boolean updateName(User user, JwtPrincipal principal) {
+        boolean updated = false;
+
+        // Update firstName
+        if (principal.getFirstName() != null && !principal.getFirstName().isEmpty()
+            && !principal.getFirstName().equals(user.getFirstName())) {
+            user.setFirstName(principal.getFirstName());
+            updated = true;
+        } else if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
+            user.setFirstName(principal.getFirstName() != null ? principal.getFirstName() : "");
+            updated = true;
+        }
+
+        // Update lastName
+        if (principal.getLastName() != null && !principal.getLastName().isEmpty()
+            && !principal.getLastName().equals(user.getLastName())) {
+            user.setLastName(principal.getLastName());
+            updated = true;
+        } else if (user.getLastName() == null || user.getLastName().isEmpty()) {
+            user.setLastName(principal.getLastName() != null ? principal.getLastName() : "");
+            updated = true;
+        }
+
+        return updated;
+    }
+
+    /**
+     * Updates phone number field.
+     * Only updates if JWT has a value, or if DB value is null/empty/N/A.
+     */
+    private boolean updatePhoneNumber(User user, JwtPrincipal principal) {
+        if (principal.getPhoneNumber() != null && !principal.getPhoneNumber().isEmpty()
+            && !principal.getPhoneNumber().equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(principal.getPhoneNumber());
+            return true;
+        } else if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
+            user.setPhoneNumber("N/A");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Ensures user status is ACTIVE.
+     */
+    private boolean updateStatus(User user) {
+        if (user.getStatus() != User.UserStatus.ACTIVE) {
+            user.setStatus(User.UserStatus.ACTIVE);
+            return true;
+        }
+        return false;
     }
 
     /**
