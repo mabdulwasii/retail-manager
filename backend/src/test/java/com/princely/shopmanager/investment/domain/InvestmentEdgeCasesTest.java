@@ -31,14 +31,22 @@ class InvestmentEdgeCasesTest {
             .email("investor@test.com")
             .build();
 
+        InvestmentRound round = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TEST-2025-Q1-001")
+            .shop(shop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .build();
+
         investment = Investment.builder()
             .id("investment-1")
             .investmentNumber("INV-001")
             .shop(shop)
             .investor(investor)
             .amount(new BigDecimal("10000.00"))
-            .investmentType(Investment.InvestmentType.SHOP_WIDE)
-            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .investmentRound(round)
             .investmentDate(LocalDateTime.now())
             .build();
     }
@@ -103,8 +111,7 @@ class InvestmentEdgeCasesTest {
             .amount(new BigDecimal("5000.00"))
             .build();
 
-        // Then
-        assertNotNull(newInvestment.getProducts());
+        // Then - products removed from Investment entity
         assertEquals(Investment.InvestmentStatus.ACTIVE, newInvestment.getStatus());
         assertEquals(BigDecimal.ZERO, newInvestment.getTotalProfitEarned());
         assertEquals(BigDecimal.ZERO, newInvestment.getTotalWithdrawn());

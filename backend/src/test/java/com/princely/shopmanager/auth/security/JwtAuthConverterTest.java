@@ -1,5 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
+import com.princely.shopmanager.core.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -17,13 +18,15 @@ import static org.mockito.Mockito.*;
 class JwtAuthConverterTest {
 
     private JwtAuthConverter jwtAuthConverter;
+    private UserRepository userRepository;
     private Jwt mockJwt;
     private Instant now;
     private Instant futureExpiry;
 
     @BeforeEach
     void setUp() {
-        jwtAuthConverter = new JwtAuthConverter();
+        userRepository = mock(UserRepository.class);
+        jwtAuthConverter = new JwtAuthConverter(userRepository);
         ReflectionTestUtils.setField(jwtAuthConverter, "clientId", "shop-manager");
 
         now = Instant.now();
