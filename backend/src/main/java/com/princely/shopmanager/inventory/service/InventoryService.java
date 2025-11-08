@@ -11,6 +11,7 @@ import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
+import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
@@ -50,8 +51,7 @@ public class InventoryService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public InventoryResponse createInventory(InventoryCreateRequest request) {
-        String shopId = TenantContext.getCurrentTenant();
+    public InventoryResponse createInventory(String shopId, InventoryCreateRequest request) {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new EntityNotFoundException("Shop not found"));
 
@@ -245,6 +245,104 @@ public class InventoryService {
         ));
 
         return mapToResponse(inventory);
+    }
+
+    public InventoryResponse updateInventory(String inventoryId, InventoryUpdateRequest request) {
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+
+        // Track changes for audit
+        StringBuilder changes = new StringBuilder();
+
+        if (request.getBatchNumber() != null) {
+            String oldValue = inventory.getBatchNumber();
+            inventory.setBatchNumber(request.getBatchNumber());
+            changes.append(String.format("Batch number: %s → %s; ", oldValue, request.getBatchNumber()));
+        }
+
+        if (request.getLocation() != null) {
+            String oldValue = inventory.getLocation();
+            inventory.setLocation(request.getLocation());
+            changes.append(String.format("Location: %s → %s; ", oldValue, request.getLocation()));
+        }
+
+        if (request.getExpiryDate() != null) {
+            LocalDate oldValue = inventory.getExpiryDate();
+            inventory.setExpiryDate(request.getExpiryDate());
+            changes.append(String.format("Expiry date: %s → %s; ", oldValue, request.getExpiryDate()));
+        }
+
+        if (request.getMinimumStock() != null) {
+            Integer oldValue = inventory.getMinimumStock();
+            inventory.setMinimumStock(request.getMinimumStock());
+            changes.append(String.format("Min stock: %s → %s; ", oldValue, request.getMinimumStock()));
+        }
+
+        if (request.getMaximumStock() != null) {
+            Integer oldValue = inventory.getMaximumStock();
+            inventory.setMaximumStock(request.getMaximumStock());
+            changes.append(String.format("Max stock: %s → %s; ", oldValue, request.getMaximumStock()));
+        }
+
+        if (request.getReorderPoint() != null) {
+            Integer oldValue = inventory.getReorderPoint();
+            inventory.setReorderPoint(request.getReorderPoint());
+            changes.append(String.format("Reorder point: %s → %s; ", oldValue, request.getReorderPoint()));
+        }
+
+        if (request.getUnitCost() != null) {
+            BigDecimal oldValue = inventory.getUnitCost();
+            inventory.setUnitCost(request.getUnitCost());
+            changes.append(String.format("Unit cost: %s → %s; ", oldValue, request.getUnitCost()));
+        }
+
+        inventory = inventoryRepository.save(inventory);
+
+        auditService.logEntityModification("Inventory", inventory.getId(),
+            "Updated inventory: " + changes.toString());
+
+        // Publish inventory updated event
+        eventPublisher.publishEvent(new InventoryUpdatedEvent(
+            inventory.getId(),
+            inventory.getProduct().getId(),
+            inventory.getShop().getId(),
+            0, // previousValue - not applicable for metadata update
+            0, // newValue - not applicable for metadata update
+            "METADATA_UPDATE"
+        ));
+
+        return mapToResponse(inventory);
+    }
+
+    public void deleteInventory(String inventoryId) {
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+
+        // Validate: Cannot delete inventory with active stock
+        if (inventory.getCurrentStock() > 0) {
+            throw new IllegalStateException(
+                String.format("Cannot delete inventory with active stock. Current stock: %d. " +
+                    "Please adjust stock to zero before deleting.", inventory.getCurrentStock()));
+        }
+
+        // Validate: Cannot delete inventory with reserved stock
+        if (inventory.getReservedStock() > 0) {
+            throw new IllegalStateException(
+                String.format("Cannot delete inventory with reserved stock. Reserved: %d. " +
+                    "Please release all reservations before deleting.", inventory.getReservedStock()));
+        }
+
+        String productName = inventory.getProduct().getName();
+        String shopId = inventory.getShop().getId();
+
+        // Delete inventory
+        inventoryRepository.delete(inventory);
+
+        auditService.logEntityDeletion("Inventory", inventoryId,
+            String.format("Deleted inventory for product: %s (batch: %s)",
+                productName, inventory.getBatchNumber()));
+
+        log.info("Deleted inventory {} for product {} in shop {}", inventoryId, productName, shopId);
     }
 
     // Advanced Inventory Management Features

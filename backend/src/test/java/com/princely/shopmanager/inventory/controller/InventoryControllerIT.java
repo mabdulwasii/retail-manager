@@ -1,11 +1,10 @@
 package com.princely.shopmanager.inventory.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.dto.ProductCreateRequest;
-import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
+import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.test.TestConstants;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
@@ -310,15 +309,183 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .andExpect(status().isForbidden());
     }
 
+    // ============== Update Inventory Tests ==============
+
+    @Test
+    @DisplayName("OWNER should update inventory metadata")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void ownerShouldUpdateInventoryMetadata() throws Exception {
+        // Create product and inventory first
+        ProductCreateRequest productRequest = ProductCreateRequest.builder()
+            .name("Update Test Product")
+            .sku("UPD-TEST-001")
+            .price(BigDecimal.valueOf(45.00))
+            .categoryId(TestConstants.CAT_ELECTRONICS)
+            .build();
+
+        String productResponse = mockMvc.perform(post("/api/shops/{shopId}/products", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(productRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String productId = objectMapper.readTree(productResponse).get("id").asText();
+
+        InventoryCreateRequest createRequest = InventoryCreateRequest.builder()
+            .productId(productId)
+            .currentStock(0)  // Zero stock so we can delete later
+            .batchNumber("OLD-BATCH")
+            .location("Old Location")
+            .unitCost(BigDecimal.valueOf(35.00))
+            .minimumStock(5)
+            .build();
+
+        String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String inventoryId = objectMapper.readTree(inventoryResponse).get("id").asText();
+
+        // Update inventory metadata
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .batchNumber("NEW-BATCH")
+            .location("New Location")
+            .expiryDate(LocalDate.now().plusMonths(12))
+            .minimumStock(10)
+            .maximumStock(500)
+            .reorderPoint(30)
+            .unitCost(BigDecimal.valueOf(38.00))
+            .build();
+
+        mockMvc.perform(put("/api/inventory/{inventoryId}", inventoryId)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(inventoryId));
+    }
+
+    @Test
+    @DisplayName("MANAGER should update inventory metadata")
+    @WithMockPermissions(role = "MANAGER")
+    void managerShouldUpdateInventoryMetadata() throws Exception {
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .location("Manager Updated Location")
+            .minimumStock(15)
+            .build();
+
+        mockMvc.perform(put("/api/inventory/{inventoryId}", "any-id")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+            .andExpect(status().isNotFound()); // 404 not 403
+    }
+
+    @Test
+    @DisplayName("EMPLOYEE should NOT update inventory metadata")
+    @WithMockPermissions(role = "EMPLOYEE")
+    void employeeShouldNotUpdateInventoryMetadata() throws Exception {
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .location("Test Location")
+            .build();
+
+        mockMvc.perform(put("/api/inventory/{inventoryId}", "any-id")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+            .andExpect(status().isForbidden());
+    }
+
     // ============== Delete Inventory Tests ==============
 
     @Test
-    @DisplayName("OWNER should delete inventory")
-    @WithMockPermissions(role = "OWNER")
-    void ownerShouldDeleteInventory() throws Exception {
-        mockMvc.perform(delete("/api/inventory/{inventoryId}", "any-id")
+    @DisplayName("OWNER should delete inventory with zero stock")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void ownerShouldDeleteInventoryWithZeroStock() throws Exception {
+        // Create product and inventory with zero stock
+        ProductCreateRequest productRequest = ProductCreateRequest.builder()
+            .name("Delete Test Product")
+            .sku("DEL-TEST-001")
+            .price(BigDecimal.valueOf(25.00))
+            .categoryId(TestConstants.CAT_ELECTRONICS)
+            .build();
+
+        String productResponse = mockMvc.perform(post("/api/shops/{shopId}/products", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(productRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String productId = objectMapper.readTree(productResponse).get("id").asText();
+
+        InventoryCreateRequest createRequest = InventoryCreateRequest.builder()
+            .productId(productId)
+            .currentStock(0)  // Zero stock so we can delete
+            .batchNumber("DEL-BATCH")
+            .unitCost(BigDecimal.valueOf(20.00))
+            .build();
+
+        String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String inventoryId = objectMapper.readTree(inventoryResponse).get("id").asText();
+
+        // Delete inventory
+        mockMvc.perform(delete("/api/inventory/{inventoryId}", inventoryId)
                 .with(csrf()))
-            .andExpect(status().isNotFound()); // 404 not 403, proving permission is granted
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("OWNER should NOT delete inventory with active stock")
+    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    void ownerShouldNotDeleteInventoryWithActiveStock() throws Exception {
+        // Create product and inventory with stock
+        ProductCreateRequest productRequest = ProductCreateRequest.builder()
+            .name("Active Stock Product")
+            .sku("STOCK-TEST-001")
+            .price(BigDecimal.valueOf(35.00))
+            .categoryId(TestConstants.CAT_ELECTRONICS)
+            .build();
+
+        String productResponse = mockMvc.perform(post("/api/shops/{shopId}/products", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(productRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String productId = objectMapper.readTree(productResponse).get("id").asText();
+
+        InventoryCreateRequest createRequest = InventoryCreateRequest.builder()
+            .productId(productId)
+            .currentStock(50)  // Has stock
+            .batchNumber("STOCK-BATCH")
+            .unitCost(BigDecimal.valueOf(30.00))
+            .build();
+
+        String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String inventoryId = objectMapper.readTree(inventoryResponse).get("id").asText();
+
+        // Try to delete inventory with stock
+        mockMvc.perform(delete("/api/inventory/{inventoryId}", inventoryId)
+                .with(csrf()))
+            .andExpect(status().isBadRequest());
     }
 
     @Test

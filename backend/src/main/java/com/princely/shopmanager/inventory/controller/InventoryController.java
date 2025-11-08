@@ -8,6 +8,7 @@ import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
+import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.specification.InventorySpecifications;
 import com.princely.shopmanager.inventory.service.InventoryService;
@@ -68,7 +69,7 @@ public class InventoryController {
         log.info("Creating inventory item for shop: {}, product: {}, user: {}",
                 shopId, request.getProductId(), principal.getUsername());
 
-        InventoryResponse response = inventoryService.createInventory(request);
+        InventoryResponse response = inventoryService.createInventory(shopId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -241,6 +242,47 @@ public class InventoryController {
 
         InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Update inventory metadata",
+        description = "Update inventory information such as batch number, location, expiry date, and stock thresholds. Does NOT update stock quantities - use adjust-stock endpoint for that."
+    )
+    @ApiResponse(responseCode = "200", description = "Inventory updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Inventory item not found")
+    @PutMapping("/inventory/{inventoryId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_UPDATE)")
+    public ResponseEntity<InventoryResponse> updateInventory(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @Valid @RequestBody InventoryUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Updating inventory metadata: {}, user: {}", inventoryId, principal.getUsername());
+
+        InventoryResponse response = inventoryService.updateInventory(inventoryId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Delete inventory item",
+        description = "Delete an inventory item. Can only delete items with zero current stock and zero reserved stock."
+    )
+    @ApiResponse(responseCode = "204", description = "Inventory deleted successfully")
+    @ApiResponse(responseCode = "400", description = "Cannot delete inventory with active or reserved stock")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Inventory item not found")
+    @DeleteMapping("/inventory/{inventoryId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_DELETE)")
+    public ResponseEntity<Void> deleteInventory(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Deleting inventory: {}, user: {}", inventoryId, principal.getUsername());
+
+        inventoryService.deleteInventory(inventoryId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
