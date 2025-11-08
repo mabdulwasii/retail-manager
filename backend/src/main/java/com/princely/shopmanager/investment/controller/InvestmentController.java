@@ -40,25 +40,25 @@ public class InvestmentController {
 
     private final InvestmentService investmentService;
 
+    /**
+     * @deprecated Use InvestmentRoundController to create investment rounds with multiple investors.
+     * This endpoint is kept for backward compatibility but should not be used for new implementations.
+     */
+    @Deprecated(since = "2.0", forRemoval = true)
     @Operation(
-        summary = "Create new investment",
-        description = "Create a new investment in a shop or specific products"
+        summary = "[DEPRECATED] Create new investment",
+        description = "DEPRECATED: Use POST /api/shops/{shopId}/investment-rounds instead. " +
+            "This endpoint is maintained for backward compatibility only."
     )
-    @ApiResponse(responseCode = "201", description = "Investment created successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid request data")
-    @ApiResponse(responseCode = "403", description = "Access denied")
-    @ApiResponse(responseCode = "404", description = "Shop or products not found")
+    @ApiResponse(responseCode = "501", description = "Not implemented - use investment rounds instead")
     @PostMapping("/investments")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_CREATE)")
-    public ResponseEntity<InvestmentResponse> createInvestment(
+    public ResponseEntity<String> createInvestment(
             @Valid @RequestBody InvestmentCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        log.info("Creating investment for shop: {}, investor: {}, user: {}",
-                request.getShopId(), request.getInvestorId(), principal.getUsername());
-
-        InvestmentResponse response = investmentService.createInvestment(request, request.getInvestorId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+            .body("This endpoint is deprecated. Please use POST /api/shops/{shopId}/investment-rounds to create investment rounds.");
     }
 
     @Operation(

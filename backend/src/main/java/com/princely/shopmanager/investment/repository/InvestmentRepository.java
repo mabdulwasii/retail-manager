@@ -56,4 +56,24 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
 
     @Query("SELECT i FROM Investment i WHERE i.investor.id = :investorId")
     Page<Investment> findByInvestorId(@Param("investorId") String investorId, Pageable pageable);
+
+    /**
+     * Calculate total investment amount in a specific round.
+     * Used for PROPORTIONAL_BY_AMOUNT profit calculations.
+     *
+     * @param roundId Investment round ID
+     * @return Total amount invested in the round
+     */
+    @Query("SELECT SUM(i.amount) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    java.math.BigDecimal sumAmountByInvestmentRoundId(@Param("roundId") String roundId);
+
+    /**
+     * Calculate total fixed shares in a specific round.
+     * Used for FIXED_SHARES profit calculations.
+     *
+     * @param roundId Investment round ID
+     * @return Total shares allocated in the round
+     */
+    @Query("SELECT SUM(i.fixedShares) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    Integer sumFixedSharesByInvestmentRoundId(@Param("roundId") String roundId);
 }

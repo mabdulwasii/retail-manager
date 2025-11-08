@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -42,51 +43,14 @@ public class InvestmentService {
     private final ProductRepository productRepository;
     private final AuditService auditService;
 
+    /**
+     * @deprecated Use InvestmentRoundService.createInvestmentRound() instead.
+     * This method is deprecated as part of the investment round redesign.
+     */
+    @Deprecated(since = "2.0", forRemoval = true)
     public InvestmentResponse createInvestment(InvestmentCreateRequest request, String investorId) {
-        log.info("Creating investment for investor: {}, shop: {}", investorId, request.getShopId());
-
-        User investor = userRepository.findById(investorId)
-            .orElseThrow(() -> new EntityNotFoundException("Investor not found"));
-
-        Shop shop = shopRepository.findById(request.getShopId())
-            .orElseThrow(() -> new EntityNotFoundException("Shop not found"));
-
-        // Validate products if specified
-        Set<Product> products = Set.of();
-        if (request.getProductIds() != null && !request.getProductIds().isEmpty()) {
-            products = new HashSet<>(productRepository.findAllById(request.getProductIds()));
-
-            if (products.size() != request.getProductIds().size()) {
-                throw new IllegalArgumentException("Some specified products were not found");
-            }
-        }
-
-        // Generate investment number
-        String investmentNumber = generateInvestmentNumber();
-
-        Investment investment = Investment.builder()
-            .investmentNumber(investmentNumber)
-            .investor(investor)
-            .shop(shop)
-            .investmentType(request.getInvestmentType())
-            .amount(request.getAmount())
-            .profitSharingModel(request.getProfitSharingModel())
-            .profitPercentage(request.getProfitPercentage())
-            .fixedShares(request.getFixedShares())
-            .investmentDate(LocalDateTime.now())
-            .maturityDate(request.getMaturityDate())
-            .products(products)
-            .notes(request.getNotes())
-            .status(Investment.InvestmentStatus.ACTIVE)
-            .build();
-
-        investment = investmentRepository.save(investment);
-
-        auditService.logEntityCreation("Investment", investment.getId(),
-            String.format("Created investment %s for ₦%s by investor %s",
-                investmentNumber, request.getAmount(), investor.getEmail()));
-
-        return mapToResponse(investment);
+        throw new UnsupportedOperationException(
+            "Direct investment creation is deprecated. Use InvestmentRoundService to create investment rounds.");
     }
 
     @Transactional(readOnly = true)
@@ -206,14 +170,20 @@ public class InvestmentService {
     }
 
     private InvestmentResponse mapToResponse(Investment investment) {
-        Set<InvestmentResponse.ProductInfo> productInfos = investment.getProducts().stream()
-            .map(product -> InvestmentResponse.ProductInfo.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .category(product.getCategory() != null ? product.getCategory().getName() : null)
-                .price(product.getPrice())
-                .build())
-            .collect(Collectors.toSet());
+        // Products removed - now handled by investment round configuration
+        Set<InvestmentResponse.ProductInfo> productInfos = Set.of();
+
+        // Calculate profit percentage dynamically based on round
+        BigDecimal profitPercentage = BigDecimal.ZERO;
+        if (investment.getInvestmentRound() != null) {
+            var round = investment.getInvestmentRound();
+            var totalAmount = investmentRepository.sumAmountByInvestmentRoundId(round.getId());
+            if (totalAmount != null && totalAmount.compareTo(BigDecimal.ZERO) > 0) {
+                profitPercentage = investment.getAmount()
+                    .divide(totalAmount, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+            }
+        }
 
         return InvestmentResponse.builder()
             .id(investment.getId())
@@ -226,7 +196,7 @@ public class InvestmentService {
             .investmentType(investment.getInvestmentType())
             .amount(investment.getAmount())
             .profitSharingModel(investment.getProfitSharingModel())
-            .profitPercentage(investment.getProfitPercentage())
+            .profitPercentage(profitPercentage)
             .fixedShares(investment.getFixedShares())
             .investmentDate(investment.getInvestmentDate())
             .maturityDate(investment.getMaturityDate())

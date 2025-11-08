@@ -155,6 +155,9 @@ public class AuditLog extends BaseEntity {
         ACCOUNT_LOCKED,
         ACCOUNT_UNLOCKED,
         // Investment and Financial specific actions
+        INVESTMENT_CREATED,
+        INVESTMENT_UPDATED,
+        INVESTMENT_DELETED,
         PROFIT_CALCULATED,
         DISTRIBUTION_APPROVED,
         DISTRIBUTION_PAID

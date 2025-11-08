@@ -136,15 +136,16 @@ public class InvestmentProfitService {
                     .getTotalRevenueByShopAndPeriod(
                         investment.getShop().getId(), periodStart, periodEnd)
                     .orElse(BigDecimal.ZERO);
-            case PRODUCT_SPECIFIC -> {
-                List<String> productIds = investment.getProducts().stream()
-                    .map(product -> product.getId())
-                    .toList();
+            case PRODUCT_SPECIFIC, CATEGORY_SPECIFIC -> {
+                // Product/Category-specific tracking moved to investment round level
+                // For now, fallback to shop-wide revenue
+                log.warn("Product/Category-specific profit calculation not yet implemented for investment {}, using shop-wide revenue",
+                    investment.getId());
                 totalRevenue = salesTransactionRepository
-                    .getTotalRevenueByProductsAndPeriod(productIds, periodStart, periodEnd)
+                    .getTotalRevenueByShopAndPeriod(
+                        investment.getShop().getId(), periodStart, periodEnd)
                     .orElse(BigDecimal.ZERO);
             }
-            case CATEGORY_SPECIFIC -> totalRevenue = BigDecimal.ZERO; // Category-specific calculation not yet implemented
             default -> totalRevenue = BigDecimal.ZERO;
         }
 
@@ -166,41 +167,103 @@ public class InvestmentProfitService {
     }
 
     private BigDecimal getProfitMarginForInvestment(Investment investment) {
-        // For product-specific investments, use category-specific margins if available
-        if (investment.getInvestmentType() == Investment.InvestmentType.PRODUCT_SPECIFIC &&
-            !investment.getProducts().isEmpty()) {
-            String categoryId = investment.getProducts().iterator().next().getCategory().getId();
-            return profitConfig.getProfitMarginForCategory(categoryId);
-        }
-
+        // Product-specific category margins no longer supported
+        // All investments now use default profit margin
         return profitConfig.getDefaultProfitMargin();
     }
 
     private BigDecimal calculateInvestorSharePercentage(Investment investment) {
-        return switch (investment.getProfitSharingModel()) {
-            case PROPORTIONAL_BY_AMOUNT -> investment.getProfitPercentage();
-            case FIXED_SHARES -> investment.getProfitPercentage(); // Calculate based on fixed shares
-            case TIME_WEIGHTED -> {
-                // Calculate time-weighted percentage
-                long daysInvested = ChronoUnit.DAYS.between(
-                    investment.getInvestmentDate(), LocalDateTime.now()
-                );
-                BigDecimal timeWeight = BigDecimal.valueOf(Math.min(daysInvested / 365.0, 1.0));
-                yield investment.getProfitPercentage().multiply(timeWeight);
-            }
-            case TIERED -> {
-                // Calculate tiered percentage based on investment amount
-                BigDecimal amount = investment.getAmount();
-                if (amount.compareTo(BigDecimal.valueOf(100000)) >= 0) {
-                    yield investment.getProfitPercentage().multiply(BigDecimal.valueOf(1.2)); // 20% bonus
-                } else if (amount.compareTo(BigDecimal.valueOf(50000)) >= 0) {
-                    yield investment.getProfitPercentage().multiply(BigDecimal.valueOf(1.1)); // 10% bonus
-                } else {
-                    yield investment.getProfitPercentage();
+        var round = investment.getInvestmentRound();
+
+        return switch (round.getProfitSharingModel()) {
+            case PROPORTIONAL_BY_AMOUNT -> {
+                // Query total amount in round
+                BigDecimal totalRoundAmount = investmentRepository
+                    .sumAmountByInvestmentRoundId(round.getId());
+
+                if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
+                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    yield BigDecimal.ZERO;
                 }
+
+                // Calculate proportion: (investorAmount / totalRoundAmount) * 100
+                yield investment.getAmount()
+                    .divide(totalRoundAmount, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
             }
-            default -> throw new IllegalArgumentException("Unsupported profit sharing model: " + investment.getProfitSharingModel());
+
+            case FIXED_SHARES -> {
+                // Query total shares in round
+                Integer totalShares = investmentRepository
+                    .sumFixedSharesByInvestmentRoundId(round.getId());
+
+                if (totalShares == null || totalShares == 0) {
+                    log.warn("Total shares is zero or null for round {}", round.getId());
+                    yield BigDecimal.ZERO;
+                }
+
+                if (investment.getFixedShares() == null) {
+                    log.warn("Investment {} has no fixed shares set", investment.getId());
+                    yield BigDecimal.ZERO;
+                }
+
+                // Calculate proportion: (investorShares / totalShares) * 100
+                yield BigDecimal.valueOf(investment.getFixedShares())
+                    .divide(BigDecimal.valueOf(totalShares), 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+            }
+
+            case TIME_WEIGHTED -> {
+                // Calculate base proportion
+                BigDecimal totalRoundAmount = investmentRepository
+                    .sumAmountByInvestmentRoundId(round.getId());
+
+                if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
+                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    yield BigDecimal.ZERO;
+                }
+
+                BigDecimal baseProportion = investment.getAmount()
+                    .divide(totalRoundAmount, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+
+                // Apply time multiplier
+                BigDecimal yearsInvested = calculateYearsInvested(investment);
+                BigDecimal timeMultiplier = round.getTimeWeightingRules()
+                    .getMultiplierForYears(yearsInvested);
+
+                yield baseProportion.multiply(timeMultiplier);
+            }
+
+            case TIERED -> {
+                // Calculate base proportion
+                BigDecimal totalRoundAmount = investmentRepository
+                    .sumAmountByInvestmentRoundId(round.getId());
+
+                if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
+                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    yield BigDecimal.ZERO;
+                }
+
+                BigDecimal baseProportion = investment.getAmount()
+                    .divide(totalRoundAmount, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+
+                // Apply tier multiplier
+                BigDecimal tierMultiplier = round.getTierConfiguration()
+                    .getMultiplierForAmount(investment.getAmount());
+
+                yield baseProportion.multiply(tierMultiplier);
+            }
         };
+    }
+
+    private BigDecimal calculateYearsInvested(Investment investment) {
+        long daysBetween = ChronoUnit.DAYS.between(
+            investment.getInvestmentDate(),
+            LocalDateTime.now()
+        );
+        return BigDecimal.valueOf(daysBetween / 365.0);
     }
 
     private String buildCalculationDetails(Investment investment, ProfitCalculationResult result,
