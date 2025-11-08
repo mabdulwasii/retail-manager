@@ -34,7 +34,7 @@ class TenantAdminControllerTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should return pending registrations for super admin")
-    @WithMockPermissions(role = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SYSTEM_ADMIN")
     void shouldReturnPendingRegistrationsForSuperAdmin() throws Exception {
         // When & Then - test-data.sql has 2 tenants loaded
         mockMvc.perform(get("/api/admin/tenants/pending"))
@@ -53,7 +53,7 @@ class TenantAdminControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @WithMockPermissions(role = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SYSTEM_ADMIN")
     @DisplayName("Should activate tenant successfully")
     void shouldActivateTenantSuccessfully() throws Exception {
         // Given - Use existing tenant from test-data.sql
@@ -79,7 +79,7 @@ class TenantAdminControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @WithMockPermissions(role = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SYSTEM_ADMIN")
     @DisplayName("Should reject tenant with reason")
     void shouldRejectTenantWithReason() throws Exception {
         // Given - Use existing tenant from test-data.sql
@@ -105,7 +105,7 @@ class TenantAdminControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @WithMockPermissions(role = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SYSTEM_ADMIN")
     @DisplayName("Should return 400 when tenant ID mismatch")
     void shouldReturn400WhenTenantIdMismatch() throws Exception {
         // Given
@@ -128,7 +128,7 @@ class TenantAdminControllerTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should return tenant details for super admin")
-    @WithMockPermissions(role = "SUPER_ADMIN")
+    @WithMockPermissions(role = "SYSTEM_ADMIN")
     void shouldReturnTenantDetailsForSuperAdmin() throws Exception {
         // Given - Use existing tenant from test-data.sql
         String tenantId = TestConstants.TEST_TENANT_001;

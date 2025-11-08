@@ -67,9 +67,16 @@ ON CONFLICT (id) DO NOTHING;
 -- NOTE: In tests, Flyway migrations run but their data is not visible within test transactions.
 -- We must explicitly insert permissions and role_permissions here for tests to work.
 
--- Insert investment-related permissions needed for tests
+-- Insert permissions needed for tests
 INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
 VALUES
+    -- Tenant management permissions
+    ('perm-tenant-create', 'TENANT_CREATE', 'Create tenants', 'TENANT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-tenant-read', 'TENANT_READ', 'View tenant details', 'TENANT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-tenant-list', 'TENANT_LIST', 'List tenants', 'TENANT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-tenant-update', 'TENANT_UPDATE', 'Update tenant information', 'TENANT', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('perm-tenant-delete', 'TENANT_DELETE', 'Delete tenants', 'TENANT', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    -- Investment permissions
     ('perm-investment-create', 'INVESTMENT_CREATE', 'Create investments', 'INVESTMENT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('perm-investment-read', 'INVESTMENT_READ', 'View investment details', 'INVESTMENT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('perm-investment-list', 'INVESTMENT_LIST', 'List investments', 'INVESTMENT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
@@ -80,12 +87,13 @@ VALUES
     ('perm-analytics-investment-view', 'ANALYTICS_INVESTMENT_VIEW', 'View investment ROI analytics', 'ANALYTICS', 'INVESTMENT_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
--- Grant permissions to SYSTEM_ADMIN role (all investment permissions)
+-- Grant permissions to SYSTEM_ADMIN role (all tenant and investment permissions)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'SYSTEM_ADMIN'
 AND p.name IN (
+    'TENANT_CREATE', 'TENANT_READ', 'TENANT_LIST', 'TENANT_UPDATE', 'TENANT_DELETE',
     'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST', 'INVESTMENT_UPDATE', 'INVESTMENT_DELETE',
     'INVESTMENT_CLOSE', 'INVESTMENT_PROFIT_DISTRIBUTE', 'ANALYTICS_INVESTMENT_VIEW'
 )

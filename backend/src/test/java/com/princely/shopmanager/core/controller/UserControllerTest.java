@@ -133,7 +133,7 @@ class UserControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value("750e8400-e29b-41d4-a716-446655440000"))
             .andExpect(jsonPath("$.username").value("jane.doe"))
-            .andExpect(jsonPath("$.email").value("jane.doe@example.com"))
+            .andExpect(jsonPath("$.email").value("investor@testretail.com"))  // Email comes from role mapping
             .andExpect(jsonPath("$.firstName").value("jane.doe"))
             .andExpect(jsonPath("$.lastName").value("User"))
             .andExpect(jsonPath("$.fullName").value("jane.doe User"))
@@ -230,7 +230,7 @@ class UserControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("750e8400-e29b-41d4-a716-446655440000"))
             .andExpect(jsonPath("$.username").value("minimal.user"))
-            .andExpect(jsonPath("$.email").value("minimal.user@example.com"))
+            .andExpect(jsonPath("$.email").value("manager@testretail.com"))  // Email comes from role mapping
             .andExpect(jsonPath("$.firstName").value("minimal.user"))
             .andExpect(jsonPath("$.lastName").value("User"));
     }

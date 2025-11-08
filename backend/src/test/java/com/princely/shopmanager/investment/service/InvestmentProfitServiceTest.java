@@ -106,6 +106,10 @@ class InvestmentProfitServiceTest {
         LocalDateTime periodEnd = LocalDateTime.now();
         BigDecimal totalRevenue = BigDecimal.valueOf(50000);
 
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
+
         when(distributionRepository.existsByInvestmentAndPeriodStartAndPeriodEnd(testInvestment, periodStart, periodEnd))
             .thenReturn(false);
         when(salesTransactionRepository.getTotalRevenueByShopAndPeriod(testShop.getId(), periodStart, periodEnd))
@@ -142,6 +146,10 @@ class InvestmentProfitServiceTest {
         LocalDateTime periodStart = LocalDateTime.now().minusDays(30);
         LocalDateTime periodEnd = LocalDateTime.now();
         BigDecimal shopRevenue = BigDecimal.valueOf(20000);
+
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
 
         when(distributionRepository.existsByInvestmentAndPeriodStartAndPeriodEnd(testInvestment, periodStart, periodEnd))
             .thenReturn(false);
@@ -281,6 +289,10 @@ class InvestmentProfitServiceTest {
         // Given
         LocalDateTime periodStart = LocalDateTime.now().minusDays(30);
         LocalDateTime periodEnd = LocalDateTime.now();
+
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
 
         when(investmentRepository.findActiveInvestments())
             .thenReturn(List.of(testInvestment));
