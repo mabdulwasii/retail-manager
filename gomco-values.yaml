@@ -10,7 +10,7 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.36
+    tag: backend-v0.0.38
     pullPolicy: Always
   podAnnotations:
     configVersion: "24"  # Add investor ID to request body and validation for investments

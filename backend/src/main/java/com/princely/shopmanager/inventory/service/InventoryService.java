@@ -473,6 +473,7 @@ public class InventoryService {
             .referenceId(referenceId)
             .referenceType(referenceType)
             .reason(reason)
+            .performedAt(LocalDateTime.now())
             .createdAt(LocalDateTime.now())
             .build();
 

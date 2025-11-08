@@ -7,7 +7,7 @@
 --   DELETE /api/inventory/{inventoryId} - Delete inventory (zero stock only)
 
 -- Verify INVENTORY_UPDATE permission exists (should already exist from V12)
-INSERT INTO permissions (id, name, description, resource, operation, created_at, updated_at, version)
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
 SELECT
     'perm-inventory-update',
     'INVENTORY_UPDATE',
@@ -20,7 +20,7 @@ SELECT
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'INVENTORY_UPDATE');
 
 -- Verify INVENTORY_DELETE permission exists (should already exist from V12)
-INSERT INTO permissions (id, name, description, resource, operation, created_at, updated_at, version)
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
 SELECT
     'perm-inventory-delete',
     'INVENTORY_DELETE',
