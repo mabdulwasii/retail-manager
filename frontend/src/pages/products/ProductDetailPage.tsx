@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { useProduct, useDeleteProduct } from '@/hooks/useProducts'
 import { ProductStatus } from '@/types/api'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useCurrency } from '@/hooks/useCurrency'
 
 export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
+  const { formatCurrency } = useCurrency()
   
   const { data: product, isLoading, error } = useProduct(productId)
   const deleteProductMutation = useDeleteProduct()
@@ -197,7 +199,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Category</p>
-                <p className="text-lg font-bold mt-1">{product.category}</p>
+                <p className="text-lg font-bold mt-1">{product.categoryName}</p>
               </div>
               <div className="p-3 rounded-lg bg-orange-50">
                 <Package className="h-6 w-6 text-orange-600" />
@@ -233,7 +235,7 @@ export const ProductDetailPage: React.FC = () => {
 
             <div className="flex justify-between py-2 border-b">
               <span className="text-gray-600">Category:</span>
-              <Badge variant="outline">{product.category}</Badge>
+              <Badge variant="outline">{product.categoryName}</Badge>
             </div>
 
             <div className="flex justify-between py-2 border-b">

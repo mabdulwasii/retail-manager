@@ -34,7 +34,9 @@ export const CreateProductPage: React.FC = () => {
         isTaxable: data.isTaxable ?? true,
         isDiscountable: data.isDiscountable ?? true,
       }
-      const newProduct = await createProductMutation.mutateAsync(productData)
+
+      const { category, status, ...rest } = productData;
+      const newProduct = await createProductMutation.mutateAsync(rest)
       navigate(`/products/${newProduct.id}`)
     } catch (error) {
       // Error handled by mutation

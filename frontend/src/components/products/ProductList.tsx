@@ -27,7 +27,7 @@ import {
   Package,
 } from 'lucide-react'
 import { Product, ProductStatus } from '@/types/api'
-import { formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/hooks/useCurrency'
 
 interface ProductListProps {
   products: Product[]
@@ -44,6 +44,7 @@ export const ProductList: React.FC<ProductListProps> = ({
   onToggleStatus,
   isLoading = false,
 }) => {
+  const { formatCurrency } = useCurrency();
   const getStatusBadge = (status: ProductStatus) => {
     const variants = {
       [ProductStatus.ACTIVE]: 'success',
@@ -128,7 +129,7 @@ export const ProductList: React.FC<ProductListProps> = ({
               </TableCell>
               <TableCell className="font-mono text-sm">{product.sku}</TableCell>
               <TableCell>
-                <Badge variant="outline">{product.category}</Badge>
+                <Badge variant="outline">{product.categoryName}</Badge>
               </TableCell>
               <TableCell className="text-right font-medium">
                 {formatCurrency(product.price)}

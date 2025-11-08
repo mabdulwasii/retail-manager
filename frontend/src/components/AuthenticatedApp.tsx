@@ -8,6 +8,7 @@ import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { 
   InventoryPage,
   InventoryDetailPage,
+  CreateInventoryPage,
   LowStockReportPage,
   ExpiringItemsPage
 } from "@/pages/inventory";
@@ -193,6 +194,18 @@ export const AuthenticatedApp: React.FC = () => {
               roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}
             >
               <InventoryPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/inventory/create"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+            >
+              <CreateInventoryPage />
             </ProtectedRoute>
           </Layout>
         }

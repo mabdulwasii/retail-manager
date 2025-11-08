@@ -1,5 +1,6 @@
 export { InventoryPage } from './InventoryPage'
 export { InventoryListPage } from './InventoryListPage'
 export { InventoryDetailPage } from './InventoryDetailPage'
+export { CreateInventoryPage } from './CreateInventoryPage'
 export { LowStockReportPage } from './LowStockReportPage'
 export { ExpiringItemsPage } from './ExpiringItemsPage'

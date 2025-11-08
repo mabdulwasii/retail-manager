@@ -17,14 +17,25 @@ export const EditProductPage: React.FC = () => {
     if (!productId) return
 
     try {
-      // Transform null to undefined for API compatibility
+      // Transform null/empty to undefined for API compatibility
       const productData = {
         ...data,
         costPrice: data.costPrice ?? undefined,
+        weightInGrams: data.weightInGrams ?? undefined,
+        unit: data.unit || undefined,
+        location: data.location || undefined,
+        dimensions: data.dimensions || undefined,
+        supplierName: data.supplierName || undefined,
+        supplierContact: data.supplierContact || undefined,
+        imageUrl: data.imageUrl || undefined,
+        isTaxable: data.isTaxable ?? true,
+        isDiscountable: data.isDiscountable ?? true,
       }
+
+      const { sku, ...rest } = productData;
       await updateProductMutation.mutateAsync({
         productId,
-        data: productData,
+        data: rest,
       })
       navigate(`/products/${productId}`)
     } catch (error) {

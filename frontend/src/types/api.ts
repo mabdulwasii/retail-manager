@@ -120,15 +120,39 @@ export interface Product {
   name: string
   description?: string
   categoryId: string
-  category: string // Category name for display
+  category?: string // Category name for display
+  categoryName?: string // Alternative field name from API
+  shopId?: string
+  shopName?: string
   price: number
   costPrice?: number
+  profitMargin?: number
+  profitMarginPercentage?: number
   barcode?: string
   sku: string
+  unit?: string
+  weightInGrams?: number
+  location?: string
+  dimensions?: string
+  supplierName?: string
+  supplierContact?: string
+  imageUrl?: string
+  isTaxable?: boolean
+  taxable?: boolean // Alternative field name from API
+  isDiscountable?: boolean
+  discountable?: boolean // Alternative field name from API
   status: ProductStatus
-  tenant: Tenant
+  totalStock?: number
+  availableStock?: number
+  reservedStock?: number
+  inventoryCount?: number
+  hasLowStock?: boolean
+  hasExpiredBatches?: boolean
+  tenant?: Tenant
   createdAt: string
   updatedAt: string
+  createdBy?: string
+  updatedBy?: string
 }
 
 export enum ProductStatus {
@@ -165,6 +189,16 @@ export interface ProductUpdateRequest {
   price?: number | undefined
   costPrice?: number | undefined
   barcode?: string | undefined
+  sku?: string | undefined
+  unit?: string | undefined
+  weightInGrams?: number | undefined
+  location?: string | undefined
+  dimensions?: string | undefined
+  supplierName?: string | undefined
+  supplierContact?: string | undefined
+  imageUrl?: string | undefined
+  isTaxable?: boolean | undefined
+  isDiscountable?: boolean | undefined
   status?: ProductStatus | undefined
 }
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Package, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
 import { Product, ProductStatus } from '@/types/api'
-import { formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/hooks/useCurrency'
 
 interface ProductStatsProps {
   products: Product[]
@@ -13,6 +13,9 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
   products,
   isLoading = false,
 }) => {
+  
+  const { formatCurrency } = useCurrency();
+
   const stats = React.useMemo(() => {
     if (!products || products.length === 0) {
       return {
@@ -22,6 +25,8 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
         averagePrice: 0,
       }
     }
+
+ 
 
     const total = products.length
     const active = products.filter((p) => p.status === ProductStatus.ACTIVE).length

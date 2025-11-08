@@ -98,6 +98,9 @@ export const InventoryDetailPage: React.FC = () => {
     }
   }, [inventoryId, currentItem?.shopId, fetchInventory, fetchInventoryHistory])
 
+  console.log('inventory', inventory, currentItem)
+  console.log('inventoryHistory', inventoryHistory)
+
   // Handle adjust stock
   const handleAdjustStock = async () => {
     if (!inventoryId || !adjustQuantity || !adjustReason) return
