@@ -1,8 +1,10 @@
 package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.auth.service.KeycloakUserService;
+import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.test.config.PostgresTestContainer;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -64,12 +67,17 @@ class UserControllerTest {
     @Autowired
     private TenantRepository tenantRepository;
 
+    @Autowired
+    private ShopRepository shopRepository;
+
     private User testUser;
     private Tenant testTenant;
+    private Shop testShop;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
+        shopRepository.deleteAll();
         tenantRepository.deleteAll();
 
         // Create test tenant
@@ -81,6 +89,17 @@ class UserControllerTest {
             .build();
         testTenant = tenantRepository.saveAndFlush(testTenant);
 
+        // Create test shop
+        testShop = Shop.builder()
+            .name("Test Shop")
+            .address("456 Shop St")
+            .email("shop@test.com")
+            .phoneNumber("+1234567890")
+            .tenant(testTenant)
+            .status(Shop.ShopStatus.ACTIVE)
+            .build();
+        testShop = shopRepository.saveAndFlush(testShop);
+
         testUser = User.builder()
             .keycloakId("keycloak-456")
             .username("john.doe")
@@ -89,6 +108,7 @@ class UserControllerTest {
             .lastName("Doe")
             .phoneNumber("+1234567890")
             .tenant(testTenant)
+            .shop(testShop)
             .status(User.UserStatus.ACTIVE)
             .build();
     }
@@ -233,5 +253,85 @@ class UserControllerTest {
             .andExpect(jsonPath("$.email").value("manager@testretail.com"))  // Email comes from role mapping
             .andExpect(jsonPath("$.firstName").value("minimal.user"))
             .andExpect(jsonPath("$.lastName").value("User"));
+    }
+
+    // ========== Tests for GET /api/users (System-wide user listing) ==========
+
+    @Test
+    @DisplayName("GET /api/users - System Admin can list all users")
+    @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
+    void getAllUsers_SystemAdmin_Success() throws Exception {
+        // Given - Create multiple users
+        User user1 = userRepository.saveAndFlush(testUser);
+        User user2 = User.builder()
+            .keycloakId("kc-2")
+            .username("jane.smith")
+            .email("jane@example.com")
+            .firstName("Jane")
+            .lastName("Smith")
+            .phoneNumber("+9876543210")
+            .tenant(testTenant)
+            .shop(testShop)
+            .status(User.UserStatus.ACTIVE)
+            .build();
+        userRepository.saveAndFlush(user2);
+
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].username").exists())
+            .andExpect(jsonPath("$[1].username").exists());
+    }
+
+    @Test
+    @DisplayName("GET /api/users - System Admin can filter by status")
+    @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
+    void getAllUsers_FilterByStatus_Success() throws Exception {
+        // Given - Create users with different statuses
+        testUser.setStatus(User.UserStatus.ACTIVE);
+        userRepository.saveAndFlush(testUser);
+
+        User inactiveUser = User.builder()
+            .keycloakId("kc-inactive")
+            .username("inactive.user")
+            .email("inactive@example.com")
+            .firstName("Inactive")
+            .lastName("User")
+            .phoneNumber("+1111111111")
+            .tenant(testTenant)
+            .shop(testShop)
+            .status(User.UserStatus.INACTIVE)
+            .build();
+        userRepository.saveAndFlush(inactiveUser);
+
+        // When & Then - Filter for ACTIVE only
+        mockMvc.perform(get("/api/users")
+                .param("status", "ACTIVE")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].username").value("john.doe"))
+            .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+    }
+
+    @Test
+    @DisplayName("GET /api/users - Non-System Admin gets 403")
+    @WithMockPermissions(role = "MANAGER", username = "manager.user")
+    void getAllUsers_NonSystemAdmin_Forbidden() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/users - Unauthenticated user gets 401")
+    void getAllUsers_Unauthenticated_Unauthorized() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isUnauthorized());
     }
 }

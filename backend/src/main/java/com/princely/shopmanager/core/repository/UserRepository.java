@@ -64,4 +64,10 @@ public interface UserRepository extends JpaRepository<User, String> {
            "LEFT JOIN FETCH r.permissions " +
            "WHERE u.email = :email")
     Optional<User> findByEmailWithPermissions(@Param("email") String email);
+
+    @Query("SELECT u FROM User u WHERE u.shop.id = :shopId")
+    List<User> findByShopId(@Param("shopId") String shopId);
+
+    @Query("SELECT u FROM User u WHERE u.shop.id = :shopId AND u.status = :status")
+    List<User> findByShopIdAndStatus(@Param("shopId") String shopId, @Param("status") User.UserStatus status);
 }

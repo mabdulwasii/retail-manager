@@ -179,7 +179,7 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 ^|
 
 |USER_LIST
-|List users
+|List users (all scopes: system, tenant, shop)
 ^|✓
 ^|✓
 ^|✓
@@ -202,6 +202,16 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 ^|
 ^|
 |===
+
+=== User Listing Endpoints (Added in V25)
+
+The following endpoints provide user listing functionality with optional status filtering:
+
+* `GET /api/users?status={status}` - List all users system-wide (SYSTEM_ADMIN only)
+* `GET /api/tenants/{tenantId}/users` - List all users in a tenant (USER_LIST permission)
+* `GET /api/shops/{shopId}/users?status={status}` - List all users in a shop (USER_LIST permission)
+
+All endpoints support optional status filtering: `ACTIVE`, `INACTIVE`, `PENDING`.
 
 == Role & Permission Management
 

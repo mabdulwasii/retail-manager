@@ -127,7 +127,7 @@ Investment operations are restricted to leadership roles only.
 |-----------|-------------|--------------|--------------|-------|---------|----------|----------|
 | **USER_CREATE** | Create users | ✓ | ✓ | ✓ | ✓ | | |
 | **USER_READ** | View user details | ✓ | ✓ | ✓ | ✓ | | |
-| **USER_LIST** | List users | ✓ | ✓ | ✓ | ✓ | | |
+| **USER_LIST** | List users (all scopes: system, tenant, shop) | ✓ | ✓ | ✓ | ✓ | | |
 | **USER_UPDATE** | Update users | ✓ | ✓ | ✓ | ✓ | | |
 | **USER_DELETE** | Delete users | ✓ | ✓ | ✓ | | | |
 | **ROLE_CREATE** | Create custom roles | ✓ | ✓ | ✓ | | | |
@@ -138,6 +138,13 @@ Investment operations are restricted to leadership roles only.
 | **ROLE_ASSIGN** | Assign roles to users | ✓ | ✓ | ✓ | | | |
 | **ROLE_PERMISSION_ADD** | Add permissions to roles | ✓ | ✓ | ✓ | | | |
 | **ROLE_PERMISSION_REMOVE** | Remove permissions from roles | ✓ | ✓ | ✓ | | | |
+
+**User Listing Endpoints** (added in V25):
+- `GET /api/users?status={status}` - List all users system-wide (SYSTEM_ADMIN only)
+- `GET /api/tenants/{tenantId}/users` - List all users in a tenant (USER_LIST permission)
+- `GET /api/shops/{shopId}/users?status={status}` - List all users in a shop (USER_LIST permission)
+
+All endpoints support optional status filtering: `ACTIVE`, `INACTIVE`, `PENDING`.
 
 ---
 

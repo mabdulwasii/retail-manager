@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.38
+    tag: backend-v0.0.39
     pullPolicy: Always
   podAnnotations:
-    configVersion: "24"  # Add investor ID to request body and validation for investments
+    configVersion: "25"  # Add user listing endpoints with filtering (V25)
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 

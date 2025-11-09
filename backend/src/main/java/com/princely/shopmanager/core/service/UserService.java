@@ -234,4 +234,35 @@ public class UserService {
         return userRepository.findByTenantId(tenantId);
     }
 
+    /**
+     * Gets all users in the system, optionally filtered by status.
+     *
+     * @param status Optional status filter (null returns all users)
+     * @return List of users
+     */
+    public List<User> getAllUsers(User.UserStatus status) {
+        log.debug("Retrieving all users with status filter: {}", status);
+        if (status != null) {
+            return userRepository.findAll().stream()
+                .filter(user -> user.getStatus() == status)
+                .toList();
+        }
+        return userRepository.findAll();
+    }
+
+    /**
+     * Gets all users for a shop, optionally filtered by status.
+     *
+     * @param shopId Shop ID
+     * @param status Optional status filter (null returns all users)
+     * @return List of users in the shop
+     */
+    public List<User> getUsersByShop(String shopId, User.UserStatus status) {
+        log.debug("Retrieving users for shop {} with status filter: {}", shopId, status);
+        if (status != null) {
+            return userRepository.findByShopIdAndStatus(shopId, status);
+        }
+        return userRepository.findByShopId(shopId);
+    }
+
 }
