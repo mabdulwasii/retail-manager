@@ -1,6 +1,5 @@
 package com.princely.shopmanager.core.service;
 
-import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
@@ -15,9 +14,7 @@ import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
 import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -30,9 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service class for managing product catalog operations.
@@ -66,23 +66,19 @@ public class ProductService {
     /**
      * Creates a new product in the catalog.
      * Stock is NOT created here - use Inventory API to add stock.
+     * SKU is auto-generated on the backend.
      *
      * @param request Product creation request with validation
      * @return Created product response
-     * @throws IllegalArgumentException if SKU/barcode already exists or shop not found
+     * @throws IllegalArgumentException if barcode already exists or shop not found
      */
     public ProductResponse createProduct(ProductCreateRequest request) {
-        log.info("Creating new product: {} with SKU: {}", request.getName(), request.getSku());
+        log.info("Creating new product: {}", request.getName());
 
         // Get shop and validate tenant access
         Shop shop = shopRepository.findById(request.getShopId())
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
         tenantSecurityValidator.validateShopAccess(shop);
-
-        // Check SKU uniqueness within shop
-        if (productRepository.existsBySkuAndShopId(request.getSku(), shop.getId())) {
-            throw new IllegalArgumentException("Product with SKU '" + request.getSku() + "' already exists in this shop");
-        }
 
         // Check barcode uniqueness if provided
         if (request.getBarcode() != null && !request.getBarcode().isBlank()) {
@@ -98,11 +94,14 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + request.getCategoryId()));
         }
 
+        // Auto-generate unique SKU
+        String generatedSku = generateUniqueSku(shop, category);
+
         // Build product entity
         Product product = Product.builder()
             .name(request.getName())
             .description(request.getDescription())
-            .sku(request.getSku())
+            .sku(generatedSku)
             .barcode(request.getBarcode())
             .shop(shop)
             .category(category)
@@ -110,7 +109,6 @@ public class ProductService {
             .costPrice(request.getCostPrice())
             .unit(request.getUnit())
             .weightInGrams(request.getWeightInGrams())
-            .location(request.getLocation())
             .dimensions(request.getDimensions())
             .supplierName(request.getSupplierName())
             .supplierContact(request.getSupplierContact())
@@ -203,10 +201,6 @@ public class ProductService {
             product.setWeightInGrams(request.getWeightInGrams());
         }
 
-        if (request.getLocation() != null) {
-            product.setLocation(request.getLocation());
-        }
-
         if (request.getDimensions() != null) {
             product.setDimensions(request.getDimensions());
         }
@@ -243,9 +237,9 @@ public class ProductService {
         product = productRepository.save(product);
 
         // Audit if there were changes
-        if (changes.length() > 0) {
+        if (!changes.isEmpty()) {
             auditService.logEntityModification("Product", product.getId(),
-                "Product updated: " + changes.toString());
+                "Product updated: " + changes);
         }
 
         log.info("Successfully updated product: {}", productId);
@@ -372,6 +366,32 @@ public class ProductService {
     }
 
     /**
+     * Searches for a product by barcode within a shop.
+     * Used for barcode scanner integration during sales.
+     *
+     * @param barcode Product barcode
+     * @param shopId Shop ID
+     * @param includeInventory Include inventory summary
+     * @return Product response
+     * @throws EntityNotFoundException if product not found
+     */
+    @Transactional(readOnly = true)
+    public ProductResponse searchByBarcode(String barcode, String shopId, boolean includeInventory) {
+        log.debug("Searching for product with barcode: {} in shop: {}", barcode, shopId);
+
+        // Validate shop access
+        Shop shop = shopRepository.findById(shopId)
+            .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
+        tenantSecurityValidator.validateShopAccess(shop);
+
+        // Find product by barcode
+        Product product = productRepository.findByBarcodeAndShopId(barcode, shopId)
+            .orElseThrow(() -> new EntityNotFoundException("Product not found with barcode: " + barcode));
+
+        return mapToResponse(product, includeInventory);
+    }
+
+    /**
      * Gets products with low stock (any inventory below minimum).
      *
      * @param shopId Shop ID
@@ -435,7 +455,6 @@ public class ProductService {
             .costPrice(product.getCostPrice())
             .unit(product.getUnit())
             .weightInGrams(product.getWeightInGrams())
-            .location(product.getLocation())
             .dimensions(product.getDimensions())
             .supplierName(product.getSupplierName())
             .supplierContact(product.getSupplierContact())
@@ -478,6 +497,100 @@ public class ProductService {
         }
 
         return builder.build();
+    }
+
+    /**
+     * Generates a unique SKU for a product.
+     * Format: {SHOP_CODE}-{CATEGORY_CODE}-{YYYYMMDD}-{RANDOM4}
+     * Example: GOM-BEV-20250109-A7F3
+     *
+     * @param shop Shop entity
+     * @param category Category entity (can be null)
+     * @return Unique SKU
+     */
+    private String generateUniqueSku(Shop shop, Category category) {
+        String sku;
+        int attempts = 0;
+        final int maxAttempts = 10;
+
+        do {
+            sku = generateSku(shop, category);
+            attempts++;
+
+            if (attempts >= maxAttempts) {
+                throw new IllegalStateException("Failed to generate unique SKU after " + maxAttempts + " attempts");
+            }
+        } while (productRepository.existsBySkuAndShopId(sku, shop.getId()));
+
+        log.debug("Generated unique SKU: {} for shop: {}", sku, shop.getId());
+        return sku;
+    }
+
+    /**
+     * Generates SKU based on shop and category.
+     * Format: {SHOP_CODE}-{CATEGORY_CODE}-{YYYYMMDD}-{RANDOM4}
+     *
+     * @param shop Shop entity
+     * @param category Category entity (can be null)
+     * @return Generated SKU
+     */
+    private String generateSku(Shop shop, Category category) {
+        // Shop code: first 3 letters of shop name (uppercase, alphanumeric only)
+        String shopCode = extractCode(shop.getName(), 3);
+
+        // Category code: first 3 letters of category name, or "GEN" if no category
+        String categoryCode = (category != null) ? extractCode(category.getName(), 3) : "GEN";
+
+        // Date: YYYYMMDD
+        String datePart = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+
+        // Random: 4 alphanumeric characters
+        String randomPart = generateRandomAlphanumeric(4);
+
+        return String.format("%s-%s-%s-%s", shopCode, categoryCode, datePart, randomPart);
+    }
+
+    /**
+     * Extracts a code from a name by taking first N alphanumeric characters (uppercase).
+     *
+     * @param name Source name
+     * @param length Desired code length
+     * @return Extracted code
+     */
+    private String extractCode(String name, int length) {
+        if (name == null || name.isEmpty()) {
+            return "XXX".substring(0, length);
+        }
+
+        // Remove non-alphanumeric and convert to uppercase
+        String cleaned = name.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+
+        if (cleaned.length() >= length) {
+            return cleaned.substring(0, length);
+        } else if (cleaned.isEmpty()) {
+            return "XXX".substring(0, length);
+        } else {
+            // Pad with 'X' if too short
+            return String.format("%-" + length + "s", cleaned).replace(' ', 'X').substring(0, length);
+        }
+    }
+
+    /**
+     * Generates random alphanumeric string (uppercase).
+     *
+     * @param length Length of random string
+     * @return Random alphanumeric string
+     */
+    private String generateRandomAlphanumeric(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        java.util.Random random = new java.util.Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+
+        return sb.toString();
     }
 
     /**

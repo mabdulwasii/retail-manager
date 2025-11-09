@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.39
+    tag: backend-v0.0.40
     pullPolicy: Always
   podAnnotations:
-    configVersion: "25"  # Add user listing endpoints with filtering (V25)
+    configVersion: "26"  # SKU auto-generation, barcode search, remove product.location (V26)
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 

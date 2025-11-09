@@ -40,12 +40,11 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should create inventory")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldCreateInventory() throws Exception {
         // First create a product
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Inventory Test Product")
-            .sku("INV-TEST-001")
             .price(BigDecimal.valueOf(50.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -82,11 +81,10 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("MANAGER should create inventory")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void managerShouldCreateInventory() throws Exception {
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Manager Inventory Product")
-            .sku("MGR-INV-001")
             .price(BigDecimal.valueOf(30.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -117,7 +115,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("EMPLOYEE should create inventory")
-    @WithMockPermissions(role = "EMPLOYEE", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "EMPLOYEE")
     void employeeShouldCreateInventory() throws Exception {
         // Employees can create inventory per permission matrix
         InventoryCreateRequest request = InventoryCreateRequest.builder()
@@ -138,7 +136,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should list inventory")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldListInventory() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001))
             .andExpect(status().isOk())
@@ -147,7 +145,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("MANAGER should list inventory")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void managerShouldListInventory() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001))
             .andExpect(status().isOk());
@@ -155,7 +153,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("EMPLOYEE should list inventory")
-    @WithMockPermissions(role = "EMPLOYEE", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "EMPLOYEE")
     void employeeShouldListInventory() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001))
             .andExpect(status().isOk());
@@ -173,12 +171,11 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should adjust inventory")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldAdjustInventory() throws Exception {
         // Create inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Adjustment Test Product")
-            .sku("ADJ-TEST-001")
             .price(BigDecimal.valueOf(60.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -224,7 +221,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("MANAGER should adjust inventory")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void managerShouldAdjustInventory() throws Exception {
         InventoryAdjustmentRequest adjustmentRequest = InventoryAdjustmentRequest.builder()
             .newStock(5)
@@ -313,12 +310,11 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should update inventory metadata")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldUpdateInventoryMetadata() throws Exception {
         // Create product and inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Update Test Product")
-            .sku("UPD-TEST-001")
             .price(BigDecimal.valueOf(45.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -404,12 +400,11 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should delete inventory with zero stock")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldDeleteInventoryWithZeroStock() throws Exception {
         // Create product and inventory with zero stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Delete Test Product")
-            .sku("DEL-TEST-001")
             .price(BigDecimal.valueOf(25.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -447,12 +442,11 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("OWNER should NOT delete inventory with active stock")
-    @WithMockPermissions(role = "OWNER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "OWNER")
     void ownerShouldNotDeleteInventoryWithActiveStock() throws Exception {
         // Create product and inventory with stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Active Stock Product")
-            .sku("STOCK-TEST-001")
             .price(BigDecimal.valueOf(35.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
@@ -510,7 +504,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should filter inventory by status")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void shouldFilterInventoryByStatus() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
                 .param("status", "ACTIVE"))
@@ -519,7 +513,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should filter inventory by location")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void shouldFilterInventoryByLocation() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
                 .param("location", "Warehouse A"))
@@ -528,7 +522,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should filter low stock items")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void shouldFilterLowStockItems() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
                 .param("lowStock", "true"))
@@ -537,7 +531,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should filter expired items")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void shouldFilterExpiredItems() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
                 .param("expired", "true"))
@@ -546,7 +540,7 @@ class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should filter expiring soon items")
-    @WithMockPermissions(role = "MANAGER", tenantId = TestConstants.TEST_TENANT_001, shopId = TestConstants.TEST_SHOP_001)
+    @WithMockPermissions(role = "MANAGER")
     void shouldFilterExpiringSoonItems() throws Exception {
         mockMvc.perform(get("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
                 .param("expiringSoon", "true")

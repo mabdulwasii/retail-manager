@@ -26,10 +26,8 @@ public class ProductCreateRequest {
     public static final int MIN_NAME_LENGTH = 2;
     public static final int MAX_NAME_LENGTH = 200;
     public static final int MAX_DESCRIPTION_LENGTH = 1000;
-    public static final int MAX_SKU_LENGTH = 100;
     public static final int MAX_BARCODE_LENGTH = 100;
     public static final int MAX_UNIT_LENGTH = 50;
-    public static final int MAX_LOCATION_LENGTH = 200;
     public static final int MAX_SUPPLIER_NAME_LENGTH = 200;
     public static final int MAX_SUPPLIER_CONTACT_LENGTH = 200;
     public static final int MAX_DIMENSIONS_LENGTH = 100;
@@ -43,12 +41,6 @@ public class ProductCreateRequest {
     @Schema(description = "Product description", example = "Refreshing carbonated soft drink")
     @Size(max = MAX_DESCRIPTION_LENGTH, message = "Description must not exceed " + MAX_DESCRIPTION_LENGTH + " characters")
     private String description;
-
-    @Schema(description = "Stock Keeping Unit - unique identifier", example = "COCA-500ML", required = true)
-    @NotBlank(message = "SKU is required")
-    @Size(max = MAX_SKU_LENGTH, message = "SKU must not exceed " + MAX_SKU_LENGTH + " characters")
-    @Pattern(regexp = "^[A-Z0-9-_]+$", message = "SKU must contain only uppercase letters, numbers, hyphens and underscores")
-    private String sku;
 
     @Schema(description = "Product barcode (EAN, UPC, etc.)", example = "5449000000996")
     @Size(max = MAX_BARCODE_LENGTH, message = "Barcode must not exceed " + MAX_BARCODE_LENGTH + " characters")
@@ -79,10 +71,6 @@ public class ProductCreateRequest {
     @Schema(description = "Weight in grams", example = "520.5")
     @DecimalMin(value = "0.0", message = "Weight cannot be negative")
     private Double weightInGrams;
-
-    @Schema(description = "Product location/shelf", example = "Aisle 3, Shelf B")
-    @Size(max = MAX_LOCATION_LENGTH, message = "Location must not exceed " + MAX_LOCATION_LENGTH + " characters")
-    private String location;
 
     @Schema(description = "Product dimensions (L x W x H)", example = "20cm x 10cm x 25cm")
     @Size(max = MAX_DIMENSIONS_LENGTH, message = "Dimensions must not exceed " + MAX_DIMENSIONS_LENGTH + " characters")

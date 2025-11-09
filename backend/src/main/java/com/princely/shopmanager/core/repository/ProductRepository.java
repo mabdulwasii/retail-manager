@@ -18,6 +18,9 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
 
     Optional<Product> findByBarcode(String barcode);
 
+    @Query("SELECT p FROM Product p WHERE p.barcode = :barcode AND p.shop.id = :shopId")
+    Optional<Product> findByBarcodeAndShopId(@Param("barcode") String barcode, @Param("shopId") String shopId);
+
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId")
     List<Product> findByShopId(@Param("shopId") String shopId);
 
@@ -36,9 +39,6 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
         @Param("minPrice") BigDecimal minPrice,
         @Param("maxPrice") BigDecimal maxPrice
     );
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.location = :location")
-    List<Product> findByShopIdAndLocation(@Param("shopId") String shopId, @Param("location") String location);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.shop.id = :shopId AND p.status = 'ACTIVE'")
     Long countActiveProductsByShopId(@Param("shopId") String shopId);

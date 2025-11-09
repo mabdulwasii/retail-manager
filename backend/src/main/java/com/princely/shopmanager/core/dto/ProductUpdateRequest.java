@@ -60,11 +60,6 @@ public class ProductUpdateRequest {
     @DecimalMin(value = "0.0", message = "Weight cannot be negative")
     private Double weightInGrams;
 
-    @Schema(description = "Product location/shelf", example = "Aisle 3, Shelf B")
-    @Size(max = ProductCreateRequest.MAX_LOCATION_LENGTH,
-          message = "Location must not exceed " + ProductCreateRequest.MAX_LOCATION_LENGTH + " characters")
-    private String location;
-
     @Schema(description = "Product dimensions", example = "20cm x 10cm x 25cm")
     @Size(max = ProductCreateRequest.MAX_DIMENSIONS_LENGTH,
           message = "Dimensions must not exceed " + ProductCreateRequest.MAX_DIMENSIONS_LENGTH + " characters")

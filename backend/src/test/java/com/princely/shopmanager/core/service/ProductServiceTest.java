@@ -14,7 +14,7 @@ import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
 import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
-import jakarta.persistence.EntityNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,9 +35,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import jakarta.persistence.EntityNotFoundException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -84,7 +93,6 @@ class ProductServiceTest {
         testProduct = Product.builder()
             .id("product-1")
             .name("Coca-Cola 500ml")
-            .sku("COCA-500ML")
             .barcode("5449000000996")
             .shop(testShop)
             .category(testCategory)
@@ -95,7 +103,6 @@ class ProductServiceTest {
 
         createRequest = ProductCreateRequest.builder()
             .name("Coca-Cola 500ml")
-            .sku("COCA-500ML")
             .barcode("5449000000996")
             .shopId("shop-1")
             .categoryId("category-1")
@@ -116,7 +123,6 @@ class ProductServiceTest {
         Product savedProduct = Product.builder()
             .id("product-1")
             .name("Coca-Cola 500ml")
-            .sku("COCA-500ML")
             .barcode("5449000000996")
             .shop(testShop)
             .category(testCategory)
@@ -417,7 +423,7 @@ class ProductServiceTest {
 
         // Assert
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getHasLowStock()).isTrue();
+        assertThat(response.getFirst().getHasLowStock()).isTrue();
     }
 
     @Test
@@ -434,7 +440,7 @@ class ProductServiceTest {
 
         // Assert
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getTotalStock()).isZero();
+        assertThat(response.getFirst().getTotalStock()).isZero();
     }
 
     @Test
@@ -447,7 +453,6 @@ class ProductServiceTest {
         Product savedProduct = Product.builder()
             .id("product-1")
             .name("Coca-Cola 500ml")
-            .sku("COCA-500ML")
             .shop(testShop)
             .category(testCategory)
             .price(new BigDecimal("500.00"))
@@ -468,13 +473,12 @@ class ProductServiceTest {
         assertThat(event.productId()).isEqualTo("product-1");
         assertThat(event.shopId()).isEqualTo("shop-1");
         assertThat(event.productName()).isEqualTo("Coca-Cola 500ml");
-        assertThat(event.sku()).isEqualTo("COCA-500ML");
     }
 
     // Helper methods
 
     private Inventory createInventory(String id, int currentStock, int reservedStock) {
-        Inventory inventory = Inventory.builder()
+        return Inventory.builder()
             .id(id)
             .shop(testShop)
             .product(testProduct)
@@ -483,6 +487,5 @@ class ProductServiceTest {
             .minimumStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
-        return inventory;
     }
 }

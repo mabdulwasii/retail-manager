@@ -5,16 +5,8 @@ import com.princely.shopmanager.core.dto.ProductCreateRequest;
 import com.princely.shopmanager.core.dto.ProductResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.core.service.ProductService;
-import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +16,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller for product catalog management.
@@ -60,8 +69,8 @@ public class ProductController {
             @Valid @RequestBody ProductCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        log.info("Creating product for shop: {}, SKU: {}, user: {}",
-                shopId, request.getSku(), principal.getUsername());
+        log.info("Creating product for shop: {}, name: {}, user: {}",
+                shopId, request.getName(), principal.getUsername());
 
         // Ensure shopId from path matches request
         request.setShopId(shopId);
@@ -89,8 +98,7 @@ public class ProductController {
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
-            @AuthenticationPrincipal JwtPrincipal principal) {
+            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir) {
 
         // Build specification based on filters
         Specification<Product> spec = (root, query, cb) ->
@@ -145,10 +153,28 @@ public class ProductController {
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_READ)")
     public ResponseEntity<ProductResponse> getProductById(
             @Parameter(description = "Product ID") @PathVariable String productId,
-            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
-            @AuthenticationPrincipal JwtPrincipal principal) {
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory) {
 
         ProductResponse response = productService.getProductById(productId, includeInventory);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Search product by barcode",
+        description = "Search for a product using its barcode (for barcode scanner integration)"
+    )
+    @ApiResponse(responseCode = "200", description = "Product found")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/products/search")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_READ)")
+    public ResponseEntity<ProductResponse> searchByBarcode(
+            @Parameter(description = "Product barcode", required = true) @RequestParam String barcode,
+            @Parameter(description = "Shop ID", required = true) @RequestParam String shopId,
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory) {
+
+        log.debug("Searching product by barcode: {} in shop: {}", barcode, shopId);
+        ProductResponse response = productService.searchByBarcode(barcode, shopId, includeInventory);
         return ResponseEntity.ok(response);
     }
 
@@ -202,8 +228,7 @@ public class ProductController {
     @GetMapping("/products/{productId}/inventory-summary")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<ProductService.InventorySummary> getInventorySummary(
-            @Parameter(description = "Product ID") @PathVariable String productId,
-            @AuthenticationPrincipal JwtPrincipal principal) {
+            @Parameter(description = "Product ID") @PathVariable String productId) {
 
         ProductService.InventorySummary summary = productService.getInventorySummary(productId);
         return ResponseEntity.ok(summary);
@@ -218,8 +243,7 @@ public class ProductController {
     @GetMapping("/shops/{shopId}/products/low-stock")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithLowStock(
-            @Parameter(description = "Shop ID") @PathVariable String shopId,
-            @AuthenticationPrincipal JwtPrincipal principal) {
+            @Parameter(description = "Shop ID") @PathVariable String shopId) {
 
         var response = productService.getProductsWithLowStock(shopId);
         return ResponseEntity.ok(response);
@@ -234,8 +258,7 @@ public class ProductController {
     @GetMapping("/shops/{shopId}/products/out-of-stock")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithNoStock(
-            @Parameter(description = "Shop ID") @PathVariable String shopId,
-            @AuthenticationPrincipal JwtPrincipal principal) {
+            @Parameter(description = "Shop ID") @PathVariable String shopId) {
 
         var response = productService.getProductsWithNoStock(shopId);
         return ResponseEntity.ok(response);
