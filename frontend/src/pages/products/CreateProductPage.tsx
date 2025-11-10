@@ -26,7 +26,6 @@ export const CreateProductPage: React.FC = () => {
         costPrice: data.costPrice ?? undefined,
         weightInGrams: data.weightInGrams ?? undefined,
         unit: data.unit || undefined,
-        location: data.location || undefined,
         dimensions: data.dimensions || undefined,
         supplierName: data.supplierName || undefined,
         supplierContact: data.supplierContact || undefined,

@@ -23,7 +23,6 @@ export const EditProductPage: React.FC = () => {
         costPrice: data.costPrice ?? undefined,
         weightInGrams: data.weightInGrams ?? undefined,
         unit: data.unit || undefined,
-        location: data.location || undefined,
         dimensions: data.dimensions || undefined,
         supplierName: data.supplierName || undefined,
         supplierContact: data.supplierContact || undefined,
@@ -32,7 +31,7 @@ export const EditProductPage: React.FC = () => {
         isDiscountable: data.isDiscountable ?? true,
       }
 
-      const { sku, ...rest } = productData;
+      const { category, status, ...rest } = productData;
       await updateProductMutation.mutateAsync({
         productId,
         data: rest,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, Search, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Package, Search, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -50,8 +50,10 @@ export const CreateInventoryPage: React.FC = () => {
   }, [products,productsLoading])
 
   const filteredProducts = products?.filter(product =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(productSearch.toLowerCase())
+    // Exclude already selected product from the list
+    product.id !== formData.productId &&
+    (product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(productSearch.toLowerCase()))
   )
 
   useEffect(() => {
@@ -211,7 +213,7 @@ export const CreateInventoryPage: React.FC = () => {
                 Product <span className="text-red-500">*</span>
               </Label>
               <div className="space-y-2">
-                <div className="relative">
+                {/* <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search products by name or SKU..."
@@ -219,10 +221,10 @@ export const CreateInventoryPage: React.FC = () => {
                     onChange={(e) => setProductSearch(e.target.value)}
                     className="pl-10"
                   />
-                </div>
+                </div> */}
                 
                 <Select
-                  value={formData.productId}
+                  //value={formData.productId}
                   onValueChange={(value) => handleInputChange('productId', value)}
                   disabled={productsLoading}
                 >
@@ -256,8 +258,20 @@ export const CreateInventoryPage: React.FC = () => {
                 </p>
               )}
               {selectedProduct && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm font-medium">{selectedProduct.name}</p>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0"
+                    onClick={() => {
+                      handleInputChange('productId', '')
+                      setProductSearch('')
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <p className="text-sm font-medium pr-8">{selectedProduct.name}</p>
                   <div className="text-xs text-muted-foreground mt-1 space-y-1">
                     {selectedProduct.sku && <p>SKU: {selectedProduct.sku}</p>}
                     {selectedProduct.category && <p>Category: {selectedProduct.category}</p>}

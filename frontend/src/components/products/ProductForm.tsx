@@ -49,16 +49,15 @@ const productSchema = yup.object({
     .optional()
     .nullable()
     .transform((value, originalValue) => originalValue === '' ? null : value),
-  location: yup.string().optional(),
   dimensions: yup.string().optional(),
   supplierName: yup.string().optional(),
   supplierContact: yup.string().optional(),
   imageUrl: yup.string().url('Must be a valid URL').optional(),
   isTaxable: yup.boolean().optional(),
   isDiscountable: yup.boolean().optional(),
-  sku: yup.string()
-    .optional()
-    .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
+  // sku: yup.string()
+  //   .optional()
+  //   .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
   barcode: yup.string()
     .optional()
     .matches(/^[0-9]+$/, 'Barcode must contain only numbers'),
@@ -101,14 +100,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       costPrice: product?.costPrice || undefined,
       unit: product?.unit || '',
       weightInGrams: product?.weightInGrams || undefined,
-      location: product?.location || '',
+      // location: product?.location || '',
       dimensions: product?.dimensions || '',
       supplierName: product?.supplierName || '',
       supplierContact: product?.supplierContact || '',
       imageUrl: product?.imageUrl || '',
       isTaxable: product?.isTaxable ?? product?.taxable ?? true,
       isDiscountable: product?.isDiscountable ?? product?.discountable ?? true,
-      sku: product?.sku || '',
+      // sku: product?.sku || '',
       barcode: product?.barcode || '',
       status: product?.status || ProductStatus.ACTIVE,
     },
@@ -117,10 +116,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const categoryId = watch('categoryId')
   const status = watch('status')
 
-  const handleGenerateSKU = () => {
-    const newSKU = productService.generateSKU()
-    setValue('sku', newSKU)
-  }
+  // const handleGenerateSKU = () => {
+  //   const newSKU = productService.generateSKU()
+  //   setValue('sku', newSKU)
+  // }
 
   const calculateProfitMargin = () => {
     const price = watch('price')
@@ -143,7 +142,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             </Label>
             <Input
               id="name"
-              {...register('name')}
+              {...register("name")}
               placeholder="Enter product name"
               disabled={isSubmitting}
             />
@@ -157,13 +156,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              {...register('description')}
+              {...register("description")}
               placeholder="Enter product description"
               rows={3}
               disabled={isSubmitting}
             />
             {errors.description && (
-              <p className="text-sm text-red-500">{errors.description.message}</p>
+              <p className="text-sm text-red-500">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
@@ -185,10 +186,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <Select
                 value={categoryId}
                 onValueChange={(value) => {
-                  setValue('categoryId', value)
-                  const selectedCat = categories.find(c => c.id === value)
+                  setValue("categoryId", value);
+                  const selectedCat = categories.find((c) => c.id === value);
                   if (selectedCat) {
-                    setValue('category', selectedCat.name)
+                    setValue("category", selectedCat.name);
                   }
                 }}
                 disabled={isSubmitting}
@@ -206,7 +207,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </Select>
             )}
             {errors.categoryId && (
-              <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+              <p className="text-sm text-red-500">
+                {errors.categoryId.message}
+              </p>
             )}
           </div>
 
@@ -220,7 +223,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 id="price"
                 type="number"
                 step="0.01"
-                {...register('price')}
+                {...register("price")}
                 placeholder="0.00"
                 disabled={isSubmitting}
               />
@@ -235,18 +238,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 id="costPrice"
                 type="number"
                 step="0.01"
-                {...register('costPrice')}
+                {...register("costPrice")}
                 placeholder="0.00"
                 disabled={isSubmitting}
               />
               {errors.costPrice && (
-                <p className="text-sm text-red-500">{errors.costPrice.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.costPrice.message}
+                </p>
               )}
             </div>
           </div>
 
           {/* Profit Margin Display */}
-          {(watch('price') || 0) > 0 && (watch('costPrice') || 0) > 0 && (
+          {(watch("price") || 0) > 0 && (watch("costPrice") || 0) > 0 && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800">
                 <strong>Profit Margin:</strong> {calculateProfitMargin()}
@@ -255,7 +260,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           )}
 
           {/* SKU */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
             <div className="flex gap-2">
               <Input
@@ -278,14 +283,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             {errors.sku && (
               <p className="text-sm text-red-500">{errors.sku.message}</p>
             )}
-          </div>
+          </div> */}
 
           {/* Barcode */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="barcode">Barcode</Label>
             <Input
               id="barcode"
-              {...register('barcode')}
+              {...register("barcode")}
               placeholder="Enter barcode"
               disabled={isSubmitting}
             />
@@ -294,13 +300,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             )}
           </div>
 
+          {/* Image URL */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              {...register("imageUrl")}
+              placeholder="https://cdn.example.com/products/product-image.jpg"
+              disabled={isSubmitting}
+            />
+            {errors.imageUrl && (
+              <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
+            )}
+          </div>
+          </div>
           {/* Unit and Weight */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
               <Input
                 id="unit"
-                {...register('unit')}
+                {...register("unit")}
                 placeholder="e.g., bottle, pack, kg"
                 disabled={isSubmitting}
               />
@@ -315,18 +336,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 id="weightInGrams"
                 type="number"
                 step="0.01"
-                {...register('weightInGrams')}
+                {...register("weightInGrams")}
                 placeholder="520.5"
                 disabled={isSubmitting}
               />
               {errors.weightInGrams && (
-                <p className="text-sm text-red-500">{errors.weightInGrams.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.weightInGrams.message}
+                </p>
               )}
             </div>
           </div>
 
           {/* Location and Dimensions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
@@ -352,7 +375,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <p className="text-sm text-red-500">{errors.dimensions.message}</p>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Supplier Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -360,12 +383,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <Label htmlFor="supplierName">Supplier Name</Label>
               <Input
                 id="supplierName"
-                {...register('supplierName')}
+                {...register("supplierName")}
                 placeholder="Coca-Cola Bottling Company"
                 disabled={isSubmitting}
               />
               {errors.supplierName && (
-                <p className="text-sm text-red-500">{errors.supplierName.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.supplierName.message}
+                </p>
               )}
             </div>
 
@@ -373,29 +398,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <Label htmlFor="supplierContact">Supplier Contact</Label>
               <Input
                 id="supplierContact"
-                {...register('supplierContact')}
+                {...register("supplierContact")}
                 placeholder="+234-800-COCA-COLA"
                 disabled={isSubmitting}
               />
               {errors.supplierContact && (
-                <p className="text-sm text-red-500">{errors.supplierContact.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.supplierContact.message}
+                </p>
               )}
             </div>
-          </div>
-
-          {/* Image URL */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              {...register('imageUrl')}
-              placeholder="https://cdn.example.com/products/product-image.jpg"
-              disabled={isSubmitting}
-            />
-            {errors.imageUrl && (
-              <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
-            )}
           </div>
 
           {/* Tax and Discount Options */}
@@ -403,8 +415,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="isTaxable"
-                checked={watch('isTaxable') ?? true}
-                onCheckedChange={(checked) => setValue('isTaxable', checked === true)}
+                checked={watch("isTaxable") ?? true}
+                onCheckedChange={(checked) =>
+                  setValue("isTaxable", checked === true)
+                }
                 disabled={isSubmitting}
               />
               <Label htmlFor="isTaxable" className="cursor-pointer">
@@ -415,8 +429,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="isDiscountable"
-                checked={watch('isDiscountable') ?? true}
-                onCheckedChange={(checked) => setValue('isDiscountable', checked === true)}
+                checked={watch("isDiscountable") ?? true}
+                onCheckedChange={(checked) =>
+                  setValue("isDiscountable", checked === true)
+                }
                 disabled={isSubmitting}
               />
               <Label htmlFor="isDiscountable" className="cursor-pointer">
@@ -431,7 +447,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <Label htmlFor="status">Status</Label>
               <Select
                 value={status || undefined}
-                onValueChange={(value) => setValue('status', value as ProductStatus)}
+                onValueChange={(value) =>
+                  setValue("status", value as ProductStatus)
+                }
                 disabled={isSubmitting}
               >
                 <SelectTrigger>
@@ -439,8 +457,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ProductStatus.ACTIVE}>Active</SelectItem>
-                  <SelectItem value={ProductStatus.INACTIVE}>Inactive</SelectItem>
-                  <SelectItem value={ProductStatus.DISCONTINUED}>Discontinued</SelectItem>
+                  <SelectItem value={ProductStatus.INACTIVE}>
+                    Inactive
+                  </SelectItem>
+                  <SelectItem value={ProductStatus.DISCONTINUED}>
+                    Discontinued
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -460,9 +482,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {product ? 'Update Product' : 'Create Product'}
+          {product ? "Update Product" : "Create Product"}
         </Button>
       </div>
     </form>
-  )
+  );
 }
