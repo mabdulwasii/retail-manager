@@ -21,9 +21,12 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -32,6 +35,114 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final MessageService messageService;
+
+    // Regex patterns for extracting constraint details from PostgreSQL error messages
+    private static final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(
+        "duplicate key value violates unique constraint \"([^\"]+)\".*Key \\(([^)]+)\\)=\\(([^)]+)\\)",
+        Pattern.DOTALL
+    );
+    private static final Pattern NOT_NULL_PATTERN = Pattern.compile(
+        "null value in column \"([^\"]+)\" of relation \"([^\"]+)\"");
+    private static final Pattern FOREIGN_KEY_PATTERN = Pattern.compile(
+        "violates foreign key constraint \"([^\"]+)\".*Key \\(([^)]+)\\)=\\(([^)]+)\\)",
+        Pattern.DOTALL
+    );
+
+    /**
+     * Extracts detailed constraint violation information for debugging.
+     * Logs table, column, constraint name, and violating value.
+     */
+    private Map<String, String> extractConstraintDetails(SQLException sqlEx) {
+        Map<String, String> details = new HashMap<>();
+
+        if (sqlEx == null || sqlEx.getMessage() == null) {
+            return details;
+        }
+
+        String errorMessage = sqlEx.getMessage();
+
+        // Try to extract duplicate key violation details
+        Matcher duplicateMatcher = DUPLICATE_KEY_PATTERN.matcher(errorMessage);
+        if (duplicateMatcher.find()) {
+            details.put("violationType", "UNIQUE_CONSTRAINT");
+            details.put("constraintName", duplicateMatcher.group(1));
+            details.put("column", duplicateMatcher.group(2));
+            details.put("attemptedValue", duplicateMatcher.group(3));
+
+            // Extract table name from constraint name (usually format: table_column_key)
+            String constraintName = duplicateMatcher.group(1);
+            if (constraintName.contains("_")) {
+                details.put("table", constraintName.split("_")[0]);
+            }
+            return details;
+        }
+
+        // Try to extract NOT NULL violation details
+        Matcher notNullMatcher = NOT_NULL_PATTERN.matcher(errorMessage);
+        if (notNullMatcher.find()) {
+            details.put("violationType", "NOT_NULL");
+            details.put("column", notNullMatcher.group(1));
+            details.put("table", notNullMatcher.group(2));
+            return details;
+        }
+
+        // Try to extract foreign key violation details
+        Matcher foreignKeyMatcher = FOREIGN_KEY_PATTERN.matcher(errorMessage);
+        if (foreignKeyMatcher.find()) {
+            details.put("violationType", "FOREIGN_KEY");
+            details.put("constraintName", foreignKeyMatcher.group(1));
+            details.put("column", foreignKeyMatcher.group(2));
+            details.put("attemptedValue", foreignKeyMatcher.group(3));
+            return details;
+        }
+
+        return details;
+    }
+
+    /**
+     * Logs detailed constraint violation information for debugging purposes.
+     */
+    private void logConstraintViolation(SQLException sqlEx, Map<String, String> details) {
+        if (details.isEmpty()) {
+            logger.error("Database constraint violation (unable to parse details): {}",
+                sqlEx.getMessage());
+            return;
+        }
+
+        String violationType = details.getOrDefault("violationType", "UNKNOWN");
+
+        switch (violationType) {
+            case "UNIQUE_CONSTRAINT":
+                logger.error("UNIQUE CONSTRAINT VIOLATION - Table: {}, Column: {}, " +
+                    "Constraint: {}, Attempted Value: {}, SQL State: {}",
+                    details.get("table"),
+                    details.get("column"),
+                    details.get("constraintName"),
+                    details.get("attemptedValue"),
+                    sqlEx.getSQLState());
+                break;
+
+            case "NOT_NULL":
+                logger.error("NOT NULL CONSTRAINT VIOLATION - Table: {}, Column: {}, SQL State: {}",
+                    details.get("table"),
+                    details.get("column"),
+                    sqlEx.getSQLState());
+                break;
+
+            case "FOREIGN_KEY":
+                logger.error("FOREIGN KEY CONSTRAINT VIOLATION - Constraint: {}, Column: {}, " +
+                    "Attempted Value: {}, SQL State: {}",
+                    details.get("constraintName"),
+                    details.get("column"),
+                    details.get("attemptedValue"),
+                    sqlEx.getSQLState());
+                break;
+
+            default:
+                logger.error("DATABASE CONSTRAINT VIOLATION - Type: {}, Details: {}",
+                    violationType, details);
+        }
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
@@ -148,8 +259,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
-        logger.error("Data integrity violation: {}", e.getMessage(), e);
-
         String message = "Database constraint violation";
         String code = "DATA_INTEGRITY_ERROR";
         HttpStatus status = HttpStatus.CONFLICT;
@@ -158,63 +267,41 @@ public class GlobalExceptionHandler {
             org.hibernate.exception.ConstraintViolationException cve =
                 (org.hibernate.exception.ConstraintViolationException) e.getCause();
 
-            // Check for NOT NULL constraint violations first
-            if (cve.getSQLException() != null && cve.getSQLException().getMessage() != null) {
-                String sqlMsg = cve.getSQLException().getMessage();
-                if (sqlMsg.contains("null value") && sqlMsg.contains("violates not-null constraint")) {
-                    code = "REQUIRED_FIELD_MISSING";
-                    status = HttpStatus.BAD_REQUEST; // 400 for validation errors
+            SQLException sqlEx = cve.getSQLException();
 
-                    // Try to extract the column name from error message
-                    // Format: null value in column "column_name" of relation "table_name"
-                    try {
-                        int columnStart = sqlMsg.indexOf("column \"") + 8;
-                        int columnEnd = sqlMsg.indexOf("\"", columnStart);
-                        if (columnStart > 7 && columnEnd > columnStart) {
-                            String columnName = sqlMsg.substring(columnStart, columnEnd);
-                            message = "Required field '" + columnName + "' is missing or null";
-                        } else {
-                            message = "Required field is missing or null";
-                        }
-                    } catch (Exception ex) {
-                        message = "Required field is missing or null";
-                    }
+            // Extract and log detailed constraint information
+            if (sqlEx != null) {
+                Map<String, String> constraintDetails = extractConstraintDetails(sqlEx);
+                logConstraintViolation(sqlEx, constraintDetails);
 
-                    return ResponseEntity.status(status)
-                        .body(new ErrorResponse(code, message));
-                }
-            }
-
-            // Check constraint name for other violations
-            if (cve.getConstraintName() != null) {
-                if (cve.getConstraintName().toLowerCase().contains("unique") ||
-                    cve.getConstraintName().toLowerCase().contains("uq_")) {
+                // Build user-friendly message based on constraint details
+                String violationType = constraintDetails.get("violationType");
+                if ("UNIQUE_CONSTRAINT".equals(violationType)) {
                     code = "DUPLICATE_ENTRY";
-                    message = "A record with this information already exists";
-                    status = HttpStatus.CONFLICT; // 409 for conflicts
-                } else if (cve.getConstraintName().toLowerCase().contains("foreign") ||
-                           cve.getConstraintName().toLowerCase().contains("fk_")) {
+                    String column = constraintDetails.getOrDefault("column", "field");
+                    message = String.format("A record with this %s already exists",
+                        column.replace("_", " "));
+                    status = HttpStatus.CONFLICT;
+                } else if ("NOT_NULL".equals(violationType)) {
+                    code = "REQUIRED_FIELD_MISSING";
+                    String column = constraintDetails.getOrDefault("column", "field");
+                    message = String.format("Required field '%s' cannot be null",
+                        column.replace("_", " "));
+                    status = HttpStatus.BAD_REQUEST;
+                } else if ("FOREIGN_KEY".equals(violationType)) {
                     code = "INVALID_REFERENCE";
-                    message = "Referenced record does not exist";
-                    status = HttpStatus.BAD_REQUEST; // 400 for invalid references
+                    message = "Referenced record does not exist or cannot be deleted due to dependencies";
+                    status = HttpStatus.BAD_REQUEST;
                 }
+            } else {
+                // Fallback: Log basic info
+                logger.error("Data integrity violation without SQLException details: {}",
+                    e.getMessage());
             }
-        } else if (e.getMessage() != null) {
-            // Try to extract constraint type from error message
-            String errorMsg = e.getMessage().toLowerCase();
-            if (errorMsg.contains("null value") && errorMsg.contains("not-null constraint")) {
-                code = "REQUIRED_FIELD_MISSING";
-                message = "Required field is missing or null";
-                status = HttpStatus.BAD_REQUEST; // 400 for validation errors
-            } else if (errorMsg.contains("unique") || errorMsg.contains("duplicate")) {
-                code = "DUPLICATE_ENTRY";
-                message = "A record with this information already exists";
-                status = HttpStatus.CONFLICT; // 409 for conflicts
-            } else if (errorMsg.contains("foreign key") || errorMsg.contains("violates")) {
-                code = "INVALID_REFERENCE";
-                message = "Referenced record does not exist";
-                status = HttpStatus.BAD_REQUEST; // 400 for invalid references
-            }
+
+        } else {
+            // Not a Hibernate ConstraintViolationException - log basic info
+            logger.error("Data integrity violation (non-Hibernate): {}", e.getMessage());
         }
 
         return ResponseEntity.status(status)
@@ -223,7 +310,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException e) {
-        logger.error("Database access error", e);
+        // Log detailed error for debugging
+        logger.error("DATABASE ACCESS ERROR - Type: {}, Message: {}, Root Cause: {}",
+            e.getClass().getSimpleName(),
+            e.getMessage(),
+            e.getRootCause() != null ? e.getRootCause().getMessage() : "none",
+            e);
+
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .body(new ErrorResponse("DATABASE_ERROR",
                 "Database operation failed. Please try again later."));
@@ -231,7 +324,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(KeycloakUserException.class)
     public ResponseEntity<ErrorResponse> handleKeycloakUserException(KeycloakUserException e) {
-        logger.error("Keycloak user operation failed: {}", e.getMessage());
+        // Log detailed Keycloak error
+        logger.error("KEYCLOAK OPERATION FAILED - Message: {}, Cause: {}",
+            e.getMessage(),
+            e.getCause() != null ? e.getCause().getMessage() : "none",
+            e);
+
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
             .body(new ErrorResponse("EXTERNAL_SERVICE_ERROR",
                 "User management operation failed. Please try again later."));
@@ -239,15 +337,34 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TenantRegistrationException.class)
     public ResponseEntity<ErrorResponse> handleTenantRegistrationException(TenantRegistrationException e) {
-        logger.warn("Tenant registration failed: {}", e.getMessage());
+        logger.warn("TENANT REGISTRATION FAILED - Message: {}", e.getMessage());
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("REGISTRATION_ERROR", e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
-        logger.error("Unexpected error occurred", e);
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception e, WebRequest request) {
+        // Log comprehensive error information for unexpected exceptions
+        logger.error("UNEXPECTED ERROR - Type: {}, Message: {}, Request: {}, Stack Trace:",
+            e.getClass().getName(),
+            e.getMessage(),
+            request.getDescription(false),
+            e);
+
+        // Log cause chain if present
+        Throwable cause = e.getCause();
+        int depth = 1;
+        while (cause != null && depth <= 5) {
+            logger.error("  Caused by [{}]: {} - {}",
+                depth,
+                cause.getClass().getName(),
+                cause.getMessage());
+            cause = cause.getCause();
+            depth++;
+        }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"));
+            .body(new ErrorResponse("INTERNAL_ERROR",
+                "An unexpected error occurred. Please contact support if the issue persists."));
     }
 }
