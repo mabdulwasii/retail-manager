@@ -4,15 +4,19 @@ import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.RoleResponse;
 import com.princely.shopmanager.core.dto.UserProfileResponse;
 import com.princely.shopmanager.core.dto.UserResponse;
+import com.princely.shopmanager.core.dto.UserShopTransferRequest;
 import com.princely.shopmanager.core.dto.UserUpdateRequest;
 import com.princely.shopmanager.core.service.UserService;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 
+import jakarta.validation.Valid;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,21 +75,7 @@ public class UserController {
             User user = userService.getUserByKeycloakId(principal.getSubject());
 
             if (user == null) {
-                log.warn("User not found in database for Keycloak ID: {}", principal.getSubject());
-                // Return minimal profile info from JWT token if user not in database
-                UserProfileResponse response = UserProfileResponse.builder()
-                    .id(principal.getSubject())
-                    .username(principal.getUsername())
-                    .email(principal.getEmail())
-                    .firstName(principal.getFirstName())
-                    .lastName(principal.getLastName())
-                    .fullName(principal.getFullName())
-                    .roles(List.of())
-                    .tenantId(principal.getTenantId())
-                    .shopId(principal.getShopId())
-                    .build();
-
-                return ResponseEntity.ok(response);
+                throw new IllegalStateException("User not found in database: " + principal.getSubject());
             }
 
             // Convert database roles to RoleResponse DTOs
@@ -94,6 +84,8 @@ public class UserController {
                 .toList();
 
             // Convert User entity to response DTO
+            // IMPORTANT: Use database values for tenantId/shopId, NOT JWT principal
+            // JWT can be stale after user updates (e.g., shop transfer)
             UserProfileResponse response = UserProfileResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -104,15 +96,19 @@ public class UserController {
                 .phoneNumber(user.getPhoneNumber())
                 .status(user.getStatus().name())
                 .roles(roleResponses) // Database roles with permissions
-                .tenantId(principal.getTenantId())
-                .shopId(principal.getShopId())
+                .tenantId(user.getTenant().getId()) // From DB, not JWT (prevents staleness)
+                .shopId(user.getShop() != null ? user.getShop().getId() : null) // From DB, not JWT
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
 
             log.debug("Successfully retrieved profile for user: {} with {} roles",
                 user.getUsername(), roleResponses.size());
-            return ResponseEntity.ok(response);
+
+            // Prevent caching of profile data
+            return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(response);
 
         } catch (Exception e) {
             log.error("Error retrieving user profile for {}: {}", principal.getUsername(), e.getMessage(), e);
@@ -152,9 +148,9 @@ public class UserController {
      */
     @Operation(
         summary = "Update user",
-        description = "Updates an existing user."
+        description = "Partially updates an existing user. Only provided fields will be updated (PATCH semantics)."
     )
-    @PutMapping("/users/{userId}")
+    @PatchMapping("/users/{userId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_UPDATE)")
     public ResponseEntity<UserResponse> updateUser(
         @Parameter(description = "User ID") @PathVariable String userId,
@@ -166,6 +162,34 @@ public class UserController {
     }
 
     /**
+     * Transfer user to a different shop within the same tenant.
+     *
+     * @param userId User ID
+     * @param request Shop transfer request
+     * @return Updated user
+     */
+    @Operation(
+        summary = "Transfer user to different shop",
+        description = "Transfers a user to a different shop within the same tenant. Updates both database and Keycloak."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User transferred successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request or shops in different tenants"),
+        @ApiResponse(responseCode = "404", description = "User or shop not found"),
+        @ApiResponse(responseCode = "403", description = "Insufficient permissions")
+    })
+    @PatchMapping("/users/{userId}/transfer-shop")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_TRANSFER_SHOP)")
+    public ResponseEntity<UserResponse> transferUserToShop(
+        @Parameter(description = "User ID") @PathVariable String userId,
+        @Valid @RequestBody UserShopTransferRequest request
+    ) {
+        log.info("Transferring user {} to shop {}", userId, request.getNewShopId());
+        User user = userService.transferUserToShop(userId, request);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
+    }
+
+    /**
      * Delete (deactivate) a user.
      *
      * @param userId User ID
@@ -173,7 +197,7 @@ public class UserController {
      */
     @Operation(
         summary = "Delete user",
-        description = "Soft deletes a user by setting status to INACTIVE."
+        description = "Soft deletes a user by setting status to INACTIVE and removes from Keycloak."
     )
     @DeleteMapping("/users/{userId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_DELETE)")

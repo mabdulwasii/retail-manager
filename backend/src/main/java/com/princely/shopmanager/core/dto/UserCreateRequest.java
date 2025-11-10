@@ -1,5 +1,7 @@
 package com.princely.shopmanager.core.dto;
 
+import java.util.Set;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,8 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
 
 /**
  * DTO for creating a new user.
@@ -52,6 +52,7 @@ public class UserCreateRequest {
     private String password;
 
     @Schema(description = "Shop ID to assign the user to (optional)", example = "shop-123")
+    @NotBlank(message = "Shop is required")
     private String shopId;
 
     @Schema(description = "Set of role IDs or role names to assign to the user", example = "[\"MANAGER\", \"CASHIER\"]")

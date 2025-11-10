@@ -234,4 +234,80 @@ public class KeycloakUserService {
             return Optional.empty();
         }
     }
+
+    /**
+     * Update user in Keycloak
+     */
+    public void updateUser(String keycloakId, String email, String firstName, String lastName,
+                          String phoneNumber, boolean enabled, String tenantId, String shopId) {
+        log.info("Updating user in Keycloak: {}", keycloakId);
+
+        try {
+            UserResource userResource = realmResource.users().get(keycloakId);
+            UserRepresentation user = userResource.toRepresentation();
+
+            // Update basic fields
+            if (email != null) {
+                user.setEmail(email);
+            }
+            if (firstName != null) {
+                user.setFirstName(firstName);
+            }
+            if (lastName != null) {
+                user.setLastName(lastName);
+            }
+            user.setEnabled(enabled);
+
+            // Update attributes
+            Map<String, List<String>> attributes = user.getAttributes();
+            if (attributes == null) {
+                attributes = new HashMap<>();
+            }
+
+            if (tenantId != null) {
+                attributes.put("tenantId", List.of(tenantId));
+            }
+            if (shopId != null) {
+                attributes.put("shopId", List.of(shopId));
+            }
+            if (phoneNumber != null) {
+                attributes.put("phoneNumber", List.of(phoneNumber));
+            }
+
+            user.setAttributes(attributes);
+            userResource.update(user);
+
+            log.info("User updated successfully in Keycloak: {}", keycloakId);
+        } catch (NotFoundException e) {
+            throw new KeycloakUserException("User not found: " + keycloakId, e);
+        } catch (Exception e) {
+            log.error("Error updating user in Keycloak: {}", keycloakId, e);
+            throw new KeycloakUserException("Failed to update user: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Delete user from Keycloak (hard delete)
+     */
+    public void deleteUser(String keycloakId) {
+        log.info("Deleting user from Keycloak: {}", keycloakId);
+
+        try {
+            realmResource.users().get(keycloakId).remove();
+            log.info("User deleted successfully from Keycloak: {}", keycloakId);
+        } catch (NotFoundException e) {
+            throw new KeycloakUserException("User not found: " + keycloakId, e);
+        } catch (Exception e) {
+            log.error("Error deleting user from Keycloak: {}", keycloakId, e);
+            throw new KeycloakUserException("Failed to delete user: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Deactivate user in Keycloak (soft delete - just disable)
+     */
+    public void deactivateUser(String keycloakId) {
+        log.info("Deactivating user in Keycloak: {}", keycloakId);
+        updateUserStatus(keycloakId, false);
+    }
 }

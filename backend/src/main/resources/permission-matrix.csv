@@ -15,6 +15,7 @@ USER,USER_CREATE,Create new users,✓,✓,✓,✓,,,USER_CREATE
 USER,USER_READ,View user details,✓,✓,✓,✓,,,USER_READ
 USER,USER_LIST,"List users (all scopes: system, tenant, shop)",✓,✓,✓,✓,,,USER_LIST
 USER,USER_UPDATE,Update user information,✓,✓,✓,✓,,,USER_UPDATE
+USER,USER_TRANSFER_SHOP,Transfer user to different shop within tenant,✓,✓,✓,,,,USER_TRANSFER_SHOP
 USER,USER_DELETE,Delete users,✓,✓,✓,,,, USER_DELETE
 ROLE,ROLE_CREATE,Create custom roles,✓,✓,✓,,,, ROLE_CREATE
 ROLE,ROLE_READ,View role details,✓,✓,✓,✓,,,ROLE_READ
