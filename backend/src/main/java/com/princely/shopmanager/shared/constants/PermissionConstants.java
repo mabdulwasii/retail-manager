@@ -28,6 +28,12 @@ public final class PermissionConstants {
     public static final String TENANT_UPDATE = "TENANT_UPDATE";
     public static final String TENANT_DELETE = "TENANT_DELETE";
 
+    // Tenant Configuration Permissions
+    public static final String TENANT_CONFIG_READ = "TENANT_CONFIG_READ";
+    public static final String TENANT_CONFIG_CREATE = "TENANT_CONFIG_CREATE";
+    public static final String TENANT_CONFIG_UPDATE = "TENANT_CONFIG_UPDATE";
+    public static final String TENANT_CONFIG_DELETE = "TENANT_CONFIG_DELETE";
+
     // ==========================================
     // SHOP PERMISSIONS
     // ==========================================

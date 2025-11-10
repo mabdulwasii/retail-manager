@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.40
+    tag: backend-v0.0.41
     pullPolicy: Always
   podAnnotations:
-    configVersion: "26"  # SKU auto-generation, barcode search, remove product.location (V26)
+    configVersion: "27"  # Updated backend image
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
@@ -22,7 +22,7 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.6
+    tag: frontend-v0.0.7
     pullPolicy: Always
 
 branding:

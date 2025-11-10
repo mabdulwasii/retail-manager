@@ -5,6 +5,10 @@ TENANT,TENANT_READ,View tenant details,✓,✓,✓,,,, TENANT_READ
 TENANT,TENANT_LIST,List all tenants,✓,,,,,, TENANT_LIST
 TENANT,TENANT_UPDATE,Update tenant information,✓,,,,,, TENANT_UPDATE
 TENANT,TENANT_DELETE,Delete tenants,✓,,,,,, TENANT_DELETE
+TENANT,TENANT_CONFIG_READ,View tenant configuration settings,✓,✓,✓,✓,,,TENANT_CONFIG_READ
+TENANT,TENANT_CONFIG_CREATE,Create tenant configuration settings,✓,✓,✓,,,,TENANT_CONFIG_CREATE
+TENANT,TENANT_CONFIG_UPDATE,Update tenant configuration settings,✓,✓,✓,,,,TENANT_CONFIG_UPDATE
+TENANT,TENANT_CONFIG_DELETE,Delete tenant configuration settings,✓,✓,,,,,TENANT_CONFIG_DELETE
 SHOP,SHOP_CREATE,Create new shops,✓,✓,✓,,,, SHOP_CREATE
 SHOP,SHOP_READ,View shop details,✓,✓,✓,✓,,,SHOP_READ
 SHOP,SHOP_LIST,List shops within context,✓,✓,✓,✓,,,SHOP_LIST
