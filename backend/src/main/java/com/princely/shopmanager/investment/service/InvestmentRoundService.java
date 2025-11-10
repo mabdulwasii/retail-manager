@@ -358,9 +358,8 @@ public class InvestmentRoundService {
 
         String prefix = String.format("ROUND-%s-%d-Q%d-", shop.getName().toUpperCase().substring(0, 3), year, quarter);
 
-        // Find next sequence number
-        long count = investmentRoundRepository.findByShopId(shop.getId(), Pageable.unpaged())
-            .getTotalElements();
+        // Find next sequence number from database (thread-safe)
+        long count = investmentRoundRepository.countByShopId(shop.getId());
 
         return prefix + String.format("%03d", count + 1);
     }
@@ -369,7 +368,9 @@ public class InvestmentRoundService {
      * Generate investment number: INV-{ROUND_NUMBER}-{SEQUENCE}
      */
     private String generateInvestmentNumber(Shop shop, InvestmentRound round) {
-        int sequence = round.getInvestments().size() + 1;
+        // Query database for actual count (thread-safe)
+        long count = investmentRepository.countByInvestmentRoundId(round.getId());
+        int sequence = (int) count + 1;
         return String.format("INV-%s-%03d", round.getRoundNumber(), sequence);
     }
 

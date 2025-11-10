@@ -1,0 +1,313 @@
+package com.princely.shopmanager.investment.service;
+
+import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
+import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.repository.UserRepository;
+import com.princely.shopmanager.investment.domain.Investment;
+import com.princely.shopmanager.investment.domain.InvestmentRound;
+import com.princely.shopmanager.investment.dto.InvestmentRoundCreateRequest;
+import com.princely.shopmanager.investment.dto.InvestmentRoundResponse;
+import com.princely.shopmanager.investment.repository.InvestmentRepository;
+import com.princely.shopmanager.investment.repository.InvestmentRoundRepository;
+import com.princely.shopmanager.investment.validator.InvestmentRoundValidator;
+import com.princely.shopmanager.shared.service.AuditService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("InvestmentRoundService - Uniqueness Tests")
+class InvestmentRoundServiceTest {
+
+    @Mock
+    private InvestmentRoundRepository investmentRoundRepository;
+
+    @Mock
+    private InvestmentRepository investmentRepository;
+
+    @Mock
+    private ShopRepository shopRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private InvestmentRoundValidator validator;
+
+    @Mock
+    private AuditService auditService;
+
+    @InjectMocks
+    private InvestmentRoundService investmentRoundService;
+
+    private Tenant testTenant;
+    private Shop testShop;
+    private User testInvestor;
+
+    @BeforeEach
+    void setUp() {
+        testTenant = Tenant.builder()
+            .id("tenant-1")
+            .name("Test Tenant")
+            .build();
+
+        testShop = Shop.builder()
+            .id("shop-1")
+            .name("Test Shop")
+            .tenant(testTenant)
+            .build();
+
+        testInvestor = User.builder()
+            .id("investor-1")
+            .username("investor@test.com")
+            .email("investor@test.com")
+            .firstName("John")
+            .lastName("Doe")
+            .tenant(testTenant)
+            .build();
+    }
+
+    @Test
+    @DisplayName("Should generate unique round numbers for same shop")
+    void shouldGenerateUniqueRoundNumbers() {
+        // Given: Shop has 2 existing rounds
+        when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        when(investmentRoundRepository.countByShopId("shop-1"))
+            .thenReturn(0L)  // First call
+            .thenReturn(1L)  // Second call
+            .thenReturn(2L); // Third call
+        when(userRepository.findById("investor-1")).thenReturn(Optional.of(testInvestor));
+        when(validator.validate(any())).thenReturn(List.of());
+        when(investmentRoundRepository.save(any(InvestmentRound.class)))
+            .thenAnswer(invocation -> {
+                InvestmentRound round = invocation.getArgument(0);
+                round.setId("round-id-" + System.currentTimeMillis());
+                return round;
+            });
+        when(investmentRepository.countByInvestmentRoundId(anyString())).thenReturn(0L);
+        when(investmentRepository.save(any(Investment.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When: Create 3 investment rounds
+        InvestmentRoundCreateRequest request1 = createTestRequest();
+        InvestmentRoundCreateRequest request2 = createTestRequest();
+        InvestmentRoundCreateRequest request3 = createTestRequest();
+
+        InvestmentRoundResponse response1 = investmentRoundService.createInvestmentRound(request1, "admin");
+        InvestmentRoundResponse response2 = investmentRoundService.createInvestmentRound(request2, "admin");
+        InvestmentRoundResponse response3 = investmentRoundService.createInvestmentRound(request3, "admin");
+
+        // Then: All round numbers should be unique
+        assertThat(response1.getRoundNumber()).contains("-001");
+        assertThat(response2.getRoundNumber()).contains("-002");
+        assertThat(response3.getRoundNumber()).contains("-003");
+
+        // Verify countByShopId was called for sequence generation
+        verify(investmentRoundRepository, times(3)).countByShopId("shop-1");
+    }
+
+    @Test
+    @DisplayName("Should generate unique investment numbers within same round")
+    void shouldGenerateUniqueInvestmentNumbers() {
+        // Given: Round with ID
+        when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        when(investmentRoundRepository.countByShopId("shop-1")).thenReturn(0L);
+        when(userRepository.findById("investor-1")).thenReturn(Optional.of(testInvestor));
+        when(validator.validate(any())).thenReturn(List.of());
+
+        InvestmentRound savedRound = InvestmentRound.builder()
+            .id("round-123")
+            .roundNumber("ROUND-TES-2025-Q4-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.save(any(InvestmentRound.class))).thenReturn(savedRound);
+
+        // Mock countByInvestmentRoundId to return 0, 1, 2 for sequential investments
+        when(investmentRepository.countByInvestmentRoundId("round-123"))
+            .thenReturn(0L)  // First investor
+            .thenReturn(1L)  // Second investor
+            .thenReturn(2L); // Third investor
+
+        when(investmentRepository.save(any(Investment.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When: Create round with 3 investors
+        InvestmentRoundCreateRequest request = InvestmentRoundCreateRequest.builder()
+            .shopId("shop-1")
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId("investor-1")
+                    .amount(BigDecimal.valueOf(10000))
+                    .build(),
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId("investor-1")
+                    .amount(BigDecimal.valueOf(20000))
+                    .build(),
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId("investor-1")
+                    .amount(BigDecimal.valueOf(30000))
+                    .build()
+            ))
+            .build();
+
+        InvestmentRoundResponse response = investmentRoundService.createInvestmentRound(request, "admin");
+
+        // Then: Investment numbers should be sequential
+        assertThat(response.getInvestments()).hasSize(3);
+
+        // Extract all investment numbers and verify they're unique and sequential
+        List<String> investmentNumbers = response.getInvestments().stream()
+            .map(InvestmentRoundResponse.InvestmentSummary::getInvestmentNumber)
+            .sorted()
+            .toList();
+
+        assertThat(investmentNumbers).containsExactly(
+            "INV-ROUND-TES-2025-Q4-001-001",
+            "INV-ROUND-TES-2025-Q4-001-002",
+            "INV-ROUND-TES-2025-Q4-001-003"
+        );
+
+        // Verify countByInvestmentRoundId was called 3 times
+        verify(investmentRepository, times(3)).countByInvestmentRoundId("round-123");
+    }
+
+    @Test
+    @DisplayName("Should use database count for investment numbers when adding to existing round")
+    void shouldUseDatabaseCountWhenAddingInvestor() {
+        // Given: Existing round with 5 investments in database
+        InvestmentRound existingRound = InvestmentRound.builder()
+            .id("round-existing")
+            .roundNumber("ROUND-TES-2025-Q4-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-existing")).thenReturn(Optional.of(existingRound));
+        when(userRepository.findById("investor-1")).thenReturn(Optional.of(testInvestor));
+
+        // Database has 5 investments, but in-memory collection is empty
+        when(investmentRepository.countByInvestmentRoundId("round-existing")).thenReturn(5L);
+        when(investmentRepository.save(any(Investment.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When: Add new investor to existing round
+        InvestmentRoundCreateRequest.InvestorInput newInvestor = InvestmentRoundCreateRequest.InvestorInput.builder()
+            .investorId("investor-1")
+            .amount(BigDecimal.valueOf(15000))
+            .build();
+
+        InvestmentRoundResponse response = investmentRoundService.addInvestorToRound(
+            "round-existing",
+            newInvestor,
+            "admin"
+        );
+
+        // Then: New investment should get number 006 (not 001)
+        assertThat(response.getInvestments()).hasSize(1);
+        assertThat(response.getInvestments().get(0).getInvestmentNumber()).endsWith("-006");
+
+        // Verify database count was used
+        verify(investmentRepository).countByInvestmentRoundId("round-existing");
+    }
+
+    @Test
+    @DisplayName("Should generate round numbers scoped by shop")
+    void shouldGenerateRoundNumbersScopedByShop() {
+        // Given: Two different shops
+        Shop shop1 = Shop.builder().id("shop-1").name("Shop One").tenant(testTenant).build();
+        Shop shop2 = Shop.builder().id("shop-2").name("Shop Two").tenant(testTenant).build();
+
+        when(shopRepository.findById("shop-1")).thenReturn(Optional.of(shop1));
+        when(shopRepository.findById("shop-2")).thenReturn(Optional.of(shop2));
+        when(investmentRoundRepository.countByShopId("shop-1")).thenReturn(0L);
+        when(investmentRoundRepository.countByShopId("shop-2")).thenReturn(0L);
+        when(userRepository.findById("investor-1")).thenReturn(Optional.of(testInvestor));
+        when(validator.validate(any())).thenReturn(List.of());
+        when(investmentRoundRepository.save(any(InvestmentRound.class)))
+            .thenAnswer(invocation -> {
+                InvestmentRound round = invocation.getArgument(0);
+                round.setId("round-id-" + System.currentTimeMillis());
+                return round;
+            });
+        when(investmentRepository.countByInvestmentRoundId(anyString())).thenReturn(0L);
+        when(investmentRepository.save(any(Investment.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When: Create rounds for both shops
+        InvestmentRoundCreateRequest request1 = createTestRequestForShop("shop-1");
+        InvestmentRoundCreateRequest request2 = createTestRequestForShop("shop-2");
+
+        InvestmentRoundResponse response1 = investmentRoundService.createInvestmentRound(request1, "admin");
+        InvestmentRoundResponse response2 = investmentRoundService.createInvestmentRound(request2, "admin");
+
+        // Then: Both should get -001 because they're different shops
+        assertThat(response1.getRoundNumber()).contains("-001");
+        assertThat(response2.getRoundNumber()).contains("-001");
+
+        // Verify each shop's count was queried separately
+        verify(investmentRoundRepository).countByShopId("shop-1");
+        verify(investmentRoundRepository).countByShopId("shop-2");
+    }
+
+    private InvestmentRoundCreateRequest createTestRequest() {
+        return InvestmentRoundCreateRequest.builder()
+            .shopId("shop-1")
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .maturityDate(LocalDate.now().plusMonths(12))
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId("investor-1")
+                    .amount(BigDecimal.valueOf(50000))
+                    .notes("Test investment")
+                    .build()
+            ))
+            .notes("Test round")
+            .build();
+    }
+
+    private InvestmentRoundCreateRequest createTestRequestForShop(String shopId) {
+        return InvestmentRoundCreateRequest.builder()
+            .shopId(shopId)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .maturityDate(LocalDate.now().plusMonths(12))
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId("investor-1")
+                    .amount(BigDecimal.valueOf(50000))
+                    .notes("Test investment")
+                    .build()
+            ))
+            .notes("Test round")
+            .build();
+    }
+}

@@ -75,4 +75,14 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
      */
     @Query("SELECT SUM(i.fixedShares) FROM Investment i WHERE i.investmentRound.id = :roundId")
     Integer sumFixedSharesByInvestmentRoundId(@Param("roundId") String roundId);
+
+    /**
+     * Count investments in a specific round from the database.
+     * Used to generate unique sequential investment numbers.
+     *
+     * @param roundId Investment round ID
+     * @return Count of investments in the round
+     */
+    @Query("SELECT COUNT(i) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    long countByInvestmentRoundId(@Param("roundId") String roundId);
 }
