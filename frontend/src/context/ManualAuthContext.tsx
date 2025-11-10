@@ -189,6 +189,9 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 fetchUserProfile().then(profile => {
                   if (profile) setUser(profile);
                 });
+              } else {
+                // Token doesn't need refresh yet (still valid for more than 5 minutes)
+                console.log("Token still valid, no refresh needed");
               }
             } catch (error) {
               console.error(

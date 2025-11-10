@@ -91,7 +91,6 @@ export const InventoryListPage: React.FC = () => {
   // Adjust stock form
   const [adjustQuantity, setAdjustQuantity] = useState('')
   const [adjustReason, setAdjustReason] = useState('')
-  const [adjustType, setAdjustType] = useState<'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'>('ADJUSTMENT')
 
   // Reserve stock form
   const [reserveQuantity, setReserveQuantity] = useState('')
@@ -111,9 +110,9 @@ export const InventoryListPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       const matchesSearch =
-        item.product.name.toLowerCase().includes(query) ||
-        item.product.sku?.toLowerCase().includes(query) ||
-        item.product.barcode?.toLowerCase().includes(query) ||
+        item.productName?.toLowerCase().includes(query) ||
+        item.productSku?.toLowerCase().includes(query) ||
+        // item.productBarcode?.toLowerCase().includes(query) ||
         item.location?.toLowerCase().includes(query)
       
       if (!matchesSearch) return false
@@ -144,7 +143,6 @@ export const InventoryListPage: React.FC = () => {
     const success = await adjustStock(selectedItem.id, {
       newStock,
       reason: adjustReason,
-      changeType: adjustType,
     })
 
     if (success) {
@@ -453,7 +451,7 @@ export const InventoryListPage: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>SKU/Barcode</TableHead>
+                  <TableHead>SKU</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead className="text-right">Current</TableHead>
                   <TableHead className="text-right">Reserved</TableHead>
@@ -464,27 +462,22 @@ export const InventoryListPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInventory.map((item) => (
+                {filteredInventory?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       <div>
-                        <div className="font-semibold">{item.product.name}</div>
-                        {item.product.category && (
+                        <div className="font-semibold">{item?.productName}</div>
+                        {item?.product?.category && (
                           <div className="text-xs text-muted-foreground">
-                            {item.product.category}
+                            {item?.product?.category}
                           </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {item.product.sku && (
-                          <div className="font-mono">{item.product.sku}</div>
-                        )}
-                        {item.product.barcode && (
-                          <div className="text-xs text-muted-foreground font-mono">
-                            {item.product.barcode}
-                          </div>
+                        {item?.productSku && (
+                          <div className="font-mono">{item?.productSku}</div>
                         )}
                       </div>
                     </TableCell>
@@ -578,7 +571,7 @@ export const InventoryListPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adjust Stock</DialogTitle>
             <DialogDescription>
-              Update stock levels for {selectedItem?.product.name}
+              Update stock levels for {selectedItem?.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -587,23 +580,6 @@ export const InventoryListPage: React.FC = () => {
               <div className="text-2xl font-bold">
                 {selectedItem?.currentStock || 0} units
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="adjust-type">Adjustment Type</Label>
-              <Select
-                value={adjustType}
-                onValueChange={(value: any) => setAdjustType(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="STOCK_IN">Stock In (Increase)</SelectItem>
-                  <SelectItem value="STOCK_OUT">Stock Out (Decrease)</SelectItem>
-                  <SelectItem value="ADJUSTMENT">Manual Adjustment</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
@@ -657,7 +633,7 @@ export const InventoryListPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Reserve Stock</DialogTitle>
             <DialogDescription>
-              Reserve stock for {selectedItem?.product.name}
+              Reserve stock for {selectedItem?.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

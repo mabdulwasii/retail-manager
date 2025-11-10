@@ -24,6 +24,9 @@ export interface InventoryItem {
   shopName: string
   productId: string
   product: Product
+  productName?: string
+  productSku?: string
+  productBarcode?: string
   currentStock: number
   reservedStock: number
   availableStock: number
@@ -72,7 +75,7 @@ export interface CreateInventoryRequest {
 export interface AdjustStockRequest {
   newStock: number
   reason: string
-  changeType: 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'
+  changeType?: 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'
 }
 
 export interface ReserveStockRequest {
@@ -143,6 +146,31 @@ export const useInventory = () => {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return []
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Fetch a single inventory item by ID
+  const fetchInventoryItem = useCallback(async (inventoryId: string): Promise<InventoryItem | null> => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const item = await api.get<InventoryItem>(`/inventory/${inventoryId}`)
+      // Update the inventory array with the fetched item
+      setInventory(prevInventory => {
+        const existing = prevInventory.find(i => i.id === inventoryId)
+        if (existing) {
+          return prevInventory.map(i => i.id === inventoryId ? item : i)
+        }
+        return [item, ...prevInventory]
+      })
+      return item
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+      return null
     } finally {
       setIsLoading(false)
     }
@@ -389,6 +417,7 @@ export const useInventory = () => {
 
     // Operations
     fetchInventory,
+    fetchInventoryItem,
     createInventoryItem,
     adjustStock,
     reserveStock,

@@ -25,13 +25,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   ArrowLeft,
   Package,
   TrendingUp,
@@ -65,7 +58,7 @@ export const InventoryDetailPage: React.FC = () => {
     error,
     canManageInventory,
     canAdjustStock,
-    fetchInventory,
+    fetchInventoryItem,
     fetchInventoryHistory,
     adjustStock,
     reserveStock,
@@ -82,7 +75,6 @@ export const InventoryDetailPage: React.FC = () => {
   // Form states
   const [adjustQuantity, setAdjustQuantity] = useState('')
   const [adjustReason, setAdjustReason] = useState('')
-  const [adjustType, setAdjustType] = useState<'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'>('ADJUSTMENT')
   const [reserveQuantity, setReserveQuantity] = useState('')
   const [reserveReason, setReserveReason] = useState('')
   const [releaseQuantity, setReleaseQuantity] = useState('')
@@ -92,14 +84,11 @@ export const InventoryDetailPage: React.FC = () => {
 
   // Load data on mount
   useEffect(() => {
-    if (inventoryId && currentItem?.shopId) {
-      fetchInventory(currentItem.shopId)
+    if (inventoryId) {
+      fetchInventoryItem(inventoryId)
       fetchInventoryHistory(inventoryId)
     }
-  }, [inventoryId, currentItem?.shopId, fetchInventory, fetchInventoryHistory])
-
-  console.log('inventory', inventory, currentItem)
-  console.log('inventoryHistory', inventoryHistory)
+  }, [inventoryId, fetchInventoryItem, fetchInventoryHistory])
 
   // Handle adjust stock
   const handleAdjustStock = async () => {
@@ -111,7 +100,6 @@ export const InventoryDetailPage: React.FC = () => {
     const result = await adjustStock(inventoryId, {
       newStock,
       reason: adjustReason,
-      changeType: adjustType,
     })
 
     if (result) {
@@ -247,8 +235,8 @@ export const InventoryDetailPage: React.FC = () => {
 
   if (!currentItem) return null
 
-  const stockPercentage = currentItem.maximumStock 
-    ? (currentItem.currentStock / currentItem.maximumStock) * 100
+  const stockPercentage = currentItem?.maximumStock 
+    ? (currentItem?.currentStock / currentItem?.maximumStock) * 100
     : 0
 
   return (
@@ -261,9 +249,9 @@ export const InventoryDetailPage: React.FC = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{currentItem.product.name}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{currentItem?.productName}</h1>
             <p className="text-muted-foreground mt-1">
-              {currentItem.product.category || 'Uncategorized'}
+              {currentItem?.product?.category || 'Uncategorized'}
             </p>
           </div>
         </div>
@@ -273,18 +261,18 @@ export const InventoryDetailPage: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setAdjustQuantity(currentItem.currentStock.toString())
+                  setAdjustQuantity(currentItem?.currentStock.toString())
                   setAdjustStockOpen(true)
                 }}
               >
                 <Minus className="mr-2 h-4 w-4" />
                 Adjust Stock
               </Button>
-              {currentItem.reservedStock > 0 && (
+              {currentItem?.reservedStock > 0 && (
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setReleaseQuantity(currentItem.reservedStock.toString())
+                    setReleaseQuantity(currentItem?.reservedStock.toString())
                     setReleaseStockOpen(true)
                   }}
                 >
@@ -336,7 +324,7 @@ export const InventoryDetailPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${getStockLevelColor(currentItem)}`}>
-              {currentItem.currentStock}
+              {currentItem?.currentStock}
             </div>
             <div className="mt-2">
               {getStockLevelBadge(currentItem)}
@@ -351,7 +339,7 @@ export const InventoryDetailPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {currentItem.reservedStock}
+              {currentItem?.reservedStock}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Allocated for orders
@@ -366,7 +354,7 @@ export const InventoryDetailPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {currentItem.availableStock}
+              {currentItem?.availableStock}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Ready to sell
@@ -381,8 +369,8 @@ export const InventoryDetailPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {currentItem.unitCost 
-                ? formatCurrency(currentItem.currentStock * currentItem.unitCost)
+              {currentItem?.unitCost 
+                ? formatCurrency(currentItem?.currentStock * currentItem?.unitCost)
                 : '—'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -404,34 +392,34 @@ export const InventoryDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground">Product Name</Label>
-                <p className="font-medium">{currentItem.product.name}</p>
+                <p className="font-medium">{currentItem?.productName}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Category</Label>
-                <p className="font-medium">{currentItem.product.category || '—'}</p>
+                <p className="font-medium">{currentItem?.product?.category || '—'}</p>
               </div>
             </div>
 
-            {currentItem.product.description && (
+            {currentItem?.product?.description && (
               <div>
                 <Label className="text-muted-foreground">Description</Label>
-                <p className="text-sm">{currentItem.product.description}</p>
+                <p className="text-sm">{currentItem?.product?.description}</p>
               </div>
             )}
 
             <Separator />
 
             <div className="grid grid-cols-2 gap-4">
-              {currentItem.product.sku && (
+              {currentItem?.productSku && (
                 <div>
                   <Label className="text-muted-foreground">SKU</Label>
-                  <p className="font-mono text-sm">{currentItem.product.sku}</p>
+                  <p className="font-mono text-sm">{currentItem?.productSku}</p>
                 </div>
               )}
-              {currentItem.product.barcode && (
+              {currentItem?.product?.barcode && (
                 <div>
                   <Label className="text-muted-foreground">Barcode</Label>
-                  <p className="font-mono text-sm">{currentItem.product.barcode}</p>
+                  <p className="font-mono text-sm">{currentItem?.product?.barcode}</p>
                 </div>
               )}
             </div>
@@ -439,12 +427,12 @@ export const InventoryDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground">Retail Price</Label>
-                <p className="font-medium">{formatCurrency(currentItem.product.price)}</p>
+                <p className="font-medium">{formatCurrency(currentItem?.product?.price)}</p>
               </div>
-              {currentItem.unitCost && (
+              {currentItem?.unitCost && (
                 <div>
                   <Label className="text-muted-foreground">Unit Cost</Label>
-                  <p className="font-medium">{formatCurrency(currentItem.unitCost)}</p>
+                  <p className="font-medium">{formatCurrency(currentItem?.unitCost)}</p>
                 </div>
               )}
             </div>
@@ -461,18 +449,18 @@ export const InventoryDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground">Minimum Stock</Label>
-                <p className="font-medium text-red-600">{currentItem.minimumStock}</p>
+                <p className="font-medium text-red-600">{currentItem?.minimumStock}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Reorder Point</Label>
-                <p className="font-medium text-yellow-600">{currentItem.reorderPoint}</p>
+                <p className="font-medium text-yellow-600">{currentItem?.reorderPoint}</p>
               </div>
             </div>
 
-            {currentItem.maximumStock && (
+            {currentItem?.maximumStock && (
               <div>
                 <Label className="text-muted-foreground">Maximum Stock</Label>
-                <p className="font-medium">{currentItem.maximumStock}</p>
+                <p className="font-medium">{currentItem?.maximumStock}</p>
                 <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500"
@@ -488,36 +476,36 @@ export const InventoryDetailPage: React.FC = () => {
             <Separator />
 
             <div className="grid grid-cols-2 gap-4">
-              {currentItem.location && (
+              {currentItem?.location && (
                 <div>
                   <Label className="text-muted-foreground">Location</Label>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{currentItem.location}</p>
+                    <p className="font-medium">{currentItem?.location}</p>
                   </div>
                 </div>
               )}
-              {currentItem.batchNumber && (
+              {currentItem?.batchNumber && (
                 <div>
                   <Label className="text-muted-foreground">Batch Number</Label>
-                  <p className="font-mono text-sm">{currentItem.batchNumber}</p>
+                  <p className="font-mono text-sm">{currentItem?.batchNumber}</p>
                 </div>
               )}
             </div>
 
-            {currentItem.expiryDate && (
+            {currentItem?.expiryDate && (
               <div>
                 <Label className="text-muted-foreground">Expiry Date</Label>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <p className="font-medium">
-                    {format(new Date(currentItem.expiryDate), 'PPP')}
+                    {format(new Date(currentItem?.expiryDate), 'PPP')}
                   </p>
                 </div>
-                {currentItem.isExpired && (
+                {currentItem?.isExpired && (
                   <Badge variant="destructive" className="mt-2">Expired</Badge>
                 )}
-                {currentItem.isExpiringSoon && !currentItem.isExpired && (
+                {currentItem?.isExpiringSoon && !currentItem?.isExpired && (
                   <Badge className="bg-orange-500 mt-2">Expiring Soon</Badge>
                 )}
               </div>
@@ -529,13 +517,13 @@ export const InventoryDetailPage: React.FC = () => {
               <div>
                 <Label className="text-muted-foreground">Status</Label>
                 <div className="mt-1">
-                  {getStatusBadge(currentItem.status)}
+                  {getStatusBadge(currentItem?.status)}
                 </div>
               </div>
               <div>
                 <Label className="text-muted-foreground">Last Updated</Label>
                 <p className="text-sm">
-                  {format(new Date(currentItem.lastStockUpdate), 'PPp')}
+                  {format(new Date(currentItem?.lastStockUpdate), 'PPp')}
                 </p>
               </div>
             </div>
@@ -617,32 +605,15 @@ export const InventoryDetailPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adjust Stock</DialogTitle>
             <DialogDescription>
-              Update stock levels for {currentItem.product.name}
+              Update stock levels for {currentItem?.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Current Stock</Label>
               <div className="text-2xl font-bold">
-                {currentItem.currentStock} units
+                {currentItem?.currentStock} units
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Adjustment Type</Label>
-              <Select
-                value={adjustType}
-                onValueChange={(value: any) => setAdjustType(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="STOCK_IN">Stock In (Increase)</SelectItem>
-                  <SelectItem value="STOCK_OUT">Stock Out (Decrease)</SelectItem>
-                  <SelectItem value="ADJUSTMENT">Manual Adjustment</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
@@ -695,7 +666,7 @@ export const InventoryDetailPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Reserve Stock</DialogTitle>
             <DialogDescription>
-              Reserve stock for {currentItem.product.name}
+              Reserve stock for {currentItem?.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -703,13 +674,13 @@ export const InventoryDetailPage: React.FC = () => {
               <div className="space-y-2">
                 <Label>Available Stock</Label>
                 <div className="text-2xl font-bold text-green-600">
-                  {currentItem.availableStock}
+                  {currentItem?.availableStock}
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Already Reserved</Label>
                 <div className="text-2xl font-bold text-orange-600">
-                  {currentItem.reservedStock}
+                  {currentItem?.reservedStock}
                 </div>
               </div>
             </div>
@@ -723,7 +694,7 @@ export const InventoryDetailPage: React.FC = () => {
                 onChange={(e) => setReserveQuantity(e.target.value)}
                 placeholder="Enter quantity"
                 min="1"
-                max={currentItem.availableStock}
+                max={currentItem?.availableStock}
               />
             </div>
 
@@ -753,7 +724,7 @@ export const InventoryDetailPage: React.FC = () => {
               onClick={handleReserveStock}
               disabled={
                 !reserveQuantity ||
-                parseInt(reserveQuantity) > currentItem.availableStock
+                parseInt(reserveQuantity) > currentItem?.availableStock
               }
             >
               Reserve Stock
@@ -768,14 +739,14 @@ export const InventoryDetailPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Release Reserved Stock</DialogTitle>
             <DialogDescription>
-              Release reserved stock for {currentItem.product.name}
+              Release reserved stock for {currentItem?.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Currently Reserved</Label>
               <div className="text-2xl font-bold text-orange-600">
-                {currentItem.reservedStock} units
+                {currentItem?.reservedStock} units
               </div>
             </div>
 
@@ -788,7 +759,7 @@ export const InventoryDetailPage: React.FC = () => {
                 onChange={(e) => setReleaseQuantity(e.target.value)}
                 placeholder="Enter quantity"
                 min="1"
-                max={currentItem.reservedStock}
+                max={currentItem?.reservedStock}
               />
             </div>
           </div>
@@ -806,7 +777,7 @@ export const InventoryDetailPage: React.FC = () => {
               onClick={handleReleaseStock}
               disabled={
                 !releaseQuantity ||
-                parseInt(releaseQuantity) > currentItem.reservedStock
+                parseInt(releaseQuantity) > currentItem?.reservedStock
               }
             >
               Release Stock

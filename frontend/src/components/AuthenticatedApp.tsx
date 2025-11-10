@@ -8,6 +8,7 @@ import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { 
   InventoryPage,
   InventoryDetailPage,
+  InventoryEditPage,
   CreateInventoryPage,
   LowStockReportPage,
   ExpiringItemsPage
@@ -16,6 +17,9 @@ import { InvestmentsPage } from "@/pages/investments/InvestmentsPage";
 import { InvestmentDetailPage } from "@/pages/investments/InvestmentDetailPage";
 import { CreateInvestmentPage } from "@/pages/investments/CreateInvestmentPage";
 import { DistributionListPage } from "@/pages/investments/DistributionListPage";
+import { InvestmentRoundsPage } from "@/pages/investments/InvestmentRoundsPage";
+import { InvestmentRoundDetailPage } from "@/pages/investments/InvestmentRoundDetailPage";
+import { CreateInvestmentRoundPage } from "@/pages/investments/CreateInvestmentRoundPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
 import { CreateProductPage } from "@/pages/products/CreateProductPage";
@@ -28,6 +32,7 @@ import { RolesPage } from "@/pages/admin/RolesPage";
 import { CreateRolePage } from "@/pages/admin/CreateRolePage";
 import { EditRolePage } from "@/pages/admin/EditRolePage";
 import { PermissionsMatrixPage } from "@/pages/admin/PermissionsMatrixPage";
+import { UsersPage, CreateUserPage } from "@/pages/users";
 import { SalesPage, TransactionDetailPage } from "@/pages/sales";
 import { POSPage } from "@/pages/pos/POSPage";
 import { CreateShopPage } from "@/pages/shops/CreateShopPage";
@@ -235,6 +240,18 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
+        path="/inventory/:inventoryId/edit"
+        element={
+          <Layout>
+            <ProtectedRoute
+              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+            >
+              <InventoryEditPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
         path="/inventory/:inventoryId"
         element={
           <Layout>
@@ -325,6 +342,36 @@ export const AuthenticatedApp: React.FC = () => {
         }
       />
       <Route
+        path="/investments/rounds"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN"]}>
+              <InvestmentRoundsPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/investments/rounds/create"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "TENANT_ADMIN"]}>
+              <CreateInvestmentRoundPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/investments/rounds/:id"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN", "INVESTOR"]}>
+              <InvestmentRoundDetailPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
         path="/investments/:id"
         element={
           <Layout>
@@ -408,6 +455,28 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
               <PermissionsMatrixPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      {/* Users */}
+      <Route
+        path="/users"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+              <UsersPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/users/create"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <CreateUserPage />
             </ProtectedRoute>
           </Layout>
         }

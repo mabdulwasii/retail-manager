@@ -50,6 +50,7 @@ export const ExpiringItemsPage: React.FC = () => {
   const {
     isLoading,
     error,
+    canViewInventory,
     getExpiringItems,
     exportInventory,
     clearError,
@@ -60,10 +61,10 @@ export const ExpiringItemsPage: React.FC = () => {
 
   // Load expiring items data
   useEffect(() => {
-    if (shopId) {
+    if (shopId && canViewInventory) {
       loadExpiringItems()
     }
-  }, [shopId, daysThreshold])
+  }, [shopId, daysThreshold, canViewInventory])
 
   const loadExpiringItems = async () => {
     const items = await getExpiringItems(shopId, parseInt(daysThreshold))
@@ -309,10 +310,10 @@ export const ExpiringItemsPage: React.FC = () => {
                       <TableRow key={item.id}>
                         <TableCell>
                           <div>
-                            <div className="font-semibold">{item.product.name}</div>
-                            {item.product.sku && (
+                            <div className="font-semibold">{item.productName}</div>
+                            {item.productSku && (
                               <div className="text-xs text-muted-foreground font-mono">
-                                {item.product.sku}
+                                {item.productSku}
                               </div>
                             )}
                           </div>

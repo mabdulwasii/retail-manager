@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Download } from 'lucide-react'
+import { Plus, Download, Users } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/ManualAuthContext'
@@ -97,6 +97,10 @@ export const InvestmentsPage: React.FC = () => {
           <Button variant="outline" onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
             Export Report
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/investments/rounds')}>
+            <Users className="h-4 w-4 mr-2" />
+            Investment Rounds
           </Button>
           {canCreateInvestment && (
             <Button onClick={handleCreateInvestment}>

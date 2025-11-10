@@ -1,11 +1,13 @@
 import api from "@/lib/axios";
 import type { 
   Investment, 
-  InvestorDistribution 
+  InvestorDistribution,
+  InvestmentRound,
+  InvestmentRoundCreateRequest 
 } from "@/types/investment";
 
 // Re-export types for backward compatibility
-export type { Investment, InvestorDistribution };
+export type { Investment, InvestorDistribution, InvestmentRound };
 
 export interface CreateInvestmentRequest {
   shopId: string;
@@ -136,7 +138,7 @@ export const investmentService = {
     distributionId: string,
     paymentReference: string
   ): Promise<InvestorDistribution> {
-    const { data } = await api.post(
+    const { data} = await api.post(
       `/distributions/${distributionId}/mark-paid`,
       null,
       {
@@ -144,5 +146,52 @@ export const investmentService = {
       }
     );
     return data;
+  },
+
+  // Investment Rounds API
+  async createInvestmentRound(
+    shopId: string,
+    request: InvestmentRoundCreateRequest
+  ): Promise<InvestmentRound> {
+    const { data } = await api.post(`/shops/${shopId}/investment-rounds`, request);
+    return data;
+  },
+
+  async getShopInvestmentRounds(
+    shopId: string,
+    page = 0,
+    size = 20,
+    status?: string
+  ): Promise<PaginatedResponse<InvestmentRound>> {
+    const { data } = await api.get(`/shops/${shopId}/investment-rounds`, {
+      params: { page, size, status },
+    });
+    return data;
+  },
+
+  async getInvestmentRoundById(roundId: string): Promise<InvestmentRound> {
+    const { data } = await api.get(`/investment-rounds/${roundId}`);
+    return data;
+  },
+
+  async closeInvestmentRound(roundId: string): Promise<InvestmentRound> {
+    const { data } = await api.post(`/investment-rounds/${roundId}/close`);
+    return data;
+  },
+
+  async completeInvestmentRound(roundId: string): Promise<InvestmentRound> {
+    const { data } = await api.post(`/investment-rounds/${roundId}/complete`);
+    return data;
+  },
+
+  async cancelInvestmentRound(roundId: string, reason?: string): Promise<InvestmentRound> {
+    const { data } = await api.post(`/investment-rounds/${roundId}/cancel`, null, {
+      params: reason ? { reason } : undefined,
+    });
+    return data;
+  },
+
+  async deleteInvestmentRound(roundId: string): Promise<void> {
+    await api.delete(`/investment-rounds/${roundId}`);
   },
 };

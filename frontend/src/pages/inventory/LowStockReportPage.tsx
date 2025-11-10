@@ -42,6 +42,7 @@ export const LowStockReportPage: React.FC = () => {
   const {
     isLoading,
     error,
+    canViewInventory,
     getLowStockAlerts,
     exportInventory,
     clearError,
@@ -51,10 +52,10 @@ export const LowStockReportPage: React.FC = () => {
 
   // Load low stock data
   useEffect(() => {
-    if (shopId) {
+    if (shopId && canViewInventory) {
       loadLowStockItems()
     }
-  }, [shopId])
+  }, [shopId, canViewInventory])
 
   const loadLowStockItems = async () => {
     const items = await getLowStockAlerts(shopId)
@@ -281,10 +282,10 @@ export const LowStockReportPage: React.FC = () => {
                     <TableRow key={item.id}>
                       <TableCell>
                         <div>
-                          <div className="font-semibold">{item.product.name}</div>
-                          {item.product.sku && (
+                          <div className="font-semibold">{item.productName}</div>
+                          {item.productSku && (
                             <div className="text-xs text-muted-foreground font-mono">
-                              {item.product.sku}
+                              {item.productSku}
                             </div>
                           )}
                         </div>

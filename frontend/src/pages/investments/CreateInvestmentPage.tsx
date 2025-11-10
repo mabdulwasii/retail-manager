@@ -21,6 +21,7 @@ import { useCreateInvestment } from '@/hooks/investment/useInvestmentMutations'
 import { InvestmentType, ProfitSharingModel, InvestmentCreateRequest } from '@/types/investment'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useActiveShops } from '@/hooks/useShops'
+import { useShopUsers } from '@/hooks/useUsers'
 import { useAuth } from '@/context/ManualAuthContext'
 import { addMonths, format } from 'date-fns'
 import { toast } from 'sonner'
@@ -28,6 +29,7 @@ import { toast } from 'sonner'
 // Validation schema matching backend requirements
 const investmentSchema = yup.object().shape({
   shopId: yup.string().required('Shop is required'),
+  investorId: yup.string().required('Investor is required'),
   investmentType: yup.string().oneOf(Object.values(InvestmentType)).required('Investment type is required'),
   amount: yup.number()
     .min(1000, 'Minimum investment is ₦1,000')
@@ -118,14 +120,12 @@ export const CreateInvestmentPage: React.FC = () => {
   
   // Fetch active shops
   const { data: shops = [], isLoading: shopsLoading } = useActiveShops()
-  
-  // Get investor ID from current user
-  const investorId = user?.id
 
   const form = useForm<InvestmentFormValues>({
     resolver: yupResolver(investmentSchema),
     defaultValues: {
       shopId: '',
+      investorId: '',
       investmentType: InvestmentType.SHOP_WIDE,
       amount: 0,
       profitSharingModel: 'PROPORTIONAL_BY_AMOUNT' as any,
@@ -151,9 +151,18 @@ export const CreateInvestmentPage: React.FC = () => {
   const duration = watch('duration') || 0
   const investmentType = watch('investmentType')
   const shopId = watch('shopId')
+  const investorId = watch('investorId')
   
-  // Get selected shop for display in review section
+  // Fetch shop users for investor selection
+  const { data: shopUsers = [], isLoading: usersLoading } = useShopUsers({
+    shopId: shopId,
+    status: 'ACTIVE',
+    enabled: !!shopId,
+  })
+  
+  // Get selected shop and investor for display in review section
   const selectedShop = shops.find(shop => shop.id === shopId)
+  const selectedInvestor = shopUsers.find(user => user.id === investorId)
 
   // Calculate investment preview
   const investmentPreview = useMemo(() => {
@@ -178,12 +187,6 @@ export const CreateInvestmentPage: React.FC = () => {
   }, [amount, profitPercentage, duration])
 
   const onSubmit = async (data: InvestmentFormValues) => {
-    if (!investorId) {
-      toast.error('User ID not found. Please log in again.')
-      console.error('User ID not found')
-      return
-    }
-
     try {
       const maturityDate = investmentPreview.maturityDate
         ? investmentPreview.maturityDate.toISOString()
@@ -191,7 +194,7 @@ export const CreateInvestmentPage: React.FC = () => {
 
       // Build payload with only defined optional fields (exactOptionalPropertyTypes compliance)
       const payload: InvestmentCreateRequest = {
-        investorId, // Add investor ID from current user
+        investorId: data.investorId, // Use selected investor ID
         shopId: data.shopId,
         investmentType: data.investmentType as InvestmentType,
         amount: data.amount,
@@ -199,10 +202,10 @@ export const CreateInvestmentPage: React.FC = () => {
       }
 
       // Conditionally add optional fields only if they have values
-      if (data.profitPercentage !== undefined) {
+      if (data.profitPercentage) {
         payload.profitPercentage = data.profitPercentage
       }
-      if (data.fixedShares !== undefined) {
+      if (data.fixedShares) {
         payload.fixedShares = data.fixedShares
       }
       if (maturityDate !== undefined) {
@@ -316,7 +319,10 @@ export const CreateInvestmentPage: React.FC = () => {
                 <Label htmlFor="shopId">Shop *</Label>
                 <Select
                   value={shopId || undefined}
-                  onValueChange={(value) => setValue('shopId', value)}
+                  onValueChange={(value) => {
+                    setValue('shopId', value)
+                    setValue('investorId', '') // Reset investor when shop changes
+                  }}
                   disabled={shopsLoading}
                 >
                   <SelectTrigger>
@@ -338,6 +344,51 @@ export const CreateInvestmentPage: React.FC = () => {
                 </Select>
                 {errors.shopId && (
                   <p className="text-sm text-red-600">{errors.shopId.message}</p>
+                )}
+              </div>
+
+              {/* Investor Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="investorId">Investor *</Label>
+                <Select
+                  value={investorId || undefined}
+                  onValueChange={(value) => setValue('investorId', value)}
+                  disabled={!shopId || usersLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue 
+                      placeholder={
+                        !shopId 
+                          ? "Select a shop first" 
+                          : usersLoading 
+                          ? "Loading investors..." 
+                          : "Select an investor"
+                      } 
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shopUsers.length === 0 && !usersLoading ? (
+                      <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                        No active users available for this shop
+                      </div>
+                    ) : (
+                      shopUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.firstName && user.lastName 
+                            ? `${user.firstName} ${user.lastName} (${user.email})` 
+                            : user.email}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {errors.investorId && (
+                  <p className="text-sm text-red-600">{errors.investorId.message}</p>
+                )}
+                {selectedInvestor && (
+                  <p className="text-xs text-muted-foreground">
+                    Roles: {selectedInvestor.roles.join(', ')}
+                  </p>
                 )}
               </div>
 
@@ -729,6 +780,19 @@ export const CreateInvestmentPage: React.FC = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Shop</p>
                     <p className="font-medium">{selectedShop?.name || 'Not selected'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Investor</p>
+                    <p className="font-medium">
+                      {selectedInvestor 
+                        ? (selectedInvestor.firstName && selectedInvestor.lastName 
+                          ? `${selectedInvestor.firstName} ${selectedInvestor.lastName}` 
+                          : selectedInvestor.email)
+                        : 'Not selected'}
+                    </p>
+                    {selectedInvestor && (
+                      <p className="text-xs text-muted-foreground">{selectedInvestor.email}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Investment Type</p>

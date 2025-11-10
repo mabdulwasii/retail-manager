@@ -14,8 +14,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export const CreateInventoryPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { createInventoryItem, isLoading } = useInventory()
+  const { createInventoryItem, isLoading, canManageInventory } = useInventory()
   const { products, isLoading: productsLoading } = useProducts()
+
+  // Check if user has permission to create inventory
+  useEffect(() => {
+    if (!canManageInventory) {
+      navigate('/inventory')
+    }
+  }, [canManageInventory, navigate])
+
+  if (!canManageInventory) {
+    return null
+  }
 
   const [formData, setFormData] = useState({
     productId: '',

@@ -15,8 +15,9 @@ export enum InvestmentType {
 
 export enum ProfitSharingModel {
   PROPORTIONAL_BY_AMOUNT = 'PROPORTIONAL_BY_AMOUNT',
-  FIXED_PERCENTAGE = 'FIXED_PERCENTAGE',
-  FIXED_AMOUNT = 'FIXED_AMOUNT'
+  FIXED_SHARES = 'FIXED_SHARES',
+  TIME_WEIGHTED = 'TIME_WEIGHTED',
+  TIERED = 'TIERED'
 }
 
 export enum DistributionStatus {
@@ -155,4 +156,73 @@ export interface TimelineEvent {
   amount?: number
   icon: React.ReactNode
   color: string
+}
+
+// Investment Round Types
+export enum RoundStatus {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED'
+}
+
+export interface TimeWeightingRules {
+  baseYears: number
+  baseMultiplier: number
+  year2Threshold: number
+  year2Multiplier: number
+  year3Threshold: number
+  year3Multiplier: number
+  maxMultiplier: number
+}
+
+export interface TierConfiguration {
+  tier1Threshold: number
+  tier1Multiplier: number
+  tier2Threshold: number
+  tier2Multiplier: number
+  tier3Threshold: number
+  tier3Multiplier: number
+}
+
+export interface InvestmentRoundInvestor {
+  investorId: string
+  amount: number
+  fixedShares?: number
+  notes?: string
+}
+
+export interface InvestmentRoundCreateRequest {
+  shopId: string
+  investmentType: InvestmentType
+  profitSharingModel: ProfitSharingModel
+  maturityDate?: string
+  notes?: string
+  productIds?: string[]
+  categoryFilter?: string
+  timeWeightingRules?: TimeWeightingRules
+  tierConfiguration?: TierConfiguration
+  investors: InvestmentRoundInvestor[]
+}
+
+export interface InvestmentRound {
+  id: string
+  roundNumber: string
+  shopId: string
+  shopName: string
+  investmentType: InvestmentType
+  profitSharingModel: ProfitSharingModel
+  maturityDate?: string
+  status: RoundStatus
+  totalAmount: number
+  totalInvestors: number
+  notes?: string
+  timeWeightingRules?: TimeWeightingRules
+  tierConfiguration?: TierConfiguration
+  investments: Investment[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  closedAt?: string
+  completedAt?: string
 }
