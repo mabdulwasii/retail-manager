@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.42
+    tag: backend-v0.0.43
     pullPolicy: Always
   podAnnotations:
-    configVersion: "29"  # Add getUserByEmail, explicit JWT mappers, require shopId, permanent passwords
+    configVersion: "30"  # Fix ProductServiceTest Mockito errors, V29 migration permissions fix
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
