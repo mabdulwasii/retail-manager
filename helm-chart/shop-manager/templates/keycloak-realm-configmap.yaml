@@ -217,7 +217,7 @@ data:
             "composite": false
           }
         ]
-      },
+      }{{- if .Values.application.testUsers.enabled }},
       "users": [
         {
           "username": "admin@shopmanager.com",
@@ -395,7 +395,7 @@ data:
             "tenantId": ["default-tenant-id"]
           }
         }
-      ]
+      ]{{- end }}
     }
 
   setup-realm.sh: |

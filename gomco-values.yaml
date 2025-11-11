@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.41
+    tag: backend-v0.0.42
     pullPolicy: Always
   podAnnotations:
-    configVersion: "28"  # Fix system roles and tenant-specific roles
+    configVersion: "29"  # Add getUserByEmail, explicit JWT mappers, require shopId, permanent passwords
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
@@ -32,6 +32,11 @@ branding:
   colors:
     primary: "#2E7D32"
     secondary: "#FF6F00"
+
+# Application configuration
+application:
+  testUsers:
+    enabled: true  # Set to false to disable test user creation in Keycloak
 
 # TLS Configuration
 tls:
