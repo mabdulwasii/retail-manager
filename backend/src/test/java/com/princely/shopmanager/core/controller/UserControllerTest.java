@@ -247,84 +247,82 @@ class UserControllerTest {
     }
 
     // ========== Tests for GET /api/users (System-wide user listing) ==========
-    // NOTE: These tests are disabled because the /api/users endpoint doesn't exist yet.
-    // The endpoint needs to be implemented in UserController with proper SYSTEM_ADMIN authorization.
 
-    // @Test
-    // @DisplayName("GET /api/users - System Admin can list all users")
-    // @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
-    // void getAllUsers_SystemAdmin_Success() throws Exception {
-    //     // Given - Create multiple users
-    //     User user1 = userRepository.saveAndFlush(testUser);
-    //     User user2 = User.builder()
-    //         .keycloakId("kc-2")
-    //         .username("jane.smith")
-    //         .email("jane@example.com")
-    //         .firstName("Jane")
-    //         .lastName("Smith")
-    //         .phoneNumber("+9876543210")
-    //         .tenant(testTenant)
-    //         .shop(testShop)
-    //         .status(User.UserStatus.ACTIVE)
-    //         .build();
-    //     userRepository.saveAndFlush(user2);
-    //
-    //     // When & Then
-    //     mockMvc.perform(get("/api/users")
-    //             .contentType(MediaType.APPLICATION_JSON))
-    //         .andExpect(status().isOk())
-    //         .andExpect(jsonPath("$", hasSize(2)))
-    //         .andExpect(jsonPath("$[0].username").exists())
-    //         .andExpect(jsonPath("$[1].username").exists());
-    // }
+    @Test
+    @DisplayName("GET /api/users - System Admin can list all users")
+    @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
+    void getAllUsers_SystemAdmin_Success() throws Exception {
+        // Given - Create multiple users
+        User user1 = userRepository.saveAndFlush(testUser);
+        User user2 = User.builder()
+            .keycloakId("kc-2")
+            .username("jane.smith")
+            .email("jane@example.com")
+            .firstName("Jane")
+            .lastName("Smith")
+            .phoneNumber("+9876543210")
+            .tenant(testTenant)
+            .shop(testShop)
+            .status(User.UserStatus.ACTIVE)
+            .build();
+        userRepository.saveAndFlush(user2);
 
-    // @Test
-    // @DisplayName("GET /api/users - System Admin can filter by status")
-    // @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
-    // void getAllUsers_FilterByStatus_Success() throws Exception {
-    //     // Given - Create users with different statuses
-    //     testUser.setStatus(User.UserStatus.ACTIVE);
-    //     userRepository.saveAndFlush(testUser);
-    //
-    //     User inactiveUser = User.builder()
-    //         .keycloakId("kc-inactive")
-    //         .username("inactive.user")
-    //         .email("inactive@example.com")
-    //         .firstName("Inactive")
-    //         .lastName("User")
-    //         .phoneNumber("+1111111111")
-    //         .tenant(testTenant)
-    //         .shop(testShop)
-    //         .status(User.UserStatus.INACTIVE)
-    //         .build();
-    //     userRepository.saveAndFlush(inactiveUser);
-    //
-    //     // When & Then - Filter for ACTIVE only
-    //     mockMvc.perform(get("/api/users")
-    //             .param("status", "ACTIVE")
-    //             .contentType(MediaType.APPLICATION_JSON))
-    //         .andExpect(status().isOk())
-    //         .andExpect(jsonPath("$", hasSize(1)))
-    //         .andExpect(jsonPath("$[0].username").value("john.doe"))
-    //         .andExpect(jsonPath("$[0].status").value("ACTIVE"));
-    // }
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].username").exists())
+            .andExpect(jsonPath("$[1].username").exists());
+    }
 
-    // @Test
-    // @DisplayName("GET /api/users - Non-System Admin gets 403")
-    // @WithMockPermissions(role = "MANAGER", username = "manager.user")
-    // void getAllUsers_NonSystemAdmin_Forbidden() throws Exception {
-    //     // When & Then
-    //     mockMvc.perform(get("/api/users")
-    //             .contentType(MediaType.APPLICATION_JSON))
-    //         .andExpect(status().isForbidden());
-    // }
+    @Test
+    @DisplayName("GET /api/users - System Admin can filter by status")
+    @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
+    void getAllUsers_FilterByStatus_Success() throws Exception {
+        // Given - Create users with different statuses
+        testUser.setStatus(User.UserStatus.ACTIVE);
+        userRepository.saveAndFlush(testUser);
 
-    // @Test
-    // @DisplayName("GET /api/users - Unauthenticated user gets 401")
-    // void getAllUsers_Unauthenticated_Unauthorized() throws Exception {
-    //     // When & Then
-    //     mockMvc.perform(get("/api/users")
-    //             .contentType(MediaType.APPLICATION_JSON))
-    //         .andExpect(status().isUnauthorized());
-    // }
+        User inactiveUser = User.builder()
+            .keycloakId("kc-inactive")
+            .username("inactive.user")
+            .email("inactive@example.com")
+            .firstName("Inactive")
+            .lastName("User")
+            .phoneNumber("+1111111111")
+            .tenant(testTenant)
+            .shop(testShop)
+            .status(User.UserStatus.INACTIVE)
+            .build();
+        userRepository.saveAndFlush(inactiveUser);
+
+        // When & Then - Filter for ACTIVE only
+        mockMvc.perform(get("/api/users")
+                .param("status", "ACTIVE")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].username").value("john.doe"))
+            .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+    }
+
+    @Test
+    @DisplayName("GET /api/users - Non-System Admin gets 403")
+    @WithMockPermissions(role = "MANAGER", username = "manager.user")
+    void getAllUsers_NonSystemAdmin_Forbidden() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/users - Unauthenticated user gets 401")
+    void getAllUsers_Unauthenticated_Unauthorized() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/api/users")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isUnauthorized());
+    }
 }

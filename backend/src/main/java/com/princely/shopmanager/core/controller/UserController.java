@@ -252,7 +252,7 @@ public class UserController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SYSTEM_ADMIN)")
+    @PreAuthorize("hasAuthority(T(com.princely.shopmanager.shared.constants.PermissionConstants).SYSTEM_ADMIN)")
     public ResponseEntity<List<UserResponse>> getAllUsers(
         @Parameter(description = "Optional status filter (ACTIVE, INACTIVE, PENDING)")
         @RequestParam(required = false) User.UserStatus status
