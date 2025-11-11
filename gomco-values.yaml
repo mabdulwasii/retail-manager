@@ -13,7 +13,7 @@ backend:
     tag: backend-v0.0.41
     pullPolicy: Always
   podAnnotations:
-    configVersion: "27"  # Updated backend image
+    configVersion: "28"  # Fix system roles and tenant-specific roles
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 

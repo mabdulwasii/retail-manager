@@ -2,11 +2,13 @@ package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.core.domain.Permission;
 import com.princely.shopmanager.core.domain.Role;
+import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.RoleCreateRequest;
 import com.princely.shopmanager.core.dto.RoleUpdateRequest;
 import com.princely.shopmanager.core.repository.PermissionRepository;
 import com.princely.shopmanager.core.repository.RoleRepository;
+import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -32,16 +34,19 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
+    private final TenantRepository tenantRepository;
 
     /**
-     * Get all available roles.
+     * Get all available roles for the current tenant.
+     * Returns system roles (available to all tenants) + tenant-specific custom roles.
      *
-     * @return List of all roles
+     * @return List of system and tenant-specific roles
      */
     @Transactional(readOnly = true)
     public List<Role> getAllRoles() {
-        log.debug("Retrieving all roles");
-        return roleRepository.findAll();
+        String currentTenantId = TenantContext.getCurrentTenant();
+        log.debug("Retrieving system and tenant-specific roles for tenant: {}", currentTenantId);
+        return roleRepository.findSystemAndTenantRoles(currentTenantId);
     }
 
     /**
@@ -204,6 +209,7 @@ public class RoleService {
     /**
      * Create a new custom role.
      * System roles cannot be created via API.
+     * Custom roles are tenant-specific.
      *
      * @param request Role creation request
      * @return Created role
@@ -212,6 +218,8 @@ public class RoleService {
     @Transactional
     public Role createRole(RoleCreateRequest request) {
         log.info("Creating custom role: {}", request.getName());
+
+        String currentTenantId = TenantContext.getCurrentTenant();
 
         // Validate role name doesn't exist
         if (roleRepository.findByName(request.getName()).isPresent()) {
@@ -223,11 +231,16 @@ public class RoleService {
             throw new IllegalArgumentException("Role name must be uppercase letters and underscores only");
         }
 
+        // Get current tenant
+        Tenant tenant = tenantRepository.findById(currentTenantId)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + currentTenantId));
+
         // Build role
         Role role = Role.builder()
             .name(request.getName())
             .description(request.getDescription())
             .isSystem(false) // Custom roles are never system roles
+            .tenant(tenant)   // Set tenant for custom roles
             .permissions(new HashSet<>())
             .build();
 
@@ -238,7 +251,7 @@ public class RoleService {
         }
 
         Role savedRole = roleRepository.save(role);
-        log.info("Successfully created custom role: {}", savedRole.getName());
+        log.info("Successfully created custom role: {} for tenant: {}", savedRole.getName(), currentTenantId);
 
         return savedRole;
     }
@@ -310,11 +323,13 @@ public class RoleService {
 
     /**
      * Add a permission to a role.
+     * System roles cannot be modified.
      * Evicts permission cache for all users with this role.
      *
      * @param roleId Role ID
      * @param permissionIdentifier Permission ID or name
      * @throws IllegalArgumentException if role or permission not found
+     * @throws SecurityException if attempting to modify a system role
      */
     @Transactional
     @CacheEvict(value = "userPermissions", allEntries = true)
@@ -323,6 +338,11 @@ public class RoleService {
 
         Role role = roleRepository.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // System roles cannot be modified
+        if (role.isSystem()) {
+            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+        }
 
         Permission permission = permissionRepository.findById(permissionIdentifier)
             .or(() -> permissionRepository.findByName(permissionIdentifier))
@@ -337,11 +357,13 @@ public class RoleService {
 
     /**
      * Remove a permission from a role.
+     * System roles cannot be modified.
      * Evicts permission cache for all users with this role.
      *
      * @param roleId Role ID
      * @param permissionId Permission ID
      * @throws IllegalArgumentException if role or permission not found
+     * @throws SecurityException if attempting to modify a system role
      */
     @Transactional
     @CacheEvict(value = "userPermissions", allEntries = true)
@@ -350,6 +372,11 @@ public class RoleService {
 
         Role role = roleRepository.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // System roles cannot be modified
+        if (role.isSystem()) {
+            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+        }
 
         Permission permission = permissionRepository.findById(permissionId)
             .orElseThrow(() -> new IllegalArgumentException("Permission not found with ID: " + permissionId));
@@ -363,10 +390,12 @@ public class RoleService {
 
     /**
      * Bulk update role permissions (replaces all existing permissions).
+     * System roles cannot be modified.
      *
      * @param roleId Role ID
      * @param permissionIdentifiers Set of permission IDs or names
      * @throws IllegalArgumentException if role not found or any permission not found
+     * @throws SecurityException if attempting to modify a system role
      */
     @Transactional
     public void bulkUpdateRolePermissions(String roleId, Set<String> permissionIdentifiers) {
@@ -374,6 +403,11 @@ public class RoleService {
 
         Role role = roleRepository.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+
+        // System roles cannot be modified
+        if (role.isSystem()) {
+            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+        }
 
         // Resolve all permissions
         Set<Permission> permissions = resolvePermissions(permissionIdentifiers);

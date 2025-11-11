@@ -32,6 +32,9 @@ public class RoleResponse {
     @Schema(description = "Whether this is a system role", example = "false")
     private Boolean isSystem;
 
+    @Schema(description = "Tenant ID for custom roles (null for system roles)", example = "tenant-123")
+    private String tenantId;
+
     @Schema(description = "Permissions assigned to this role")
     private Set<String> permissions;
 
@@ -47,6 +50,7 @@ public class RoleResponse {
             .name(role.getName())
             .description(role.getDescription())
             .isSystem(role.isSystem())
+            .tenantId(role.getTenant() != null ? role.getTenant().getId() : null)
             .permissions(role.getPermissions() != null ?
                 role.getPermissions().stream()
                     .map(p -> p.getName())
