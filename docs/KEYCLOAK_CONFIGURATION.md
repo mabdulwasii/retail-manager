@@ -20,6 +20,7 @@ Shop Manager requires specific JWT claims from Keycloak for proper user synchron
 - Primary key for linking Keycloak users to database records
 - Used by `UserController.getCurrentUserProfile()` to retrieve user data
 - Immutable - never changes even if user details are updated
+- **Without this claim, users will experience authentication errors and profile lookups will fail**
 
 **How to configure:**
 
@@ -47,10 +48,15 @@ Shop Manager requires specific JWT claims from Keycloak for proper user synchron
 ### 2. `tenant_id` - **REQUIRED**
 
 - **Purpose:** Identifies which tenant the user belongs to
-- **Used for:** Multi-tenant data isolation
+- **Used for:** Multi-tenant data isolation and TenantContext setup
 - **Requirement:** REQUIRED
 - **Type:** String
 - **Example:** `"tenant_id": "default-tenant-id"`
+
+**Why it's critical:**
+- Used by `TenantFilter` to set the tenant context for every request
+- **Without this claim, API calls will fail with "No tenant context available" error**
+- Required for all database queries to ensure proper tenant isolation
 
 **How to configure:**
 
@@ -333,21 +339,34 @@ Understanding how Shop Manager syncs users from Keycloak:
 ## Best Practices
 
 ### 1. User Attribute Management
-- Set `tenant_id` and `shop_id` immediately when creating users in Keycloak
+- **CRITICAL:** Set `tenant_id` and `shop_id` immediately when creating users in Keycloak
 - Use consistent UUID formats for IDs
 - Don't change user attributes manually after first login
+- **For API-created users:** Attributes are automatically set by `KeycloakUserService.createUser()`
+- **For manually created users:** You MUST set `tenantId` and `shopId` attributes in Keycloak user profile
 
-### 2. Role Management
+### 2. API User Creation
+- **Shop ID is now REQUIRED** for all user creation via `/api/tenants/{tenantId}/users`
+- Passwords are set as **permanent** (users will NOT be forced to change on first login)
+- Users created via API automatically get proper Keycloak attributes set
+
+### 3. Role Management
 - Create system roles in database FIRST (via migrations)
 - Then assign matching roles in Keycloak
 - Keep role names consistent across Keycloak and database
 
-### 3. Testing New Users
+### 4. Testing New Users
 - Always decode JWT after first login to verify claims
 - Check database to confirm user was synced correctly
 - Test /profile endpoint before granting production access
 
-### 4. Troubleshooting
+### 5. Helm Deployment
+- Test users in `keycloak-realm-configmap.yaml` are **optional**
+- Control via `application.testUsers.enabled` in values.yaml
+- Set to `false` in production to disable automatic test user creation
+- Realm configuration is still imported even when test users are disabled
+
+### 6. Troubleshooting
 - Enable DEBUG logging for `com.princely.shopmanager.auth.service.UserSyncService`
 - Check Keycloak server logs for authentication errors
 - Use browser DevTools Network tab to inspect API responses
@@ -358,17 +377,18 @@ Understanding how Shop Manager syncs users from Keycloak:
 
 Use this checklist when setting up a new Keycloak realm or client:
 
-- [ ] Client `retail-frontend` created
-- [ ] Client scope `retail-frontend-dedicated` created
-- [ ] Mapper: `sub` → added to client scope
-- [ ] Mapper: `tenant_id` → created and configured
-- [ ] Mapper: `shop_id` → created and configured
+- [ ] Client `retail-frontend` created (auto-created via Helm chart)
+- [ ] Client scope `retail-frontend-dedicated` created (auto-created via Helm chart)
+- [ ] Mapper: `sub` → **CRITICAL** - auto-included via Helm protocolMappers
+- [ ] Mapper: `tenant_id` → auto-included via Helm protocolMappers
+- [ ] Mapper: `shop_id` → auto-included via Helm protocolMappers
 - [ ] Standard profile mappers enabled (email, name, username)
-- [ ] Realm roles created matching database roles
-- [ ] Test user created with attributes: tenant_id, shop_id
-- [ ] Test login and JWT decode verification
-- [ ] Test /profile API call
+- [ ] Realm roles created matching database roles (auto-created via Helm chart)
+- [ ] Test user created with attributes: tenant_id, shop_id (optional via `application.testUsers.enabled`)
+- [ ] Test login and JWT decode verification - **verify sub, tenant_id, shop_id present**
+- [ ] Test /profile API call - should return correct user data
 - [ ] Verify database user record created with correct keycloak_id
+- [ ] Test new user creation via API - verify JWT has all required claims
 
 ---
 

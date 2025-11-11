@@ -133,6 +133,24 @@ public class UserService {
     }
 
     /**
+     * Gets a user by their email address.
+     *
+     * @param email User email
+     * @return User if found, null otherwise
+     */
+    public User getUserByEmail(String email) {
+        log.debug("Finding user by email: {}", email);
+
+        try {
+            return userRepository.findByEmail(email)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.error("Error finding user by email {}: {}", email, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Creates a new user.
      *
      * @param tenantId Tenant ID
@@ -172,20 +190,22 @@ public class UserService {
             throw new IllegalArgumentException("At least one role must be specified");
         }
 
-        // Get shop if shopId is provided
-        Shop shop = null;
-        if (request.getShopId() != null && !request.getShopId().isBlank()) {
-            shop = shopRepository.findById(request.getShopId())
-                .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
-
-            // Validate shop belongs to tenant
-            if (!shop.getTenant().getId().equals(tenantId)) {
-                throw new IllegalArgumentException(
-                    "Shop " + request.getShopId() + " does not belong to tenant " + tenantId
-                );
-            }
-            log.debug("Assigning user to shop: {} ({})", shop.getName(), shop.getId());
+        // Validate shopId is provided (now required)
+        if (request.getShopId() == null || request.getShopId().isBlank()) {
+            throw new IllegalArgumentException("Shop ID is required for user creation");
         }
+
+        // Get shop
+        Shop shop = shopRepository.findById(request.getShopId())
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
+
+        // Validate shop belongs to tenant
+        if (!shop.getTenant().getId().equals(tenantId)) {
+            throw new IllegalArgumentException(
+                "Shop " + request.getShopId() + " does not belong to tenant " + tenantId
+            );
+        }
+        log.debug("Assigning user to shop: {} ({})", shop.getName(), shop.getId());
 
         // Create user in Keycloak FIRST (if enabled)
         // If this fails, transaction will rollback and user won't be created in DB
@@ -205,7 +225,7 @@ public class UserService {
                 tenantId,
                 request.getShopId(),
                 request.getPassword(),
-                true, // temporary password
+                false, // permanent password (not temporary)
                 true, // enabled
                 roleNames
             );

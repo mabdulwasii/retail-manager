@@ -104,6 +104,17 @@ data:
           ],
           "protocolMappers": [
             {
+              "name": "sub-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-sub-mapper",
+              "consentRequired": false,
+              "config": {
+                "access.token.claim": "true",
+                "id.token.claim": "true",
+                "userinfo.token.claim": "true"
+              }
+            },
+            {
               "name": "tenant-id-mapper",
               "protocol": "openid-connect",
               "protocolMapper": "oidc-usermodel-attribute-mapper",
@@ -206,7 +217,7 @@ data:
             "composite": false
           }
         ]
-      },
+      }{{- if .Values.application.testUsers.enabled }},
       "users": [
         {
           "username": "admin@shopmanager.com",
@@ -384,7 +395,7 @@ data:
             "tenantId": ["default-tenant-id"]
           }
         }
-      ]
+      ]{{- end }}
     }
 
   setup-realm.sh: |
