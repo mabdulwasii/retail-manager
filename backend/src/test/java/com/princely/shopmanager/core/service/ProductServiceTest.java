@@ -116,7 +116,8 @@ class ProductServiceTest {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(categoryRepository.findById("category-1")).thenReturn(Optional.of(testCategory));
-        when(productRepository.existsBySkuAndShopId("COCA-500ML", "shop-1")).thenReturn(false);
+        // Mock auto-generated SKU check (any SKU format should return false for uniqueness)
+        when(productRepository.existsBySkuAndShopId(anyString(), eq("shop-1"))).thenReturn(false);
         when(productRepository.existsByBarcodeAndShopId("5449000000996", "shop-1")).thenReturn(false);
 
         // Mock save to return product with ID set
@@ -140,7 +141,9 @@ class ProductServiceTest {
         // Assert
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("Coca-Cola 500ml");
-        assertThat(response.getSku()).isEqualTo("COCA-500ML");
+        // SKU is auto-generated, just verify it exists and follows pattern
+        assertThat(response.getSku()).isNotNull();
+        assertThat(response.getSku()).matches("[A-Z]{3,4}-[A-Z]{3}-\\d{8}-[A-Z0-9]{4}");
         assertThat(response.getPrice()).isEqualByComparingTo("500.00");
         assertThat(response.getTotalStock()).isZero();
         assertThat(response.getAvailableStock()).isZero();
@@ -171,7 +174,9 @@ class ProductServiceTest {
     void createProduct_WithDuplicateBarcode_ShouldThrowException() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
-        when(productRepository.existsBySkuAndShopId("COCA-500ML", "shop-1")).thenReturn(false);
+        when(categoryRepository.findById("category-1")).thenReturn(Optional.of(testCategory));
+        // Mock auto-generated SKU check
+        when(productRepository.existsBySkuAndShopId(anyString(), eq("shop-1"))).thenReturn(false);
         when(productRepository.existsByBarcodeAndShopId("5449000000996", "shop-1")).thenReturn(true);
 
         // Act & Assert
@@ -198,7 +203,8 @@ class ProductServiceTest {
     void createProduct_WithInvalidCategory_ShouldThrowException() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
-        when(productRepository.existsBySkuAndShopId("COCA-500ML", "shop-1")).thenReturn(false);
+        // Mock auto-generated SKU check
+        when(productRepository.existsBySkuAndShopId(anyString(), eq("shop-1"))).thenReturn(false);
         when(categoryRepository.findById("category-1")).thenReturn(Optional.empty());
 
         // Act & Assert
