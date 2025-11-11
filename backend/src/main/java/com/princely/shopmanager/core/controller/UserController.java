@@ -68,14 +68,30 @@ public class UserController {
     public ResponseEntity<UserProfileResponse> getCurrentUserProfile(
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        log.debug("Getting profile for user: {}", principal.getUsername());
+        log.debug("Getting profile for user: {} (sub: {}, email: {})",
+            principal.getUsername(), principal.getSubject(), principal.getEmail());
 
         try {
-            // Get user from database by Keycloak ID
-            User user = userService.getUserByKeycloakId(principal.getSubject());
+            User user = null;
+
+            // Primary lookup: by Keycloak ID (sub claim)
+            if (principal.getSubject() != null && !principal.getSubject().isBlank()) {
+                user = userService.getUserByKeycloakId(principal.getSubject());
+            }
+
+            // Fallback: lookup by email if keycloakId lookup fails
+            if (user == null && principal.getEmail() != null && !principal.getEmail().isBlank()) {
+                log.warn("User not found by keycloakId: {}. Falling back to email lookup: {}",
+                    principal.getSubject(), principal.getEmail());
+                user = userService.getUserByEmail(principal.getEmail());
+            }
 
             if (user == null) {
-                throw new IllegalStateException("User not found in database: " + principal.getSubject());
+                log.error("User not found in database. KeycloakId: {}, Email: {}, Username: {}",
+                    principal.getSubject(), principal.getEmail(), principal.getUsername());
+                throw new IllegalStateException(
+                    "User not found in database. Please contact administrator to sync your account."
+                );
             }
 
             // Convert database roles to RoleResponse DTOs

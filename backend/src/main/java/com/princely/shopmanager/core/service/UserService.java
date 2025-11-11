@@ -172,6 +172,21 @@ public class UserService {
             throw new IllegalArgumentException("At least one role must be specified");
         }
 
+        // Get shop if shopId is provided
+        Shop shop = null;
+        if (request.getShopId() != null && !request.getShopId().isBlank()) {
+            shop = shopRepository.findById(request.getShopId())
+                .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
+
+            // Validate shop belongs to tenant
+            if (!shop.getTenant().getId().equals(tenantId)) {
+                throw new IllegalArgumentException(
+                    "Shop " + request.getShopId() + " does not belong to tenant " + tenantId
+                );
+            }
+            log.debug("Assigning user to shop: {} ({})", shop.getName(), shop.getId());
+        }
+
         // Create user in Keycloak FIRST (if enabled)
         // If this fails, transaction will rollback and user won't be created in DB
         String keycloakId = null;
@@ -208,13 +223,15 @@ public class UserService {
             .phoneNumber(request.getPhoneNumber())
             .keycloakId(keycloakId)
             .tenant(tenant)
+            .shop(shop)
             .roles(roles)
             .status(User.UserStatus.ACTIVE)
             .build();
 
         User savedUser = userRepository.save(user);
-        log.info("Successfully created user {} with ID {} (Keycloak ID: {})",
-            savedUser.getUsername(), savedUser.getId(), keycloakId);
+        log.info("Successfully created user {} with ID {} (Keycloak ID: {}, Shop: {})",
+            savedUser.getUsername(), savedUser.getId(), keycloakId,
+            shop != null ? shop.getId() : "none");
 
         return savedUser;
     }
