@@ -19,7 +19,7 @@ export interface CategoryCreateRequest {
   shopId: string
   name: string
   description?: string
-  parentId?: string
+  parentId?: string | undefined
   displayOrder?: number
   isActive?: boolean
   imageUrl?: string
@@ -28,7 +28,7 @@ export interface CategoryCreateRequest {
 export interface CategoryUpdateRequest {
   name?: string
   description?: string
-  parentId?: string
+  parentId?: string | undefined
   displayOrder?: number
   isActive?: boolean
   imageUrl?: string

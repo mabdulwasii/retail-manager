@@ -90,7 +90,7 @@ export const ProductList: React.FC<ProductListProps> = ({
         <div className="p-8 text-center text-gray-500">
           <Package className="h-12 w-12 mx-auto mb-2 text-gray-400" />
           <p className="text-lg font-medium mb-1">No products found</p>
-          <p className="text-sm">Create your first product to get started</p>
+          {/* <p className="text-sm">Create your first product to get started</p> */}
         </div>
       </div>
     )
@@ -104,6 +104,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             <TableHead>Product Name</TableHead>
             <TableHead>SKU</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Barcode</TableHead>
             <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-right">Cost</TableHead>
             <TableHead className="text-right">Margin</TableHead>
@@ -131,11 +132,12 @@ export const ProductList: React.FC<ProductListProps> = ({
               <TableCell>
                 <Badge variant="outline">{product.categoryName}</Badge>
               </TableCell>
+              <TableCell className="font-mono text-sm">{product.barcode}</TableCell>
               <TableCell className="text-right font-medium">
                 {formatCurrency(product.price)}
               </TableCell>
               <TableCell className="text-right text-gray-600">
-                {product.costPrice ? formatCurrency(product.costPrice) : '-'}
+                {product.costPrice ? formatCurrency(product.costPrice) : "-"}
               </TableCell>
               <TableCell className="text-right text-sm text-green-600">
                 {calculateProfitMargin(product)}
@@ -164,7 +166,9 @@ export const ProductList: React.FC<ProductListProps> = ({
                     {onToggleStatus && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onToggleStatus(product)}>
+                        <DropdownMenuItem
+                          onClick={() => onToggleStatus(product)}
+                        >
                           {product.status === ProductStatus.ACTIVE ? (
                             <>
                               <PowerOff className="h-4 w-4 mr-2" />
@@ -199,5 +203,5 @@ export const ProductList: React.FC<ProductListProps> = ({
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

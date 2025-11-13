@@ -1,21 +1,9 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/context/ManualAuthContext'
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination'
-import { Plus, Tag } from 'lucide-react'
-import { ProductList } from '@/components/products/ProductList'
-import { ProductFilters, ProductFilterValues } from '@/components/products/ProductFilters'
-import { ProductStats } from '@/components/products/ProductStats'
-import { useProducts, useDeleteProduct, useUpdateProductStatus } from '@/hooks/useProducts'
-import { Product, ProductStatus } from '@/types/api'
+  ProductFilters,
+  ProductFilterValues,
+} from "@/components/products/ProductFilters";
+import { ProductList } from "@/components/products/ProductList";
+import { ProductStats } from "@/components/products/ProductStats";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,88 +13,106 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  useDeleteProduct,
+  useProducts,
+  useUpdateProductStatus,
+} from "@/hooks/useProducts";
+import { Product, ProductStatus } from "@/types/api";
+import { Plus, Tag } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const ProductsPage: React.FC = () => {
-  const navigate = useNavigate()
-  const { hasPermission } = useAuth()
-  
-  const [currentPage, setCurrentPage] = useState(0)
-  
+  const navigate = useNavigate();
+  const permissions = usePermissions();
+
+  const [currentPage, setCurrentPage] = useState(0);
+
   // Check permissions based on backend permission matrix
-  const canCreateProduct = hasPermission('PRODUCT_CREATE')  // MANAGER and above
-  const canUpdateProduct = hasPermission('PRODUCT_UPDATE')  // MANAGER and above
-  const canDeleteProduct = hasPermission('PRODUCT_DELETE')  // MANAGER and above
-  const canListProducts = hasPermission('PRODUCT_LIST')     // EMPLOYEE and above
-  const canViewCategories = hasPermission('CATEGORY_LIST')  // EMPLOYEE and above
+  const canCreateProduct = permissions.canCreateProduct();
+  const canUpdateProduct = permissions.canEditProduct();
+  const canDeleteProduct = permissions.canDeleteProduct();
+  const canViewCategories = permissions.canViewCategories();
   const [filters, setFilters] = useState<ProductFilterValues>({
-    search: '',
-    category: '',
-    status: '',
-  })
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+    search: "",
+    categoryId: "",
+    status: "",
+  });
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   // Fetch products with filters
   const { products, totalPages, totalElements, isLoading } = useProducts({
     page: currentPage,
-    size: 20,
+    size: 10,
     ...(filters.search && { search: filters.search }),
-    ...(filters.category && { category: filters.category }),
+    ...(filters.categoryId && { categoryId: filters.categoryId }),
     ...(filters.status && { status: filters.status }),
-  })
+  });
 
-  const deleteProductMutation = useDeleteProduct()
-  const updateStatusMutation = useUpdateProductStatus()
+  const deleteProductMutation = useDeleteProduct();
+  const updateStatusMutation = useUpdateProductStatus();
 
   const handleFiltersChange = (newFilters: ProductFilterValues) => {
-    setFilters(newFilters)
-    setCurrentPage(0) // Reset to first page when filters change
-  }
+    setFilters(newFilters);
+    setCurrentPage(0); // Reset to first page when filters change
+  };
 
   const handleClearFilters = () => {
-    setFilters({ search: '', category: '', status: '' })
-    setCurrentPage(0)
-  }
+    setFilters({ search: "", categoryId: "", status: "" });
+    setCurrentPage(0);
+  };
 
   const handleEdit = (product: Product) => {
-    navigate(`/products/${product.id}/edit`)
-  }
+    navigate(`/products/${product.id}/edit`);
+  };
 
   const handleDelete = (product: Product) => {
-    setProductToDelete(product)
-  }
+    setProductToDelete(product);
+  };
 
   const confirmDelete = async () => {
-    if (!productToDelete) return
+    if (!productToDelete) return;
 
     try {
-      await deleteProductMutation.mutateAsync(productToDelete.id)
-      setProductToDelete(null)
+      await deleteProductMutation.mutateAsync(productToDelete.id);
+      setProductToDelete(null);
     } catch (error) {
-      // Error handled by mutation
+      console.warn("Failed to delete product:", error);
     }
-  }
+  };
 
   const handleToggleStatus = async (product: Product) => {
     const newStatus =
       product.status === ProductStatus.ACTIVE
         ? ProductStatus.INACTIVE
-        : ProductStatus.ACTIVE
+        : ProductStatus.ACTIVE;
 
     try {
       await updateStatusMutation.mutateAsync({
         productId: product.id,
         status: newStatus,
-      })
+      });
     } catch (error) {
-      // Error handled by mutation
+      console.warn("Failed to update product status:", error);
     }
-  }
+  };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="space-y-6">
@@ -120,13 +126,13 @@ export const ProductsPage: React.FC = () => {
         </div>
         <div className="flex gap-2">
           {canViewCategories && (
-            <Button variant="outline" onClick={() => navigate('/categories')}>
+            <Button variant="outline" onClick={() => navigate("/categories")}>
               <Tag className="h-4 w-4 mr-2" />
               Manage Categories
             </Button>
           )}
           {canCreateProduct && (
-            <Button onClick={() => navigate('/products/create')}>
+            <Button onClick={() => navigate("/products/create")}>
               <Plus className="h-4 w-4 mr-2" />
               New Product
             </Button>
@@ -147,7 +153,7 @@ export const ProductsPage: React.FC = () => {
       {/* Results Count */}
       {!isLoading && (
         <div className="text-sm text-gray-600">
-          Showing <strong>{products.length}</strong> of{' '}
+          Showing <strong>{products.length}</strong> of{" "}
           <strong>{totalElements}</strong> products
         </div>
       )}
@@ -170,17 +176,17 @@ export const ProductsPage: React.FC = () => {
                 onClick={() => handlePageChange(currentPage - 1)}
                 className={
                   currentPage === 0
-                    ? 'pointer-events-none opacity-50'
-                    : 'cursor-pointer'
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
                 }
               />
             </PaginationItem>
 
             {[...Array(Math.min(5, totalPages))].map((_, idx) => {
-              let pageNum = idx
+              let pageNum = idx;
               if (totalPages > 5 && currentPage > 2) {
-                pageNum = currentPage - 2 + idx
-                if (pageNum >= totalPages) pageNum = totalPages - 5 + idx
+                pageNum = currentPage - 2 + idx;
+                if (pageNum >= totalPages) pageNum = totalPages - 5 + idx;
               }
 
               return (
@@ -193,7 +199,7 @@ export const ProductsPage: React.FC = () => {
                     {pageNum + 1}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
             })}
 
             <PaginationItem>
@@ -201,8 +207,8 @@ export const ProductsPage: React.FC = () => {
                 onClick={() => handlePageChange(currentPage + 1)}
                 className={
                   currentPage === totalPages - 1
-                    ? 'pointer-events-none opacity-50'
-                    : 'cursor-pointer'
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
                 }
               />
             </PaginationItem>
@@ -219,8 +225,9 @@ export const ProductsPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Product</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{productToDelete?.name}"? This action
-              cannot be undone and will affect all associated inventory records.
+              Are you sure you want to delete "{productToDelete?.name}"? This
+              action cannot be undone and will affect all associated inventory
+              records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -235,5 +242,5 @@ export const ProductsPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
-}
+  );
+};

@@ -10,11 +10,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Search, X } from 'lucide-react'
 import { ProductStatus } from '@/types/api'
-import { useProductCategories } from '@/hooks/useProducts'
+import { useCategories } from '@/hooks/useCategories'
 
 export interface ProductFilterValues {
   search: string
-  category: string
+  categoryId: string
   status: string
 }
 
@@ -29,14 +29,14 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onFiltersChange,
   onClear,
 }) => {
-  const { data: categories = [], isLoading: categoriesLoading } = useProductCategories()
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(false)
 
   const handleSearchChange = (value: string) => {
     onFiltersChange({ ...filters, search: value })
   }
 
   const handleCategoryChange = (value: string) => {
-    onFiltersChange({ ...filters, category: value === 'all' ? '' : value })
+    onFiltersChange({ ...filters, categoryId: value === 'all' ? '' : value })
   }
 
   const handleStatusChange = (value: string) => {
@@ -44,7 +44,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   }
 
   const hasActiveFilters =
-    filters.search || filters.category || filters.status
+    filters.search || filters.categoryId || filters.status
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -61,7 +61,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
       {/* Category Filter */}
       <Select
-        value={filters.category || 'all'}
+        value={filters.categoryId || 'all'}
         onValueChange={handleCategoryChange}
         disabled={categoriesLoading}
       >
@@ -70,11 +70,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Categories</SelectItem>
-          {categories.map((category) => (
-            <SelectItem key={category} value={category}>
-              {category}
-            </SelectItem>
-          ))}
+          {categories
+            .map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
 

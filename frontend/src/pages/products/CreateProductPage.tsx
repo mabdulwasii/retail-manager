@@ -38,6 +38,7 @@ export const CreateProductPage: React.FC = () => {
       const newProduct = await createProductMutation.mutateAsync(rest)
       navigate(`/products/${newProduct.id}`)
     } catch (error) {
+      console.error('Error creating product:', error)
       // Error handled by mutation
     }
   }

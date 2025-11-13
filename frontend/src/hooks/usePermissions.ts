@@ -23,6 +23,11 @@ export const usePermissions = () => {
     canViewProducts: () => hasPermission(Permission.PRODUCT_LIST),
     canEditProduct: () => hasPermission(Permission.PRODUCT_UPDATE),
     canDeleteProduct: () => hasPermission(Permission.PRODUCT_DELETE),
+
+    canCreateCategory: () => hasPermission(Permission.CATEGORY_CREATE),
+    canViewCategories: () => hasPermission(Permission.CATEGORY_LIST),
+    canEditCategory: () => hasPermission(Permission.CATEGORY_UPDATE),
+    canDeleteCategory: () => hasPermission(Permission.CATEGORY_DELETE),
     
     canCreateSale: () => hasPermission(Permission.SALES_CREATE),
     canViewSales: () => hasPermission(Permission.SALES_READ),

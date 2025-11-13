@@ -41,6 +41,7 @@ import { useInventory } from '@/hooks/useInventory'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { format, differenceInDays } from 'date-fns'
+import { downloadCSV, exportToPDF, formatExpiringItemsForExport } from '@/lib/exportHelpers'
 
 export const ExpiringItemsPage: React.FC = () => {
   const { user } = useAuth()
@@ -52,18 +53,18 @@ export const ExpiringItemsPage: React.FC = () => {
     error,
     canViewInventory,
     getExpiringItems,
-    exportInventory,
     clearError,
   } = useInventory()
 
   const [expiringItems, setExpiringItems] = useState<any[]>([])
   const [daysThreshold, setDaysThreshold] = useState('30')
 
-  // Load expiring items data
+  // Load expiring items data on mount and when threshold changes
   useEffect(() => {
     if (shopId && canViewInventory) {
       loadExpiringItems()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId, daysThreshold, canViewInventory])
 
   const loadExpiringItems = async () => {
@@ -79,16 +80,21 @@ export const ExpiringItemsPage: React.FC = () => {
   )
 
   // Handle export
-  const handleExport = async (format: 'csv' | 'excel') => {
-    if (!shopId) return
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!expiringItems || expiringItems.length === 0) {
+      alert('No data to export')
+      return
+    }
     
-    const url = await exportInventory(shopId, format)
-    if (url) {
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `expiring-items-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`
-      link.click()
-      window.URL.revokeObjectURL(url)
+    const filename = `expiring-items-${daysThreshold}days-${new Date().toISOString().split('T')[0]}`
+    
+    if (format === 'csv') {
+      // Export to CSV
+      const formattedData = formatExpiringItemsForExport(expiringItems)
+      downloadCSV(formattedData, `${filename}.csv`)
+    } else {
+      // Export to PDF
+      exportToPDF('expiring-items-content', `Expiring Items Report (${daysThreshold} days)`)
     }
   }
 
@@ -172,15 +178,17 @@ export const ExpiringItemsPage: React.FC = () => {
                 <FileDown className="mr-2 h-4 w-4" />
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('excel')}>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>
                 <FileDown className="mr-2 h-4 w-4" />
-                Export as Excel
+                Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
+      {/* Exportable Content */}
+      <div id="expiring-items-content">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -460,6 +468,7 @@ export const ExpiringItemsPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   )
 }

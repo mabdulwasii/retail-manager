@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -59,6 +59,7 @@ import {
 import { useInventory, InventoryItem, InventoryStatus } from '@/hooks/useInventory'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
+import { downloadCSV, exportToPDF, formatInventoryForExport } from '@/lib/exportHelpers'
 
 export const InventoryListPage: React.FC = () => {
   const { user } = useAuth()
@@ -76,10 +77,13 @@ export const InventoryListPage: React.FC = () => {
     fetchInventorySummary,
     adjustStock,
     reserveStock,
-    exportInventory,
     clearError,
   } = useInventory()
 
+  // Get query params for dashboard navigation
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filterParam = searchParams.get('filter')
+  
   // Local state
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -96,13 +100,43 @@ export const InventoryListPage: React.FC = () => {
   const [reserveQuantity, setReserveQuantity] = useState('')
   const [reserveReason, setReserveReason] = useState('')
 
-  // Load data on mount
+  // Handle filter from query params (e.g., from dashboard links)
+  useEffect(() => {
+    if (filterParam) {
+      switch (filterParam) {
+        case 'lowStock':
+          setStockLevelFilter('low')
+          break
+        case 'outOfStock':
+          setStockLevelFilter('out')
+          break
+        case 'expiringSoon':
+          // Navigate to dedicated expiring items page
+          window.location.href = '/inventory/expiring'
+          return
+        case 'expired':
+          setStatusFilter('EXPIRED')
+          break
+        default:
+          break
+      }
+      // Clear the query param after applying
+      setSearchParams({})
+    }
+  }, [filterParam, setSearchParams])
+  
+  // Load data on mount and when filters change
   useEffect(() => {
     if (shopId) {
-      fetchInventory(shopId)
-      fetchInventorySummary(shopId)
+      const loadData = async () => {
+        await Promise.all([
+          fetchInventory(shopId),
+          fetchInventorySummary(shopId)
+        ])
+      }
+      loadData()
     }
-  }, [shopId, fetchInventory, fetchInventorySummary])
+  }, [shopId])
 
   // Filter inventory
   const filteredInventory = (inventory || []).filter((item) => {
@@ -183,16 +217,21 @@ export const InventoryListPage: React.FC = () => {
   }
 
   // Handle export
-  const handleExport = async (format: 'csv' | 'excel') => {
-    if (!shopId) return
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!filteredInventory || filteredInventory.length === 0) {
+      alert('No data to export')
+      return
+    }
     
-    const url = await exportInventory(shopId, format)
-    if (url) {
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `inventory-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`
-      link.click()
-      window.URL.revokeObjectURL(url)
+    const filename = `inventory-${new Date().toISOString().split('T')[0]}`
+    
+    if (format === 'csv') {
+      // Export to CSV
+      const formattedData = formatInventoryForExport(filteredInventory)
+      downloadCSV(formattedData, `${filename}.csv`)
+    } else {
+      // Export to PDF
+      exportToPDF('inventory-content', 'Inventory Report')
     }
   }
 
@@ -267,15 +306,17 @@ export const InventoryListPage: React.FC = () => {
                 <FileDown className="mr-2 h-4 w-4" />
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('excel')}>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>
                 <FileDown className="mr-2 h-4 w-4" />
-                Export as Excel
+                Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
+      {/* Exportable Content */}
+      <div id="inventory-content">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -700,6 +741,7 @@ export const InventoryListPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 }

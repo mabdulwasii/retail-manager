@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Plus, Tag, ArrowLeft } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Tag, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,24 +8,55 @@ import { useCategories, useDeleteCategory } from '@/hooks/useCategories'
 import { Category } from '@/services/categoryService'
 import { useAuth } from '@/context/ManualAuthContext'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { usePermissions } from '@/hooks/usePermissions'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useActiveShops } from '@/hooks/useShops'
 
 export const CategoriesPage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasPermission } = useAuth()
+  const { user, hasAnyRole } = useAuth()
+  const permissions = usePermissions()
   
   // Check permissions based on backend permission matrix
-  const canCreateCategory = hasPermission('CATEGORY_CREATE')  // MANAGER and above
-  const canUpdateCategory = hasPermission('CATEGORY_UPDATE')  // MANAGER and above
-  const canDeleteCategory = hasPermission('CATEGORY_DELETE')  // MANAGER and above
-  const canViewCategories = hasPermission('CATEGORY_LIST')    // EMPLOYEE and above
+  const canCreateCategory = permissions.canCreateCategory()
+  const canUpdateCategory = permissions.canEditCategory() 
+  const canDeleteCategory = permissions.canDeleteCategory() 
+  const canViewCategories = permissions.canViewCategories()
+  
+  // Check if user can manage multiple shops (Tenant Admin or System Admin)
+  const canManageMultipleShops = hasAnyRole(['TENANT_ADMIN', 'SYSTEM_ADMIN'])
+  
+  // State for shop selection (for multi-shop admins)
+  const [selectedShopId, setSelectedShopId] = useState<string>(user?.shopId || '')
+  
+  // Fetch shops for multi-shop admins
+  const { data: shops = [] } = useActiveShops()
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  
+  // Update selected shop when user changes
+  useEffect(() => {
+    if (!canManageMultipleShops && user?.shopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId, canManageMultipleShops])
 
-  // Fetch categories
-  const { data: categories = [], isLoading, refetch } = useCategories(false)
+  // Fetch categories - ensure refetch on mount
+  const { data: categories = [], isLoading, refetch, error } = useCategories(false)
   const deleteMutation = useDeleteCategory()
+  
+  // Force refetch when page mounts or shop changes
+  useEffect(() => {
+    if (selectedShopId) {
+      refetch()
+    }
+  }, [selectedShopId, refetch])
+  
+  // Debug logging to help identify issues
+  useEffect(() => {
+    console.log('Categories data:', { categories, isLoading, error, selectedShopId })
+  }, [categories, isLoading, error, selectedShopId])
 
   const handleCreate = () => {
     setSelectedCategory(null)
@@ -42,7 +73,7 @@ export const CategoriesPage: React.FC = () => {
       await deleteMutation.mutateAsync(categoryId)
       refetch()
     } catch (error) {
-      // Error handled by mutation
+      console.warn('Failed to delete category:', error)
     }
   }
 
@@ -89,13 +120,43 @@ export const CategoriesPage: React.FC = () => {
             Organize your products with categories and subcategories
           </p>
         </div>
-        {canCreateCategory && (
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Category
+        <div className="flex gap-2 items-center">
+          {canManageMultipleShops && shops.length > 0 && (
+            <Select value={selectedShopId} onValueChange={setSelectedShopId}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select shop" />
+              </SelectTrigger>
+              <SelectContent>
+                {shops.map((shop) => (
+                  <SelectItem key={shop.id} value={shop.id}>
+                    {shop.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
-        )}
+          {canCreateCategory && (
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Category
+            </Button>
+          )}
+        </div>
       </div>
+      
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load categories: {error.message || 'Unknown error'}. Please try refreshing.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Card */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -169,6 +230,9 @@ export const CategoriesPage: React.FC = () => {
         onOpenChange={setIsFormOpen}
         category={selectedCategory}
         onSuccess={handleFormSuccess}
+        selectedShopId={canManageMultipleShops ? selectedShopId : undefined}
+        showShopSelector={canManageMultipleShops}
+        shops={shops}
       />
     </div>
   )

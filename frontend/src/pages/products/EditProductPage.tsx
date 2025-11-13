@@ -38,6 +38,7 @@ export const EditProductPage: React.FC = () => {
       })
       navigate(`/products/${productId}`)
     } catch (error) {
+      console.error('Error updating product:', error)
       // Error handled by mutation
     }
   }

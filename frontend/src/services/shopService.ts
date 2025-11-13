@@ -1,4 +1,24 @@
 import api from "@/lib/axios";
+import { ShopCustomization, ShopStatus, Tenant } from "@/types/api";
+
+export interface Shop {
+  id: string
+  name: string
+  tenant: Tenant
+  description?: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
+  postalCode?: string
+  phoneNumber?: string
+  email?: string
+  taxId?: string
+  status: ShopStatus
+  openingDate: string
+  customization?: ShopCustomization
+}
+
 
 export interface ShopResponse {
   id: string;

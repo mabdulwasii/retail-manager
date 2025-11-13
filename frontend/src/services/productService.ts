@@ -7,7 +7,7 @@ export interface ProductListParams {
   sortBy?: string
   sortDir?: 'asc' | 'desc'
   search?: string | undefined
-  category?: string | undefined
+  categoryId?: string | undefined
   status?: string | undefined
   shopId?: string | undefined
   minPrice?: number | undefined

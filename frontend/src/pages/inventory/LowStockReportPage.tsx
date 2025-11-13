@@ -33,6 +33,7 @@ import {
 import { useInventory } from '@/hooks/useInventory'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
+import { downloadCSV, exportToPDF, formatLowStockForExport } from '@/lib/exportHelpers'
 
 export const LowStockReportPage: React.FC = () => {
   const { user } = useAuth()
@@ -44,17 +45,17 @@ export const LowStockReportPage: React.FC = () => {
     error,
     canViewInventory,
     getLowStockAlerts,
-    exportInventory,
     clearError,
   } = useInventory()
 
   const [lowStockItems, setLowStockItems] = useState<any[]>([])
 
-  // Load low stock data
+  // Load low stock data on mount
   useEffect(() => {
     if (shopId && canViewInventory) {
       loadLowStockItems()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId, canViewInventory])
 
   const loadLowStockItems = async () => {
@@ -70,16 +71,21 @@ export const LowStockReportPage: React.FC = () => {
   )
 
   // Handle export
-  const handleExport = async (format: 'csv' | 'excel') => {
-    if (!shopId) return
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!lowStockItems || lowStockItems.length === 0) {
+      alert('No data to export')
+      return
+    }
     
-    const url = await exportInventory(shopId, format)
-    if (url) {
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `low-stock-report-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`
-      link.click()
-      window.URL.revokeObjectURL(url)
+    const filename = `low-stock-report-${new Date().toISOString().split('T')[0]}`
+    
+    if (format === 'csv') {
+      // Export to CSV
+      const formattedData = formatLowStockForExport(lowStockItems)
+      downloadCSV(formattedData, `${filename}.csv`)
+    } else {
+      // Export to PDF
+      exportToPDF('low-stock-content', 'Low Stock Report')
     }
   }
 
@@ -146,14 +152,16 @@ export const LowStockReportPage: React.FC = () => {
               <FileDown className="mr-2 h-4 w-4" />
               Export as CSV
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport('excel')}>
+            <DropdownMenuItem onClick={() => handleExport('pdf')}>
               <FileDown className="mr-2 h-4 w-4" />
-              Export as Excel
+              Export as PDF
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
+      {/* Exportable Content */}
+      <div id="low-stock-content">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -365,6 +373,7 @@ export const LowStockReportPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   )
 }

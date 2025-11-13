@@ -368,23 +368,6 @@ export const useInventory = () => {
     }
   }, [])
 
-  // Export inventory data
-  const exportInventory = useCallback(async (shopId: string, format: 'csv' | 'excel' = 'csv'): Promise<string | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const blob = await api.getBlob(`/shops/${shopId}/inventory/export?format=${format}`)
-      const url = window.URL.createObjectURL(blob)
-      return url
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
-      setError(errorMessage)
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
 
   // Clear error state
   const clearError = useCallback(() => {
@@ -428,7 +411,6 @@ export const useInventory = () => {
     updateInventoryStatus,
     getLowStockAlerts,
     getExpiringItems,
-    exportInventory,
 
     // Utility
     clearError
