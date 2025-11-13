@@ -258,7 +258,7 @@ export const CreateInvestmentPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6">
+    <div className="max-w-6xl mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/investments')}>

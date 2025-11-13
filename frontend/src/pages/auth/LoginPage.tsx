@@ -70,7 +70,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8">
+      <div className="max-w-6xl w-full space-y-8">
         {/* Header with back to home link */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">

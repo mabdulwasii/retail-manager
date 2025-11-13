@@ -58,7 +58,7 @@ export const RoleDetailPage: React.FC = () => {
 
   if (isError || !role) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6 max-w-6xl">
         <Button variant="ghost" onClick={() => navigate('/admin/roles')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Roles
@@ -76,7 +76,7 @@ export const RoleDetailPage: React.FC = () => {
   const canEditThisRole = isSystemAdmin || !role.isSystem
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Button variant="ghost" className="w-fit" onClick={() => navigate('/admin/roles')}>

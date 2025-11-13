@@ -250,7 +250,7 @@ export const ShopSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Button variant="ghost" className="w-fit" onClick={handleCancel}>

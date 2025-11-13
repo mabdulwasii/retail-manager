@@ -48,7 +48,7 @@ export const CreateProductPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Breadcrumb / Back Navigation */}
       <div>
         <Button

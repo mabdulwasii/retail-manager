@@ -178,7 +178,7 @@ export const EditShopPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Button variant="ghost" className="w-fit" onClick={handleCancel}>
