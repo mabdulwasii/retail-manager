@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { toast } from 'sonner'
 
 export const ProfilePage: React.FC = () => {
   const { user: authUser, isAuthenticated } = useAuth()
@@ -139,7 +140,12 @@ export const ProfilePage: React.FC = () => {
             Manage your account information and preferences
           </p>
         </div>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={() => toast.info('Edit Profile feature is coming soon', {
+            description: 'Profile editing functionality will be available in a future update'
+          })}
+        >
           <Edit className="mr-2 h-4 w-4" />
           Edit Profile
         </Button>
@@ -328,15 +334,30 @@ export const ProfilePage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => toast.info('Edit Profile feature is coming soon', {
+                description: 'Profile editing functionality will be available in a future update'
+              })}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => toast.info('Security Settings feature is coming soon', {
+                description: 'Password change and security settings will be available in a future update'
+              })}
+            >
               <Shield className="mr-2 h-4 w-4" />
               Security Settings
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => toast.info('Notification Preferences feature is coming soon', {
+                description: 'Email and notification preferences will be available in a future update'
+              })}
+            >
               <Mail className="mr-2 h-4 w-4" />
               Notification Preferences
             </Button>

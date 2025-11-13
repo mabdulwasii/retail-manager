@@ -33,6 +33,7 @@ import { CreateRolePage } from "@/pages/admin/CreateRolePage";
 import { EditRolePage } from "@/pages/admin/EditRolePage";
 import { PermissionsMatrixPage } from "@/pages/admin/PermissionsMatrixPage";
 import { UsersPage, CreateUserPage } from "@/pages/users";
+import { UnauthorizedPage } from "@/pages/UnauthorizedPage";
 import { SalesPage, TransactionDetailPage } from "@/pages/sales";
 import { POSPage } from "@/pages/pos/POSPage";
 import { CreateShopPage } from "@/pages/shops/CreateShopPage";
@@ -130,7 +131,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId/settings"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={["SYSTEM_ADMIN", "TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
               <ShopSettingsPage />
             </ProtectedRoute>
           </Layout>
@@ -481,6 +482,9 @@ export const AuthenticatedApp: React.FC = () => {
           </Layout>
         }
       />
+
+      {/* Unauthorized */}
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Default redirect or 404 */}
       <Route path="*" element={<NotFoundPage />} />

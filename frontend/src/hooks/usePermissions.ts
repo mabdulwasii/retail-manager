@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/ManualAuthContext'
+import { Permission } from '@/types/permissions'
 
 /**
  * Custom hook for checking permissions in components
@@ -13,39 +14,39 @@ export const usePermissions = () => {
     hasAllPermissions,
     
     // Specific permission checks for common actions
-    canCreateShop: () => hasPermission('SHOP_CREATE'),
-    canViewShops: () => hasPermission('SHOP_LIST'),
-    canEditShop: () => hasPermission('SHOP_UPDATE'),
-    canDeleteShop: () => hasPermission('SHOP_DELETE'),
+    canCreateShop: () => hasPermission(Permission.SHOP_CREATE),
+    canViewShops: () => hasPermission(Permission.SHOP_LIST),
+    canEditShop: () => hasPermission(Permission.SHOP_UPDATE),
+    canDeleteShop: () => hasPermission(Permission.SHOP_DELETE),
     
-    canCreateProduct: () => hasPermission('PRODUCT_CREATE'),
-    canViewProducts: () => hasPermission('PRODUCT_LIST'),
-    canEditProduct: () => hasPermission('PRODUCT_UPDATE'),
-    canDeleteProduct: () => hasPermission('PRODUCT_DELETE'),
+    canCreateProduct: () => hasPermission(Permission.PRODUCT_CREATE),
+    canViewProducts: () => hasPermission(Permission.PRODUCT_LIST),
+    canEditProduct: () => hasPermission(Permission.PRODUCT_UPDATE),
+    canDeleteProduct: () => hasPermission(Permission.PRODUCT_DELETE),
     
-    canCreateSale: () => hasPermission('SALES_CREATE'),
-    canViewSales: () => hasPermission('SALES_READ'),
-    canEditSale: () => hasPermission('SALES_UPDATE'),
-    canDeleteSale: () => hasPermission('SALES_DELETE'),
+    canCreateSale: () => hasPermission(Permission.SALES_CREATE),
+    canViewSales: () => hasPermission(Permission.SALES_READ),
+    canEditSale: () => hasPermission(Permission.SALES_UPDATE),
+    canDeleteSale: () => hasPermission(Permission.SALES_DELETE),
     
-    canViewInventory: () => hasPermission('INVENTORY_LIST'),
-    canUpdateInventory: () => hasPermission('INVENTORY_UPDATE'),
+    canViewInventory: () => hasPermission(Permission.INVENTORY_LIST),
+    canUpdateInventory: () => hasPermission(Permission.INVENTORY_UPDATE),
     
-    canCreateInvestment: () => hasPermission('INVESTMENT_CREATE'),
-    canViewInvestments: () => hasPermission('INVESTMENT_LIST'),
-    canEditInvestment: () => hasPermission('INVESTMENT_UPDATE'),
-    canDeleteInvestment: () => hasPermission('INVESTMENT_DELETE'),
+    canCreateInvestment: () => hasPermission(Permission.INVESTMENT_CREATE),
+    canViewInvestments: () => hasPermission(Permission.INVESTMENT_LIST),
+    canEditInvestment: () => hasPermission(Permission.INVESTMENT_UPDATE),
+    canDeleteInvestment: () => hasPermission(Permission.INVESTMENT_DELETE),
     
-    canViewReceipts: () => hasPermission('RECEIPT_LIST'),
-    canCreateReceipt: () => hasPermission('RECEIPT_CREATE'),
+    canViewReceipts: () => hasPermission(Permission.RECEIPT_LIST),
+    canCreateReceipt: () => hasPermission(Permission.RECEIPT_CREATE),
     
-    canViewExpenses: () => hasPermission('EXPENSE_LIST'),
-    canApproveExpenses: () => hasPermission('EXPENSE_APPROVE'),
+    canViewExpenses: () => hasPermission(Permission.EXPENSE_LIST),
+    canApproveExpenses: () => hasPermission(Permission.EXPENSE_APPROVE),
     
-    canViewAnalytics: () => hasPermission('ANALYTICS_VIEW'),
-    canViewFraudDetection: () => hasPermission('FRAUD_DETECTION_VIEW'),
+    canViewAnalytics: () => hasPermission(Permission.ANALYTICS_VIEW),
+    canViewFraudDetection: () => hasPermission(Permission.FRAUD_DETECTION_VIEW),
     
-    canManageUsers: () => hasPermission('USER_MANAGE'),
-    canViewUsers: () => hasPermission('USER_LIST'),
+    canManageUsers: () => hasPermission(Permission.USER_MANAGE),
+    canViewUsers: () => hasPermission(Permission.USER_LIST),
   }
 }

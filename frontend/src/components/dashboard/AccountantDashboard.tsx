@@ -17,6 +17,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useCurrency } from '@/hooks/useCurrency'
 
 interface FinancialRecord {
   id: string
@@ -30,6 +31,7 @@ interface FinancialRecord {
 
 export const AccountantDashboard: React.FC = () => {
   const { user } = useAuth()
+  const { formatCurrency } = useCurrency()
   const [period, setPeriod] = useState<TimePeriod>('month')
   
   const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics(undefined, period)
@@ -51,7 +53,7 @@ export const AccountantDashboard: React.FC = () => {
   const financialStats = [
     {
       title: 'Total Revenue',
-      value: `$${currentRevenue.toLocaleString()}`,
+      value: formatCurrency(currentRevenue),
       description: `This ${period}`,
       icon: DollarSign,
       trend: `${revenueAnalytics?.growthRate || 0 > 0 ? '+' : ''}${(revenueAnalytics?.growthRate || 0).toFixed(1)}%`,
@@ -60,7 +62,7 @@ export const AccountantDashboard: React.FC = () => {
     },
     {
       title: 'Total Expenses',
-      value: `$${totalExpenses.toLocaleString()}`,
+      value: formatCurrency(totalExpenses),
       description: `This ${period}`,
       icon: TrendingDown,
       trend: `+${expenseGrowth.toFixed(1)}%`,
@@ -69,7 +71,7 @@ export const AccountantDashboard: React.FC = () => {
     },
     {
       title: 'Net Profit',
-      value: `$${netProfit.toLocaleString()}`,
+      value: formatCurrency(netProfit),
       description: `This ${period}`,
       icon: TrendingUp,
       trend: `${profitGrowth > 0 ? '+' : ''}${profitGrowth.toFixed(1)}%`,
@@ -106,7 +108,7 @@ export const AccountantDashboard: React.FC = () => {
       amount: totalExpenses > 0 ? Math.round(totalExpenses * 0.054) : 8500,
       date: new Date().toISOString().split('T')[0],
       description: 'Inventory and supplies',
-      status: expenseSummary?.pendingApproval > 0 ? 'pending' : 'approved'
+      status: expenseSummary?.pendingApproval && expenseSummary?.pendingApproval > 0 ? 'pending' : 'approved'
     },
     {
       id: '3',
@@ -191,7 +193,7 @@ export const AccountantDashboard: React.FC = () => {
   ]
 
   // Revenue breakdown from expense summary category data or calculate from totals
-  const categoryBreakdown = expenseSummary?.categoryBreakdown?.length > 0
+  const categoryBreakdown = expenseSummary?.categoryBreakdown && expenseSummary?.categoryBreakdown?.length > 0
     ? expenseSummary.categoryBreakdown.map((cat, idx) => ({
         category: cat.category,
         amount: cat.totalValue,
@@ -269,7 +271,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Financial Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {financialStats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
+          <Card key={stat.title + `-${index}`} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {stat.title}
@@ -472,7 +474,7 @@ export const AccountantDashboard: React.FC = () => {
                   </div>
                   <div className="p-3 border rounded-lg">
                     <p className="text-xs text-muted-foreground">Total Amount</p>
-                    <p className="text-2xl font-bold">${expenseSummary.totalAmount?.toLocaleString() || '0'}</p>
+                    <p className="text-2xl font-bold">{formatCurrency(expenseSummary.totalAmount || 0)}</p>
                   </div>
                 </div>
                 
@@ -487,7 +489,7 @@ export const AccountantDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
                     <span className="text-sm">This {period === 'month' ? 'Month' : period}</span>
-                    <span className="text-sm font-semibold text-blue-700">${expenseSummary.monthlyTotal?.toLocaleString() || '0'}</span>
+                    <span className="text-sm font-semibold text-blue-700">{formatCurrency(expenseSummary?.monthlyTotal ||0)}</span>
                   </div>
                 </div>
 

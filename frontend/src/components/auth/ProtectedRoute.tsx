@@ -1,6 +1,7 @@
 import React from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/ManualAuthContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -13,9 +14,25 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   roles = [],
   requireAll = false,
 }) => {
-  const { hasRole, hasAnyRole } = useAuth()
+  const { isInitialized, isAuthenticated, hasRole, hasAnyRole, user } = useAuth()
 
-  const hasAccess = () => {
+  // Wait for auth to initialize before checking permissions
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Check access synchronously with loaded user data
+  const hasAccess = (): boolean => {
+    // No roles required means accessible to all authenticated users
     if (roles.length === 0) return true
 
     if (requireAll) {
@@ -25,25 +42,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
+  // Immediately check access - no delay
   if (!hasAccess()) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Required roles: {roles.join(', ')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <Navigate
+        to="/unauthorized"
+        state={{ requiredRoles: roles }}
+        replace
+      />
     )
   }
 
+  // Only render children after all checks pass
   return <>{children}</>
 }

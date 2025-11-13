@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
-import { useSalesSummary } from '@/hooks/useDashboard'
+import { useSalesSummary, TimePeriod } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ShoppingCart,
   Receipt,
@@ -17,10 +18,13 @@ import {
   Star
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useCurrency } from '@/hooks/useCurrency'
 
 export const CashierDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { data: salesSummary, isLoading: salesLoading, refetch } = useSalesSummary(undefined, 'today')
+  const { formatCurrency } = useCurrency()
+  const [period, setPeriod] = useState<TimePeriod>('today')
+  const { data: salesSummary, isLoading: salesLoading, refetch } = useSalesSummary(undefined, period)
   const [currentTime, setCurrentTime] = useState(new Date())
   
   // Update current time every minute
@@ -34,33 +38,35 @@ export const CashierDashboard: React.FC = () => {
   const totalTransactions = salesSummary?.totalTransactions || 0
   const totalRevenue = salesSummary?.totalRevenue || 0
   const avgTransaction = salesSummary?.averageTransactionValue || 0
-  const topProductsCount = salesSummary?.topProducts?.length || 0
+  //const topProductsCount = salesSummary?.topProducts?.length || 0
+  
+  const periodLabel = period === 'today' ? 'Today' : period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Year'
   
   const todayStats = [
     {
-      title: 'Sales Today',
+      title: `Sales ${periodLabel}`,
       value: `${totalTransactions}`,
       description: 'Transactions completed',
       icon: ShoppingCart,
       color: 'text-blue-600'
     },
     {
-      title: 'Revenue Today',
-      value: `$${totalRevenue.toLocaleString()}`,
+      title: `Revenue ${periodLabel}`,
+      value: formatCurrency(totalRevenue),
       description: 'Total earnings',
       icon: DollarSign,
       color: 'text-green-600'
     },
-    {
-      title: 'Top Products',
-      value: `${topProductsCount}`,
-      description: 'Product varieties',
-      icon: Package,
-      color: 'text-purple-600'
-    },
+    // {
+    //   title: 'Top Products',
+    //   value: `${topProductsCount}`,
+    //   description: 'Product varieties',
+    //   icon: Package,
+    //   color: 'text-purple-600'
+    // },
     {
       title: 'Avg. Transaction',
-      value: `$${avgTransaction.toFixed(2)}`,
+      value: formatCurrency(avgTransaction),
       description: 'Per sale',
       icon: TrendingUp,
       color: 'text-orange-600'
@@ -75,20 +81,20 @@ export const CashierDashboard: React.FC = () => {
           type: 'sale',
           description: `Completed ${totalTransactions} transaction${totalTransactions !== 1 ? 's' : ''} today`,
           time: 'Today',
-          amount: `$${totalRevenue.toLocaleString()}`
+          amount: formatCurrency(totalRevenue)
         },
-        {
-          id: '2',
-          type: 'inventory',
-          description: topProductsCount > 0 ? `${topProductsCount} products sold today` : 'No products sold yet',
-          time: 'Today'
-        },
+        // {
+        //   id: '2',
+        //   type: 'inventory',
+        //   description: topProductsCount > 0 ? `${topProductsCount} products sold today` : 'No products sold yet',
+        //   time: 'Today'
+        // },
         {
           id: '3',
           type: 'sale',
-          description: `Average transaction value: $${avgTransaction.toFixed(2)}`,
+          description: `Average transaction value: ${formatCurrency(avgTransaction)}`,
           time: 'Today',
-          amount: `$${avgTransaction.toFixed(2)}`
+          amount: formatCurrency(avgTransaction)
         }
       ]
     : [
@@ -96,7 +102,8 @@ export const CashierDashboard: React.FC = () => {
           id: '1',
           type: 'sale',
           description: 'No sales recorded today yet',
-          time: 'Waiting for first sale'
+          time: 'Waiting for first sale',
+          amount: undefined
         }
       ]
 
@@ -161,18 +168,31 @@ export const CashierDashboard: React.FC = () => {
             Ready to serve customers and process sales.
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => refetch()}
-          disabled={salesLoading}
-        >
-          {salesLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
-          )}
-          Refresh
-        </Button>
+        <div className="flex space-x-2">
+          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="outline" 
+            onClick={() => refetch()}
+            disabled={salesLoading}
+          >
+            {salesLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Today's Performance */}
@@ -251,11 +271,11 @@ export const CashierDashboard: React.FC = () => {
                       <p className="text-sm text-muted-foreground">
                         {activity.time}
                       </p>
-                      {activity.amount && (
+                      {activity?.amount && (
                         <p className={`text-sm font-semibold ${
-                          activity.amount.startsWith('-') ? 'text-red-600' : 'text-green-600'
+                          activity?.amount.startsWith('-') ? 'text-red-600' : 'text-green-600'
                         }`}>
-                          {activity.amount}
+                          {activity?.amount}
                         </p>
                       )}
                     </div>
@@ -269,7 +289,7 @@ export const CashierDashboard: React.FC = () => {
             </div>
             
             {/* Top Products Section */}
-            {salesSummary?.topProducts && salesSummary.topProducts.length > 0 && (
+            {/* {salesSummary?.topProducts && salesSummary.topProducts.length > 0 && (
               <div className="mt-6 pt-4 border-t">
                 <h4 className="text-sm font-semibold mb-3 flex items-center">
                   <Star className="h-4 w-4 mr-2 text-yellow-500" />
@@ -284,7 +304,7 @@ export const CashierDashboard: React.FC = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </CardContent>
         </Card>
 

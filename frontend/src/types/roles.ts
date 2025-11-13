@@ -117,6 +117,8 @@ export const RoleGroups = {
   ],
   
   SETTINGS_MANAGERS: [
+    UserRole.SYSTEM_ADMIN,
+    UserRole.TENANT_ADMIN,
     UserRole.SHOP_OWNER,
     UserRole.MANAGER,
   ],

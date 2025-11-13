@@ -1,151 +1,170 @@
-import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/ManualAuthContext'
-import { RoleGroups } from '@/types/roles'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import {
-  ArrowLeft,
-  Store,
-  Loader2,
-  AlertCircle,
-  Save,
-  DollarSign,
-  Receipt,
-  CreditCard,
-  Bell,
-  Shield,
-  RefreshCw,
-  Palette,
-  Upload,
-  CheckCircle
-} from 'lucide-react'
-import { useShopById } from '@/hooks/useShops'
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useShopById } from "@/hooks/useShops";
 import {
   useShopConfiguration,
-  useUpdateShopConfiguration,
   useShopCustomization,
-  useUpdateShopCustomization,
   useUpdateColors,
+  useUpdateShopConfiguration,
+  useUpdateShopCustomization,
   useUploadLogo,
-} from '@/hooks/useShopSettings'
-import { ThemeVariant, FontSize, DashboardLayout } from '@/services/shopConfigurationService'
+} from "@/hooks/useShopSettings";
+import {
+  DashboardLayout,
+  FontSize,
+  ThemeVariant,
+} from "@/services/shopConfigurationService";
+import { Permission } from "@/types/permissions";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Bell,
+  CheckCircle,
+  CreditCard,
+  DollarSign,
+  Loader2,
+  Palette,
+  Receipt,
+  RefreshCw,
+  Save,
+  Shield,
+  Store,
+  Upload,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 export const ShopSettingsPage: React.FC = () => {
-  const { shopId } = useParams<{ shopId: string }>()
-  const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
-  
-  // Check if user can manage settings (SHOP_OWNER, MANAGER, or higher)
-  const canManageSettings = hasAnyRole(RoleGroups.SETTINGS_MANAGERS)
-  
-  // Redirect if no permission
+  const { shopId } = useParams<{ shopId: string }>();
+  const navigate = useNavigate();
+  const permissions = usePermissions();
+
+  const canManageSettings =
+    permissions.hasAnyPermission([Permission.SHOP_UPDATE]) ||
+    permissions.hasPermission(Permission.SYSTEM_ADMIN) ||
+    permissions.hasPermission(Permission.TENANT_ADMIN);
+
   useEffect(() => {
     if (!canManageSettings) {
-      navigate(`/shops/${shopId || ''}`)
+      navigate(`/shops/${shopId || ""}`);
     }
-  }, [canManageSettings, navigate, shopId])
+  }, [canManageSettings, navigate, shopId]);
 
   if (!canManageSettings) {
-    return null
+    return null;
   }
-  
+
   // Fetch shop data
-  const { data: shop, isLoading: loadingShop, isError, error } = useShopById(shopId)
-  
+  const {
+    data: shop,
+    isLoading: loadingShop,
+    isError,
+    error,
+  } = useShopById(shopId);
+
   // Fetch configuration and customization
   const {
     data: configuration,
     isLoading: loadingConfig,
     refetch: refetchConfig,
-  } = useShopConfiguration(shopId)
-  
+  } = useShopConfiguration(shopId);
+
   const {
     data: customization,
     isLoading: loadingCustomization,
     refetch: refetchCustomization,
-  } = useShopCustomization(shopId)
+  } = useShopCustomization(shopId);
 
   // Mutations
-  const updateConfigMutation = useUpdateShopConfiguration()
-  const updateCustomizationMutation = useUpdateShopCustomization()
+  const updateConfigMutation = useUpdateShopConfiguration();
+  const updateCustomizationMutation = useUpdateShopCustomization();
 
   // Configuration state
-  const [investmentEnabled, setInvestmentEnabled] = useState(false)
-  const [analyticsEnabled, setAnalyticsEnabled] = useState(false)
-  const [fraudDetectionEnabled, setFraudDetectionEnabled] = useState(false)
-  const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
-  const [currency, setCurrency] = useState('USD')
-  const [taxRate, setTaxRate] = useState('0')
-  const [maxDiscountPercent, setMaxDiscountPercent] = useState('20')
-  const [receiptFooter, setReceiptFooter] = useState('')
+  const [investmentEnabled, setInvestmentEnabled] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [fraudDetectionEnabled, setFraudDetectionEnabled] = useState(false);
+  const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
+  const [currency, setCurrency] = useState("USD");
+  const [taxRate, setTaxRate] = useState("0");
+  const [maxDiscountPercent, setMaxDiscountPercent] = useState("20");
+  const [receiptFooter, setReceiptFooter] = useState("");
 
   // Customization state
-  const [receiptHeader, setReceiptHeader] = useState('')
-  const [receiptShowLogo, setReceiptShowLogo] = useState(true)
-  const [themeVariant, setThemeVariant] = useState<ThemeVariant>('LIGHT')
-  const [fontSize, setFontSize] = useState<FontSize>('MEDIUM')
-  const [dashboardLayout, setDashboardLayout] = useState<DashboardLayout>('GRID')
-  const [enableAnimations, setEnableAnimations] = useState(true)
-  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false)
+  const [receiptHeader, setReceiptHeader] = useState("");
+  const [receiptShowLogo, setReceiptShowLogo] = useState(true);
+  const [themeVariant, setThemeVariant] = useState<ThemeVariant>("LIGHT");
+  const [fontSize, setFontSize] = useState<FontSize>("MEDIUM");
+  const [dashboardLayout, setDashboardLayout] =
+    useState<DashboardLayout>("GRID");
+  const [enableAnimations, setEnableAnimations] = useState(true);
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
   // Brand colors state
-  const [primaryColor, setPrimaryColor] = useState('#3B82F6')
-  const [secondaryColor, setSecondaryColor] = useState('#10B981')
-  const [accentColor, setAccentColor] = useState('#F59E0B')
+  const [primaryColor, setPrimaryColor] = useState("#3B82F6");
+  const [secondaryColor, setSecondaryColor] = useState("#10B981");
+  const [accentColor, setAccentColor] = useState("#F59E0B");
 
   // Logo state
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Additional mutations
-  const updateColorsMutation = useUpdateColors()
-  const uploadLogoMutation = useUploadLogo()
+  const updateColorsMutation = useUpdateColors();
+  const uploadLogoMutation = useUploadLogo();
 
   useEffect(() => {
     if (configuration) {
-      setInvestmentEnabled(configuration.investmentEnabled ?? false)
-      setAnalyticsEnabled(configuration.analyticsEnabled ?? false)
-      setFraudDetectionEnabled(configuration.fraudDetectionEnabled ?? false)
-      setAutoBackupEnabled(configuration.autoBackupEnabled ?? false)
-      setCurrency(configuration.currency || 'USD')
-      setTaxRate(configuration.taxRate?.toString() || '0')
-      setMaxDiscountPercent(configuration.maxDiscountPercentage?.toString() || '20')
-      setReceiptFooter(configuration.receiptFooter || '')
+      setInvestmentEnabled(configuration.investmentEnabled ?? false);
+      setAnalyticsEnabled(configuration.analyticsEnabled ?? false);
+      setFraudDetectionEnabled(configuration.fraudDetectionEnabled ?? false);
+      setAutoBackupEnabled(configuration.autoBackupEnabled ?? false);
+      setCurrency(configuration.currency || "USD");
+      setTaxRate(configuration.taxRate?.toString() || "0");
+      setMaxDiscountPercent(
+        configuration.maxDiscountPercentage?.toString() || "20"
+      );
+      setReceiptFooter(configuration.receiptFooter || "");
     }
-  }, [configuration])
+  }, [configuration]);
 
   useEffect(() => {
     if (customization) {
-      setReceiptHeader(customization.receiptHeader || '')
-      setReceiptShowLogo(customization.receiptShowLogo ?? true)
-      setThemeVariant(customization.themeVariant || 'LIGHT')
-      setFontSize(customization.fontSize || 'MEDIUM')
-      setDashboardLayout(customization.dashboardLayout || 'GRID')
-      setEnableAnimations(customization.enableAnimations ?? true)
-      setShowAdvancedFeatures(customization.showAdvancedFeatures ?? false)
-      setPrimaryColor(customization.primaryColor || '#3B82F6')
-      setSecondaryColor(customization.secondaryColor || '#10B981')
-      setAccentColor(customization.accentColor || '#F59E0B')
+      setReceiptHeader(customization.receiptHeader || "");
+      setReceiptShowLogo(customization.receiptShowLogo ?? true);
+      setThemeVariant(customization.themeVariant || "LIGHT");
+      setFontSize(customization.fontSize || "MEDIUM");
+      setDashboardLayout(customization.dashboardLayout || "GRID");
+      setEnableAnimations(customization.enableAnimations ?? true);
+      setShowAdvancedFeatures(customization.showAdvancedFeatures ?? false);
+      setPrimaryColor(customization.primaryColor || "#3B82F6");
+      setSecondaryColor(customization.secondaryColor || "#10B981");
+      setAccentColor(customization.accentColor || "#F59E0B");
     }
-  }, [customization])
+  }, [customization]);
 
   const handleSaveConfiguration = async () => {
-    if (!shopId) return
+    if (!shopId) return;
 
     try {
       await updateConfigMutation.mutateAsync({
@@ -160,15 +179,15 @@ export const ShopSettingsPage: React.FC = () => {
           maxDiscountPercentage: parseFloat(maxDiscountPercent) || 0,
           receiptFooter,
         },
-      })
-      refetchConfig()
+      });
+      refetchConfig();
     } catch (error) {
-      console.error('Failed to save configuration:', error)
+      console.error("Failed to save configuration:", error);
     }
-  }
+  };
 
   const handleSaveCustomization = async () => {
-    if (!shopId) return
+    if (!shopId) return;
 
     try {
       await updateCustomizationMutation.mutateAsync({
@@ -182,49 +201,52 @@ export const ShopSettingsPage: React.FC = () => {
           enableAnimations,
           showAdvancedFeatures,
         },
-      })
-      refetchCustomization()
+      });
+      refetchCustomization();
     } catch (error) {
-      console.error('Failed to save customization:', error)
+      console.error("Failed to save customization:", error);
     }
-  }
+  };
 
   const handleSaveAll = async () => {
-    await Promise.all([handleSaveConfiguration(), handleSaveCustomization()])
-  }
+    await Promise.all([handleSaveConfiguration(), handleSaveCustomization()]);
+  };
 
-  const isSaving = updateConfigMutation.isPending || updateCustomizationMutation.isPending
+  const isSaving =
+    updateConfigMutation.isPending || updateCustomizationMutation.isPending;
 
   const handleCancel = () => {
-    navigate(`/shops/${shopId}`)
-  }
+    navigate(`/shops/${shopId}`);
+  };
 
-  const isLoading = loadingShop || loadingConfig || loadingCustomization
+  const isLoading = loadingShop || loadingConfig || loadingCustomization;
 
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Loading shop settings...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading shop settings...
+        </p>
       </div>
-    )
+    );
   }
 
   if (isError || !shop) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => navigate('/shops')}>
+        <Button variant="ghost" onClick={() => navigate("/shops")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Shops
         </Button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error?.message || 'Shop not found'}
+            {error?.message || "Shop not found"}
           </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   return (
@@ -235,7 +257,7 @@ export const ShopSettingsPage: React.FC = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Shop Details
         </Button>
-        
+
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
             <Store className="h-6 w-6 text-primary" />
@@ -275,7 +297,9 @@ export const ShopSettingsPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="investment-enabled">Investment Features</Label>
+                    <Label htmlFor="investment-enabled">
+                      Investment Features
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       Enable investment and profit sharing features
                     </p>
@@ -408,7 +432,8 @@ export const ShopSettingsPage: React.FC = () => {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Tax rate will be applied to all taxable items. You can override this per product.
+                  Tax rate will be applied to all taxable items. You can
+                  override this per product.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -459,7 +484,8 @@ export const ShopSettingsPage: React.FC = () => {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Receipt customization applies to both printed and email receipts.
+                  Receipt customization applies to both printed and email
+                  receipts.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -483,7 +509,10 @@ export const ShopSettingsPage: React.FC = () => {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <Select value={themeVariant} onValueChange={(value: any) => setThemeVariant(value)}>
+                    <Select
+                      value={themeVariant}
+                      onValueChange={(value: any) => setThemeVariant(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select theme" />
                       </SelectTrigger>
@@ -497,7 +526,10 @@ export const ShopSettingsPage: React.FC = () => {
 
                   <div className="space-y-2">
                     <Label>Font Size</Label>
-                    <Select value={fontSize} onValueChange={(value: any) => setFontSize(value)}>
+                    <Select
+                      value={fontSize}
+                      onValueChange={(value: any) => setFontSize(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
@@ -512,7 +544,10 @@ export const ShopSettingsPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label>Dashboard Layout</Label>
-                  <Select value={dashboardLayout} onValueChange={(value: any) => setDashboardLayout(value)}>
+                  <Select
+                    value={dashboardLayout}
+                    onValueChange={(value: any) => setDashboardLayout(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select layout" />
                     </SelectTrigger>
@@ -544,7 +579,9 @@ export const ShopSettingsPage: React.FC = () => {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="show-advanced">Show Advanced Features</Label>
+                    <Label htmlFor="show-advanced">
+                      Show Advanced Features
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       Display advanced settings and options
                     </p>
@@ -609,7 +646,9 @@ export const ShopSettingsPage: React.FC = () => {
                       placeholder="#3B82F6"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for main buttons and headers</p>
+                  <p className="text-xs text-muted-foreground">
+                    Used for main buttons and headers
+                  </p>
                 </div>
 
                 {/* Secondary Color */}
@@ -631,7 +670,9 @@ export const ShopSettingsPage: React.FC = () => {
                       placeholder="#10B981"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for success states</p>
+                  <p className="text-xs text-muted-foreground">
+                    Used for success states
+                  </p>
                 </div>
 
                 {/* Accent Color */}
@@ -653,7 +694,9 @@ export const ShopSettingsPage: React.FC = () => {
                       placeholder="#F59E0B"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for highlights and badges</p>
+                  <p className="text-xs text-muted-foreground">
+                    Used for highlights and badges
+                  </p>
                 </div>
               </div>
 
@@ -662,21 +705,21 @@ export const ShopSettingsPage: React.FC = () => {
                 <Label>Preview</Label>
                 <div className="grid grid-cols-3 gap-4 p-4 border rounded-lg">
                   <div className="space-y-2">
-                    <div 
+                    <div
                       className="h-16 rounded-md"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <p className="text-xs text-center font-medium">Primary</p>
                   </div>
                   <div className="space-y-2">
-                    <div 
+                    <div
                       className="h-16 rounded-md"
                       style={{ backgroundColor: secondaryColor }}
                     />
                     <p className="text-xs text-center font-medium">Secondary</p>
                   </div>
                   <div className="space-y-2">
-                    <div 
+                    <div
                       className="h-16 rounded-md"
                       style={{ backgroundColor: accentColor }}
                     />
@@ -686,13 +729,13 @@ export const ShopSettingsPage: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   onClick={() => {
-                    if (!shopId) return
-                    updateColorsMutation.mutate({ 
-                      shopId, 
-                      colors: { primaryColor, secondaryColor, accentColor } 
-                    })
+                    if (!shopId) return;
+                    updateColorsMutation.mutate({
+                      shopId,
+                      colors: { primaryColor, secondaryColor, accentColor },
+                    });
                   }}
                   disabled={updateColorsMutation.isPending}
                 >
@@ -743,9 +786,12 @@ export const ShopSettingsPage: React.FC = () => {
                     />
                     <div>
                       <p className="text-sm font-medium">Active Logo</p>
-                      <p className="text-xs text-muted-foreground">
-                        Uploaded on {new Date(customization.updatedAt || '').toLocaleDateString()}
-                      </p>
+                      {/* <p className="text-xs text-muted-foreground">
+                        Uploaded on{" "}
+                        {new Date(
+                          customization?.updatedAt || ""
+                        ).toLocaleDateString()}
+                      </p> */}
                     </div>
                   </div>
                 </div>
@@ -780,37 +826,37 @@ export const ShopSettingsPage: React.FC = () => {
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
+                      const file = e.target.files?.[0];
+                      if (!file) return;
 
                       // Validate file type
-                      if (!file.type.startsWith('image/')) {
-                        alert('Please upload an image file')
-                        return
+                      if (!file.type.startsWith("image/")) {
+                        alert("Please upload an image file");
+                        return;
                       }
 
                       // Validate file size (max 2MB)
                       if (file.size > 2 * 1024 * 1024) {
-                        alert('File size must be less than 2MB')
-                        return
+                        alert("File size must be less than 2MB");
+                        return;
                       }
 
-                      setLogoFile(file)
-                      
+                      setLogoFile(file);
+
                       // Create preview
-                      const reader = new FileReader()
+                      const reader = new FileReader();
                       reader.onloadend = () => {
-                        setLogoPreview(reader.result as string)
-                      }
-                      reader.readAsDataURL(file)
+                        setLogoPreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
                     }}
                     className="cursor-pointer"
                   />
                   {logoFile && (
-                    <Button 
+                    <Button
                       onClick={() => {
-                        if (!shopId || !logoFile) return
-                        uploadLogoMutation.mutate({ shopId, file: logoFile })
+                        if (!shopId || !logoFile) return;
+                        uploadLogoMutation.mutate({ shopId, file: logoFile });
                       }}
                       disabled={uploadLogoMutation.isPending}
                     >
@@ -829,7 +875,8 @@ export const ShopSettingsPage: React.FC = () => {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Recommended size: 200x200px. Transparent background works best.
+                  Recommended size: 200x200px. Transparent background works
+                  best.
                 </p>
               </div>
             </CardContent>
@@ -868,7 +915,8 @@ export const ShopSettingsPage: React.FC = () => {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Receipt customization applies to both printed and digital receipts.
+                    Receipt customization applies to both printed and digital
+                    receipts.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -886,8 +934,8 @@ export const ShopSettingsPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  refetchConfig()
-                  refetchCustomization()
+                  refetchConfig();
+                  refetchCustomization();
                 }}
                 disabled={isSaving}
               >
@@ -903,10 +951,7 @@ export const ShopSettingsPage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleSaveAll}
-                disabled={isSaving}
-              >
+              <Button onClick={handleSaveAll} disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -924,5 +969,5 @@ export const ShopSettingsPage: React.FC = () => {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

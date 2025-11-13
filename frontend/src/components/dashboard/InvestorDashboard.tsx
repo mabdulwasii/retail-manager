@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useInvestments } from '@/hooks/investment/useInvestments'
 import { useDistributions } from '@/hooks/investment/useDistributions'
 import { usePortfolioSummary } from '@/hooks/investment/usePortfolioSummary'
+import { TimePeriod } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -25,6 +27,7 @@ export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth()
   const permissions = usePermissions()
   const { formatCurrency } = useCurrency()
+  const [period, setPeriod] = useState<TimePeriod>('month')
   
   // Fetch real data
   const { data: investmentsData, isLoading: investmentsLoading } = useInvestments({
@@ -145,6 +148,17 @@ export const InvestorDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
           {permissions.canViewAnalytics() && (
             <Button variant="outline" asChild>
               <Link to="/analytics">

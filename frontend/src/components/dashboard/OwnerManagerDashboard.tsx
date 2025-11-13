@@ -26,11 +26,13 @@ import {
   FileText
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useCurrency } from '@/hooks/useCurrency'
 import { useDashboardData, useAllShopsPerformance } from '@/hooks/useDashboard'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
   const permissions = usePermissions()
+  const { formatCurrency } = useCurrency()
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month')
 
   const {
@@ -54,7 +56,7 @@ export const OwnerManagerDashboard: React.FC = () => {
   const businessStats = [
     {
       title: 'Total Revenue',
-      value: revenueAnalytics ? `$${(revenueAnalytics.currentRevenue || 0).toLocaleString()}` : '$0',
+      value: formatCurrency(revenueAnalytics?.currentRevenue || 0),
       description: `This ${period}`,
       icon: DollarSign,
       trend: revenueAnalytics ? `${revenueAnalytics.growthRate > 0 ? '+' : ''}${revenueAnalytics.growthRate?.toFixed(1) || 0}%` : '0%',
@@ -73,7 +75,7 @@ export const OwnerManagerDashboard: React.FC = () => {
       value: salesSummary ? (salesSummary.totalTransactions?.toString() || '0') : '0',
       description: `This ${period}`,
       icon: Package,
-      trend: salesSummary ? `Avg: $${salesSummary.averageTransactionValue?.toFixed(2) || '0.00'}` : 'No sales',
+      trend: salesSummary ? `Avg: ${formatCurrency(salesSummary.averageTransactionValue || 0)}` : 'No sales',
       color: 'text-purple-600'
     },
     {
@@ -81,7 +83,7 @@ export const OwnerManagerDashboard: React.FC = () => {
       value: investmentROI ? `${investmentROI.roiPercentage?.toFixed(1) || 0}%` : '0%',
       description: `${period} return`,
       icon: TrendingUp,
-      trend: investmentROI ? `$${investmentROI.totalDistributions?.toLocaleString() || '0'} earned` : 'No returns',
+      trend: investmentROI ? `${formatCurrency(investmentROI.totalDistributions || 0)} earned` : 'No returns',
       color: 'text-emerald-600'
     }
   ]
@@ -98,7 +100,7 @@ export const OwnerManagerDashboard: React.FC = () => {
     return {
       shopId: shop.shopId,
       name: shop.shopName,
-      revenue: `$${shop.revenue.toLocaleString()}`,
+      revenue: formatCurrency(shop.revenue),
       sales: shop.transactions,
       growth: `${shop.growthRate > 0 ? '+' : ''}${shop.growthRate.toFixed(1)}%`,
       status: getPerformanceStatus(shop.growthRate)
@@ -248,7 +250,7 @@ export const OwnerManagerDashboard: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {permissions.canCreateSale() && (
               <Button variant="outline" className="h-20 flex-col" asChild>
-                <Link to="/sales">
+                <Link to="/pos">
                   <ShoppingCart className="h-6 w-6 mb-2" />
                   New Sale
                 </Link>
@@ -256,7 +258,7 @@ export const OwnerManagerDashboard: React.FC = () => {
             )}
             {permissions.canCreateProduct() && (
               <Button variant="outline" className="h-20 flex-col" asChild>
-                <Link to="/products">
+                <Link to="/products/create">
                   <Package className="h-6 w-6 mb-2" />
                   Add Product
                 </Link>
@@ -299,12 +301,14 @@ export const OwnerManagerDashboard: React.FC = () => {
             ) : shopPerformance.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No shop performance data available</p>
-                <Button variant="outline" className="mt-4" asChild>
-                  <Link to="/shops/create">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Shop
-                  </Link>
-                </Button>
+                {shops.length === 0 && permissions.canCreateShop() && (
+                  <Button variant="outline" className="mt-4" asChild>
+                    <Link to="/shops/create">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Shop
+                    </Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <>
@@ -417,7 +421,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium">Expenses Awaiting Approval</p>
                     <p className="text-xs text-muted-foreground">
-                      {expenseSummary.pendingApproval} expense(s) totaling ${expenseSummary.totalAmount?.toLocaleString() || '0'}
+                      {expenseSummary.pendingApproval} expense(s) totaling {formatCurrency(expenseSummary.totalAmount || 0)}
                     </p>
                   </div>
                 </div>
@@ -546,7 +550,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 <div className="p-3 border rounded-lg">
                   <p className="text-xs text-muted-foreground">Total Value</p>
-                  <p className="text-2xl font-bold">${inventorySummary.totalValue?.toLocaleString() || '0'}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(inventorySummary.totalValue || 0)}</p>
                 </div>
               </div>
               
@@ -592,7 +596,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 <div className="p-3 border rounded-lg">
                   <p className="text-xs text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold">${expenseSummary.totalAmount?.toLocaleString() || '0'}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(expenseSummary.totalAmount || 0)}</p>
                 </div>
               </div>
               
@@ -607,7 +611,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
                   <span className="text-sm">This Month</span>
-                  <span className="text-sm font-semibold text-blue-700">${expenseSummary.monthlyTotal?.toLocaleString() || '0'}</span>
+                  <span className="text-sm font-semibold text-blue-700">{formatCurrency(expenseSummary.monthlyTotal || 0)}</span>
                 </div>
               </div>
 
@@ -637,11 +641,11 @@ export const OwnerManagerDashboard: React.FC = () => {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Total Invested</p>
-                <p className="text-2xl font-bold">${investmentROI.totalInvestmentAmount?.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-bold">{formatCurrency(investmentROI.totalInvestmentAmount || 0)}</p>
               </div>
               <div className="p-4 border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Total Returns</p>
-                <p className="text-2xl font-bold text-green-600">${investmentROI.totalDistributions?.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(investmentROI.totalDistributions || 0)}</p>
               </div>
               <div className="p-4 border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">ROI</p>
