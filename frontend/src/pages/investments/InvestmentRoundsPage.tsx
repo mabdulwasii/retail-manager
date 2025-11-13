@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Eye, MoreVertical, XCircle, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,6 +52,7 @@ export const InvestmentRoundsPage: React.FC = () => {
     page,
     size,
     status: statusFilter === 'all' ? undefined : statusFilter,
+    enabled: !!shopId,
   })
 
   const closeRound = useCloseInvestmentRound()

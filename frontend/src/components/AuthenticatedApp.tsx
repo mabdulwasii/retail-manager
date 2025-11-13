@@ -31,8 +31,9 @@ import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
 import { RolesPage } from "@/pages/admin/RolesPage";
 import { CreateRolePage } from "@/pages/admin/CreateRolePage";
 import { EditRolePage } from "@/pages/admin/EditRolePage";
+import { RoleDetailPage } from "@/pages/admin/RoleDetailPage";
 import { PermissionsMatrixPage } from "@/pages/admin/PermissionsMatrixPage";
-import { UsersPage, CreateUserPage } from "@/pages/users";
+import { UsersPage, CreateUserPage, EditUserPage } from "@/pages/users";
 import { UnauthorizedPage } from "@/pages/UnauthorizedPage";
 import { SalesPage, TransactionDetailPage } from "@/pages/sales";
 import { POSPage } from "@/pages/pos/POSPage";
@@ -445,7 +446,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
-              <EditRolePage />
+              <RoleDetailPage />
             </ProtectedRoute>
           </Layout>
         }
@@ -478,6 +479,16 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
               <CreateUserPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/users/edit/:userId"
+        element={
+          <Layout>
+            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+              <EditUserPage />
             </ProtectedRoute>
           </Layout>
         }

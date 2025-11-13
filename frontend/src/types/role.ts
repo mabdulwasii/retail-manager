@@ -12,14 +12,16 @@ export interface Role {
   name: string
   description?: string
   permissions: string[] // Array of permission names (not objects)
+  tenantId?: string // null for system roles, specific tenantId for custom roles
+  isSystem?: boolean // System roles cannot be edited/deleted except by SYSTEM_ADMIN
   createdAt?: string
   updatedAt?: string
-  isSystem?: boolean // System roles cannot be deleted
 }
 
 export interface RoleCreateRequest {
   name: string
   description?: string
+  tenantId?: string // Set for custom tenant-specific roles
 }
 
 export interface RoleUpdateRequest {

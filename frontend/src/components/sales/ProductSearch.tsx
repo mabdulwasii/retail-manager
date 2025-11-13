@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useSales, Product } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
-import { SearchIcon, PlusIcon, PackageIcon } from 'lucide-react'
+import { useProductSearch } from '@/hooks/useProducts'
+import { useSales, } from '@/hooks/useSales'
+import { Product, ProductStatus } from '@/types/api'
 import { debounce } from 'lodash'
+import { PackageIcon, PlusIcon, SearchIcon } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 interface ProductSearchProps {
   onProductSelect: (product: Product) => void
@@ -15,19 +17,21 @@ interface ProductSearchProps {
 
 export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect }) => {
   const { searchProducts, isLoading } = useSales()
+    const [search, setSearch] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const { data: productsData =[] } = useProductSearch(search);
+  
   const { formatCurrency } = useCurrency()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Product[]>([])
+
   const [hasSearched, setHasSearched] = useState(false)
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
       if (query.trim().length >= 2) {
-        setHasSearched(true)
-        const results = await searchProducts(query)
-        setSearchResults(results)
+        setHasSearched(true);
+        setSearch(query);
       } else {
-        setSearchResults([])
         setHasSearched(false)
       }
     }, 300),
@@ -44,7 +48,6 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect })
   const handleProductSelect = (product: Product) => {
     onProductSelect(product)
     setSearchQuery('')
-    setSearchResults([])
     setHasSearched(false)
   }
 
@@ -54,7 +57,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect })
     } else if (stock <= 10) {
       return <Badge variant="outline" className="text-orange-600 border-orange-600">Low Stock ({stock})</Badge>
     } else {
-      return <Badge variant="secondary">In Stock ({stock})</Badge>
+      return <Badge variant="success">In Stock ({stock})</Badge>
     }
   }
 
@@ -90,14 +93,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect })
         {/* Search Results */}
         {!isLoading && hasSearched && (
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {searchResults.length === 0 ? (
+            {productsData.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <PackageIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                 <p>No products found</p>
                 <p className="text-sm">Try a different search term</p>
               </div>
             ) : (
-              searchResults.map((product) => (
+              productsData.map((product) => (
                 <div
                   key={product.id}
                   className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -108,8 +111,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect })
                         <h3 className="font-medium text-gray-900 truncate">
                           {product.name}
                         </h3>
-                        {getStockBadge(product.stock)}
-                        {!product.isActive && (
+                        {getStockBadge(product.availableStock || 0)}
+                        {product.status === ProductStatus.ACTIVE && (
                           <Badge variant="outline" className="text-red-600 border-red-600">
                             Inactive
                           </Badge>
@@ -135,16 +138,16 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect })
                         <div className="text-lg font-semibold text-gray-900">
                           {formatCurrency(product.price)}
                         </div>
-                        {product.taxRate && (
+                        {/* {product.taxable && (
                           <div className="text-xs text-gray-500">
                             +{product.taxRate}% tax
                           </div>
-                        )}
+                        )} */}
                       </div>
 
                       <Button
                         onClick={() => handleProductSelect(product)}
-                        disabled={!product.isActive || product.stock === 0}
+                        disabled={product.status === ProductStatus.INACTIVE || product.availableStock === 0}
                         size="sm"
                         className="flex items-center space-x-1"
                       >

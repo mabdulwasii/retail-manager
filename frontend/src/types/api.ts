@@ -139,11 +139,12 @@ export interface Product {
   imageUrl?: string
   isTaxable?: boolean
   taxable?: boolean // Alternative field name from API
+  taxRate?:number
   isDiscountable?: boolean
   discountable?: boolean // Alternative field name from API
   status: ProductStatus
   totalStock?: number
-  availableStock?: number
+  availableStock: number
   reservedStock?: number
   inventoryCount?: number
   hasLowStock?: boolean

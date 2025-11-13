@@ -1,6 +1,13 @@
 import { SalesHistory } from "@/components/sales/SalesHistory";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { downloadCSV, exportToPDF } from '@/lib/exportHelpers';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Card,
   CardContent,
@@ -29,19 +36,22 @@ import {
   Search,
   ShoppingBag,
   TrendingUp,
+  FileDown,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const SalesPage: React.FC = () => {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const { sales, fetchSales, isLoading, error } = useSales();
+  const permissions = usePermissions();
 
   // Check permissions based on backend permission matrix
-  const canViewSales = hasPermission('SALES_READ');        // EMPLOYEE and above
-  const canUpdateSales = hasPermission('SALES_UPDATE');    // MANAGER and above
-  const canDeleteSales = hasPermission('SALES_DELETE');    // OWNER and above
-  const canCreateSales = hasPermission('SALES_CREATE');    // EMPLOYEE and above
+  const canViewSales = permissions.canViewSales();
+  const canUpdateSales = permissions.canEditSale();
+  const canDeleteSales = permissions.canDeleteSale();
+  const canCreateSales = permissions.canCreateSale();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -57,10 +67,13 @@ export const SalesPage: React.FC = () => {
     totalElements: 0,
   });
 
-  // Fetch sales on mount
+  // Fetch sales on mount only once
   useEffect(() => {
-    loadSales();
-  }, []);
+    if (user?.shopId) {
+      loadSales();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.shopId]);
 
   const loadSales = async (page: number = 0) => {
     const filter: SalesFilter = {
@@ -104,9 +117,33 @@ export const SalesPage: React.FC = () => {
     loadSales(newPage);
   };
 
-  const handleExport = () => {
-    // TODO: Implement CSV export
-    console.log("Export sales data");
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!sales || sales.length === 0) {
+      alert('No sales data to export');
+      return;
+    }
+
+    const filename = `sales-report-${new Date().toISOString().split('T')[0]}`;
+
+    if (format === 'csv') {
+      // Format sales data for CSV
+      const formattedData = sales.map(sale => ({
+        'Receipt #': sale.receiptNumber,
+        'Date': new Date(sale.transactionDate).toLocaleDateString(),
+        'Customer': sale.customerName || 'Walk-in',
+        'Items': sale.items?.length || 0,
+        'Subtotal': sale.subtotal,
+        'Tax': sale.taxAmount,
+        'Discount': sale.discountAmount,
+        'Total': sale.totalAmount,
+        'Payment Method': sale.paymentMethod,
+        'Status': sale.status,
+      }));
+      downloadCSV(formattedData, `${filename}.csv`);
+    } else {
+      // Export to PDF
+      exportToPDF('sales-content', 'Sales Report');
+    }
   };
 
   // Calculate summary statistics
@@ -189,10 +226,24 @@ export const SalesPage: React.FC = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Reset
           </Button>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -204,6 +255,8 @@ export const SalesPage: React.FC = () => {
         </Alert>
       )}
 
+      {/* Exportable Content */}
+      <div id="sales-content" className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -368,6 +421,7 @@ export const SalesPage: React.FC = () => {
           {renderSalesContent()}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

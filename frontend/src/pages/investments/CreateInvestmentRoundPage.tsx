@@ -73,6 +73,10 @@ export const CreateInvestmentRoundPage: React.FC = () => {
     enabled: !!formData.shopId,
   })
 
+  const investorsAvailable = shopUsers?.filter(user => 
+    user.roles?.some(role => role.name === 'INVESTOR' || role.name?.includes('INVESTOR'))
+  ) || []
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -135,16 +139,19 @@ export const CreateInvestmentRoundPage: React.FC = () => {
   const handleSubmit = async () => {
     if (!validateStep(3)) return
 
-    const maturityDate = new Date()
-    maturityDate.setMonth(maturityDate.getMonth() + formData.maturityMonths)
-
     const payload: any = {
       shopId: formData.shopId,
       investmentType: formData.investmentType,
       profitSharingModel: formData.profitSharingModel,
-      maturityDate: maturityDate.toISOString(),
       notes: formData.notes || undefined,
       investors: investors.filter(inv => inv.investorId && inv.amount > 0),
+    }
+
+    // Only add maturity date if specified (optional for SHOP_WIDE, recommended for TIME_WEIGHTED)
+    if (formData.maturityMonths && formData.maturityMonths > 0) {
+      const maturityDate = new Date()
+      maturityDate.setMonth(maturityDate.getMonth() + formData.maturityMonths)
+      payload.maturityDate = maturityDate.toISOString()
     }
 
     // Add time weighting rules if applicable
@@ -271,15 +278,24 @@ export const CreateInvestmentRoundPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maturityMonths">Maturity Duration (months) *</Label>
+                <Label htmlFor="maturityMonths">
+                  Maturity Duration (months) 
+                  {formData.profitSharingModel === ProfitSharingModel.TIME_WEIGHTED && ' *'}
+                </Label>
                 <Input
                   id="maturityMonths"
                   type="number"
                   value={formData.maturityMonths}
                   onChange={(e) => handleInputChange('maturityMonths', parseInt(e.target.value) || 0)}
-                  min={3}
+                  min={0}
                   max={60}
+                  placeholder={formData.investmentType === InvestmentType.SHOP_WIDE ? 'Optional for shop-wide' : '24'}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {formData.investmentType === InvestmentType.SHOP_WIDE
+                    ? 'Optional for shop-wide investments. Recommended for TIME_WEIGHTED model.'
+                    : 'Specify the investment duration in months'}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -495,12 +511,16 @@ export const CreateInvestmentRoundPage: React.FC = () => {
                                 />
                               </SelectTrigger>
                               <SelectContent>
-                                {shopUsers.length === 0 && !usersLoading ? (
-                                  <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                                    No active users available for this shop
+                                {usersLoading ? (
+                                  <div className="py-2 px-3 text-sm text-muted-foreground">
+                                    Loading users...
+                                  </div>
+                                ) : investorsAvailable.length === 0 ? (
+                                  <div className="py-2 px-3 text-sm text-destructive">
+                                    No users with INVESTOR role found. Please assign INVESTOR role to users first.
                                   </div>
                                 ) : (
-                                  shopUsers.map((user) => (
+                                  investorsAvailable.map((user) => (
                                     <SelectItem key={user.id} value={user.id}>
                                       {user.firstName && user.lastName
                                         ? `${user.firstName} ${user.lastName} (${user.email})`

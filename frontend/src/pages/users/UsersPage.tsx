@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Mail, Phone, Shield } from 'lucide-react'
+import { Plus, Search, Mail, Phone, Shield, Edit } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,7 @@ export const UsersPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const canCreateUsers = hasPermission('USER_CREATE')
+  const canUpdateUsers = hasPermission('USER_UPDATE')
 
   const { data: users = [], isLoading } = useTenantUsers({
     tenantId,
@@ -182,6 +183,7 @@ export const UsersPage: React.FC = () => {
                   <TableHead>Roles</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  {canUpdateUsers && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -229,6 +231,17 @@ export const UsersPage: React.FC = () => {
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                     </TableCell>
+                    {canUpdateUsers && (
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/users/edit/${user.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

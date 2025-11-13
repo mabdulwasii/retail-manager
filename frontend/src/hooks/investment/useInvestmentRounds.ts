@@ -7,7 +7,7 @@ interface UseInvestmentRoundsOptions {
   shopId?: string
   page?: number
   size?: number
-  status?: string
+  status?: string | undefined
   enabled?: boolean
 }
 
@@ -26,7 +26,8 @@ export function useInvestmentRounds({
       }
       return investmentService.getShopInvestmentRounds(shopId, page, size, status)
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute
+    refetchOnMount: true, // Always fetch fresh data on mount
     refetchOnWindowFocus: false,
     enabled: enabled && !!shopId,
   })

@@ -41,11 +41,15 @@ import { UserRole } from '@/types/roles'
 
 export const RolesPage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const { hasAnyRole, user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [roleToDelete, setRoleToDelete] = useState<{ id: string; name: string } | null>(null)
+  
+  const isSystemAdmin = hasAnyRole([UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  // TENANT_ADMIN only sees system roles + their tenant's custom roles
+  const tenantIdForFilter = !isSystemAdmin && user?.tenantId ? user.tenantId : undefined
 
-  const { data: roles, isLoading, isError, error } = useRoles()
+  const { data: roles, isLoading, isError, error } = useRoles(tenantIdForFilter)
   const deleteRoleMutation = useDeleteRole()
 
   // Only TENANT_ADMIN can access this page
@@ -168,7 +172,7 @@ export const RolesPage: React.FC = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load roles: {error?.message || 'An error occurred'}
+            Failed to load roles: {error?.message || "An error occurred"}
           </AlertDescription>
         </Alert>
       )}
@@ -186,12 +190,12 @@ export const RolesPage: React.FC = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Shield className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              {searchQuery ? 'No roles found' : 'No roles yet'}
+              {searchQuery ? "No roles found" : "No roles yet"}
             </h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchQuery
-                ? 'Try adjusting your search criteria'
-                : 'Get started by creating your first role'}
+                ? "Try adjusting your search criteria"
+                : "Get started by creating your first role"}
             </p>
             {!searchQuery && (
               <Link to="/admin/roles/create">
@@ -209,20 +213,33 @@ export const RolesPage: React.FC = () => {
       {!isLoading && filteredRoles && filteredRoles.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredRoles.map((role) => (
-            <Card key={role.id} className="hover:shadow-lg transition-shadow duration-200">
+            <Card
+              key={role.id}
+              className="hover:shadow-lg transition-shadow duration-200"
+            >
               <CardHeader>
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg truncate">{role.name}</CardTitle>
+                      <CardTitle className="text-lg truncate">
+                        {role.name}
+                      </CardTitle>
                       {role.isSystem && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-100 text-blue-800"
+                        >
                           System
+                        </Badge>
+                      )}
+                      {role.tenantId && (
+                        <Badge variant="outline" className="text-xs">
+                          Custom
                         </Badge>
                       )}
                     </div>
                     <CardDescription className="line-clamp-2">
-                      {role.description || 'No description'}
+                      {role.description || "No description"}
                     </CardDescription>
                   </div>
                 </div>
@@ -231,7 +248,10 @@ export const RolesPage: React.FC = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Key className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span>{role.permissions?.length || 0} permission{role.permissions?.length === 1 ? '' : 's'}</span>
+                  <span>
+                    {role.permissions?.length || 0} permission
+                    {role.permissions?.length === 1 ? "" : "s"}
+                  </span>
                 </div>
 
                 <div className="flex gap-2 pt-2">
@@ -241,36 +261,37 @@ export const RolesPage: React.FC = () => {
                       View
                     </Button>
                   </Link>
+                  {(isSystemAdmin || !role.isSystem) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to={`/admin/roles/${role.id}/edit`}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Role
-                        </Link>
-                      </DropdownMenuItem>
-                      {!role.isSystem && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setRoleToDelete({ id: role.id, name: role.name })}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Role
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/admin/roles/${role.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Role
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setRoleToDelete({ id: role.id, name: role.name })
+                          }
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Role
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -279,13 +300,16 @@ export const RolesPage: React.FC = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
+      <AlertDialog
+        open={!!roleToDelete}
+        onOpenChange={() => setRoleToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the role "{roleToDelete?.name}".
-              This action cannot be undone. Users with this role will lose access to
+              This will permanently delete the role "{roleToDelete?.name}". This
+              action cannot be undone. Users with this role will lose access to
               associated permissions.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -302,12 +326,12 @@ export const RolesPage: React.FC = () => {
                   Deleting...
                 </>
               ) : (
-                'Delete Role'
+                "Delete Role"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

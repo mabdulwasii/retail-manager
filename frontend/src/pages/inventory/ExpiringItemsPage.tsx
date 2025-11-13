@@ -188,7 +188,7 @@ export const ExpiringItemsPage: React.FC = () => {
       </div>
 
       {/* Exportable Content */}
-      <div id="expiring-items-content">
+      <div id="expiring-items-content" className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

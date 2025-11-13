@@ -80,4 +80,22 @@ export function useCreateUser() {
   })
 }
 
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userId, request }: { userId: string; request: Partial<UserCreateRequest> }) =>
+      userService.updateUser(userId, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-users'] })
+      queryClient.invalidateQueries({ queryKey: ['shop-users'] })
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('User updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to update user')
+    },
+  })
+}
+
 export type { User, UserCreateRequest }

@@ -316,7 +316,7 @@ export const InventoryListPage: React.FC = () => {
       </div>
 
       {/* Exportable Content */}
-      <div id="inventory-content">
+      <div id="inventory-content" className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

@@ -99,22 +99,26 @@ export const POSPage: React.FC = () => {
     setIsPaymentModalOpen(true)
   }
 
-  const handlePaymentComplete = async (paymentData: {
-    method: string
-    amountPaid: number
-    discount: number
-    notes: string
-  }) => {
+  const handlePaymentComplete = async (paymentData: any) => {
     const saleData: CreateSaleRequest = {
-      items: cart.map(item => ({
+      lineItems: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: item.product.price
+        unitPrice: item.product.price,
+        discount: 0
       })),
       paymentMethod: paymentData.method,
-      discountAmount: paymentData.discount,
-      notes: paymentData.notes || `Amount paid: ${paymentData.amountPaid}`
+      discountAmount: paymentData.discount || 0,
+      notes: paymentData.notes,
+      shopId: user?.shopId as string,
+      customerName: paymentData.customerName,
+      customerPhone: paymentData.customerPhone,
+      customerEmail: paymentData.customerEmail,
+      taxAmount: cartSummary.taxAmount,
+      paymentReference: paymentData.paymentReference
     }
+
+    
 
     const sale = await processSale(saleData)
 

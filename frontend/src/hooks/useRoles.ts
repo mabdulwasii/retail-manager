@@ -24,11 +24,25 @@ export const permissionKeys = {
 
 /**
  * Fetch all roles
+ * For TENANT_ADMIN: shows system roles + their tenant's custom roles
+ * For SYSTEM_ADMIN: shows all roles
  */
-export const useRoles = () => {
+export const useRoles = (tenantId?: string) => {
   return useQuery({
-    queryKey: roleKeys.list(),
-    queryFn: () => roleService.getRoles(),
+    queryKey: [...roleKeys.list(), tenantId],
+    queryFn: async () => {
+      const allRoles = await roleService.getRoles()
+      // If tenantId provided (TENANT_ADMIN), filter to show only:
+      // 1. System roles (isSystem = true or tenantId = null)
+      // 2. Custom roles belonging to this tenant
+      if (tenantId) {
+        return allRoles.filter(
+          role => role.isSystem || !role.tenantId || role.tenantId === tenantId
+        )
+      }
+      // SYSTEM_ADMIN sees all roles
+      return allRoles
+    },
   })
 }
 

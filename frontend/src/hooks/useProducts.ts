@@ -190,7 +190,7 @@ export const useProductSearch = (query: string) => {
   return useQuery({
     queryKey: ['productSearch', shopId, query],
     queryFn: () => productService.searchProducts(shopId!, query),
-    enabled: !!shopId && query.length > 2,
+    enabled: !!shopId && query.length >= 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 }

@@ -47,7 +47,7 @@ export const userService = {
     status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
     page = 0,
     size = 50
-  ): Promise<PaginatedUsers> {
+  ): Promise<User[]> {
     const { data } = await api.get(`/shops/${shopId}/users`, {
       params: { status, page, size },
     });
@@ -90,7 +90,16 @@ export const userService = {
    * Get user by ID
    */
   async getUserById(userId: string): Promise<User> {
-    const { data } = await api.get(`/users/${userId}`);
+    const { data} = await api.get(`/users/users/${userId}`);
+    return data;
+  },
+
+  /**
+   * Update user
+   * Available to: System Admin, Tenant Admin
+   */
+  async updateUser(userId: string, request: Partial<UserCreateRequest>): Promise<User> {
+    const { data } = await api.put(`/users/${userId}`, request);
     return data;
   },
 };

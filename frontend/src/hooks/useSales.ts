@@ -2,19 +2,20 @@ import { useState, useCallback, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
 import { api } from '@/services/api'
+import { Product } from '@/types/api'
 
-export interface Product {
-  id: string
-  name: string
-  description?: string
-  price: number
-  barcode?: string
-  category: string
-  stock: number
-  isActive: boolean
-  imageUrl?: string
-  taxRate?: number
-}
+// export interface Product {
+//   id: string
+//   name: string
+//   description?: string
+//   price: number
+//   barcode?: string
+//   category: string
+//   stock: number
+//   isActive: boolean
+//   imageUrl?: string
+//   taxRate?: number
+// }
 
 export interface CartItem {
   product: Product
@@ -42,15 +43,21 @@ export interface SalesTransaction {
 }
 
 export interface CreateSaleRequest {
-  customerId?: string
-  items: Array<{
-    productId: string
-    quantity: number
-    unitPrice: number
-  }>
-  paymentMethod: string
-  discountAmount?: number
-  notes?: string
+  paymentMethod: string;
+  discountAmount?: number;
+  notes?: string;
+  shopId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  lineItems: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+  }>;
+  taxAmount: number;
+  paymentReference: string;
 }
 
 export interface SalesFilter {
@@ -113,7 +120,19 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const product = await api.get<Product>(`/products/barcode/${encodeURIComponent(barcode)}`)
+      if (!user?.shopId) {
+        setError('Shop ID is required for barcode search')
+        return null
+      }
+
+      // Use the correct API endpoint as per backend spec: /products/search?barcode=...&shopId=...
+      const product = await api.get<Product>(`/products/search`, {
+        params: {
+          barcode: barcode,
+          shopId: user.shopId,
+          includeInventory: true
+        }
+      })
       return product
     } catch (err: any) {
       if (err?.response?.status === 404) {
@@ -125,13 +144,13 @@ export const useSales = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [user?.shopId])
 
   // Cart management
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
     if (quantity <= 0) return
-    if (quantity > product.stock) {
-      setError(`Only ${product.stock} items available in stock`)
+    if (quantity > product.availableStock) {
+      setError(`Only ${product.availableStock} items available in stock`)
       return
     }
 
@@ -140,8 +159,8 @@ export const useSales = () => {
 
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity
-        if (newQuantity > product.stock) {
-          setError(`Only ${product.stock} items available in stock`)
+        if (newQuantity > product.availableStock) {
+          setError(`Only ${product.availableStock} items available in stock`)
           return prevCart
         }
 
@@ -151,15 +170,15 @@ export const useSales = () => {
                 ...item,
                 quantity: newQuantity,
                 subtotal: product.price * newQuantity,
-                taxAmount: (product.price * newQuantity) * (product.taxRate || 0) / 100,
-                total: (product.price * newQuantity) * (1 + (product.taxRate || 0) / 100)
+                taxAmount: (product.price * newQuantity) * (product?.taxRate || 0) / 100,
+                total: (product.price * newQuantity) * (1 + (product?.taxRate || 0) / 100)
               }
             : item
         )
       }
 
       const subtotal = product.price * quantity
-      const taxAmount = subtotal * (product.taxRate || 0) / 100
+      const taxAmount = subtotal * (product?.taxRate || 0) / 100
       const total = subtotal + taxAmount
 
       return [...prevCart, {
@@ -187,8 +206,8 @@ export const useSales = () => {
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.product.id === productId) {
-          if (quantity > item.product.stock) {
-            setError(`Only ${item.product.stock} items available in stock`)
+          if (quantity > item.product.availableStock) {
+            setError(`Only ${item.product.availableStock} items available in stock`)
             return item
           }
 

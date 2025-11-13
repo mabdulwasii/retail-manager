@@ -10,6 +10,7 @@ import { PaymentModal } from '@/components/sales/PaymentModal'
 import { SalesHistory } from '@/components/sales/SalesHistory'
 import { useSales } from '@/hooks/useSales'
 import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon } from 'lucide-react'
+import { useAuth } from '@/context/ManualAuthContext'
 
 export const SalesPage: React.FC = () => {
   const {
@@ -31,6 +32,7 @@ export const SalesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos')
   const [barcodeInput, setBarcodeInput] = useState('')
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const { user } = useAuth()
 
   useEffect(() => {
     if (activeTab === 'history') {
@@ -66,15 +68,25 @@ export const SalesPage: React.FC = () => {
 
   const handlePaymentComplete = async (paymentData: any) => {
     const saleData = {
-      items: cart.map(item => ({
+      lineItems: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: item.product.price
+        unitPrice: item.product.price,
+        discount: 0
       })),
       paymentMethod: paymentData.method,
       discountAmount: paymentData.discount || 0,
-      notes: paymentData.notes
+      notes: paymentData.notes,
+      shopId: user?.shopId as string,
+      customerName: paymentData.customerName,
+      customerPhone: paymentData.customerPhone,
+      customerEmail: paymentData.customerEmail,
+      taxAmount: cartSummary.taxAmount,
+      paymentReference: paymentData.paymentReference
     }
+
+    console.log('saleData', saleData);
+    
 
     const sale = await processSale(saleData)
     if (sale) {

@@ -31,11 +31,12 @@ type RoleFormData = yup.InferType<typeof roleSchema>
 
 export const CreateRolePage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const { hasAnyRole, user } = useAuth()
   const createRoleMutation = useCreateRole()
 
   // Only TENANT_ADMIN can access
   const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  const isSystemAdmin = hasAnyRole([UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
 
   React.useEffect(() => {
     if (!canManageRoles) {
@@ -64,6 +65,8 @@ export const CreateRolePage: React.FC = () => {
       const roleData: RoleCreateRequest = {
         name: data.name,
         ...(data.description && { description: data.description }),
+        // Custom roles are tenant-specific (unless creating as SYSTEM_ADMIN)
+        ...(!isSystemAdmin && user?.tenantId && { tenantId: user.tenantId }),
       }
 
       const newRole = await createRoleMutation.mutateAsync(roleData)
