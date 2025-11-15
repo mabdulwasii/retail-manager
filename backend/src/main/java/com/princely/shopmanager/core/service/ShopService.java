@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +71,7 @@ public class ShopService {
      * @throws IllegalStateException if no tenant context or tenant not found
      */
     @Transactional
+    @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
     public ShopResponse createShop(ShopCreateRequest request) {
         log.info("Creating new shop: {}", request.getName());
 
@@ -128,7 +130,10 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional
-    @CacheEvict(key = "#shopId")
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public ShopResponse updateShop(String shopId, ShopUpdateRequest request) {
         log.info("Updating shop: {}", shopId);
 
@@ -255,7 +260,10 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or invalid status transition
      */
     @Transactional
-    @CacheEvict(key = "#shopId")
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public ShopResponse changeShopStatus(String shopId, Shop.ShopStatus newStatus) {
         log.info("Changing shop status: {} to {}", shopId, newStatus);
 
@@ -291,6 +299,10 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public void deleteShop(String shopId) {
         log.info("Deleting shop: {}", shopId);
 
