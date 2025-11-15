@@ -1,8 +1,8 @@
 # Permission Matrix
 
-**Version**: 1.1.0
-**Last Updated**: 2025-11-04
-**Migration**: V19
+**Version**: 1.2.0
+**Last Updated**: 2025-11-15
+**Migration**: V30
 
 This document provides a comprehensive overview of all permissions, resources, and role assignments in the Shop Manager system.
 
@@ -94,6 +94,7 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 | USER_CREATE | USER | CREATE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | USER_READ | USER | READ | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ 🔒 | ❌ | ❌ |
 | USER_LIST | USER | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ 🔒 | ❌ | ❌ |
+| USER_LIST_ALL | USER | LIST_ALL | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | USER_UPDATE | USER | UPDATE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | USER_DELETE | USER | DELETE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | ROLE_CREATE | ROLE | CREATE | ✅ | ✅ 🏢 | ✅ | ❌ | ❌ | ❌ |

@@ -1,12 +1,17 @@
 package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.auth.service.KeycloakUserService;
+import com.princely.shopmanager.core.domain.Permission;
+import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.repository.PermissionRepository;
+import com.princely.shopmanager.core.repository.RoleRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
+import com.princely.shopmanager.test.TestConstants;
 import com.princely.shopmanager.test.config.PostgresTestContainer;
 import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +74,12 @@ class UserControllerTest {
 
     @Autowired
     private ShopRepository shopRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
 
     private User testUser;
     private Tenant testTenant;
@@ -252,6 +263,9 @@ class UserControllerTest {
     @DisplayName("GET /api/users - System Admin can list all users")
     @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
     void getAllUsers_SystemAdmin_Success() throws Exception {
+        // Given - Create system admin user with proper permissions
+        createSystemAdminUser();
+
         // Given - Create multiple users
         User user1 = userRepository.saveAndFlush(testUser);
         User user2 = User.builder()
@@ -271,15 +285,19 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$", hasSize(3)))  // admin.user + testUser + jane.smith
             .andExpect(jsonPath("$[0].username").exists())
-            .andExpect(jsonPath("$[1].username").exists());
+            .andExpect(jsonPath("$[1].username").exists())
+            .andExpect(jsonPath("$[2].username").exists());
     }
 
     @Test
     @DisplayName("GET /api/users - System Admin can filter by status")
     @WithMockPermissions(role = "SYSTEM_ADMIN", username = "admin.user")
     void getAllUsers_FilterByStatus_Success() throws Exception {
+        // Given - Create system admin user with proper permissions
+        createSystemAdminUser();
+
         // Given - Create users with different statuses
         testUser.setStatus(User.UserStatus.ACTIVE);
         userRepository.saveAndFlush(testUser);
@@ -297,14 +315,13 @@ class UserControllerTest {
             .build();
         userRepository.saveAndFlush(inactiveUser);
 
-        // When & Then - Filter for ACTIVE only
+        // When & Then - Filter for ACTIVE only (admin.user + testUser)
         mockMvc.perform(get("/api/users")
                 .param("status", "ACTIVE")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(jsonPath("$[0].username").value("john.doe"))
-            .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+            .andExpect(jsonPath("$", hasSize(2)))  // admin.user + john.doe (both ACTIVE)
+            .andExpect(jsonPath("$[*].status").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("ACTIVE"))));
     }
 
     @Test
@@ -324,5 +341,56 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isUnauthorized());
+    }
+
+    /**
+     * Creates a system admin user with USER_LIST_ALL permission.
+     * Required for hasPermission() checks that query the database.
+     */
+    private void createSystemAdminUser() {
+        // Find or create USER_LIST_ALL permission
+        Permission userListAllPermission = permissionRepository.findByName("USER_LIST_ALL")
+            .orElseGet(() -> {
+                Permission perm = Permission.builder()
+                    .name("USER_LIST_ALL")
+                    .description("List all users across all tenants in the system")
+                    .resource("USER")
+                    .action("LIST_ALL")
+                    .build();
+                return permissionRepository.save(perm);
+            });
+
+        // Find or create SYSTEM_ADMIN role with USER_LIST_ALL permission
+        Role systemAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
+            .orElseGet(() -> {
+                Role role = Role.builder()
+                    .name("SYSTEM_ADMIN")
+                    .description("System-level administrative access")
+                    .isSystem(true)
+                    .build();
+                return roleRepository.save(role);
+            });
+
+        // Add permission to role if not already present
+        if (!systemAdminRole.getPermissions().contains(userListAllPermission)) {
+            systemAdminRole.getPermissions().add(userListAllPermission);
+            roleRepository.save(systemAdminRole);
+        }
+
+        // Create system admin user with TestConstants.ADMIN_EMAIL
+        User adminUser = User.builder()
+            .keycloakId(TestConstants.KC_ADMIN_001)
+            .username("admin.user")
+            .email(TestConstants.ADMIN_EMAIL)
+            .firstName("Admin")
+            .lastName("User")
+            .phoneNumber("+1234567890")
+            .tenant(testTenant)
+            .shop(testShop)
+            .status(User.UserStatus.ACTIVE)
+            .build();
+
+        adminUser.getRoles().add(systemAdminRole);
+        userRepository.save(adminUser);
     }
 }

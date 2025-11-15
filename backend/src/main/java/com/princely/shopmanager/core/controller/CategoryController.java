@@ -73,7 +73,7 @@ public class CategoryController {
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_LIST)")
     public ResponseEntity<List<CategoryResponse>> getCategories(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
-            @Parameter(description = "Include hierarchical tree structure") @RequestParam(defaultValue = "false") boolean tree,
+            @Parameter(description = "Include hierarchical tree structure") @RequestParam(defaultValue = "true") boolean tree,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
         log.debug("Fetching categories for shop: {}, tree: {}, user: {}",

@@ -18,6 +18,7 @@ SHOP,SHOP_DELETE,Delete shops,✓,✓,✓,,,, SHOP_DELETE
 USER,USER_CREATE,Create new users,✓,✓,✓,✓,,,USER_CREATE
 USER,USER_READ,View user details,✓,✓,✓,✓,,,USER_READ
 USER,USER_LIST,"List users (all scopes: system, tenant, shop)",✓,✓,✓,✓,,,USER_LIST
+USER,USER_LIST_ALL,List all users across all tenants in the system,✓,,,,,, USER_LIST_ALL
 USER,USER_UPDATE,Update user information,✓,✓,✓,✓,,,USER_UPDATE
 USER,USER_TRANSFER_SHOP,Transfer user to different shop within tenant,✓,✓,✓,,,,USER_TRANSFER_SHOP
 USER,USER_DELETE,Delete users,✓,✓,✓,,,, USER_DELETE

@@ -72,6 +72,11 @@ public class SalesTransactionService {
         // Validate inventory availability for all products BEFORE creating transaction
         List<InventoryAllocation> allocations = new ArrayList<>();
         for (SalesTransactionCreateRequest.LineItemRequest lineItemRequest : request.getLineItems()) {
+            // Validate productId is not null or empty
+            if (lineItemRequest.getProductId() == null || lineItemRequest.getProductId().isBlank()) {
+                throw new IllegalArgumentException("Product ID is required for all line items");
+            }
+
             Product product = productRepository.findById(lineItemRequest.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + lineItemRequest.getProductId()));
 

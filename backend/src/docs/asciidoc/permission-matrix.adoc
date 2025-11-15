@@ -186,6 +186,14 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 ^|
 ^|
 
+|USER_LIST_ALL
+|List all users across all tenants in the system
+^|✓
+^|
+^|
+^|
+^|
+
 |USER_UPDATE
 |Update user information
 ^|✓

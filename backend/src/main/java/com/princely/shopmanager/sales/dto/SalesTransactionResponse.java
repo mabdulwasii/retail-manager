@@ -74,7 +74,7 @@ public class SalesTransactionResponse {
             .lineItems(transaction.getLineItems() != null ?
                 transaction.getLineItems().stream()
                     .map(SalesTransactionResponse::toLineItemResponse)
-                    .collect(Collectors.toList()) : List.of())
+                    .toList() : List.of())
             .subtotal(transaction.getSubtotal())
             .taxAmount(transaction.getTaxAmount())
             .discountAmount(transaction.getDiscountAmount())

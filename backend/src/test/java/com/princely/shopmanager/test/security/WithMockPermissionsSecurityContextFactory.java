@@ -79,7 +79,7 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
                 // Shop
                 "SHOP_CREATE", "SHOP_READ", "SHOP_LIST", "SHOP_LIST_ALL", "SHOP_UPDATE", "SHOP_DELETE",
                 // User
-                "USER_CREATE", "USER_READ", "USER_LIST", "USER_UPDATE", "USER_DELETE",
+                "USER_CREATE", "USER_READ", "USER_LIST", "USER_LIST_ALL", "USER_UPDATE", "USER_DELETE",
                 // Role
                 "ROLE_CREATE", "ROLE_READ", "ROLE_LIST", "ROLE_UPDATE", "ROLE_DELETE", "ROLE_ASSIGN",
                 // Permission

@@ -50,6 +50,7 @@ public final class PermissionConstants {
     public static final String USER_CREATE = "USER_CREATE";
     public static final String USER_READ = "USER_READ";
     public static final String USER_LIST = "USER_LIST";
+    public static final String USER_LIST_ALL = "USER_LIST_ALL";
     public static final String USER_UPDATE = "USER_UPDATE";
     public static final String USER_TRANSFER_SHOP = "USER_TRANSFER_SHOP";
     public static final String USER_DELETE = "USER_DELETE";
