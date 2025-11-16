@@ -151,6 +151,54 @@ public class ShopCustomizationController {
         return ResponseEntity.ok(ShopCustomizationResponse.fromEntity(saved));
     }
 
+    @Operation(
+        summary = "Partially update shop customization (PATCH)",
+        description = "Partially update or create shop customization settings (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Customization updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopCustomizationResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request data"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PatchMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('OWNER') or hasRole('MANAGER')")
+    public ResponseEntity<ShopCustomizationResponse> patchCustomization(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody ShopCustomizationRequest request
+    ) {
+        log.info("Patching customization for shop: {}", shopId);
+
+        // Reuse the same update logic - current implementation already does partial updates
+        Optional<ShopCustomization> existingCustomization = customizationService.getShopCustomization(shopId);
+        ShopCustomization customization;
+
+        if (existingCustomization.isPresent()) {
+            customization = existingCustomization.get();
+            request.applyTo(customization);
+        } else {
+            customization = ShopCustomization.builder().build();
+            request.applyTo(customization);
+        }
+
+        ShopCustomization saved = customizationService.saveShopCustomization(shopId, customization);
+        return ResponseEntity.ok(ShopCustomizationResponse.fromEntity(saved));
+    }
+
     /**
      * Updates the color scheme for a shop.
      *

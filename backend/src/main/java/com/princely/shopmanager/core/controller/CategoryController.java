@@ -124,6 +124,28 @@ public class CategoryController {
     }
 
     @Operation(
+        summary = "Partially update category",
+        description = "Partially update an existing category (PATCH). All fields are optional - only provided fields will be updated. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Category updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "404", description = "Category not found")
+    @ApiResponse(responseCode = "403", description = "Insufficient permissions")
+    @PatchMapping("/categories/{id}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CATEGORY_UPDATE)")
+    public ResponseEntity<CategoryResponse> patchCategory(
+            @Parameter(description = "Category ID") @PathVariable String id,
+            @Valid @RequestBody CategoryUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching category: {}, user: {}", id, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
+        CategoryResponse response = categoryService.updateCategory(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Delete category",
         description = "Delete a category. Category must not have products or child categories."
     )

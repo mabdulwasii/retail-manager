@@ -146,6 +146,29 @@ public class InvestmentController {
     }
 
     @Operation(
+        summary = "Update investment status (PATCH)",
+        description = "Update the status of an investment (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Investment status updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid status")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Investment not found")
+    @PatchMapping("/investments/{investmentId}/status")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_UPDATE)")
+    public ResponseEntity<InvestmentResponse> patchInvestmentStatus(
+            @Parameter(description = "Investment ID") @PathVariable String investmentId,
+            @Parameter(description = "New status") @RequestParam Investment.InvestmentStatus status,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching investment status: {}, new status: {}, user: {}",
+                investmentId, status, principal.getUsername());
+
+        // Reuse the same update logic
+        InvestmentResponse response = investmentService.updateInvestmentStatus(investmentId, status);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Process withdrawal",
         description = "Process a withdrawal request from an investment"
     )

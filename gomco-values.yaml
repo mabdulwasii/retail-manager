@@ -13,7 +13,7 @@ backend:
     tag: backend-v0.0.44
     pullPolicy: Always
   podAnnotations:
-    configVersion: "30"  # Fix ProductServiceTest Mockito errors, V29 migration permissions fix
+    configVersion: "31"  # Active shops cache fix, USER_LIST_ALL permission, Jackson fail-on-unknown-properties
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 

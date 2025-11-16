@@ -130,6 +130,29 @@ public class InvestmentRoundController {
     }
 
     @Operation(
+        summary = "Partially update investment round (PATCH)",
+        description = "Partially update an investment round (PATCH). All fields are optional. Only allowed if round is not closed/completed. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Investment round updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data or round is closed/completed")
+    @ApiResponse(responseCode = "403", description = "Access denied - requires INVESTMENT_UPDATE permission")
+    @ApiResponse(responseCode = "404", description = "Investment round not found")
+    @PatchMapping("/investment-rounds/{roundId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVESTMENT_UPDATE)")
+    public ResponseEntity<InvestmentRoundResponse> patchInvestmentRound(
+            @Parameter(description = "Investment round ID") @PathVariable String roundId,
+            @Valid @RequestBody InvestmentRoundCreateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching investment round {} by user {}", roundId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
+        InvestmentRoundResponse response = investmentRoundService.updateInvestmentRound(
+            roundId, request, principal.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Delete investment round",
         description = "Delete an investment round. Only allowed if no profit distributions have been made."
     )

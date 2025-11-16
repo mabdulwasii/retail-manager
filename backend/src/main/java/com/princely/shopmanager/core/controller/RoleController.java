@@ -318,6 +318,38 @@ public class RoleController {
         return ResponseEntity.ok(RoleResponse.fromEntity(role));
     }
 
+    @Operation(
+        summary = "Partially update role (PATCH)",
+        description = "Partially update a custom role (PATCH). All fields are optional. System roles cannot be modified. Preferred over PUT for partial updates."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Role updated successfully",
+            content = @Content(schema = @Schema(implementation = RoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request or attempting to modify system role"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role not found"
+        )
+    })
+    @PatchMapping("/roles/{roleId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<RoleResponse> patchRole(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Valid @RequestBody RoleUpdateRequest request
+    ) {
+        log.info("Patching role: {}", roleId);
+        // Reuse the same update logic - current implementation already does partial updates
+        Role role = roleService.updateRole(roleId, request);
+        return ResponseEntity.ok(RoleResponse.fromEntity(role));
+    }
+
     /**
      * Delete a custom role.
      * System roles cannot be deleted.
@@ -476,6 +508,43 @@ public class RoleController {
         @Valid @RequestBody RolePermissionUpdateRequest request
     ) {
         log.info("Bulk updating permissions for role {}", roleId);
+        roleService.bulkUpdateRolePermissions(roleId, request.getPermissionIdentifiers());
+        Role role = roleService.getRoleById(roleId);
+        return ResponseEntity.ok(RoleResponse.fromEntity(role));
+    }
+
+    @Operation(
+        summary = "Bulk update role permissions (PATCH)",
+        description = "Replace all role permissions with a new set of permissions (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Permissions updated successfully",
+            content = @Content(schema = @Schema(implementation = RoleResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid permission identifiers"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Role not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions"
+        )
+    })
+    @PatchMapping("/roles/{roleId}/permissions")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ROLE_UPDATE)")
+    public ResponseEntity<RoleResponse> patchBulkRolePermissions(
+        @Parameter(description = "Role ID", example = "role-123")
+        @PathVariable String roleId,
+        @Valid @RequestBody RolePermissionUpdateRequest request
+    ) {
+        log.info("Patching permissions for role {}", roleId);
+        // Reuse the same update logic
         roleService.bulkUpdateRolePermissions(roleId, request.getPermissionIdentifiers());
         Role role = roleService.getRoleById(roleId);
         return ResponseEntity.ok(RoleResponse.fromEntity(role));

@@ -285,6 +285,25 @@ public class FraudDetectionController {
     }
 
     @Operation(
+        summary = "Partially update fraud rule (PATCH)",
+        description = "Partially update a fraud detection rule (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Fraud rule updated successfully")
+    @PatchMapping("/rules/{ruleId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).FRAUD_DETECT)")
+    public ResponseEntity<FraudRule> patchFraudRule(
+            @Parameter(description = "Rule ID") @PathVariable String ruleId,
+            @Valid @RequestBody FraudRuleRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching fraud rule: {}, user: {}", ruleId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
+        FraudRule rule = fraudManagementService.updateFraudRule(ruleId, request);
+        return ResponseEntity.ok(rule);
+    }
+
+    @Operation(
         summary = "Delete fraud rule",
         description = "Delete a fraud detection rule"
     )
@@ -333,6 +352,26 @@ public class FraudDetectionController {
         log.info("Updating fraud rule status: {}, enabled: {}, user: {}",
                 ruleId, enabled, principal.getUsername());
 
+        FraudRule rule = fraudManagementService.updateRuleStatus(ruleId, enabled);
+        return ResponseEntity.ok(rule);
+    }
+
+    @Operation(
+        summary = "Enable/Disable fraud rule (PATCH)",
+        description = "Enable or disable a fraud detection rule (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Fraud rule status updated successfully")
+    @PatchMapping("/rules/{ruleId}/status")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).FRAUD_DETECT)")
+    public ResponseEntity<FraudRule> patchRuleStatus(
+            @Parameter(description = "Rule ID") @PathVariable String ruleId,
+            @Parameter(description = "Enabled status") @RequestParam boolean enabled,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching fraud rule status: {}, enabled: {}, user: {}",
+                ruleId, enabled, principal.getUsername());
+
+        // Reuse the same update logic
         FraudRule rule = fraudManagementService.updateRuleStatus(ruleId, enabled);
         return ResponseEntity.ok(rule);
     }

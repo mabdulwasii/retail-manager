@@ -287,6 +287,34 @@ public class TenantController {
         return ResponseEntity.ok(TenantConfigurationResponse.fromEntity(config));
     }
 
+    @Operation(
+        summary = "Partially update tenant configuration",
+        description = "Partially updates an existing configuration setting for the tenant (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated successfully",
+            content = @Content(schema = @Schema(implementation = TenantConfigurationResponse.class))
+        ),
+        @ApiResponse(responseCode = "400", description = "Invalid request or configuration not editable"),
+        @ApiResponse(responseCode = "404", description = "Configuration not found"),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Insufficient permissions")
+    })
+    @PatchMapping("/{tenantId}/configurations/{key}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).TENANT_CONFIG_UPDATE)")
+    public ResponseEntity<TenantConfigurationResponse> patchConfiguration(
+        @Parameter(description = "Tenant ID") @PathVariable String tenantId,
+        @Parameter(description = "Configuration key") @PathVariable String key,
+        @Valid @RequestBody TenantConfigurationRequest request
+    ) {
+        log.info("Patching configuration {} for tenant: {}", key, tenantId);
+        // Reuse the same update logic - current implementation already does partial updates
+        TenantConfiguration config = configurationService.updateConfiguration(tenantId, key, request);
+        return ResponseEntity.ok(TenantConfigurationResponse.fromEntity(config));
+    }
+
     /**
      * Update configuration value only.
      */

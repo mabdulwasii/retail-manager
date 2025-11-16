@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -195,6 +196,28 @@ public class ProductController {
 
         log.info("Updating product: {}, user: {}", productId, principal.getUsername());
 
+        ProductResponse response = productService.updateProduct(productId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Partially update product",
+        description = "Partially update an existing product's catalog information (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Product updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @PatchMapping("/products/{productId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_UPDATE)")
+    public ResponseEntity<ProductResponse> patchProduct(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @Valid @RequestBody ProductUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching product: {}, user: {}", productId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
         ProductResponse response = productService.updateProduct(productId, request);
         return ResponseEntity.ok(response);
     }

@@ -85,6 +85,28 @@ public class ExpenseController {
     }
 
     @Operation(
+        summary = "Partially update expense (PATCH)",
+        description = "Partially update an expense (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Expense updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Expense not found")
+    @PatchMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_UPDATE)")
+    public ResponseEntity<ExpenseResponse> patchExpense(
+            @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
+            @Valid @RequestBody ExpenseUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching expense: {}, user: {}", expenseId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
+        ExpenseResponse response = expenseService.updateExpense(expenseId, request, principal);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Get expense by ID",
         description = "Retrieve a specific expense by its ID"
     )

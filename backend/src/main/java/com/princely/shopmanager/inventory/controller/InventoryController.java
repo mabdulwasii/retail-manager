@@ -177,6 +177,29 @@ public class InventoryController {
     }
 
     @Operation(
+        summary = "Adjust stock level (PATCH)",
+        description = "Adjust the stock level of an inventory item (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Stock adjusted successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Inventory item not found")
+    @PatchMapping("/inventory/{inventoryId}/adjust-stock")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_ADJUST)")
+    public ResponseEntity<InventoryResponse> patchAdjustStock(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @Valid @RequestBody InventoryAdjustmentRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching stock adjustment for inventory: {}, new stock: {}, reason: {}, user: {}",
+                inventoryId, request.getNewStock(), request.getReason(), principal.getUsername());
+
+        // Reuse the same adjustment logic
+        InventoryResponse response = inventoryService.adjustStock(inventoryId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Reserve stock",
         description = "Reserve stock for a sale or other operation"
     )
@@ -245,6 +268,29 @@ public class InventoryController {
     }
 
     @Operation(
+        summary = "Update inventory status (PATCH)",
+        description = "Update the status of an inventory item (PATCH). Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Status updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid status")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Inventory item not found")
+    @PatchMapping("/inventory/{inventoryId}/status")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_UPDATE)")
+    public ResponseEntity<InventoryResponse> patchInventoryStatus(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @Parameter(description = "New status") @RequestParam Inventory.InventoryStatus status,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching inventory status: {}, new status: {}, user: {}",
+                inventoryId, status, principal.getUsername());
+
+        // Reuse the same update logic
+        InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Update inventory metadata",
         description = "Update inventory information such as batch number, location, expiry date, and stock thresholds. Does NOT update stock quantities - use adjust-stock endpoint for that."
     )
@@ -261,6 +307,28 @@ public class InventoryController {
 
         log.info("Updating inventory metadata: {}, user: {}", inventoryId, principal.getUsername());
 
+        InventoryResponse response = inventoryService.updateInventory(inventoryId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Partially update inventory metadata (PATCH)",
+        description = "Partially update inventory metadata (PATCH). All fields are optional. Does NOT update stock quantities. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Inventory updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Inventory item not found")
+    @PatchMapping("/inventory/{inventoryId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_UPDATE)")
+    public ResponseEntity<InventoryResponse> patchInventory(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @Valid @RequestBody InventoryUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching inventory metadata: {}, user: {}", inventoryId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
         InventoryResponse response = inventoryService.updateInventory(inventoryId, request);
         return ResponseEntity.ok(response);
     }

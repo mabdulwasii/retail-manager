@@ -313,6 +313,44 @@ public class ShopController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Partially update shop",
+        description = "Partially update shop information (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Shop updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PatchMapping("/{shopId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    public ResponseEntity<ShopResponse> patchShop(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody ShopUpdateRequest request
+    ) {
+        log.info("Patching shop: {}", shopId);
+        // Reuse the same update logic - current implementation already does partial updates
+        ShopResponse response = shopService.updateShop(shopId, request);
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Changes the status of a shop.
      *
@@ -496,6 +534,53 @@ public class ShopController {
         log.info("Updating configuration for shop: {}", shopId);
 
         // Use ShopUpdateRequest to update configuration via existing service method
+        ShopUpdateRequest updateRequest = ShopUpdateRequest.builder()
+            .configuration(request)
+            .build();
+
+        ShopResponse response = shopService.updateShop(shopId, updateRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Partially update shop configuration",
+        description = "Partially updates business configuration settings for a shop (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid configuration data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PatchMapping("/{shopId}/configuration")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    public ResponseEntity<ShopResponse> patchConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody com.princely.shopmanager.core.dto.ShopConfigurationRequest request
+    ) {
+        log.info("Patching configuration for shop: {}", shopId);
+
+        // Reuse the same update logic - current implementation already does partial updates
         ShopUpdateRequest updateRequest = ShopUpdateRequest.builder()
             .configuration(request)
             .build();

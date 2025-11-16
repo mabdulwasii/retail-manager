@@ -333,6 +333,78 @@ public class FeatureFlagController {
         return ResponseEntity.ok(FeatureFlagResponse.fromEntity(featureFlag));
     }
 
+    @Operation(
+        summary = "Partially update a feature flag (PATCH)",
+        description = "Partially update a feature flag (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Feature flag updated successfully",
+            content = @Content(schema = @Schema(implementation = FeatureFlagResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Feature flag not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires SYSTEM_ADMIN or TENANT_ADMIN role"
+        )
+    })
+    @PatchMapping("/{featureFlagId}")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN')")
+    public ResponseEntity<FeatureFlagResponse> patchFeatureFlag(
+            @Parameter(description = "Feature flag ID", example = "ff-123", required = true)
+            @PathVariable String featureFlagId,
+            @Valid @RequestBody FeatureFlagUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching feature flag '{}'", featureFlagId);
+
+        // Reuse the same update logic - current implementation already does partial updates
+        FeatureFlag featureFlag = null;
+
+        // Update enabled status if provided
+        if (request.getEnabled() != null) {
+            featureFlag = featureFlagService.updateFeatureFlag(
+                featureFlagId,
+                request.getEnabled(),
+                principal.getUsername()
+            );
+        }
+
+        // Update schedule if provided
+        if (request.getEffectiveFrom() != null || request.getEffectiveUntil() != null) {
+            featureFlag = featureFlagService.updateFeatureFlagSchedule(
+                featureFlagId,
+                request.getEffectiveFrom(),
+                request.getEffectiveUntil(),
+                principal.getUsername()
+            );
+        }
+
+        // Update configuration if provided
+        if (request.getConfiguration() != null) {
+            featureFlag = featureFlagService.updateFeatureFlagConfiguration(
+                featureFlagId,
+                request.getConfiguration(),
+                principal.getUsername()
+            );
+        }
+
+        // If no updates were made, fetch the current flag
+        if (featureFlag == null) {
+            List<FeatureFlag> allFlags = featureFlagService.getAllFeatureFlags();
+            featureFlag = allFlags.stream()
+                .filter(f -> f.getId().equals(featureFlagId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Feature flag not found: " + featureFlagId));
+        }
+
+        return ResponseEntity.ok(FeatureFlagResponse.fromEntity(featureFlag));
+    }
+
     /**
      * Deletes a feature flag.
      *
