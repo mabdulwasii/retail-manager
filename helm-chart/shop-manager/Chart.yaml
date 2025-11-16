@@ -1,21 +1,86 @@
 apiVersion: v2
 name: shop-manager
-description: A Helm chart for Shop Manager - Multi-tenant retail management platform
+description: Enterprise multi-tenant retail management platform with investment tracking, sales analytics, and Keycloak SSO
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+
+# Chart version - increment for chart changes
+version: 0.0.1
+
+# Application version - matches backend version
+appVersion: "0.0.1"
+
+# Project URLs
 home: https://github.com/shop-manager/shop-manager
 sources:
   - https://github.com/shop-manager/shop-manager
+icon: https://raw.githubusercontent.com/shop-manager/shop-manager/main/docs/assets/logo.png
+
+# Maintainers
 maintainers:
   - name: Shop Manager Development Team
     email: dev@shopmanager.com
+    url: https://github.com/shop-manager
+
+# Keywords for Helm Hub/Artifact Hub
 keywords:
   - retail
+  - pos
   - inventory
   - sales
+  - investment-tracking
   - multi-tenant
+  - e-commerce
   - spring-boot
+  - react
+  - keycloak
+  - postgresql
+  - kubernetes
+
+# Annotations for Artifact Hub
+annotations:
+  # Category for Artifact Hub
+  artifacthub.io/category: "productivity"
+
+  # Images used by this chart
+  artifacthub.io/images: |
+    - name: backend
+      image: princely/shop-manager:backend-v0.0.45
+    - name: frontend
+      image: princely/shop-manager:frontend-v0.0.9
+    - name: postgresql
+      image: postgres:16-alpine
+    - name: keycloak
+      image: quay.io/keycloak/keycloak:24.0.1
+
+  # License
+  artifacthub.io/license: Apache-2.0
+
+  # Links
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://github.com/shop-manager/shop-manager/blob/main/CUSTOMER_INSTALL.md
+    - name: Support
+      url: https://github.com/shop-manager/shop-manager/issues
+
+  # Changelog
+  artifacthub.io/changes: |
+    - kind: added
+      description: PATCH endpoints for all PUT endpoints
+    - kind: fixed
+      description: User list permissions and authentication issues
+    - kind: changed
+      description: Jackson configuration for unknown properties
+
+  # Operator capabilities (for Helm charts that manage CRDs)
+  artifacthub.io/operator: "false"
+
+  # Prerelease flag
+  artifacthub.io/prerelease: "false"
+
+  # Recommendations
+  artifacthub.io/recommendations: |
+    - url: https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
+    - url: https://artifacthub.io/packages/helm/cert-manager/cert-manager
 # All dependencies removed - using official images with custom templates
 # - PostgreSQL: Official postgres:15 image
 # - Keycloak: Official quay.io/keycloak/keycloak:23.0

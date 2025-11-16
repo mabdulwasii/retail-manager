@@ -1,0 +1,193 @@
+name: Publish Helm Chart
+
+# Trigger on:
+# 1. New version tags (e.g., v0.0.1, v0.0.2)
+# 2. Manual workflow dispatch
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      chart_version:
+        description: 'Chart version to publish (e.g., 0.0.1)'
+        required: true
+        type: string
+
+env:
+  CHART_PATH: ./helm-chart/shop-manager
+  REGISTRY: registry-1.docker.io
+  REGISTRY_USERNAME: princely
+
+jobs:
+  publish-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # ================================================================
+      # Step 1: Checkout Code
+      # ================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ================================================================
+      # Step 2: Extract Version
+      # ================================================================
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.chart_version }}" >> $GITHUB_OUTPUT
+          else
+            # Remove 'v' prefix from tag (v0.0.1 -> 0.0.1)
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          fi
+          echo "Publishing chart version: $VERSION"
+
+      # ================================================================
+      # Step 3: Update Chart.yaml Version
+      # ================================================================
+      - name: Update Chart.yaml version
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+
+          # Update chart version
+          sed -i "s/^version:.*/version: $VERSION/" $CHART_PATH/Chart.yaml
+
+          # Update app version
+          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" $CHART_PATH/Chart.yaml
+
+          echo "Updated Chart.yaml:"
+          cat $CHART_PATH/Chart.yaml | grep -E "^version:|^appVersion:"
+
+      # ================================================================
+      # Step 4: Install Helm
+      # ================================================================
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      # ================================================================
+      # Step 5: Lint Helm Chart
+      # ================================================================
+      - name: Lint Helm chart
+        run: |
+          helm lint $CHART_PATH
+
+      # ================================================================
+      # Step 6: Package Helm Chart
+      # ================================================================
+      - name: Package Helm chart
+        run: |
+          helm package $CHART_PATH
+
+          # List packaged chart
+          ls -lh *.tgz
+
+      # ================================================================
+      # Step 7: Login to Docker Hub (OCI Registry)
+      # ================================================================
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login $REGISTRY \
+            --username $REGISTRY_USERNAME \
+            --password-stdin
+
+      # ================================================================
+      # Step 8: Push Chart to Docker Hub
+      # ================================================================
+      - name: Push chart to Docker Hub
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          CHART_PACKAGE="shop-manager-${VERSION}.tgz"
+
+          echo "Pushing $CHART_PACKAGE to oci://$REGISTRY/$REGISTRY_USERNAME"
+
+          helm push $CHART_PACKAGE oci://$REGISTRY/$REGISTRY_USERNAME
+
+          echo "Chart published successfully!"
+
+      # ================================================================
+      # Step 9: Verify Chart Push
+      # ================================================================
+      - name: Verify chart availability
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+
+          echo "Verifying chart at oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager:$VERSION"
+
+          helm show chart oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager --version $VERSION
+
+      # ================================================================
+      # Step 10: Create GitHub Release (Optional)
+      # ================================================================
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: shop-manager-${{ steps.version.outputs.VERSION }}.tgz
+          generate_release_notes: true
+          body: |
+            ## Helm Chart v${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+
+            ```bash
+            helm install retail oci://${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/shop-manager \
+              --version ${{ steps.version.outputs.VERSION }} \
+              -n gomco \
+              --create-namespace \
+              -f my-values.yaml
+            ```
+
+            ### What's Included
+
+            - Backend: `princely/shop-manager:backend-v${{ steps.version.outputs.VERSION }}`
+            - Frontend: `princely/shop-manager:frontend-v0.0.9`
+            - PostgreSQL: `postgres:16-alpine`
+            - Keycloak: `quay.io/keycloak/keycloak:24.0.1`
+
+            ### Documentation
+
+            - [Customer Installation Guide](https://github.com/${{ github.repository }}/blob/main/CUSTOMER_INSTALL.md)
+            - [Deployment Guide](https://github.com/${{ github.repository }}/blob/main/DEPLOYMENT_GUIDE.md)
+
+            ### Support
+
+            - Report issues: https://github.com/${{ github.repository }}/issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ================================================================
+      # Step 11: Summary
+      # ================================================================
+      - name: Summary
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+
+          echo "## 🎉 Helm Chart Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Chart Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Customer Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "helm install retail oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --version $VERSION \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -n gomco \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --create-namespace \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -f my-values.yaml" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Upgrade Existing Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "helm upgrade retail oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --version $VERSION \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -n gomco \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -f my-values.yaml" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

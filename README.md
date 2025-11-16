@@ -6,7 +6,28 @@ A comprehensive multi-tenant retail management system built with Spring Boot and
 
 ## 🚀 Quick Start
 
-### Run with Docker Compose
+### Option 1: Install with Helm (Recommended for Production)
+
+**No repository clone needed!** Install directly from Docker Hub:
+
+```bash
+# Download configuration template
+curl -o my-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/main/examples/customer-values.yaml
+
+# Customize your values (domain, company name, etc.)
+vi my-values.yaml
+
+# Install
+helm install retail oci://registry-1.docker.io/princely/shop-manager \
+  --version 0.0.1 \
+  -n gomco \
+  --create-namespace \
+  -f my-values.yaml
+```
+
+📖 **Complete guide**: [CUSTOMER_INSTALL.md](./CUSTOMER_INSTALL.md)
+
+### Option 2: Run with Docker Compose (Development)
 ```bash
 # Start all services
 docker-compose up -d
@@ -27,6 +48,7 @@ Use any of these pre-configured accounts:
 
 | Document | Purpose |
 |----------|---------|
+| **[CUSTOMER_INSTALL.md](./CUSTOMER_INSTALL.md)** | 🚀 Simple Kubernetes installation via Helm (5 minutes, no repo clone) |
 | **[KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md)** | ☸️ Complete Kubernetes deployment guide (Helm, SSL, Production) |
 | **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)** | 🐳 Docker Compose, Kubernetes, and local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
