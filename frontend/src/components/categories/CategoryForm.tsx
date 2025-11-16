@@ -72,32 +72,34 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         reset({
           shopId: category.shopId,
           name: category.name,
-          description: category.description || '',
-          imageUrl: category.imageUrl || '',
+          description: category.description || "",
+          imageUrl: category.imageUrl || "",
           displayOrder: category.displayOrder || 0,
           isActive: category.isActive,
           parentId: category.parentId,
-        })
+        });
       } else {
         reset({
-          shopId: selectedShopId || user?.shopId || '',
-          name: '',
-          description: '',
-          imageUrl: '',
+          shopId: selectedShopId || user?.shopId || "",
+          name: "",
+          description: "",
+          imageUrl: "",
           displayOrder: 0,
           isActive: true,
           parentId: undefined,
-        })
+        });
       }
     }
-  }, [category, open, reset, selectedShopId, user?.shopId])
+    //category, open, reset, selectedShopId, user?.shopId
+  }, []);
 
   const onSubmit = async (data: CategoryCreateRequest) => {
-    try {
+    try {   
+      const{shopId, ...restData} = data
       if (isEdit) {
         await updateMutation.mutateAsync({
           categoryId: category.id,
-          data: data as CategoryUpdateRequest,
+          data: restData as CategoryUpdateRequest,
         })
       } else {
         await createMutation.mutateAsync(data)
@@ -144,6 +146,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               <Select
                 value={formShopId}
                 onValueChange={(value) => setValue("shopId", value)}
+                disabled={isEdit}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a shop" />
@@ -156,9 +159,14 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {!formShopId && (
+              {!formShopId && !isEdit && (
                 <p className="text-sm text-red-600">
                   Shop selection is required
+                </p>
+              )}
+              {isEdit && (
+                <p className="text-xs text-muted-foreground">
+                  Shop cannot be changed when editing a category
                 </p>
               )}
             </div>
