@@ -10,7 +10,7 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.43
+    tag: backend-v0.0.44
     pullPolicy: Always
   podAnnotations:
     configVersion: "30"  # Fix ProductServiceTest Mockito errors, V29 migration permissions fix
@@ -22,7 +22,7 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.7
+    tag: frontend-v0.0.8
     pullPolicy: Always
 
 branding:
