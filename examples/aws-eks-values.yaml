@@ -1,0 +1,319 @@
+# ============================================================================
+# Shop Manager - AWS EKS Deployment Values
+# ============================================================================
+#
+# Optimized for AWS Elastic Kubernetes Service (EKS) with:
+# - AWS LoadBalancer Controller
+# - EBS storage classes
+# - S3 for backups
+# - AWS Certificate Manager for SSL
+# - IAM roles for service accounts
+#
+# Prerequisites:
+#   - EKS cluster running
+#   - AWS LoadBalancer Controller installed
+#   - EBS CSI driver installed
+#   - ExternalDNS (optional)
+#
+# Usage:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version 0.0.1 \
+#     -n production \
+#     --create-namespace \
+#     -f aws-eks-values.yaml
+#
+# ============================================================================
+
+global:
+  appName: "retail"
+  domain: "retail.yourcompany.com"  # CHANGE THIS
+  environment: "production"
+
+# ============================================================================
+# BACKEND CONFIGURATION
+# ============================================================================
+backend:
+  replicaCount: 3
+
+  image:
+    repository: princely/shop-manager
+    tag: backend-v0.0.45
+    pullPolicy: Always
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+  # AWS-specific service account for IAM roles
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/shop-manager-backend"
+
+# ============================================================================
+# FRONTEND CONFIGURATION
+# ============================================================================
+frontend:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: princely/shop-manager
+    tag: frontend-v0.0.9
+    pullPolicy: Always
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+
+# ============================================================================
+# BRANDING
+# ============================================================================
+branding:
+  platformName: "Enterprise Retail Pro"
+  companyName: "Your Company Inc"
+  platformDescription: "Enterprise Retail Management System"
+  colors:
+    primary: "#2E7D32"
+    secondary: "#FF6F00"
+
+application:
+  testUsers:
+    enabled: false
+
+# ============================================================================
+# TLS/SSL - AWS Certificate Manager
+# ============================================================================
+tls:
+  enabled: true
+  # Use ACM for SSL certificates
+  issuer: "letsencrypt-prod"
+  email: "admin@yourcompany.com"
+
+# ============================================================================
+# DATABASE - Amazon RDS or EKS PostgreSQL
+# ============================================================================
+# Option 1: Use Amazon RDS PostgreSQL (Recommended)
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: "shopmanager-db.xxxxx.us-east-1.rds.amazonaws.com"
+  port: 5432
+  database: "shopmanager"
+  username: "shopmanager"
+  # Use AWS Secrets Manager
+  existingSecret: "shopmanager-db-secret"
+  existingSecretPasswordKey: "password"
+
+# Option 2: Use PostgreSQL in EKS
+# postgresql:
+#   enabled: true
+#   persistence:
+#     enabled: true
+#     size: 100Gi
+#     storageClass: "gp3"  # AWS EBS gp3
+#   replication:
+#     enabled: true
+#     replicaCount: 2
+#   resources:
+#     requests:
+#       memory: "2Gi"
+#       cpu: "1000m"
+#     limits:
+#       memory: "4Gi"
+#       cpu: "2000m"
+
+# ============================================================================
+# KEYCLOAK
+# ============================================================================
+keycloak:
+  replicaCount: 2
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: "gp3"
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+# ============================================================================
+# INGRESS - AWS Load Balancer Controller
+# ============================================================================
+ingress:
+  enabled: true
+  className: "alb"  # AWS Load Balancer Controller
+
+  annotations:
+    # ALB configuration
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+
+    # ACM certificate (create in AWS Certificate Manager first)
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+
+    # Health check
+    alb.ingress.kubernetes.io/healthcheck-path: "/actuator/health"
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/success-codes: "200"
+
+    # Security
+    alb.ingress.kubernetes.io/security-groups: "sg-xxxxx"  # Your security group
+
+    # Tags
+    alb.ingress.kubernetes.io/tags: "Environment=production,Application=shop-manager"
+
+# ============================================================================
+# STORAGE CLASSES (AWS EBS)
+# ============================================================================
+storageClass:
+  # Use AWS EBS gp3 (better performance than gp2)
+  name: "gp3"
+  provisioner: "ebs.csi.aws.com"
+  parameters:
+    type: "gp3"
+    fsType: "ext4"
+    encrypted: "true"
+
+# ============================================================================
+# BACKUP - Amazon S3
+# ============================================================================
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 30
+
+  storage:
+    type: "s3"
+    s3:
+      endpoint: "s3.amazonaws.com"
+      bucket: "shopmanager-backups-prod"
+      region: "us-east-1"
+
+      # Use IAM role for service account (IRSA)
+      useIAMRole: true
+
+      # Or use access keys (not recommended)
+      # existingSecret: "s3-backup-secret"
+
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/shop-manager-backup"
+
+# ============================================================================
+# MONITORING - Amazon CloudWatch
+# ============================================================================
+serviceMonitor:
+  enabled: true
+
+# CloudWatch Container Insights
+cloudwatch:
+  enabled: true
+  region: "us-east-1"
+  clusterName: "shop-manager-eks"
+
+logging:
+  # Send logs to CloudWatch Logs
+  destination: "cloudwatch"
+  cloudwatch:
+    logGroup: "/aws/eks/shop-manager"
+    region: "us-east-1"
+
+# ============================================================================
+# OPTIONAL: Amazon MSK (Managed Kafka)
+# ============================================================================
+kafka:
+  enabled: false
+
+externalKafka:
+  bootstrapServers: "b-1.shopmanager.xxxxx.kafka.us-east-1.amazonaws.com:9092"
+  # Use IAM authentication
+  saslMechanism: "AWS_MSK_IAM"
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+networkPolicy:
+  enabled: true
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# ============================================================================
+# AWS-SPECIFIC NOTES
+# ============================================================================
+# Before deploying:
+#
+# 1. Create EKS cluster:
+#    eksctl create cluster \
+#      --name shop-manager \
+#      --region us-east-1 \
+#      --node-type t3.large \
+#      --nodes 3 \
+#      --managed
+#
+# 2. Install AWS Load Balancer Controller:
+#    https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html
+#
+# 3. Install EBS CSI Driver:
+#    https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+#
+# 4. Create ACM certificate for your domain
+#
+# 5. Create IAM roles for service accounts:
+#    - shop-manager-backend (S3, Secrets Manager access)
+#    - shop-manager-backup (S3 access)
+#
+# 6. Create RDS PostgreSQL instance (optional)
+#
+# 7. Create S3 bucket for backups
+#
+# 8. Update this file with your specific ARNs and IDs
+#
+# Deploy:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version 0.0.1 \
+#     -n production \
+#     --create-namespace \
+#     -f aws-eks-values.yaml \
+#     --atomic \
+#     --timeout 20m
+#
+# ============================================================================

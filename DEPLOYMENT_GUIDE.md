@@ -140,6 +140,85 @@ open https://retail.gomco.com
 
 ---
 
+## Installation Methods
+
+Shop Manager provides three ways to install via Helm:
+
+### Method 1: Helm OCI Registry (Docker Hub) ⭐ Recommended
+
+**Best for**: Quick installation, customer deployments, no repository clone needed
+
+Install directly from Docker Hub:
+
+```bash
+# Download configuration template
+curl -o my-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/main/examples/customer-values.yaml
+
+# Customize values
+vi my-values.yaml
+
+# Install
+helm install retail oci://registry-1.docker.io/princely/shop-manager \
+  --version 0.0.1 \
+  -n gomco \
+  --create-namespace \
+  -f my-values.yaml
+```
+
+**Advantages:**
+- ✅ No repository clone needed
+- ✅ Fastest installation method
+- ✅ Official published releases
+- ✅ Easy version management
+
+**See:** [CUSTOMER_INSTALL.md](./CUSTOMER_INSTALL.md) for complete guide
+
+### Method 2: Helm Repository (GitHub Pages)
+
+**Best for**: Organizations with multiple installations, Helm Hub integration
+
+```bash
+# Add repository
+helm repo add shopmanager https://yourorg.github.io/shop-manager
+helm repo update
+
+# Install
+helm install retail shopmanager/shop-manager \
+  --version 0.0.1 \
+  -n gomco \
+  --create-namespace \
+  -f my-values.yaml
+```
+
+**Advantages:**
+- ✅ Traditional Helm workflow
+- ✅ Searchable in Helm Hub
+- ✅ Familiar to Helm users
+- ✅ Easy updates via `helm repo update`
+
+### Method 3: Local Chart (Development)
+
+**Best for**: Development, customization, testing unreleased changes
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd shop-manager
+
+# Install from local chart
+helm install retail ./helm-chart/shop-manager \
+  -n gomco \
+  --create-namespace \
+  -f my-values.yaml
+```
+
+**Advantages:**
+- ✅ Test unreleased features
+- ✅ Customize chart templates
+- ✅ Development workflow
+
+---
+
 ## Deployment Options
 
 Shop Manager supports multiple deployment strategies:

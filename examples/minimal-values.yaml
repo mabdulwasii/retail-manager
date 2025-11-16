@@ -1,0 +1,35 @@
+# ============================================================================
+# Shop Manager - Minimal Configuration
+# ============================================================================
+#
+# Bare minimum configuration to get Shop Manager running quickly.
+# Suitable for:
+# - Quick testing
+# - Development
+# - Small deployments (1-5 users)
+#
+# This uses all defaults except domain and branding.
+#
+# Usage:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version 0.0.1 \
+#     -n gomco \
+#     --create-namespace \
+#     -f minimal-values.yaml
+#
+# ============================================================================
+
+# Only required settings
+global:
+  domain: "localhost"  # For local testing
+
+branding:
+  platformName: "My Retail App"
+  companyName: "My Company"
+
+# Everything else uses chart defaults:
+# - Single replica for each service
+# - Built-in PostgreSQL
+# - No autoscaling
+# - Self-signed certificates
+# - Test users enabled
