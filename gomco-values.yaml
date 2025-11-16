@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.44
+    tag: backend-v0.0.45
     pullPolicy: Always
   podAnnotations:
-    configVersion: "31"  # Active shops cache fix, USER_LIST_ALL permission, Jackson fail-on-unknown-properties
+    configVersion: "32"  # PATCH endpoints for all PUT endpoints
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
