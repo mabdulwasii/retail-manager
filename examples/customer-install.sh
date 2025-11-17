@@ -122,6 +122,21 @@ if [ ! -f "$VALUES_FILE" ]; then
     read -p "Platform name (e.g., Acme Retail Pro): " platform_name
     read -p "Company name (e.g., Acme Corporation): " company_name
 
+    # Ask about test users
+    echo ""
+    print_warning "Test users provide pre-configured accounts for testing."
+    print_warning "For production deployments, it's recommended to disable them."
+    read -p "Enable test users? (y/n, default: n): " enable_test_users
+    enable_test_users=${enable_test_users:-n}
+
+    if [ "$enable_test_users" = "y" ]; then
+        TEST_USERS_ENABLED="true"
+        print_info "Test users will be created (admin@shopmanager.com, etc.)"
+    else
+        TEST_USERS_ENABLED="false"
+        print_info "Test users will be disabled (production mode)"
+    fi
+
     # Create values file
     cat > $VALUES_FILE <<EOF
 global:
@@ -155,7 +170,7 @@ branding:
 
 application:
   testUsers:
-    enabled: true
+    enabled: ${TEST_USERS_ENABLED}
 
 tls:
   enabled: true

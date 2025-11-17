@@ -50,6 +50,47 @@ helm version
 
 ## 🚀 Quick Installation (5 Minutes)
 
+### Option A: Automated Installation (Easiest) ⭐
+
+The automated installer handles everything for you.
+
+**Linux / macOS:**
+```bash
+# Download installer
+curl -o customer-install.sh https://raw.githubusercontent.com/yourorg/shop-manager/main/examples/customer-install.sh
+
+# Make executable
+chmod +x customer-install.sh
+
+# Run installer
+./customer-install.sh
+```
+
+**Windows (PowerShell as Administrator):**
+```powershell
+# Download installer
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yourorg/shop-manager/main/examples/customer-install.ps1" `
+    -OutFile "customer-install.ps1"
+
+# Run installer
+.\customer-install.ps1
+```
+
+**What the installer does:**
+- ✅ Checks prerequisites
+- ✅ Prompts for configuration (domain, company name, test users)
+- ✅ Installs cert-manager (if needed)
+- ✅ Installs NGINX ingress (if needed)
+- ✅ Deploys Shop Manager
+- ✅ Sets up SSL certificates
+- ✅ Configures DNS entries
+
+**Skip to Step 6** if you use the automated installer.
+
+---
+
+### Option B: Manual Installation
+
 ### Step 1: Download Configuration Template
 
 ```bash
