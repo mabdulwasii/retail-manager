@@ -43,7 +43,7 @@ class RoleService {
   async updateRole(roleId: string, data: RoleUpdateRequest): Promise<Role> {
     // Only send description to API
     const payload = { description: data.description }
-    return apiService.put<Role>(`${this.baseUrl}/${roleId}`, payload)
+    return apiService.patch<Role>(`${this.baseUrl}/${roleId}`, payload)
   }
 
   /**
@@ -75,7 +75,7 @@ class RoleService {
     roleId: string,
     permissionIds: string[]
   ): Promise<void> {
-    return apiService.put<void>(
+    return apiService.patch<void>(
       `${this.baseUrl}/${roleId}/permissions`,
       { permissionIdentifiers: permissionIds }
     )

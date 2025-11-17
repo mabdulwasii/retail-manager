@@ -94,7 +94,7 @@ export const shopConfigurationService = {
     shopId: string,
     config: ShopConfigurationRequest
   ): Promise<ShopConfiguration> {
-    const { data } = await api.put(`/shops/${shopId}/configuration`, config);
+    const { data } = await api.patch(`/shops/${shopId}/configuration`, config);
     return data;
   },
 
@@ -108,7 +108,7 @@ export const shopConfigurationService = {
     shopId: string,
     customization: ShopCustomizationRequest
   ): Promise<ShopCustomization> {
-    const { data } = await api.put(`/shops/${shopId}/customization`, customization);
+    const { data } = await api.patch(`/shops/${shopId}/customization`, customization);
     return data;
   },
 

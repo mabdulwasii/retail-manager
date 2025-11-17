@@ -72,7 +72,7 @@ export const categoryService = {
    * @param data - Category update data
    */
   async updateCategory(categoryId: string, data: CategoryUpdateRequest): Promise<Category> {
-    const response = await api.put(`/categories/${categoryId}`, data)
+    const response = await api.patch(`/categories/${categoryId}`, data)
     return response.data
   },
 

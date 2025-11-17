@@ -200,7 +200,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const updatedItem = await api.put<InventoryItem>(`/inventory/${inventoryId}/adjust-stock`, request)
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}/adjust-stock`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -304,7 +304,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const updatedItem = await api.put<InventoryItem>(`/inventory/${inventoryId}`, updates)
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}`, updates)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item

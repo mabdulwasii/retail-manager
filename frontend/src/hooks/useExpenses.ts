@@ -247,7 +247,7 @@ export const useExpenses = () => {
       if (updates.notes !== undefined) formData.append('notes', updates.notes)
       if (updates.status) formData.append('status', updates.status)
 
-      const updatedExpense = await api.put<Expense>(`/expenses/${expenseId}`, formData)
+      const updatedExpense = await api.patch<Expense>(`/expenses/${expenseId}`, formData)
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
           expense.id === expenseId ? updatedExpense : expense

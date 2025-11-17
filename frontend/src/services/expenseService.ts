@@ -115,7 +115,7 @@ export const expenseService = {
     if (updates.notes !== undefined) formData.append("notes", updates.notes);
     if (updates.status) formData.append("status", updates.status);
 
-    const { data } = await api.put(`/expenses/${expenseId}`, formData, {
+    const { data } = await api.patch(`/expenses/${expenseId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;

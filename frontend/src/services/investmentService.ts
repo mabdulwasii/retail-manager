@@ -80,7 +80,7 @@ export const investmentService = {
     investmentId: string,
     status: string
   ): Promise<Investment> {
-    const { data } = await api.put(
+    const { data } = await api.patch(
       `/investments/${investmentId}/status`,
       null,
       {

@@ -171,7 +171,7 @@ export const useInvestment = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await api.put(`/api/investments/${investmentId}/status?status=${status}`)
+      const response = await api.patch(`/api/investments/${investmentId}/status?status=${status}`)
       return response
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update investment status')

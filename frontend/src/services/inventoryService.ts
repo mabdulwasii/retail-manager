@@ -128,7 +128,7 @@ export const inventoryService = {
     inventoryId: string,
     updates: Partial<CreateInventoryRequest>
   ): Promise<InventoryItem> {
-    const { data } = await api.put(`/inventory/${inventoryId}`, updates);
+    const { data } = await api.patch(`/inventory/${inventoryId}`, updates);
     return data;
   },
 

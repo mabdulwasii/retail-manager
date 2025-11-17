@@ -99,7 +99,7 @@ export const userService = {
    * Available to: System Admin, Tenant Admin
    */
   async updateUser(userId: string, request: Partial<UserCreateRequest>): Promise<User> {
-    const { data } = await api.put(`/users/${userId}`, request);
+    const { data } = await api.patch(`/users/${userId}`, request);
     return data;
   },
 };

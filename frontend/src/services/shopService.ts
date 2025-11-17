@@ -90,7 +90,7 @@ export const shopService = {
     shopId: string,
     request: ShopUpdateRequest
   ): Promise<ShopResponse> {
-    const { data } = await api.put(`/shops/${shopId}`, request);
+    const { data } = await api.patch(`/shops/${shopId}`, request);
     return data;
   },
 
