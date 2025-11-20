@@ -21,6 +21,21 @@ public class JwtPrincipal {
     private String userId; // Database User ID (set after user lookup/sync)
     private String preferredUsername;
     private String tenantId;
+
+    /**
+     * Shop ID assigned to the user.
+     *
+     * CURRENT LIMITATION: Single shop per user
+     * - Users can currently be assigned to only ONE shop (User.shop is ManyToOne)
+     * - This field stores a single shop ID from the JWT token
+     * - TENANT_ADMIN and SYSTEM_ADMIN roles have access to ALL shops in their tenant
+     *
+     * FUTURE ENHANCEMENT: Multi-shop support
+     * - Change User.shop to ManyToMany relationship
+     * - Change this field to List<String> shopIds
+     * - Update Keycloak mapper to return shop_ids as array
+     * - Update all shop access validation logic
+     */
     private String shopId;
     private String email;
     private String firstName;

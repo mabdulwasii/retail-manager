@@ -1,6 +1,6 @@
 package com.princely.shopmanager.expenses.service;
 
-import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
@@ -54,6 +54,7 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseCategoryRepository categoryRepository;
     private final AuditService auditService;
+    private final ShopAccessValidator shopAccessValidator;
     private final com.princely.shopmanager.core.repository.ShopRepository shopRepository;
 
     /**
@@ -366,8 +367,8 @@ public class ExpenseService {
         Expense expense = expenseRepository.findById(expenseId)
             .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND, expenseId));
 
-        // Step 2: Check permissions
-        if (!hasAccessToShop(expense.getShopId(), principal)) {
+        // Step 2: Check permissions using ShopAccessValidator
+        if (shopAccessValidator.hasNoAccessToShop(expense.getShopId(), principal)) {
             throw new AccessDeniedException("You don't have permission to access this expense");
         }
 
@@ -381,35 +382,10 @@ public class ExpenseService {
             throw new ShopNotFoundException("The shop with id " + shopId + " was not found");
         }
 
-        // Step 2: Check permissions
-        if (!hasAccessToShop(shopId, principal)) {
+        // Step 2: Check permissions using ShopAccessValidator
+        if (shopAccessValidator.hasNoAccessToShop(shopId, principal)) {
             throw new AccessDeniedException("You don't have permission to access shop with id " + shopId);
         }
-    }
-
-    private boolean hasAccessToShop(String shopId, JwtPrincipal principal) {
-        // Validate that tenant context is set
-        String tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId == null) {
-            log.warn("No tenant context found for shop access validation");
-            return false;
-        }
-
-        // Validate that user's tenant matches the current tenant context
-        if (principal.getTenantId() != null && !principal.getTenantId().equals(tenantId)) {
-            log.warn("User tenant {} does not match context tenant {}", principal.getTenantId(), tenantId);
-            return false;
-        }
-
-        // If user has shop_id in JWT, validate it matches the requested shop
-        if (principal.getShopId() != null && !principal.getShopId().equals(shopId)) {
-            log.warn("User shop {} does not match requested shop {}", principal.getShopId(), shopId);
-            return false;
-        }
-
-        // TODO: For multi-shop users, query database to verify shop access
-        // For now, tenant-level access is sufficient for TENANT_ADMIN, OWNER roles
-        return true;
     }
 
     private Set<String> cleanTags(Set<String> tags) {

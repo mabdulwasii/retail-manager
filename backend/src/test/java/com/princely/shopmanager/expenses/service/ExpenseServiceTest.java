@@ -1,6 +1,7 @@
 package com.princely.shopmanager.expenses.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
@@ -47,6 +48,9 @@ class ExpenseServiceTest {
     private AuditService auditService;
 
     @Mock
+    private ShopAccessValidator shopAccessValidator;
+
+    @Mock
     private com.princely.shopmanager.core.repository.ShopRepository shopRepository;
 
     @InjectMocks
@@ -72,6 +76,9 @@ class ExpenseServiceTest {
 
         // Mock shop repository to return true for shop existence by default
         lenient().when(shopRepository.existsById(anyString())).thenReturn(true);
+
+        // Mock shop access validator to allow access by default (no access restriction)
+        lenient().when(shopAccessValidator.hasNoAccessToShop(anyString(), any(JwtPrincipal.class))).thenReturn(false);
 
         category = ExpenseCategory.builder()
             .id(categoryId)
