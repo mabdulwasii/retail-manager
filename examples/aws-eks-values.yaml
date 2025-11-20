@@ -37,7 +37,7 @@ backend:
 
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.45
+    tag: backend-latest
     pullPolicy: Always
 
   resources:
@@ -69,7 +69,7 @@ frontend:
 
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.9
+    tag: frontend-latest
     pullPolicy: Always
 
   resources:

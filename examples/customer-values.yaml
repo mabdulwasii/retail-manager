@@ -54,7 +54,7 @@ backend:
   image:
     repository: princely/shop-manager
     # Backend version - update this when upgrading
-    tag: backend-v0.0.45
+    tag: backend-latest
     pullPolicy: Always
 
   # Pod annotations for configuration tracking
@@ -92,7 +92,7 @@ frontend:
   image:
     repository: princely/shop-manager
     # Frontend version - update this when upgrading
-    tag: frontend-v0.0.9
+    tag: frontend-latest
     pullPolicy: Always
 
   # Resource limits (adjust based on your needs)

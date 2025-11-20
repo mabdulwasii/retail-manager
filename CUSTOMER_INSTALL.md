@@ -150,7 +150,7 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
 ```bash
 # Install from Docker Hub
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.45 \
+  --version 0.0.46 \
   -n gomco \
   --create-namespace \
   -f my-values.yaml \

@@ -39,7 +39,7 @@ curl -o my-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/ma
 vi my-values.yaml
 
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 -n gomco --create-namespace -f my-values.yaml
+  --version 0.0.46 -n gomco --create-namespace -f my-values.yaml
 ```
 
 **Perfect for:**
@@ -59,7 +59,7 @@ curl -o my-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/ma
 vi my-values.yaml
 
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 -n gomco --create-namespace -f my-values.yaml
+  --version 0.0.46 -n gomco --create-namespace -f my-values.yaml
 ```
 
 **Perfect for:**
@@ -86,7 +86,7 @@ curl -o prod-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/
 vi prod-values.yaml
 
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 \
+  --version 0.0.46 \
   -n production \
   --create-namespace \
   -f prod-values.yaml \
@@ -120,7 +120,7 @@ curl -o aws-values.yaml https://raw.githubusercontent.com/yourorg/shop-manager/m
 vi aws-values.yaml
 
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 \
+  --version 0.0.46 \
   -n production \
   --create-namespace \
   -f aws-values.yaml
@@ -220,7 +220,7 @@ backend:
 
 ```bash
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 \
+  --version 0.0.46 \
   -n gomco \
   --create-namespace \
   -f my-values.yaml
@@ -230,7 +230,7 @@ helm install retail oci://registry-1.docker.io/princely/shop-manager \
 
 ```bash
 helm upgrade retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.2 \
+  --version 0.0.46 \
   -n gomco \
   -f my-values.yaml
 ```
@@ -245,7 +245,7 @@ helm get values retail -n gomco
 
 ```bash
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 \
+  --version 0.0.46 \
   -n gomco \
   -f my-values.yaml \
   --dry-run \
@@ -284,7 +284,7 @@ Later files override earlier ones.
 **A:** View the chart's default values:
 
 ```bash
-helm show values oci://registry-1.docker.io/princely/shop-manager --version 0.0.1
+helm show values oci://registry-1.docker.io/princely/shop-manager --version 0.0.46
 ```
 
 ### Q: Do I need to fill out everything?

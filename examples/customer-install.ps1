@@ -21,7 +21,7 @@
 
 # Configuration
 $CHART_REPO = "oci://registry-1.docker.io/princely/shop-manager"
-$CHART_VERSION = "0.0.1"
+$CHART_VERSION = "0.0.46"
 $RELEASE_NAME = "retail"
 $NAMESPACE = "gomco"
 $VALUES_FILE = "my-values.yaml"
@@ -163,7 +163,7 @@ global:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.45
+    tag: backend-latest
     pullPolicy: Always
   podAnnotations:
     configVersion: "32"
@@ -174,7 +174,7 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.9
+    tag: frontend-latest
     pullPolicy: Always
 
 branding:
