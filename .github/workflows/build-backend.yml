@@ -1,0 +1,183 @@
+name: Build and Push Backend (Multi-Platform)
+
+# Trigger on backend-specific version tags or manual dispatch
+on:
+  push:
+    tags:
+      - 'backend-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Backend version (e.g., 0.0.47)'
+        required: true
+        type: string
+      push_latest:
+        description: 'Also push as backend-latest tag'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: docker.io
+  REGISTRY_USERNAME: princely
+  IMAGE_NAME: shop-manager
+
+jobs:
+  build-backend:
+    name: Build Backend Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # ================================================================
+      # Step 1: Checkout Code
+      # ================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ================================================================
+      # Step 2: Extract Version from Tag
+      # ================================================================
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            # Extract from tag: backend-v0.0.46 → 0.0.46
+            VERSION=${GITHUB_REF#refs/tags/backend-v}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building backend version: $VERSION"
+
+      # ================================================================
+      # Step 3: Set up QEMU for Multi-Platform Builds
+      # ================================================================
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # ================================================================
+      # Step 4: Set up Docker Buildx
+      # ================================================================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,windows/amd64
+
+      # ================================================================
+      # Step 5: Login to Docker Hub
+      # ================================================================
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # ================================================================
+      # Step 6: Set up Java 21
+      # ================================================================
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      # ================================================================
+      # Step 7: Build Backend JAR
+      # ================================================================
+      - name: Build backend JAR
+        run: |
+          cd backend
+          chmod +x ./mvnw
+          ./mvnw clean package -DskipTests
+          echo "✅ JAR built successfully"
+          ls -lh target/*.jar
+
+      # ================================================================
+      # Step 8: Extract Docker Metadata
+      # ================================================================
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=backend-v${{ steps.version.outputs.VERSION }}
+            type=raw,value=backend-latest,enable=${{ github.event.inputs.push_latest == 'true' || github.event_name == 'push' }}
+
+      # ================================================================
+      # Step 9: Build and Push Multi-Platform Backend Image
+      # ================================================================
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./Dockerfile.backend
+          platforms: linux/amd64,linux/arm64,windows/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
+
+      # ================================================================
+      # Step 10: Create GitHub Release (for tags only)
+      # ================================================================
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/backend-v')
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Backend v${{ steps.version.outputs.VERSION }}
+          generate_release_notes: false
+          body: |
+            ## Backend v${{ steps.version.outputs.VERSION }}
+
+            ### Multi-Platform Docker Image
+
+            **Platforms**: Linux (amd64, arm64), Windows (amd64)
+
+            **Pull Image**:
+            ```bash
+            docker pull ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-v${{ steps.version.outputs.VERSION }}
+            ```
+
+            **Deploy with Helm**:
+            ```bash
+            helm upgrade retail oci://registry-1.docker.io/princely/shop-manager \
+              --set backend.image.tag=backend-v${{ steps.version.outputs.VERSION }} \
+              -n gomco
+            ```
+
+            ### What's New
+            See commit history for changes in this release.
+
+            ---
+            🔗 **Docker Hub**: https://hub.docker.com/r/${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}/tags?name=backend-v${{ steps.version.outputs.VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ================================================================
+      # Step 11: Job Summary
+      # ================================================================
+      - name: Summary
+        run: |
+          echo "## 🎉 Backend Image Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64, windows/amd64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags Pushed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-v${{ steps.version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.push_latest }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; then
+            echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull Command:**" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
