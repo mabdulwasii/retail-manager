@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.46
+    tag: backend-latest
     pullPolicy: Always
   podAnnotations:
-    configVersion: "33"  # Test users prompt and Windows installer
+    configVersion: "34"  # Multi-platform builds and latest tags
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
@@ -22,7 +22,7 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.10
+    tag: frontend-latest
     pullPolicy: Always
 
 branding:

@@ -1,0 +1,307 @@
+name: Build and Push Multi-Platform Docker Images
+
+# Trigger on:
+# 1. New version tags (e.g., v0.0.46)
+# 2. Manual workflow dispatch
+# 3. Push to main branch (for latest tags)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (e.g., 0.0.46)'
+        required: true
+        type: string
+      push_latest:
+        description: 'Also push as latest tags'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: docker.io
+  REGISTRY_USERNAME: princely
+  IMAGE_NAME: shop-manager
+
+jobs:
+  build-backend:
+    name: Build Backend (Multi-Platform)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # ================================================================
+      # Step 1: Checkout Code
+      # ================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ================================================================
+      # Step 2: Extract Version
+      # ================================================================
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Remove 'v' prefix from tag (v0.0.46 -> 0.0.46)
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            # For main branch, use 'dev' or commit SHA
+            VERSION="dev-${GITHUB_SHA::8}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building backend version: $VERSION"
+
+      # ================================================================
+      # Step 3: Set up QEMU (for multi-platform builds)
+      # ================================================================
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # ================================================================
+      # Step 4: Set up Docker Buildx
+      # ================================================================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,windows/amd64
+
+      # ================================================================
+      # Step 5: Login to Docker Hub
+      # ================================================================
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # ================================================================
+      # Step 6: Set up Java
+      # ================================================================
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      # ================================================================
+      # Step 7: Build Backend JAR
+      # ================================================================
+      - name: Build backend JAR
+        run: |
+          cd backend
+          chmod +x ../mvnw
+          ../mvnw clean package -DskipTests
+          echo "JAR built successfully"
+          ls -lh target/*.jar
+
+      # ================================================================
+      # Step 8: Extract Metadata for Docker
+      # ================================================================
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=backend-v${{ steps.version.outputs.VERSION }}
+            type=raw,value=backend-latest,enable=${{ github.event.inputs.push_latest == 'true' || github.ref == 'refs/heads/main' }}
+
+      # ================================================================
+      # Step 9: Build and Push Backend Image (Multi-Platform)
+      # ================================================================
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./Dockerfile.backend
+          platforms: linux/amd64,linux/arm64,windows/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
+
+      # ================================================================
+      # Step 10: Summary
+      # ================================================================
+      - name: Summary
+        run: |
+          echo "## 🎉 Backend Image Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64, windows/amd64" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-v${{ steps.version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.push_latest }}" = "true" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  build-frontend:
+    name: Build Frontend (Multi-Platform)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # ================================================================
+      # Step 1: Checkout Code
+      # ================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ================================================================
+      # Step 2: Extract Version
+      # ================================================================
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION="dev-${GITHUB_SHA::8}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building frontend version: $VERSION"
+
+      # ================================================================
+      # Step 3: Set up QEMU
+      # ================================================================
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # ================================================================
+      # Step 4: Set up Docker Buildx
+      # ================================================================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,windows/amd64
+
+      # ================================================================
+      # Step 5: Login to Docker Hub
+      # ================================================================
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # ================================================================
+      # Step 6: Extract Metadata for Docker
+      # ================================================================
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=frontend-v${{ steps.version.outputs.VERSION }}
+            type=raw,value=frontend-latest,enable=${{ github.event.inputs.push_latest == 'true' || github.ref == 'refs/heads/main' }}
+
+      # ================================================================
+      # Step 7: Build and Push Frontend Image (Multi-Platform)
+      # ================================================================
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64,windows/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
+
+      # ================================================================
+      # Step 8: Summary
+      # ================================================================
+      - name: Summary
+        run: |
+          echo "## 🎉 Frontend Image Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64, windows/amd64" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:frontend-v${{ steps.version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.push_latest }}" = "true" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "- \`${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:frontend-latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          body: |
+            ## Shop Manager v${{ steps.version.outputs.VERSION }}
+
+            ### Multi-Platform Docker Images
+
+            ✅ **Platforms Supported:** Linux (amd64, arm64), Windows (amd64)
+
+            **Backend Image:**
+            ```bash
+            docker pull ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:backend-v${{ steps.version.outputs.VERSION }}
+            ```
+
+            **Frontend Image:**
+            ```bash
+            docker pull ${{ env.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}:frontend-v${{ steps.version.outputs.VERSION }}
+            ```
+
+            ### Helm Chart
+
+            ```bash
+            helm install retail oci://registry-1.docker.io/${{ env.REGISTRY_USERNAME }}/shop-manager \
+              --version ${{ steps.version.outputs.VERSION }} \
+              -n gomco \
+              --create-namespace \
+              -f my-values.yaml
+            ```
+
+            ### Documentation
+
+            - [Customer Installation Guide](https://github.com/${{ github.repository }}/blob/main/CUSTOMER_INSTALL.md)
+            - [Deployment Guide](https://github.com/${{ github.repository }}/blob/main/DEPLOYMENT_GUIDE.md)
+            - [Testing Guide](https://github.com/${{ github.repository }}/blob/main/TESTING-GUIDE.md)
+
+            ### Support
+
+            - Report issues: https://github.com/${{ github.repository }}/issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
