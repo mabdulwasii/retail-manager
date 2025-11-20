@@ -99,8 +99,8 @@ jobs:
       - name: Build backend JAR
         run: |
           cd backend
-          chmod +x ../mvnw
-          ../mvnw clean package -DskipTests
+          chmod +x ./mvnw
+          ./mvnw clean package -DskipTests
           echo "JAR built successfully"
           ls -lh target/*.jar
 

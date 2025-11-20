@@ -42,9 +42,6 @@ buildNumber.properties
 
 # Backend specific
 backend/target/
-backend/.mvn/
-backend/mvnw
-backend/mvnw.cmd
 
 # IDE Files
 .idea/
