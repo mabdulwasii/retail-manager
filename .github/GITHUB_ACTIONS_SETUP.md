@@ -327,6 +327,159 @@ git push origin main backend-v0.0.47 frontend-v0.0.11 v0.0.47
 
 ---
 
+## Automated Release Process (Recommended)
+
+### Auto-Release via PR Labels
+
+The **easiest and recommended way** to release is using PR labels. No manual version tracking or tagging required!
+
+#### How It Works
+
+1. **Create PR** with your changes
+2. **Add release label** to the PR (see PR template for options)
+3. **Merge PR** to main branch
+4. **Automatic release** happens:
+   - Reads current version from `VERSION` files
+   - Bumps version based on label (patch/minor/major)
+   - Updates `VERSION` file
+   - Creates and pushes git tag
+   - Triggers Docker build workflow
+   - Creates GitHub release
+
+#### Available Labels
+
+**Backend Release**:
+- `release:backend-patch` - Bug fixes (0.0.46 → 0.0.47)
+- `release:backend-minor` - New features (0.0.46 → 0.1.0)
+- `release:backend-major` - Breaking changes (0.0.46 → 1.0.0)
+
+**Frontend Release**:
+- `release:frontend-patch` - Bug fixes (0.0.10 → 0.0.11)
+- `release:frontend-minor` - New features (0.0.10 → 0.1.0)
+- `release:frontend-major` - Breaking changes (0.0.10 → 1.0.0)
+
+**Both Components**:
+- `release:both-patch` - Bug fixes in both
+- `release:both-minor` - New features in both
+- `release:both-major` - Breaking changes in both
+
+#### Example: Backend Bug Fix
+
+```bash
+# 1. Create feature branch
+git checkout -b fix/authentication-bug
+
+# 2. Make changes and commit
+git commit -m "fix: resolve JWT token expiration issue"
+
+# 3. Push and create PR
+git push origin fix/authentication-bug
+gh pr create --title "Fix JWT token expiration" --body "..."
+
+# 4. Add label to PR
+gh pr edit --add-label "release:backend-patch"
+
+# 5. Merge PR (via GitHub UI or CLI)
+gh pr merge --squash
+
+# ✅ Auto-release workflow runs automatically:
+#    - Bumps backend/VERSION from 0.0.46 → 0.0.47
+#    - Creates tag backend-v0.0.47
+#    - Triggers Docker build
+#    - Creates GitHub release
+```
+
+#### Example: Frontend Feature
+
+```bash
+# 1. Create feature branch
+git checkout -b feat/dashboard-redesign
+
+# 2. Make changes and commit
+git commit -m "feat: add new analytics dashboard"
+
+# 3. Push and create PR
+git push origin feat/dashboard-redesign
+gh pr create --title "Add analytics dashboard" --body "..."
+
+# 4. Add label to PR
+gh pr edit --add-label "release:frontend-minor"
+
+# 5. Merge PR
+gh pr merge --squash
+
+# ✅ Auto-release workflow runs:
+#    - Bumps frontend/VERSION from 0.0.10 → 0.1.0
+#    - Creates tag frontend-v0.1.0
+#    - Triggers Docker build
+```
+
+#### Example: Major Release (Both Components)
+
+```bash
+# 1. Create feature branch
+git checkout -b feat/api-v2
+
+# 2. Make changes to both backend and frontend
+git commit -m "feat: implement API v2 with breaking changes"
+
+# 3. Push and create PR
+git push origin feat/api-v2
+gh pr create --title "Implement API v2" --body "..."
+
+# 4. Add label to PR
+gh pr edit --add-label "release:both-major"
+
+# 5. Merge PR
+gh pr merge --squash
+
+# ✅ Auto-release workflow runs:
+#    - Bumps backend/VERSION from 0.0.47 → 1.0.0
+#    - Bumps frontend/VERSION from 0.1.0 → 1.0.0
+#    - Creates tags backend-v1.0.0 and frontend-v1.0.0
+#    - Triggers Docker builds for both
+```
+
+### Manual Release Script (Alternative)
+
+For ad-hoc releases or when not using PRs:
+
+```bash
+# Backend patch release
+./scripts/release.sh backend patch
+
+# Frontend minor release
+./scripts/release.sh frontend minor
+
+# Both components major release
+./scripts/release.sh both major
+```
+
+The script will:
+- Read current version from VERSION file
+- Bump version appropriately
+- Update VERSION file
+- Commit and tag
+- Prompt to push
+
+### Version Files
+
+Version tracking uses simple text files:
+
+**backend/VERSION**:
+```
+0.0.46
+```
+
+**frontend/VERSION**:
+```
+0.0.10
+```
+
+These are the **single source of truth** for versions. Never manually edit these files - let the automation handle it.
+
+---
+
 ## Support
 
 - **Workflow issues**: Check the [Actions tab](https://github.com/mabdulwasii/retail-manager/actions)
@@ -339,6 +492,8 @@ git push origin main backend-v0.0.47 frontend-v0.0.11 v0.0.47
 
 | Task | Command |
 |------|---------|
+| Auto-release (PR) | Add `release:*` label to PR, then merge |
+| Manual release | `./scripts/release.sh <component> <bump-type>` |
 | Tag backend | `git tag -a backend-v0.0.X -m "message"` |
 | Tag frontend | `git tag -a frontend-v0.0.X -m "message"` |
 | Tag Helm chart | `git tag -a v0.0.X -m "message"` |
@@ -347,8 +502,9 @@ git push origin main backend-v0.0.47 frontend-v0.0.11 v0.0.47
 | Delete local tag | `git tag -d tag-name` |
 | Delete remote tag | `git push origin :refs/tags/tag-name` |
 | View tag details | `git show tag-name` |
+| Check current versions | `cat backend/VERSION frontend/VERSION` |
 
 ---
 
 **Updated**: November 2024
-**Strategy**: Independent backend/frontend versioning for faster, more flexible releases
+**Strategy**: Independent backend/frontend versioning with automated PR-based releases
