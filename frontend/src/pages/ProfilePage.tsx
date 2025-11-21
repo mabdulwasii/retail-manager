@@ -1,92 +1,104 @@
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/context/ManualAuthContext'
-import { apiService } from '@/services/api'
-import { UserProfileResponse } from '@/types/user'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  Shield,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useAuth } from "@/context/ManualAuthContext";
+import { apiService } from "@/services/api";
+import { UserProfileResponse } from "@/types/user";
+import {
+  AlertCircle,
   Building,
-  Store,
+  Calendar,
   Edit,
   Loader2,
-  AlertCircle
-} from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+  Mail,
+  Phone,
+  Shield,
+  Store,
+  User,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export const ProfilePage: React.FC = () => {
-  const { user: authUser, isAuthenticated } = useAuth()
-  const [profile, setProfile] = useState<UserProfileResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { user: authUser, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!isAuthenticated) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
       try {
-        setIsLoading(true)
-        setError(null)
-        const profileData = await apiService.getUserProfile()
-        setProfile(profileData)
+        setIsLoading(true);
+        setError(null);
+        const profileData = await apiService.getUserProfile();
+        setProfile(profileData);
       } catch (err) {
-        console.error('Failed to fetch user profile:', err)
-        setError('Failed to load profile information. Please try again.')
+        console.error("Failed to fetch user profile:", err);
+        setError("Failed to load profile information. Please try again.");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchProfile()
-  }, [isAuthenticated])
+    fetchProfile();
+  }, [isAuthenticated]);
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800'
-      case 'INACTIVE':
-        return 'bg-gray-100 text-gray-800'
-      case 'SUSPENDED':
-        return 'bg-red-100 text-red-800'
+      case "ACTIVE":
+        return "bg-green-100 text-green-800";
+      case "INACTIVE":
+        return "bg-gray-100 text-gray-800";
+      case "SUSPENDED":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role?.toUpperCase()) {
-      case 'TENANT_ADMIN':
-        return 'bg-purple-100 text-purple-800'
-      case 'SHOP_MANAGER':
-        return 'bg-blue-100 text-blue-800'
-      case 'SHOP_EMPLOYEE':
-        return 'bg-green-100 text-green-800'
-      case 'INVESTOR':
-        return 'bg-yellow-100 text-yellow-800'
+  const getRoleBadgeColor = (roleName: string) => {
+    switch (roleName?.toUpperCase()) {
+      case "TENANT_ADMIN":
+        return "bg-purple-100 text-purple-800";
+      case "SHOP_OWNER":
+        return "bg-indigo-100 text-indigo-800";
+      case "MANAGER":
+        return "bg-blue-100 text-blue-800";
+      case "EMPLOYEE":
+        return "bg-green-100 text-green-800";
+      case "INVESTOR":
+        return "bg-yellow-100 text-yellow-800";
+      case "CASHIER":
+        return "bg-cyan-100 text-cyan-800";
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -98,7 +110,7 @@ export const ProfilePage: React.FC = () => {
           </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -109,7 +121,7 @@ export const ProfilePage: React.FC = () => {
           <span className="ml-2">Loading profile...</span>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -120,10 +132,10 @@ export const ProfilePage: React.FC = () => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
-  const displayProfile = profile || authUser
+  const displayProfile = profile || authUser;
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -135,7 +147,10 @@ export const ProfilePage: React.FC = () => {
             Manage your account information and preferences
           </p>
         </div>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/users/edit/${displayProfile?.id}`)}
+        >
           <Edit className="mr-2 h-4 w-4" />
           Edit Profile
         </Button>
@@ -156,40 +171,48 @@ export const ProfilePage: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">First Name</label>
+                <label className="text-sm font-medium text-gray-500">
+                  First Name
+                </label>
                 <p className="text-sm font-medium">
-                  {displayProfile?.firstName || 'Not provided'}
+                  {displayProfile?.firstName || "Not provided"}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Last Name</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Last Name
+                </label>
                 <p className="text-sm font-medium">
-                  {displayProfile?.lastName || 'Not provided'}
+                  {displayProfile?.lastName || "Not provided"}
                 </p>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-500">Full Name</label>
+              <label className="text-sm font-medium text-gray-500">
+                Full Name
+              </label>
               <p className="text-sm font-medium">
-                {displayProfile?.fullName || displayProfile?.username || 'Not provided'}
+                {displayProfile?.fullName ||
+                  displayProfile?.username ||
+                  "Not provided"}
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-500">Username</label>
-              <p className="text-sm font-medium">
-                {displayProfile?.username}
-              </p>
+              <label className="text-sm font-medium text-gray-500">
+                Username
+              </label>
+              <p className="text-sm font-medium">{displayProfile?.username}</p>
             </div>
 
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-gray-500" />
               <div>
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-sm font-medium">
-                  {displayProfile?.email}
-                </p>
+                <label className="text-sm font-medium text-gray-500">
+                  Email
+                </label>
+                <p className="text-sm font-medium">{displayProfile?.email}</p>
               </div>
             </div>
 
@@ -197,10 +220,10 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-gray-500" />
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-sm font-medium">
-                    {profile.phoneNumber}
-                  </p>
+                  <label className="text-sm font-medium text-gray-500">
+                    Phone
+                  </label>
+                  <p className="text-sm font-medium">{profile.phoneNumber}</p>
                 </div>
               </div>
             )}
@@ -220,10 +243,12 @@ export const ProfilePage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Account Status</label>
+              <label className="text-sm font-medium text-gray-500">
+                Account Status
+              </label>
               <div className="mt-1">
-                <Badge className={getStatusColor(profile?.status || 'ACTIVE')}>
-                  {profile?.status || 'ACTIVE'}
+                <Badge className={getStatusColor(profile?.status || "ACTIVE")}>
+                  {profile?.status || "ACTIVE"}
                 </Badge>
               </div>
             </div>
@@ -233,21 +258,30 @@ export const ProfilePage: React.FC = () => {
               <div className="mt-2 flex flex-wrap gap-2">
                 {displayProfile?.roles?.map((role) => (
                   <Badge
-                    key={role}
+                    key={typeof role === "string" ? role : role.name}
                     variant="secondary"
-                    className={getRoleBadgeColor(role)}
+                    className={getRoleBadgeColor(
+                      typeof role === "string" ? role : role.name
+                    )}
                   >
-                    {role.replace('_', ' ')}
+                    {(typeof role === "string" ? role : role.name).replace(
+                      /_/g,
+                      " "
+                    )}
                   </Badge>
                 )) || (
-                  <span className="text-sm text-gray-500">No roles assigned</span>
+                  <span className="text-sm text-gray-500">
+                    No roles assigned
+                  </span>
                 )}
               </div>
             </div>
 
             {profile?.isInvestor && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Investor Status</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Investor Status
+                </label>
                 <div className="mt-1">
                   <Badge className="bg-yellow-100 text-yellow-800">
                     Investor
@@ -260,7 +294,9 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-gray-500" />
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Tenant ID</label>
+                  <label className="text-sm font-medium text-gray-500">
+                    Tenant ID
+                  </label>
                   <p className="text-sm font-medium font-mono">
                     {displayProfile.tenantId}
                   </p>
@@ -272,7 +308,9 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Store className="h-4 w-4 text-gray-500" />
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Shop ID</label>
+                  <label className="text-sm font-medium text-gray-500">
+                    Shop ID
+                  </label>
                   <p className="text-sm font-medium font-mono">
                     {displayProfile.shopId}
                   </p>
@@ -297,13 +335,17 @@ export const ProfilePage: React.FC = () => {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Account Created</label>
+                  <label className="text-sm font-medium text-gray-500">
+                    Account Created
+                  </label>
                   <p className="text-sm font-medium">
                     {formatDate(profile.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Last Updated</label>
+                  <label className="text-sm font-medium text-gray-500">
+                    Last Updated
+                  </label>
                   <p className="text-sm font-medium">
                     {formatDate(profile.updatedAt)}
                   </p>
@@ -324,15 +366,34 @@ export const ProfilePage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/users/edit/${displayProfile?.id}`)}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() =>
+                toast.info("Security Settings feature is coming soon", {
+                  description:
+                    "Password change and security settings will be available in a future update",
+                })
+              }
+            >
               <Shield className="mr-2 h-4 w-4" />
               Security Settings
             </Button>
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() =>
+                toast.info("Notification Preferences feature is coming soon", {
+                  description:
+                    "Email and notification preferences will be available in a future update",
+                })
+              }
+            >
               <Mail className="mr-2 h-4 w-4" />
               Notification Preferences
             </Button>
@@ -340,5 +401,5 @@ export const ProfilePage: React.FC = () => {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

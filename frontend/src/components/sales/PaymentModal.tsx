@@ -43,19 +43,19 @@ interface PaymentModalProps {
 
 const paymentMethods = [
   {
-    id: 'cash',
+    id: 'CASH',
     name: 'Cash',
     icon: BanknoteIcon,
     description: 'Cash payment'
   },
   {
-    id: 'card',
+    id: 'CARD',
     name: 'Card',
     icon: CreditCardIcon,
     description: 'Credit/Debit card'
   },
   {
-    id: 'mobile',
+    id: 'MOBILE',
     name: 'Mobile Money',
     icon: SmartphoneIcon,
     description: 'Mobile payment'
@@ -76,7 +76,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   isLoading
 }) => {
   const { formatCurrency, parseCurrency } = useCurrency()
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentMethod, setPaymentMethod] = useState('CASH')
   const [amountPaid, setAmountPaid] = useState(cartSummary.total.toString())
   const [discount, setDiscount] = useState('0')
   const [notes, setNotes] = useState('')
@@ -98,7 +98,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       errors.discount = 'Discount cannot exceed total amount'
     }
 
-    if (paymentMethod === 'cash') {
+    if (paymentMethod === 'CASH') {
       if (paidAmount < finalTotal) {
         errors.amountPaid = 'Amount paid must be at least the total amount'
       }
@@ -115,8 +115,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method)
 
-    // For non-cash payments, amount paid should equal the final total
-    if (method !== 'cash') {
+    // For non-CASH payments, amount paid should equal the final total
+    if (method !== 'CASH') {
       setAmountPaid(finalTotal.toString())
     }
   }
@@ -140,7 +140,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (!isLoading) {
       onClose()
       // Reset form
-      setPaymentMethod('cash')
+      setPaymentMethod('CASH')
       setAmountPaid(cartSummary.total.toString())
       setDiscount('0')
       setNotes('')
@@ -185,7 +185,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <span>{formatCurrency(finalTotal)}</span>
             </div>
 
-            {paymentMethod === 'cash' && changeAmount > 0 && (
+            {paymentMethod === 'CASH' && changeAmount > 0 && (
               <div className="flex justify-between text-sm text-blue-600 border-t pt-2">
                 <span>Change:</span>
                 <span>{formatCurrency(changeAmount)}</span>
@@ -231,8 +231,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </RadioGroup>
           </div>
 
-          {/* Amount Paid (for cash payments) */}
-          {paymentMethod === 'cash' && (
+          {/* Amount Paid (for CASH payments) */}
+          {paymentMethod === 'CASH' && (
             <div className="space-y-2">
               <Label htmlFor="amountPaid">Amount Paid</Label>
               <Input

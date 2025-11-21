@@ -8,6 +8,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
+import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
+import com.princely.shopmanager.auth.exception.KeycloakUserException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * Service for managing users in Keycloak using the admin client
  */
 @Service
+@ConditionalOnProperty(prefix = "app.keycloak", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class KeycloakUserService {
@@ -70,25 +74,26 @@ public class KeycloakUserService {
 
         try {
             UsersResource usersResource = realmResource.users();
-            Response response = usersResource.create(user);
+            try (Response response = usersResource.create(user)) {
 
-            if (response.getStatus() == 201) {
-                String userId = extractUserIdFromLocation(response.getLocation().toString());
-                log.info("User created successfully with ID: {}", userId);
+                if (response.getStatus() == 201) {
+                    String userId = extractUserIdFromLocation(response.getLocation().toString());
+                    log.info("User created successfully with ID: {}", userId);
 
-                // Set password
-                if (request.password() != null) {
-                    setUserPassword(userId, request.password(), request.temporaryPassword());
+                    // Set password
+                    if (request.password() != null) {
+                        setUserPassword(userId, request.password(), request.temporaryPassword());
+                    }
+
+                    // Assign roles
+                    if (request.roles() != null && !request.roles().isEmpty()) {
+                        assignRolesToUser(userId, request.roles());
+                    }
+
+                    return userId;
+                } else {
+                    throw new KeycloakUserException("Failed to create user. Status: " + response.getStatus());
                 }
-
-                // Assign roles
-                if (request.roles() != null && !request.roles().isEmpty()) {
-                    assignRolesToUser(userId, request.roles());
-                }
-
-                return userId;
-            } else {
-                throw new KeycloakUserException("Failed to create user. Status: " + response.getStatus());
             }
         } catch (Exception e) {
             log.error("Error creating user in Keycloak: {}", request.username(), e);
@@ -228,5 +233,81 @@ public class KeycloakUserService {
             log.error("Error getting user by ID: {}", userId, e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Update user in Keycloak
+     */
+    public void updateUser(String keycloakId, String email, String firstName, String lastName,
+                          String phoneNumber, boolean enabled, String tenantId, String shopId) {
+        log.info("Updating user in Keycloak: {}", keycloakId);
+
+        try {
+            UserResource userResource = realmResource.users().get(keycloakId);
+            UserRepresentation user = userResource.toRepresentation();
+
+            // Update basic fields
+            if (email != null) {
+                user.setEmail(email);
+            }
+            if (firstName != null) {
+                user.setFirstName(firstName);
+            }
+            if (lastName != null) {
+                user.setLastName(lastName);
+            }
+            user.setEnabled(enabled);
+
+            // Update attributes
+            Map<String, List<String>> attributes = user.getAttributes();
+            if (attributes == null) {
+                attributes = new HashMap<>();
+            }
+
+            if (tenantId != null) {
+                attributes.put("tenantId", List.of(tenantId));
+            }
+            if (shopId != null) {
+                attributes.put("shopId", List.of(shopId));
+            }
+            if (phoneNumber != null) {
+                attributes.put("phoneNumber", List.of(phoneNumber));
+            }
+
+            user.setAttributes(attributes);
+            userResource.update(user);
+
+            log.info("User updated successfully in Keycloak: {}", keycloakId);
+        } catch (NotFoundException e) {
+            throw new KeycloakUserException("User not found: " + keycloakId, e);
+        } catch (Exception e) {
+            log.error("Error updating user in Keycloak: {}", keycloakId, e);
+            throw new KeycloakUserException("Failed to update user: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Delete user from Keycloak (hard delete)
+     */
+    public void deleteUser(String keycloakId) {
+        log.info("Deleting user from Keycloak: {}", keycloakId);
+
+        try {
+            realmResource.users().get(keycloakId).remove();
+            log.info("User deleted successfully from Keycloak: {}", keycloakId);
+        } catch (NotFoundException e) {
+            throw new KeycloakUserException("User not found: " + keycloakId, e);
+        } catch (Exception e) {
+            log.error("Error deleting user from Keycloak: {}", keycloakId, e);
+            throw new KeycloakUserException("Failed to delete user: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Deactivate user in Keycloak (soft delete - just disable)
+     */
+    public void deactivateUser(String keycloakId) {
+        log.info("Deactivating user in Keycloak: {}", keycloakId);
+        updateUserStatus(keycloakId, false);
     }
 }

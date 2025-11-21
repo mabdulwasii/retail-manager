@@ -2,7 +2,7 @@ package com.princely.shopmanager.inventory.repository;
 
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.domain.InventoryHistory;
-import com.princely.shopmanager.shared.repository.TenantAwareRepository;
+import com.princely.shopmanager.shared.repository.base.TenantAwareRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -73,4 +73,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
 
     @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.currentStock - i.reservedStock) >= :quantity AND i.status = 'ACTIVE' AND (i.expiryDate IS NULL OR i.expiryDate > CURRENT_DATE)")
     List<Inventory> findAvailableForSale(@Param("shopId") String shopId, @Param("quantity") Integer quantity);
+
+    @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId")
+    List<Inventory> findByProductId(@Param("productId") String productId);
 }

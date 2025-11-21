@@ -2,6 +2,10 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME:shop-manager}
 
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shopdb}
     username: ${SPRING_DATASOURCE_USERNAME:shop}
@@ -19,6 +23,9 @@ spring:
         format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
         jdbc:
           time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:UTC}
+          batch_size: 0
+        order_inserts: false
+        order_updates: false
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
 
   flyway:
@@ -82,6 +89,9 @@ logging:
     com.princely.shopmanager: ${LOGGING_LEVEL_COM_PRINCELY_SHOPMANAGER:DEBUG}
     org.springframework.security: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY:INFO}
     org.springframework.web: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB:INFO}
+    # Suppress harmless Tomcat EOFException from health checks and connection closures
+    org.apache.coyote.http11.Http11Processor: ${LOGGING_LEVEL_TOMCAT_HTTP:INFO}
+    org.apache.tomcat.util.net.NioEndpoint: ${LOGGING_LEVEL_TOMCAT_NIO:INFO}
   pattern:
     console: ${LOGGING_PATTERN_CONSOLE:%d{yyyy-MM-dd HH:mm:ss} - %msg%n}
 

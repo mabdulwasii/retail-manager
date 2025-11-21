@@ -1,6 +1,7 @@
 package com.princely.shopmanager.investment.dto;
 
 import com.princely.shopmanager.investment.domain.Investment;
+import com.princely.shopmanager.investment.validator.ValidInvestmentCreateRequest;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +16,11 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidInvestmentCreateRequest
 public class InvestmentCreateRequest {
+
+    @NotBlank(message = "Investor ID is required")
+    private String investorId;
 
     @NotBlank(message = "Shop ID is required")
     private String shopId;

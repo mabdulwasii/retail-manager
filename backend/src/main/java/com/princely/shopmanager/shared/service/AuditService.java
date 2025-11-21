@@ -5,6 +5,7 @@ import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logSecurityEvent(Shop shop, String userId, String username,
                                 AuditLog.ActionType actionType, String description,
@@ -34,14 +36,19 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logDataModification(Shop shop, String userId, String username,
                                    AuditLog.ActionType actionType, String entityType,
                                    String entityId, String description,
                                    String oldValues, String newValues) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.createDataModification(
-                shop, userId, username, actionType, entityType, entityId,
+                shop, effectiveUserId, effectiveUsername, actionType, entityType, entityId,
                 description, oldValues, newValues
             );
             auditLogRepository.save(auditLog);
@@ -51,6 +58,7 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFinancialTransaction(Shop shop, String userId, String username,
                                        AuditLog.ActionType actionType, String entityId,
@@ -67,16 +75,21 @@ public class AuditService {
     }
 
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logCustomEvent(Shop shop, String userId, String username,
                               AuditLog.AuditCategory category, AuditLog.ActionType actionType,
                               String entityType, String entityId, String description,
                               Map<String, String> details, AuditLog.Severity severity) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
-                .userId(userId)
-                .username(username)
+                .userId(effectiveUserId)
+                .username(effectiveUsername)
                 .category(category)
                 .actionType(actionType)
                 .entityType(entityType)
@@ -95,15 +108,20 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logError(Shop shop, String userId, String username,
                         AuditLog.ActionType actionType, String description,
                         String errorMessage) {
         try {
+            // Default to SYSTEM if userId is null
+            String effectiveUserId = userId != null ? userId : "SYSTEM";
+            String effectiveUsername = username != null ? username : "system";
+
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
-                .userId(userId)
-                .username(username)
+                .userId(effectiveUserId)
+                .username(effectiveUsername)
                 .category(AuditLog.AuditCategory.SYSTEM_EVENT)
                 .actionType(actionType)
                 .actionDescription(description)
@@ -114,17 +132,20 @@ public class AuditService {
                 .build();
 
             auditLogRepository.save(auditLog);
-            log.debug("Error event logged: {} for user {}", actionType, username);
+            log.debug("Error event logged: {} for user {}", actionType, effectiveUsername);
         } catch (Exception e) {
             log.error("Failed to log error event: {} for user {}", actionType, username, e);
         }
     }
 
     // Convenience methods for common audit operations
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityCreation(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.CREATE)
                 .entityType(entityType)
@@ -142,10 +163,13 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityModification(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
                 .entityType(entityType)
@@ -163,10 +187,13 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEntityDeletion(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                .userId("SYSTEM")
+                .username("system")
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
                 .entityType(entityType)
@@ -185,8 +212,9 @@ public class AuditService {
     }
 
     // Expense-specific audit methods
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseCreation(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, java.math.BigDecimal amount) {
+    public void logExpenseCreation(java.util.UUID expenseId, String shopId, java.util.UUID userId, java.math.BigDecimal amount) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -208,8 +236,9 @@ public class AuditService {
         }
     }
 
+    @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseUpdate(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -232,7 +261,7 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseApproval(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId, boolean approved) {
+    public void logExpenseApproval(java.util.UUID expenseId, String shopId, java.util.UUID userId, boolean approved) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
@@ -255,7 +284,7 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseDeletion(java.util.UUID expenseId, java.util.UUID shopId, java.util.UUID userId) {
+    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId

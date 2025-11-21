@@ -9,10 +9,12 @@ import com.princely.shopmanager.inventory.domain.InventoryHistory;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
+import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.auth.context.TenantContext;
 import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityNotFoundException;
@@ -113,7 +115,7 @@ class InventoryServiceTest {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act
-            InventoryResponse result = inventoryService.createInventory(createRequest);
+            InventoryResponse result = inventoryService.createInventory("shop-1", createRequest);
 
             // Assert
             assertThat(result).isNotNull();
@@ -135,7 +137,7 @@ class InventoryServiceTest {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act & Assert
-            assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
+            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Shop not found");
 
@@ -153,7 +155,7 @@ class InventoryServiceTest {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act & Assert
-            assertThatThrownBy(() -> inventoryService.createInventory(createRequest))
+            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Product not found");
 
@@ -424,5 +426,126 @@ class InventoryServiceTest {
         // Assert
         assertThat(result).isNotNull();
         verify(auditService).logEntityModification(eq("Inventory"), eq("inventory-1"), anyString());
+    }
+
+    @Test
+    void updateInventory_ShouldUpdateMetadataSuccessfully() {
+        // Arrange
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .batchNumber("BATCH002")
+            .location("B2-C3")
+            .expiryDate(LocalDate.now().plusMonths(12))
+            .minimumStock(20)
+            .maximumStock(1000)
+            .reorderPoint(50)
+            .unitCost(BigDecimal.valueOf(18.00))
+            .build();
+
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+
+        // Act
+        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(inventoryRepository).save(any(Inventory.class));
+        verify(auditService).logEntityModification(eq("Inventory"), eq("inventory-1"), anyString());
+        verify(eventPublisher).publishEvent(any(InventoryUpdatedEvent.class));
+    }
+
+    @Test
+    void updateInventory_WithPartialUpdate_ShouldUpdateOnlyProvidedFields() {
+        // Arrange
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .location("C3-D4")
+            .minimumStock(15)
+            .build();
+
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+
+        // Act
+        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(inventoryRepository).save(any(Inventory.class));
+        verify(auditService).logEntityModification(eq("Inventory"), eq("inventory-1"), anyString());
+    }
+
+    @Test
+    void updateInventory_WithInvalidId_ShouldThrowException() {
+        // Arrange
+        InventoryUpdateRequest updateRequest = InventoryUpdateRequest.builder()
+            .location("Test Location")
+            .build();
+
+        when(inventoryRepository.findById("invalid-id")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> inventoryService.updateInventory("invalid-id", updateRequest))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessageContaining("Inventory not found");
+
+        verify(inventoryRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteInventory_WithZeroStock_ShouldDeleteSuccessfully() {
+        // Arrange
+        testInventory.setCurrentStock(0);
+        testInventory.setReservedStock(0);
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+
+        // Act
+        inventoryService.deleteInventory("inventory-1");
+
+        // Assert
+        verify(inventoryRepository).delete(testInventory);
+        verify(auditService).logEntityDeletion(eq("Inventory"), eq("inventory-1"), anyString());
+    }
+
+    @Test
+    void deleteInventory_WithActiveStock_ShouldThrowException() {
+        // Arrange
+        testInventory.setCurrentStock(50);
+        testInventory.setReservedStock(0);
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+
+        // Act & Assert
+        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Cannot delete inventory with active stock");
+
+        verify(inventoryRepository, never()).delete(any(Inventory.class));
+    }
+
+    @Test
+    void deleteInventory_WithReservedStock_ShouldThrowException() {
+        // Arrange
+        testInventory.setCurrentStock(0);
+        testInventory.setReservedStock(10);
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+
+        // Act & Assert
+        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Cannot delete inventory with reserved stock");
+
+        verify(inventoryRepository, never()).delete(any(Inventory.class));
+    }
+
+    @Test
+    void deleteInventory_WithInvalidId_ShouldThrowException() {
+        // Arrange
+        when(inventoryRepository.findById("invalid-id")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> inventoryService.deleteInventory("invalid-id"))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessageContaining("Inventory not found");
+
+        verify(inventoryRepository, never()).delete(any(Inventory.class));
     }
 }

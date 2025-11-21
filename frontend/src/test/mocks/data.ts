@@ -11,7 +11,7 @@ export const mockUserProfile: UserProfile = {
   phoneNumber: '+1234567890',
   status: 'ACTIVE',
   isInvestor: false,
-  roles: ['SHOP_MANAGER', 'SHOP_EMPLOYEE'],
+  roles: ['MANAGER', 'EMPLOYEE'],
   tenantId: 'tenant-123',
   shopId: 'shop-456',
   createdAt: '2024-01-15T10:30:00Z',
@@ -43,7 +43,7 @@ export const mockUserProfileMinimal: UserProfile = {
   email: 'minimal@example.com',
   status: 'ACTIVE',
   isInvestor: false,
-  roles: ['SHOP_EMPLOYEE']
+  roles: ['EMPLOYEE']
 }
 
 // Mock user profile for error scenarios
@@ -61,7 +61,7 @@ export const mockAuthContext = {
       email: 'john.doe@example.com',
       firstName: 'John',
       lastName: 'Doe',
-      roles: ['SHOP_MANAGER']
+      roles: ['MANAGER']
     }
   },
   unauthenticated: {

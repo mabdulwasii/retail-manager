@@ -1,0 +1,363 @@
+# ============================================================================
+# Shop Manager - Production Deployment Values
+# ============================================================================
+#
+# Production-grade configuration with:
+# - High availability (multiple replicas)
+# - Autoscaling
+# - Let's Encrypt SSL
+# - External database support
+# - Monitoring and logging
+# - Security hardening
+#
+# Usage:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version 0.0.1 \
+#     -n production \
+#     --create-namespace \
+#     -f production-values.yaml
+#
+# ============================================================================
+
+# ============================================================================
+# GLOBAL SETTINGS
+# ============================================================================
+global:
+  appName: "retail"
+  domain: "yourcompany.com"  # CHANGE THIS to your actual domain
+  environment: "production"
+
+# ============================================================================
+# BACKEND CONFIGURATION
+# ============================================================================
+backend:
+  # High availability
+  replicaCount: 3
+
+  image:
+    repository: princely/shop-manager
+    tag: backend-latest
+    pullPolicy: Always
+
+  # Resource limits for production workloads
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  # Autoscaling
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Production environment variables
+  env:
+    SPRING_PROFILES_ACTIVE: "production"
+    SWAGGER_SECURITY_ENABLED: "true"  # Require auth for Swagger in production
+    LOGGING_LEVEL_ROOT: "INFO"
+
+  # Liveness and readiness probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# ============================================================================
+# FRONTEND CONFIGURATION
+# ============================================================================
+frontend:
+  enabled: true
+
+  # High availability
+  replicaCount: 2
+
+  image:
+    repository: princely/shop-manager
+    tag: frontend-latest
+    pullPolicy: Always
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+  # Autoscaling
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# ============================================================================
+# BRANDING
+# ============================================================================
+branding:
+  platformName: "Enterprise Retail Pro"
+  companyName: "Your Company Inc"
+  platformDescription: "Enterprise Retail Management System"
+  colors:
+    primary: "#2E7D32"
+    secondary: "#FF6F00"
+
+# ============================================================================
+# APPLICATION CONFIGURATION
+# ============================================================================
+application:
+  # Disable test users in production
+  testUsers:
+    enabled: false
+
+# ============================================================================
+# TLS/SSL CONFIGURATION (Let's Encrypt)
+# ============================================================================
+tls:
+  enabled: true
+  # Use Let's Encrypt for production SSL
+  issuer: "letsencrypt-prod"
+  email: "admin@yourcompany.com"  # CHANGE THIS
+
+  # Annotations for cert-manager
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+  localCertInstallation:
+    enabled: false  # Not needed for Let's Encrypt
+
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
+# Option 1: Use included PostgreSQL (for small-medium deployments)
+postgresql:
+  enabled: true
+
+  auth:
+    # Use strong passwords
+    postgresPassword: "CHANGE-ME-super-secret-password"
+    password: "CHANGE-ME-database-password"
+
+  # High availability
+  replication:
+    enabled: true
+    numSynchronousReplicas: 1
+    replicaCount: 2
+
+  # Persistence
+  persistence:
+    enabled: true
+    size: 100Gi
+    storageClass: "standard"  # Change to your storage class
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1000m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+
+  # Backup configuration
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention: 7  # Keep 7 days
+
+# Option 2: Use external PostgreSQL (recommended for large deployments)
+# Uncomment and configure:
+# postgresql:
+#   enabled: false
+#
+# externalDatabase:
+#   host: "postgres.yourcompany.com"
+#   port: 5432
+#   database: "shopmanager"
+#   username: "shopmanager"
+#   password: "your-secure-password"
+#   # Or use existing secret:
+#   existingSecret: "shopmanager-db-secret"
+#   existingSecretPasswordKey: "password"
+
+# ============================================================================
+# KEYCLOAK CONFIGURATION
+# ============================================================================
+keycloak:
+  # Production settings
+  replicaCount: 2
+
+  auth:
+    adminPassword: "CHANGE-ME-keycloak-admin-password"
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  # Persistence
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# ============================================================================
+# INGRESS CONFIGURATION
+# ============================================================================
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    # SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+
+    # Body size limit
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+
+# ============================================================================
+# MONITORING & OBSERVABILITY
+# ============================================================================
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Prometheus metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+# Logging
+logging:
+  level: INFO
+  format: JSON
+  destination: stdout
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+# Network policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+# ============================================================================
+# BACKUP CONFIGURATION
+# ============================================================================
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 30  # Keep 30 days
+
+  # Storage backend (choose one)
+  storage:
+    type: s3  # Options: s3, gcs, azure
+
+    # S3 configuration (AWS, MinIO, etc.)
+    s3:
+      endpoint: "s3.amazonaws.com"
+      bucket: "shopmanager-backups-prod"
+      region: "us-east-1"
+      # Access via IAM role or access keys
+      # existingSecret: "s3-backup-secret"
+
+# ============================================================================
+# OPTIONAL: MinIO (if not using external S3)
+# ============================================================================
+minio:
+  enabled: false  # Use external S3 in production
+
+# ============================================================================
+# OPTIONAL: Kafka (for event streaming)
+# ============================================================================
+kafka:
+  enabled: false  # Use external Kafka in production
+
+# externalKafka:
+#   bootstrapServers: "kafka.yourcompany.com:9092"
+
+# ============================================================================
+# ADVANCED: External Secrets (Recommended)
+# ============================================================================
+# Use external secret manager for production
+# externalSecrets:
+#   enabled: true
+#   backend: vault  # Options: vault, aws-secrets-manager, azure-key-vault
+#   vaultAddress: "https://vault.yourcompany.com"
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# Before deploying:
+# 1. Change all passwords and secrets
+# 2. Update domain name
+# 3. Configure storage classes
+# 4. Set up external database (optional but recommended)
+# 5. Configure backup storage
+# 6. Set up monitoring alerts
+# 7. Review security settings
+# 8. Test in staging environment first
+#
+# Deployment:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version 0.0.1 \
+#     -n production \
+#     --create-namespace \
+#     -f production-values.yaml \
+#     --atomic \
+#     --timeout 20m
+#
+# ============================================================================

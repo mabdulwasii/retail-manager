@@ -44,8 +44,8 @@ class NotificationEventListenerTest {
     @BeforeEach
     void setUp() {
         superAdminRole = Role.builder()
-            .name("SUPER_ADMIN")
-            .description("Super Administrator")
+            .name("SYSTEM_ADMIN")
+            .description("System Administrator")
             .build();
 
         User superAdmin1 = User.builder()
@@ -81,7 +81,7 @@ class NotificationEventListenerTest {
             "TestUserAgent"
         );
 
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.findByRolesContaining(superAdminRole)).thenReturn(superAdmins);
 
         // When
@@ -119,7 +119,7 @@ class NotificationEventListenerTest {
             "TestUserAgent"
         );
 
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.empty());
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.empty());
 
         // When
         notificationEventListener.handleTenantRegistrationNotification(event);
@@ -241,7 +241,7 @@ class NotificationEventListenerTest {
         );
 
         // Mock repository exception
-        when(roleRepository.findByName("SUPER_ADMIN"))
+        when(roleRepository.findByName("SYSTEM_ADMIN"))
             .thenThrow(new RuntimeException("Database connection failed"));
 
         // When & Then - Should not throw exception
@@ -272,7 +272,7 @@ class NotificationEventListenerTest {
             "TestUserAgent"
         );
 
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.findByRolesContaining(superAdminRole)).thenReturn(superAdmins);
 
         // When

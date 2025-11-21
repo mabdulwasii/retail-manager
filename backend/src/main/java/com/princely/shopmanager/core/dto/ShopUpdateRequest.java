@@ -1,6 +1,9 @@
 package com.princely.shopmanager.core.dto;
 
 import com.princely.shopmanager.core.domain.Shop;
+
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -8,8 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object for updating shop information.
@@ -72,6 +73,9 @@ public class ShopUpdateRequest {
     @Schema(description = "Shop opening date", example = "2024-01-15T09:00:00")
     private LocalDateTime openingDate;
 
+    @Schema(description = "Shop configuration settings")
+    private ShopConfigurationRequest configuration;
+
     /**
      * Applies the update request to an existing shop entity.
      * Only updates fields that are not null in the request.
@@ -91,5 +95,12 @@ public class ShopUpdateRequest {
         if (taxId != null) shop.setTaxId(taxId);
         if (status != null) shop.setStatus(Shop.ShopStatus.valueOf(status.toUpperCase()));
         if (openingDate != null) shop.setOpeningDate(openingDate);
+        if (configuration != null) {
+            if (shop.getConfiguration() == null) {
+                shop.setConfiguration(configuration.toEntity());
+            } else {
+                configuration.applyTo(shop.getConfiguration());
+            }
+        }
     }
 }

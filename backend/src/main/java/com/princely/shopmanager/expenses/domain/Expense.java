@@ -28,7 +28,8 @@ import java.util.UUID;
         @Index(name = "idx_expenses_approved_by", columnList = "approvedBy")
     }
 )
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -41,10 +42,10 @@ public class Expense extends BaseEntity {
 
     @NotNull
     @Column(name = "shop_id", nullable = false)
-    private UUID shopId;
+    private String shopId;
 
     @NotBlank
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -66,7 +67,7 @@ public class Expense extends BaseEntity {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
-    @Column(name = "vendor_name", length = 255)
+    @Column(name = "vendor_name")
     private String vendorName;
 
     @Column(name = "reference_number", length = 100)
@@ -96,13 +97,13 @@ public class Expense extends BaseEntity {
     @Column(name = "expense_created_by", nullable = false)
     private UUID expenseCreatedBy;
 
-    @Column(name = "created_by_name", length = 255)
+    @Column(name = "created_by_name")
     private String createdByName;
 
     @Column(name = "approved_by")
     private UUID approvedBy;
 
-    @Column(name = "approved_by_name", length = 255)
+    @Column(name = "approved_by_name")
     private String approvedByName;
 
     @Column(name = "approval_date")
@@ -128,12 +129,12 @@ public class Expense extends BaseEntity {
         return status == ExpenseStatus.DRAFT || status == ExpenseStatus.REJECTED;
     }
 
-    public boolean canBeApproved() {
-        return status == ExpenseStatus.PENDING_APPROVAL;
+    public boolean cannotBeApproved() {
+        return status != ExpenseStatus.PENDING_APPROVAL;
     }
 
     public void approve(UUID approvedBy, String approvedByName, String notes) {
-        if (!canBeApproved()) {
+        if (cannotBeApproved()) {
             throw new IllegalStateException("Expense cannot be approved in current status: " + status);
         }
         this.status = ExpenseStatus.APPROVED;
@@ -144,7 +145,7 @@ public class Expense extends BaseEntity {
     }
 
     public void reject(UUID rejectedBy, String rejectedByName, String notes) {
-        if (!canBeApproved()) {
+        if (cannotBeApproved()) {
             throw new IllegalStateException("Expense cannot be rejected in current status: " + status);
         }
         this.status = ExpenseStatus.REJECTED;

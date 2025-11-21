@@ -61,11 +61,18 @@ public class InvestorShare extends BaseEntity {
     @Column(name = "notes")
     private String notes;
 
+    @Getter
     public enum ShareStatus {
-        PENDING,
-        CALCULATED,
-        DISTRIBUTED,
-        REINVESTED,
-        CANCELLED
+        PENDING("Pending"),
+        CALCULATED("Calculated"),
+        DISTRIBUTED("Distributed"),
+        REINVESTED("Reinvested"),
+        CANCELLED("Cancelled");
+
+        private final String displayName;
+
+        ShareStatus(String displayName) {
+            this.displayName = displayName;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.princely.shopmanager.expenses.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
@@ -9,6 +10,8 @@ import com.princely.shopmanager.expenses.dto.ExpenseCreateRequest;
 import com.princely.shopmanager.expenses.dto.ExpenseResponse;
 import com.princely.shopmanager.expenses.repository.ExpenseCategoryRepository;
 import com.princely.shopmanager.expenses.repository.ExpenseRepository;
+import com.princely.shopmanager.shared.exception.BusinessException;
+import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,10 +47,16 @@ class ExpenseServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private ShopAccessValidator shopAccessValidator;
+
+    @Mock
+    private com.princely.shopmanager.core.repository.ShopRepository shopRepository;
+
     @InjectMocks
     private ExpenseService expenseService;
 
-    private UUID shopId;
+    private String shopId;
     private UUID categoryId;
     private String userId;
     private JwtPrincipal principal;
@@ -56,7 +65,7 @@ class ExpenseServiceTest {
 
     @BeforeEach
     void setUp() {
-        shopId = UUID.randomUUID();
+        shopId = UUID.randomUUID().toString();
         categoryId = UUID.randomUUID();
         userId = UUID.randomUUID().toString();
 
@@ -64,6 +73,12 @@ class ExpenseServiceTest {
         lenient().when(principal.getUserId()).thenReturn(userId);
         lenient().when(principal.getFullName()).thenReturn("Test User");
         lenient().when(principal.getUsername()).thenReturn("testuser");
+
+        // Mock shop repository to return true for shop existence by default
+        lenient().when(shopRepository.existsById(anyString())).thenReturn(true);
+
+        // Mock shop access validator to allow access by default (no access restriction)
+        lenient().when(shopAccessValidator.hasNoAccessToShop(anyString(), any(JwtPrincipal.class))).thenReturn(false);
 
         category = ExpenseCategory.builder()
             .id(categoryId)
@@ -99,7 +114,7 @@ class ExpenseServiceTest {
     @DisplayName("Should create expense successfully")
     void shouldCreateExpenseSuccessfully() {
         // Given
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
@@ -135,7 +150,7 @@ class ExpenseServiceTest {
         category.setAutoApprovalEnabled(false);
         category.setRequiresApproval(true);
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         Expense savedExpense = createExpenseFromRequest();
@@ -167,7 +182,7 @@ class ExpenseServiceTest {
             .submitForApproval(true)
             .build();
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         Expense savedExpense = createExpenseFromRequest();
@@ -189,7 +204,7 @@ class ExpenseServiceTest {
     @DisplayName("Should throw exception when category not found")
     void shouldThrowExceptionWhenCategoryNotFound() {
         // Given
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.empty());
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
@@ -197,7 +212,9 @@ class ExpenseServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
-                .hasMessageContaining("Expense category not found");
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo("EXPENSE_CATEGORY_NOT_FOUND");
 
             verify(expenseRepository, never()).save(any(Expense.class));
             verify(auditService, never()).logExpenseCreation(any(), any(), any(), any());
@@ -209,7 +226,7 @@ class ExpenseServiceTest {
     void shouldThrowExceptionWhenCategoryIsInactive() {
         // Given
         category.setIsActive(false);
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
@@ -217,6 +234,7 @@ class ExpenseServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> expenseService.createExpense(shopId, createRequest, principal))
+                .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessageContaining("Cannot create expense for inactive category");
 
             verify(expenseRepository, never()).save(any(Expense.class));
@@ -242,7 +260,7 @@ class ExpenseServiceTest {
             .tags(messyTags)
             .build();
 
-        when(categoryRepository.findByIdAndShopId(categoryId, shopId))
+        when(categoryRepository.findById(categoryId))
             .thenReturn(Optional.of(category));
 
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {

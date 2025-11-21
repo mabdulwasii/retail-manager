@@ -1,5 +1,6 @@
 package com.princely.shopmanager.expenses.controller;
 
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
 import com.princely.shopmanager.expenses.dto.*;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,10 +29,12 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * REST Controller for expense management operations
+ * REST Controller for expense management operations.
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Expenses", description = "Expense and procurement management operations")
@@ -47,8 +51,9 @@ public class ExpenseController {
     @ApiResponse(responseCode = "400", description = "Invalid request data")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @PostMapping("/shops/{shopId}/expenses")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_CREATE)")
     public ResponseEntity<ExpenseResponse> createExpense(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Valid @RequestBody ExpenseCreateRequest request,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
@@ -67,6 +72,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PutMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_UPDATE)")
     public ResponseEntity<ExpenseResponse> updateExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody ExpenseUpdateRequest request,
@@ -79,6 +85,28 @@ public class ExpenseController {
     }
 
     @Operation(
+        summary = "Partially update expense (PATCH)",
+        description = "Partially update an expense (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponse(responseCode = "200", description = "Expense updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "Expense not found")
+    @PatchMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_UPDATE)")
+    public ResponseEntity<ExpenseResponse> patchExpense(
+            @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
+            @Valid @RequestBody ExpenseUpdateRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.info("Patching expense: {}, user: {}", expenseId, principal.getUsername());
+
+        // Reuse the same update logic - current implementation already does partial updates
+        ExpenseResponse response = expenseService.updateExpense(expenseId, request, principal);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Get expense by ID",
         description = "Retrieve a specific expense by its ID"
     )
@@ -86,6 +114,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @GetMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_READ)")
     public ResponseEntity<ExpenseResponse> getExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -101,12 +130,13 @@ public class ExpenseController {
     @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_LIST)")
     public ResponseEntity<Page<ExpenseResponse>> getExpenses(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date filter") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate startDate,
             @Parameter(description = "End date filter") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate endDate,
             @Parameter(description = "Status filter") @RequestParam(required = false) ExpenseStatus status,
             @Parameter(description = "Category ID filter") @RequestParam(required = false) UUID categoryId,
             @Parameter(description = "Created by user filter") @RequestParam(required = false) UUID createdBy,
@@ -150,6 +180,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PostMapping("/expenses/{expenseId}/approve")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_APPROVE)")
     public ResponseEntity<ExpenseResponse> approveExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody(required = false) ExpenseApprovalRequest request,
@@ -174,6 +205,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @PostMapping("/expenses/{expenseId}/reject")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_APPROVE)")
     public ResponseEntity<ExpenseResponse> rejectExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @Valid @RequestBody(required = false) ExpenseApprovalRequest request,
@@ -198,6 +230,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Expense not found")
     @DeleteMapping("/expenses/{expenseId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_DELETE)")
     public ResponseEntity<Void> deleteExpense(
             @Parameter(description = "Expense ID") @PathVariable UUID expenseId,
             @AuthenticationPrincipal JwtPrincipal principal) {
@@ -215,12 +248,13 @@ public class ExpenseController {
     @ApiResponse(responseCode = "200", description = "Summary retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses/summary")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_LIST)")
     public ResponseEntity<ExpenseSummaryDto> getExpenseSummary(
-            @Parameter(description = "Shop ID") @PathVariable UUID shopId,
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date for summary") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate startDate,
             @Parameter(description = "End date for summary") @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate endDate,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
         ExpenseSummaryDto response = expenseService.getExpenseSummary(shopId, startDate, endDate, principal);

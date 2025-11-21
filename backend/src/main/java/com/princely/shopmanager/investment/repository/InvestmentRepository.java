@@ -1,6 +1,5 @@
 package com.princely.shopmanager.investment.repository;
 
-import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.investment.domain.Investment;
@@ -36,8 +35,8 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
     @Query("SELECT i FROM Investment i WHERE i.investor.id = :investorId AND i.status = 'ACTIVE'")
     List<Investment> findActiveInvestmentsByInvestor(@Param("investorId") String investorId);
 
-    @Query("SELECT i FROM Investment i JOIN i.products p WHERE p = :product AND i.status = 'ACTIVE'")
-    List<Investment> findActiveInvestmentsByProduct(@Param("product") Product product);
+    // Removed: findActiveInvestmentsByProduct - products field removed from Investment
+    // Product-specific investments are now tracked at InvestmentRound level
 
     @Query("SELECT SUM(i.amount) FROM Investment i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
     Optional<java.math.BigDecimal> getTotalActiveInvestmentAmount(@Param("shopId") String shopId);
@@ -45,8 +44,8 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
     @Query("SELECT COUNT(i) FROM Investment i WHERE i.investor.id = :investorId")
     long countByInvestor(@Param("investorId") String investorId);
 
-    @Query("SELECT i FROM Investment i WHERE i.maturityDate IS NOT NULL AND i.maturityDate <= CURRENT_TIMESTAMP " +
-           "AND i.status = 'ACTIVE'")
+    @Query("SELECT i FROM Investment i WHERE i.investmentRound.maturityDate IS NOT NULL " +
+           "AND i.investmentRound.maturityDate <= CURRENT_TIMESTAMP AND i.status = 'ACTIVE'")
     List<Investment> findMaturedInvestments();
 
     boolean existsByInvestmentNumber(String investmentNumber);
@@ -56,4 +55,34 @@ public interface InvestmentRepository extends JpaRepository<Investment, String> 
 
     @Query("SELECT i FROM Investment i WHERE i.investor.id = :investorId")
     Page<Investment> findByInvestorId(@Param("investorId") String investorId, Pageable pageable);
+
+    /**
+     * Calculate total investment amount in a specific round.
+     * Used for PROPORTIONAL_BY_AMOUNT profit calculations.
+     *
+     * @param roundId Investment round ID
+     * @return Total amount invested in the round
+     */
+    @Query("SELECT SUM(i.amount) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    java.math.BigDecimal sumAmountByInvestmentRoundId(@Param("roundId") String roundId);
+
+    /**
+     * Calculate total fixed shares in a specific round.
+     * Used for FIXED_SHARES profit calculations.
+     *
+     * @param roundId Investment round ID
+     * @return Total shares allocated in the round
+     */
+    @Query("SELECT SUM(i.fixedShares) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    Integer sumFixedSharesByInvestmentRoundId(@Param("roundId") String roundId);
+
+    /**
+     * Count investments in a specific round from the database.
+     * Used to generate unique sequential investment numbers.
+     *
+     * @param roundId Investment round ID
+     * @return Count of investments in the round
+     */
+    @Query("SELECT COUNT(i) FROM Investment i WHERE i.investmentRound.id = :roundId")
+    long countByInvestmentRoundId(@Param("roundId") String roundId);
 }

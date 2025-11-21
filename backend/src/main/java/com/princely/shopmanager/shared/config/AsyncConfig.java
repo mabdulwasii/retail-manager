@@ -45,4 +45,15 @@ public class AsyncConfig {
         executor.initialize();
         return executor;
     }
+
+    @Bean(name = "auditTaskExecutor")
+    public Executor auditTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("audit-async-");
+        executor.initialize();
+        return executor;
+    }
 }

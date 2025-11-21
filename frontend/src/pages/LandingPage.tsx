@@ -17,12 +17,15 @@ import {
   Building,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Menu,
+  X
 } from 'lucide-react'
 import { useAuth } from '@/context/ManualAuthContext'
 
 export const LandingPage: React.FC = () => {
   const { isAuthenticated, login, logout } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
 
   const handleLogin = () => {
     login()
@@ -30,6 +33,15 @@ export const LandingPage: React.FC = () => {
 
   const handleLogout = async () => {
     await logout()
+  }
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(prev => !prev)
+  }
+
+  // Close mobile menu on navigation
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false)
   }
 
   const features = [
@@ -143,7 +155,22 @@ export const LandingPage: React.FC = () => {
               <Store className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">Shop Manager</span>
             </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleMobileMenu}
+                aria-label="Toggle mobile menu"
+              >
+                {isMobileMenuOpen ? 
+                  <X className="h-6 w-6" /> : 
+                  <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
 
+            {/* Desktop navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">Features</a>
               <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors">Pricing</a>
@@ -152,7 +179,7 @@ export const LandingPage: React.FC = () => {
 
               {isAuthenticated ? (
                 <>
-                  <Link to="/dashboard" className="text-blue-600 hover:text-blue-700 font-medium">Dashboard</Link>
+                  <Link to="/redirect" className="text-blue-600 hover:text-blue-700 font-medium">Dashboard</Link>
                   <Button variant="outline" onClick={handleLogout}>
                     Logout
                   </Button>
@@ -167,6 +194,86 @@ export const LandingPage: React.FC = () => {
               )}
             </div>
           </div>
+          
+          {/* Mobile menu - always in DOM for animation purposes */}
+          <div 
+            className={`md:hidden border-t overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'py-4 max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+          >
+              <div className="flex flex-col space-y-4 pb-3">
+                <a 
+                  href="#features" 
+                  className="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1" 
+                  onClick={closeMobileMenu}
+                >
+                  Features
+                </a>
+                <a 
+                  href="#pricing" 
+                  className="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1" 
+                  onClick={closeMobileMenu}
+                >
+                  Pricing
+                </a>
+                <a 
+                  href="#about" 
+                  className="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1" 
+                  onClick={closeMobileMenu}
+                >
+                  About
+                </a>
+                <a 
+                  href="#contact" 
+                  className="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1" 
+                  onClick={closeMobileMenu}
+                >
+                  Contact
+                </a>
+              </div>
+              
+              <div className="pt-4 border-t flex flex-col space-y-3">
+                {isAuthenticated ? (
+                  <>
+                    <Link 
+                      to="/dashboard" 
+                      className="text-blue-600 hover:text-blue-700 font-medium px-2 py-1"
+                      onClick={closeMobileMenu}
+                    >
+                      Dashboard
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        closeMobileMenu();
+                        handleLogout();
+                      }}
+                      className="w-full justify-center"
+                    >
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => {
+                        closeMobileMenu();
+                        handleLogin();
+                      }}
+                      className="w-full justify-center"
+                    >
+                      Login
+                    </Button>
+                    <Button 
+                      className="w-full justify-center"
+                      onClick={closeMobileMenu}
+                      asChild
+                    >
+                      <Link to="/register">Get Started</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
         </div>
       </nav>
 
@@ -481,7 +588,7 @@ export const LandingPage: React.FC = () => {
 
       {/* FAQ Section */}
       <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Frequently Asked Questions
@@ -611,7 +718,7 @@ export const LandingPage: React.FC = () => {
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold mb-4">
             Ready to Transform Your Retail Business?
           </h2>

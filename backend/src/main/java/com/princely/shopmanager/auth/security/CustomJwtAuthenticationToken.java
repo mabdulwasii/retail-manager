@@ -7,11 +7,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 import java.util.Collection;
 
+import lombok.Getter;
+
 /**
  * Custom JWT Authentication Token that properly handles JwtPrincipal.
  * This extends JwtAuthenticationToken but overrides the principal to be a JwtPrincipal object
  * instead of a String, allowing @AuthenticationPrincipal JwtPrincipal to work correctly.
  */
+@Getter
 public class CustomJwtAuthenticationToken extends JwtAuthenticationToken {
 
     private final JwtPrincipal jwtPrincipal;
@@ -26,7 +29,4 @@ public class CustomJwtAuthenticationToken extends JwtAuthenticationToken {
         return jwtPrincipal;
     }
 
-    public JwtPrincipal getJwtPrincipal() {
-        return jwtPrincipal;
-    }
 }

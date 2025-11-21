@@ -179,6 +179,28 @@ Generate certificate name for Keycloak
 {{- end }}
 
 {{/*
+Generate CORS allowed origins (comma-separated)
+Includes localhost URLs for development and dynamically generated frontend URL based on domain and TLS settings
+*/}}
+{{- define "shop-manager.cors.allowedOrigins" -}}
+{{- $frontendHostname := include "shop-manager.frontend.hostname" . -}}
+{{- $tlsEnabled := false -}}
+{{- if .Values.tls -}}
+  {{- if .Values.tls.enabled -}}
+    {{- $tlsEnabled = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $origins := list "http://localhost:3000" "http://localhost:3001" "http://localhost:3002" -}}
+{{- if $tlsEnabled -}}
+  {{- $origins = append $origins (printf "https://%s" $frontendHostname) -}}
+{{- else -}}
+  {{- $origins = append $origins (printf "http://%s" $frontendHostname) -}}
+{{- end -}}
+{{- $origins = append $origins (printf "http://%s" $frontendHostname) -}}
+{{- join "," $origins }}
+{{- end }}
+
+{{/*
 Generate PostgreSQL connection string
 */}}
 {{- define "shop-manager.postgresql.host" -}}

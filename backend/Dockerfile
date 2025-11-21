@@ -7,16 +7,19 @@ WORKDIR /app
 # Copy pom.xml first for dependency caching
 COPY pom.xml .
 
-# Download dependencies (cached layer)
-RUN mvn dependency:go-offline -B
-
-# Copy source code
+# Copy source code and docs
 COPY src ./src
 
-# Build the application with lenient compilation (skip problematic classes)
-RUN mvn clean package -DskipTests -B -Dmaven.compiler.failOnError=false || \
-    mvn clean package -DskipTests -B -Dmaven.compiler.excludes="**/expenses/**,**/investment/**,**/analytics/**,**/returns/**" || \
-    mvn clean compile exec:java -Dexec.mainClass="com.princely.shopmanager.ShopManagerApplication" -jar
+# Build the application (skip tests - they run in CI/CD pipeline)
+# First generate AsciiDoc documentation
+RUN mvn asciidoctor:process-asciidoc -B && \
+    mkdir -p src/main/resources/static/docs && \
+    cp -r target/generated-docs/* src/main/resources/static/docs/ 2>/dev/null || true && \
+    ls -lh target/generated-docs/ 2>/dev/null || echo "No docs generated yet"
+
+# Then build the JAR with the docs included
+RUN mvn clean package -DskipTests -B && \
+    ls -lh target/*.jar
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
@@ -32,7 +35,7 @@ RUN addgroup -g 1001 -S shopmanager && \
 WORKDIR /app
 
 # Copy JAR from build stage
-COPY --from=build /app/target/shop-manager-*.jar app.jar
+COPY --from=build /app/target/shop-manager-1.0.0-SNAPSHOT.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R shopmanager:shopmanager /app

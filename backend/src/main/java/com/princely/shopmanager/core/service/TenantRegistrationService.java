@@ -1,6 +1,7 @@
 package com.princely.shopmanager.core.service;
 
-import com.princely.shopmanager.auth.service.CreateKeycloakUserRequest;
+import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
+import com.princely.shopmanager.core.exception.TenantRegistrationException;
 import com.princely.shopmanager.auth.service.KeycloakUserService;
 import com.princely.shopmanager.core.domain.*;
 import com.princely.shopmanager.core.dto.registration.*;
@@ -148,9 +149,10 @@ public class TenantRegistrationService {
             }
 
             // Create audit log
+            int activatedShopCount = (request.shopIdsToActivate() != null) ? request.shopIdsToActivate().size() : 0;
             auditService.logEvent("TENANT_ACTIVATION",
                 "Tenant activated by admin: " + tenant.getName(),
-                Map.of("tenantId", tenant.getId(), "adminUserId", adminUserId, "activatedShops", request.shopIdsToActivate().size()));
+                Map.of("tenantId", tenant.getId(), "adminUserId", adminUserId, "activatedShops", activatedShopCount));
 
             // Publish activation notification event
             publishActivationNotificationEvent(tenant, true, null, adminUserId);

@@ -26,7 +26,8 @@ import java.util.UUID;
         @UniqueConstraint(name = "uk_expense_category_shop_name", columnNames = {"shopId", "name"})
     }
 )
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,7 +40,7 @@ public class ExpenseCategory extends BaseEntity {
 
     @NotNull
     @Column(name = "shop_id", nullable = false)
-    private UUID shopId;
+    private String shopId;
 
     @NotBlank
     @Column(nullable = false, length = 100)
@@ -97,10 +98,6 @@ public class ExpenseCategory extends BaseEntity {
 
     public void activate() {
         this.isActive = true;
-    }
-
-    public void deactivate() {
-        this.isActive = false;
     }
 
     public void setApprovalLimit(BigDecimal limit) {

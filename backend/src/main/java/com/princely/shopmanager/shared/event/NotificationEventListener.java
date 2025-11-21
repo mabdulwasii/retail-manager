@@ -93,9 +93,9 @@ public class NotificationEventListener {
      */
     private List<User> getSuperAdmins() {
         try {
-            Role superAdminRole = roleRepository.findByName("SUPER_ADMIN").orElse(null);
+            Role superAdminRole = roleRepository.findByName("SYSTEM_ADMIN").orElse(null);
             if (superAdminRole == null) {
-                log.warn("SUPER_ADMIN role not found");
+                log.warn("SYSTEM_ADMIN role not found");
                 return List.of();
             }
 

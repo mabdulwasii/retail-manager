@@ -1,19 +1,21 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
+import { api } from '@/services/api'
+import { Product } from '@/types/api'
 
-export interface Product {
-  id: string
-  name: string
-  description?: string
-  price: number
-  barcode?: string
-  category: string
-  stock: number
-  isActive: boolean
-  imageUrl?: string
-  taxRate?: number
-}
+// export interface Product {
+//   id: string
+//   name: string
+//   description?: string
+//   price: number
+//   barcode?: string
+//   category: string
+//   stock: number
+//   isActive: boolean
+//   imageUrl?: string
+//   taxRate?: number
+// }
 
 export interface CartItem {
   product: Product
@@ -41,18 +43,25 @@ export interface SalesTransaction {
 }
 
 export interface CreateSaleRequest {
-  customerId?: string
-  items: Array<{
-    productId: string
-    quantity: number
-    unitPrice: number
-  }>
-  paymentMethod: string
-  discountAmount?: number
-  notes?: string
+  paymentMethod: string;
+  discountAmount?: number;
+  notes?: string;
+  shopId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  lineItems: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+  }>;
+  taxAmount: number;
+  paymentReference: string;
 }
 
 export interface SalesFilter {
+  shopId?: string
   startDate?: string
   endDate?: string
   customerId?: string
@@ -60,6 +69,20 @@ export interface SalesFilter {
   paymentMethod?: string
   minAmount?: number
   maxAmount?: number
+  page?: number
+  size?: number
+  sort?: string
+}
+
+export interface PagedSalesResponse {
+  content: SalesTransaction[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  first: boolean
+  last: boolean
+  empty: boolean
 }
 
 export const useSales = () => {
@@ -77,18 +100,10 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/products/search?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+      const data = await api.get<Product[]>(`/products/search`, {
+        params: { q: query }
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to search products')
-      }
-
-      const data = await response.json()
+      
       setProducts(data)
       return data
     } catch (err) {
@@ -105,36 +120,37 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/products/barcode/${encodeURIComponent(barcode)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null
-        }
-        throw new Error('Failed to find product by barcode')
+      if (!user?.shopId) {
+        setError('Shop ID is required for barcode search')
+        return null
       }
 
-      const product = await response.json()
+      // Use the correct API endpoint as per backend spec: /products/search?barcode=...&shopId=...
+      const product = await api.get<Product>(`/products/search`, {
+        params: {
+          barcode: barcode,
+          shopId: user.shopId,
+          includeInventory: true
+        }
+      })
       return product
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return null
+      }
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return null
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [user?.shopId])
 
   // Cart management
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
     if (quantity <= 0) return
-    if (quantity > product.stock) {
-      setError(`Only ${product.stock} items available in stock`)
+    if (quantity > product.availableStock) {
+      setError(`Only ${product.availableStock} items available in stock`)
       return
     }
 
@@ -143,8 +159,8 @@ export const useSales = () => {
 
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity
-        if (newQuantity > product.stock) {
-          setError(`Only ${product.stock} items available in stock`)
+        if (newQuantity > product.availableStock) {
+          setError(`Only ${product.availableStock} items available in stock`)
           return prevCart
         }
 
@@ -154,15 +170,15 @@ export const useSales = () => {
                 ...item,
                 quantity: newQuantity,
                 subtotal: product.price * newQuantity,
-                taxAmount: (product.price * newQuantity) * (product.taxRate || 0) / 100,
-                total: (product.price * newQuantity) * (1 + (product.taxRate || 0) / 100)
+                taxAmount: (product.price * newQuantity) * (product?.taxRate || 0) / 100,
+                total: (product.price * newQuantity) * (1 + (product?.taxRate || 0) / 100)
               }
             : item
         )
       }
 
       const subtotal = product.price * quantity
-      const taxAmount = subtotal * (product.taxRate || 0) / 100
+      const taxAmount = subtotal * (product?.taxRate || 0) / 100
       const total = subtotal + taxAmount
 
       return [...prevCart, {
@@ -190,8 +206,8 @@ export const useSales = () => {
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.product.id === productId) {
-          if (quantity > item.product.stock) {
-            setError(`Only ${item.product.stock} items available in stock`)
+          if (quantity > item.product.availableStock) {
+            setError(`Only ${item.product.availableStock} items available in stock`)
             return item
           }
 
@@ -243,20 +259,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch('/api/v1/sales', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(saleData)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to process sale')
-      }
-
-      const sale = await response.json()
+      const sale = await api.post<SalesTransaction>('/sales', saleData)
 
       // Clear cart after successful sale
       clearCart()
@@ -274,39 +277,38 @@ export const useSales = () => {
     }
   }, [clearCart])
 
-  // Sales history
-  const fetchSales = useCallback(async (filter?: SalesFilter): Promise<SalesTransaction[]> => {
+  // Sales history with pagination
+  const fetchSales = useCallback(async (filter?: SalesFilter): Promise<PagedSalesResponse | null> => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const queryParams = new URLSearchParams()
-      if (filter?.startDate) queryParams.append('startDate', filter.startDate)
-      if (filter?.endDate) queryParams.append('endDate', filter.endDate)
-      if (filter?.customerId) queryParams.append('customerId', filter.customerId)
-      if (filter?.status) queryParams.append('status', filter.status)
-      if (filter?.paymentMethod) queryParams.append('paymentMethod', filter.paymentMethod)
-      if (filter?.minAmount) queryParams.append('minAmount', filter.minAmount.toString())
-      if (filter?.maxAmount) queryParams.append('maxAmount', filter.maxAmount.toString())
-
-      const response = await fetch(`/api/v1/sales?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch sales')
+      // Build query params according to API spec
+      const params: Record<string, any> = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 20,
+        ...(filter?.shopId && { shopId: filter.shopId }),
+        ...(filter?.sort && { sort: filter.sort }),
+        ...(filter?.status && { status: filter.status }),
+        ...(filter?.paymentMethod && { paymentMethod: filter.paymentMethod }),
+        ...(filter?.startDate && { startDate: filter.startDate }),
+        ...(filter?.endDate && { endDate: filter.endDate }),
+        ...(filter?.customerId && { customerId: filter.customerId }),
+        ...(filter?.minAmount !== undefined && { minAmount: filter.minAmount }),
+        ...(filter?.maxAmount !== undefined && { maxAmount: filter.maxAmount }),
       }
 
-      const salesData = await response.json()
-      setSales(salesData)
-      return salesData
+      const response = await api.get<PagedSalesResponse>('/sales', {
+        params
+      })
+      
+      // Update local state with content array
+      setSales(response.content)
+      return response
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
-      return []
+      return null
     } finally {
       setIsLoading(false)
     }
@@ -317,23 +319,12 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/sales/${saleId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null
-        }
-        throw new Error('Failed to fetch sale')
-      }
-
-      const sale = await response.json()
+      const sale = await api.get<SalesTransaction>(`/sales/${saleId}`)
       return sale
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return null
+      }
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return null
@@ -348,17 +339,7 @@ export const useSales = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/sales/${saleId}/receipt`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate receipt')
-      }
-
-      const blob = await response.blob()
+      const blob = await api.getBlob(`/sales/${saleId}/receipt`)
       const url = window.URL.createObjectURL(blob)
       return url
     } catch (err) {

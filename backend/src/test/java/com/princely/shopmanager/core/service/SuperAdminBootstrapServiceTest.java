@@ -49,7 +49,7 @@ class SuperAdminBootstrapServiceTest {
     @BeforeEach
     void setUp() {
         superAdminRole = new Role();
-        superAdminRole.setName("SUPER_ADMIN");
+        superAdminRole.setName("SYSTEM_ADMIN");
 
         // Set default configuration values
         ReflectionTestUtils.setField(bootstrapService, "bootstrapEnabled", true);
@@ -64,7 +64,7 @@ class SuperAdminBootstrapServiceTest {
     @DisplayName("Should create super admin when none exists")
     void shouldCreateSuperAdminWhenNoneExists() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(0L);
         when(keycloakUserService.generatePassword()).thenReturn("generated-password");
         when(keycloakUserService.createUser(any())).thenReturn("keycloak-id-123");
@@ -75,14 +75,14 @@ class SuperAdminBootstrapServiceTest {
         // Then
         verify(userRepository).save(any(User.class));
         verify(keycloakUserService).createUser(any());
-        verify(auditService).logEvent(eq("SUPER_ADMIN_BOOTSTRAP"), anyString(), anyMap());
+        verify(auditService).logEvent(eq("SYSTEM_ADMIN_BOOTSTRAP"), anyString(), anyMap());
     }
 
     @Test
     @DisplayName("Should skip bootstrap when super admin already exists")
     void shouldSkipBootstrapWhenSuperAdminExists() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(1L);
 
         // When
@@ -110,10 +110,10 @@ class SuperAdminBootstrapServiceTest {
     }
 
     @Test
-    @DisplayName("Should handle missing SUPER_ADMIN role gracefully")
+    @DisplayName("Should handle missing SYSTEM_ADMIN role gracefully")
     void shouldHandleMissingSuperAdminRoleGracefully() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.empty());
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.empty());
 
         // When
         bootstrapService.bootstrapSuperAdmin();
@@ -128,7 +128,7 @@ class SuperAdminBootstrapServiceTest {
     void shouldUseProvidedPasswordWhenConfigured() {
         // Given
         ReflectionTestUtils.setField(bootstrapService, "superAdminPassword", "custom-password");
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(0L);
         when(keycloakUserService.createUser(any())).thenReturn("keycloak-id-123");
 
@@ -145,7 +145,7 @@ class SuperAdminBootstrapServiceTest {
     @DisplayName("Should return correct bootstrap requirement status")
     void shouldReturnCorrectBootstrapRequirementStatus() {
         // Given - bootstrap enabled, no existing super admin
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(0L);
 
         // When
@@ -168,7 +168,7 @@ class SuperAdminBootstrapServiceTest {
     @DisplayName("Should return correct super admin count")
     void shouldReturnCorrectSuperAdminCount() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(2L);
 
         // When
@@ -179,10 +179,10 @@ class SuperAdminBootstrapServiceTest {
     }
 
     @Test
-    @DisplayName("Should return zero count when SUPER_ADMIN role not found")
+    @DisplayName("Should return zero count when SYSTEM_ADMIN role not found")
     void shouldReturnZeroCountWhenRoleNotFound() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.empty());
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.empty());
 
         // When
         long count = bootstrapService.getSuperAdminCount();
@@ -195,7 +195,7 @@ class SuperAdminBootstrapServiceTest {
     @DisplayName("Should handle Keycloak creation failure gracefully")
     void shouldHandleKeycloakCreationFailureGracefully() {
         // Given
-        when(roleRepository.findByName("SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
+        when(roleRepository.findByName("SYSTEM_ADMIN")).thenReturn(Optional.of(superAdminRole));
         when(userRepository.countByRolesContaining(superAdminRole)).thenReturn(0L);
         when(keycloakUserService.generatePassword()).thenReturn("generated-password");
         when(keycloakUserService.createUser(any())).thenThrow(new RuntimeException("Keycloak error"));

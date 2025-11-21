@@ -1,9 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiService } from '@/services/api'
 import { useAuth } from '@/context/ManualAuthContext'
+import { shopService } from '@/services/shopService'
+import { analyticsService } from '@/services/analyticsService'
+import { inventoryService } from '@/services/inventoryService'
+import { expenseService } from '@/services/expenseService'
 
-// Helper function to get date ranges
-const getDateRange = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export type TimePeriod = 'today' | 'week' | 'month' | 'year'
+
+const getDateRange = (period: TimePeriod = 'month') => {
   const now = new Date()
   let startDate: Date
 
@@ -23,9 +27,19 @@ const getDateRange = (period: 'today' | 'week' | 'month' | 'year' = 'month') => 
       break
   }
 
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+  }
+
   return {
-    startDate: startDate.toISOString(),
-    endDate: now.toISOString()
+    startDate: formatDate(startDate),
+    endDate: formatDate(now)
   }
 }
 
@@ -35,7 +49,7 @@ export const useActiveShops = () => {
 
   return useQuery({
     queryKey: ['shops', 'active'],
-    queryFn: () => apiService.getActiveShops(),
+    queryFn: () => shopService.getActiveShops(),
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2
@@ -47,77 +61,113 @@ export const useAllShops = (page = 0, size = 20) => {
 
   return useQuery({
     queryKey: ['shops', 'all', page, size],
-    queryFn: () => apiService.getShops(page, size),
+    queryFn: async () => {
+      const response = await shopService.getShops({ page, size })
+      return response.content || []
+    },
     enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 2
   })
 }
 
-export const useSalesSummary = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useSalesSummary = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
   return useQuery({
     queryKey: ['analytics', 'sales-summary', targetShopId, period],
-    queryFn: () => targetShopId ? apiService.getSalesSummary(targetShopId, startDate, endDate) : null,
-    enabled: isAuthenticated && !!targetShopId && (user?.roles?.includes('MANAGER') || user?.roles?.includes('OWNER') || user?.roles?.includes('SHOP_MANAGER') || user?.roles?.includes('TENANT_ADMIN')),
+    queryFn: () => analyticsService.getSalesSummary(targetShopId!, startDate, endDate),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
   })
 }
 
-export const useInvestmentROI = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useInvestmentROI = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
   return useQuery({
     queryKey: ['analytics', 'investment-roi', targetShopId, period],
-    queryFn: () => targetShopId ? apiService.getInvestmentROI(targetShopId, startDate, endDate) : null,
-    enabled: isAuthenticated && !!targetShopId && (user?.roles?.includes('OWNER') || user?.roles?.includes('INVESTOR') || user?.roles?.includes('TENANT_ADMIN')),
+    queryFn: () => analyticsService.getInvestmentROI(targetShopId!, startDate, endDate),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['OWNER', 'INVESTOR', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
   })
 }
 
-export const useRevenueAnalytics = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useRevenueAnalytics = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
   return useQuery({
     queryKey: ['analytics', 'revenue-analytics', targetShopId, period],
-    queryFn: () => targetShopId ? apiService.getRevenueAnalytics(targetShopId, startDate, endDate) : null,
-    enabled: isAuthenticated && !!targetShopId && (user?.roles?.includes('MANAGER') || user?.roles?.includes('OWNER') || user?.roles?.includes('SHOP_MANAGER') || user?.roles?.includes('TENANT_ADMIN')),
+    queryFn: () => analyticsService.getRevenueAnalytics(targetShopId!, startDate, endDate),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
   })
 }
 
-export const useFraudStatistics = (shopId?: string, period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useFraudStatistics = (shopId?: string, period: TimePeriod = 'month') => {
   const { isAuthenticated, user } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
-  // Use first active shop if shopId not provided
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
 
   return useQuery({
     queryKey: ['analytics', 'fraud-statistics', targetShopId, period],
-    queryFn: () => targetShopId ? apiService.getFraudStatistics(targetShopId, startDate, endDate) : null,
-    enabled: isAuthenticated && !!targetShopId && (user?.roles?.includes('MANAGER') || user?.roles?.includes('OWNER') || user?.roles?.includes('SHOP_MANAGER') || user?.roles?.includes('TENANT_ADMIN')),
+    queryFn: () => analyticsService.getFraudStatistics(targetShopId!, startDate, endDate),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep cached for 10 minutes after becoming inactive
+    retry: 1
+  })
+}
+
+export const useInventorySummary = (shopId?: string) => {
+  const { isAuthenticated, user } = useAuth()
+
+  const { data: shops } = useActiveShops()
+  const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
+
+  return useQuery({
+    queryKey: ['inventory', 'summary', targetShopId],
+    queryFn: () => inventoryService.getInventorySummary(targetShopId!),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep cached for 10 minutes after becoming inactive
+    retry: 1
+  })
+}
+
+export const useExpenseSummary = (shopId?: string, period: TimePeriod = 'month') => {
+  const { isAuthenticated, user } = useAuth()
+  const { startDate, endDate } = getDateRange(period)
+
+  const { data: shops } = useActiveShops()
+  const targetShopId = shopId || (shops && shops.length > 0 ? shops[0].id : null)
+
+  return useQuery({
+    queryKey: ['expenses', 'summary', targetShopId, period],
+    queryFn: () => expenseService.getExpenseSummary(targetShopId!, startDate, endDate),
+    enabled: !!(isAuthenticated && targetShopId && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'ACCOUNTANT'].includes(r.name))),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
   })
 }
@@ -146,28 +196,82 @@ export const useAlerts = () => {
         }
       ])
     },
-    enabled: isAuthenticated && (user?.roles?.includes('MANAGER') || user?.roles?.includes('OWNER') || user?.roles?.includes('SHOP_MANAGER') || user?.roles?.includes('TENANT_ADMIN')),
+    enabled: !!(isAuthenticated && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 1
   })
 }
 
+// Hook to get performance data for all shops
+export const useAllShopsPerformance = (period: TimePeriod = 'month') => {
+  const { isAuthenticated, user } = useAuth()
+  const { data: shops } = useActiveShops()
+  const { startDate, endDate } = getDateRange(period)
+
+  return useQuery({
+    queryKey: ['analytics', 'all-shops-performance', period],
+    queryFn: async () => {
+      if (!shops || shops.length === 0) return []
+
+      // Fetch analytics for each shop in parallel
+      const performancePromises = shops.map(async (shop) => {
+        try {
+          const [salesSummary, revenueAnalytics] = await Promise.all([
+            analyticsService.getSalesSummary(shop.id, startDate, endDate),
+            analyticsService.getRevenueAnalytics(shop.id, startDate, endDate)
+          ])
+
+          return {
+            shopId: shop.id,
+            shopName: shop.name,
+            revenue: salesSummary.totalRevenue,
+            transactions: salesSummary.totalTransactions,
+            averageTransaction: salesSummary.averageTransactionValue,
+            growthRate: revenueAnalytics.growthRate,
+            status: shop.status
+          }
+        } catch (error) {
+          console.error(`Failed to fetch performance for shop ${shop.id}:`, error)
+          return {
+            shopId: shop.id,
+            shopName: shop.name,
+            revenue: 0,
+            transactions: 0,
+            averageTransaction: 0,
+            growthRate: 0,
+            status: shop.status
+          }
+        }
+      })
+
+      return Promise.all(performancePromises)
+    },
+    enabled: !!(isAuthenticated && shops && shops.length > 0 && user?.roles && user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    retry: 1
+  })
+}
+
 // Combined dashboard data hook for easy consumption
-export const useDashboardData = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+export const useDashboardData = (period: TimePeriod = 'month', shopId?: string) => {
   const { user } = useAuth()
   const shops = useActiveShops()
-  const salesSummary = useSalesSummary(undefined, period)
-  const investmentROI = useInvestmentROI(undefined, period)
-  const revenueAnalytics = useRevenueAnalytics(undefined, period)
-  const fraudStatistics = useFraudStatistics(undefined, period)
+  const salesSummary = useSalesSummary(shopId, period)
+  const investmentROI = useInvestmentROI(shopId, period)
+  const revenueAnalytics = useRevenueAnalytics(shopId, period)
+  const fraudStatistics = useFraudStatistics(shopId, period)
+  const inventorySummary = useInventorySummary(shopId)
+  const expenseSummary = useExpenseSummary(shopId, period)
 
   const isLoading = shops.isLoading || salesSummary.isLoading ||
                    investmentROI.isLoading || revenueAnalytics.isLoading ||
-                   fraudStatistics.isLoading
+                   fraudStatistics.isLoading || inventorySummary.isLoading ||
+                   expenseSummary.isLoading
 
   const hasError = shops.error || salesSummary.error ||
                    investmentROI.error || revenueAnalytics.error ||
-                   fraudStatistics.error
+                   fraudStatistics.error || inventorySummary.error ||
+                   expenseSummary.error
 
   return {
     user,
@@ -176,6 +280,8 @@ export const useDashboardData = (period: 'today' | 'week' | 'month' | 'year' = '
     investmentROI: investmentROI.data,
     revenueAnalytics: revenueAnalytics.data,
     fraudStatistics: fraudStatistics.data,
+    inventorySummary: inventorySummary.data,
+    expenseSummary: expenseSummary.data,
     isLoading,
     hasError,
     refetch: () => {
@@ -184,6 +290,8 @@ export const useDashboardData = (period: 'today' | 'week' | 'month' | 'year' = '
       investmentROI.refetch()
       revenueAnalytics.refetch()
       fraudStatistics.refetch()
+      inventorySummary.refetch()
+      expenseSummary.refetch()
     }
   }
 }

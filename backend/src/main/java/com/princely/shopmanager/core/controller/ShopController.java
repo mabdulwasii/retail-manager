@@ -1,10 +1,33 @@
 package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
+import com.princely.shopmanager.core.dto.UserResponse;
 import com.princely.shopmanager.core.service.ShopService;
+import com.princely.shopmanager.core.service.UserService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,15 +39,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * REST Controller for shop management operations.
@@ -35,11 +50,8 @@ import java.util.List;
  * - Status management and business rule enforcement
  * - Pagination support for listing operations
  *
- * All endpoints are secured and require appropriate authentication and authorization.
- * Operations respect tenant boundaries and include comprehensive audit logging.
- *
- * @author Shop Manager Development Team
- * @version 1.0
+ * Uses granular permission-based authorization instead of role-based.
+ * See docs/PERMISSION_MATRIX.md for complete permission matrix.
  */
 @RestController
 @RequestMapping("/api/shops")
@@ -52,12 +64,13 @@ public class ShopController {
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final ShopService shopService;
+    private final UserService userService;
 
     /**
      * Creates a new shop in the system.
      *
      * This endpoint allows authorized users to create new shops with proper validation
-     * and automatic tenant ID generation. Only users with SYSTEM_ADMIN or SHOP_OWNER
+     * and automatic tenant ID generation. Only users with SYSTEM_ADMIN or OWNER
      * roles can create new shops.
      *
      * @param request Shop creation request with validation
@@ -65,7 +78,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Create a new shop",
-        description = "Creates a new shop with automatic tenant ID generation. Requires SYSTEM_ADMIN or SHOP_OWNER role.",
+        description = "Creates a new shop with automatic tenant ID generation. Requires SYSTEM_ADMIN or OWNER role.",
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Shop creation details",
             required = true,
@@ -89,11 +102,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SYSTEM_ADMIN or SHOP_OWNER role"
+            description = "Insufficient permissions - requires SYSTEM_ADMIN or OWNER role"
         )
     })
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_CREATE)")
     public ResponseEntity<ShopResponse> createShop(
         @Valid @RequestBody ShopCreateRequest request
     ) {
@@ -132,7 +145,7 @@ public class ShopController {
         )
     })
     @GetMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER') or hasRole('SHOP_EMPLOYEE')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
     public ResponseEntity<ShopResponse> getShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -143,18 +156,17 @@ public class ShopController {
     }
 
     /**
-     * Retrieves a paginated list of shops.
+     * Retrieves a paginated list of shops for the current tenant.
      *
-     * Returns shops accessible to the current user:
-     * - System admins can see all shops
-     * - Tenant users can only see shops within their tenant
+     * Returns only shops within the authenticated user's tenant.
+     * Tenant isolation is automatically enforced at the service layer.
      *
      * @param pageable Pagination parameters
-     * @return Paginated list of shops
+     * @return Paginated list of shops in the current tenant
      */
     @Operation(
         summary = "Get shops with pagination",
-        description = "Retrieves a paginated list of shops. System admins see all shops, tenant users see only their tenant's shops."
+        description = "Retrieves a paginated list of shops for the current tenant. Tenant isolation is enforced automatically."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -168,7 +180,7 @@ public class ShopController {
         )
     })
     @GetMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST)")
     public ResponseEntity<Page<ShopResponse>> getShops(
         @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
         @Parameter(description = "Pagination parameters (page, size, sort)")
@@ -180,16 +192,57 @@ public class ShopController {
     }
 
     /**
+     * Retrieves ALL shops across ALL tenants (System Admin only).
+     *
+     * This endpoint bypasses tenant isolation and returns all shops in the system.
+     * Only accessible to users with SYSTEM_ADMIN role.
+     *
+     * @param pageable Pagination parameters
+     * @return Paginated list of all shops across all tenants
+     */
+    @Operation(
+        summary = "Get all shops in the system (System Admin only)",
+        description = "Retrieves all shops across all tenants. Only accessible to system administrators."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "All shops retrieved successfully",
+            content = @Content(schema = @Schema(implementation = Page.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires SYSTEM_ADMIN role"
+        )
+    })
+    @GetMapping("/all")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_LIST_ALL)")
+    public ResponseEntity<Page<ShopResponse>> getAllShops(
+        @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "name")
+        @Parameter(description = "Pagination parameters (page, size, sort)")
+        Pageable pageable
+    ) {
+        log.debug("System admin retrieving all shops with pagination: {}", pageable);
+        Page<ShopResponse> response = shopService.getAllShopsSystemAdmin(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Retrieves all active shops for the current tenant.
      *
      * This endpoint is optimized for dropdown lists and quick selections.
-     * Returns only shops with ACTIVE status.
+     * Returns only shops with ACTIVE status. Available to all authenticated users
+     * within their tenant due to automatic tenant isolation.
      *
      * @return List of active shops
      */
     @Operation(
         summary = "Get active shops",
-        description = "Retrieves all active shops for the current tenant. Useful for dropdown lists and quick selections."
+        description = "Retrieves all active shops for the current tenant. Useful for dropdown lists and quick selections. Tenant isolation is enforced automatically."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -203,7 +256,6 @@ public class ShopController {
         )
     })
     @GetMapping("/active")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('TENANT_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER') or hasRole('CASHIER') or hasRole('SHOP_EMPLOYEE')")
     public ResponseEntity<List<ShopResponse>> getActiveShops() {
         log.debug("Retrieving active shops");
         List<ShopResponse> response = shopService.getActiveShops();
@@ -222,7 +274,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Update shop information",
-        description = "Updates shop information with partial update support. Only non-null fields are updated. Requires SHOP_OWNER or SHOP_MANAGER role."
+        description = "Updates shop information with partial update support. Only non-null fields are updated. Requires OWNER or MANAGER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -246,17 +298,55 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER or SHOP_MANAGER role"
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
         )
     })
     @PutMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER') or hasRole('SHOP_MANAGER')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> updateShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
         @Valid @RequestBody ShopUpdateRequest request
     ) {
         log.info("Updating shop: {}", shopId);
+        ShopResponse response = shopService.updateShop(shopId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Partially update shop",
+        description = "Partially update shop information (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Shop updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PatchMapping("/{shopId}")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    public ResponseEntity<ShopResponse> patchShop(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody ShopUpdateRequest request
+    ) {
+        log.info("Patching shop: {}", shopId);
+        // Reuse the same update logic - current implementation already does partial updates
         ShopResponse response = shopService.updateShop(shopId, request);
         return ResponseEntity.ok(response);
     }
@@ -273,7 +363,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Change shop status",
-        description = "Changes the status of a shop with validation of status transitions. Requires SHOP_OWNER role."
+        description = "Changes the status of a shop with validation of status transitions. Requires OWNER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -297,11 +387,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER role"
+            description = "Insufficient permissions - requires OWNER role"
         )
     })
     @PatchMapping("/{shopId}/status")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
     public ResponseEntity<ShopResponse> changeShopStatus(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
@@ -324,7 +414,7 @@ public class ShopController {
      */
     @Operation(
         summary = "Delete shop (soft delete)",
-        description = "Soft deletes a shop by setting status to CLOSED. Preserves historical data. Requires SHOP_OWNER role."
+        description = "Soft deletes a shop by setting status to CLOSED. Preserves historical data. Requires OWNER role."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -342,11 +432,11 @@ public class ShopController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Insufficient permissions - requires SHOP_OWNER role"
+            description = "Insufficient permissions - requires OWNER role"
         )
     })
     @DeleteMapping("/{shopId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SHOP_OWNER')")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_DELETE)")
     public ResponseEntity<Void> deleteShop(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId
@@ -355,4 +445,195 @@ public class ShopController {
         shopService.deleteShop(shopId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Retrieves the configuration settings for a specific shop.
+     *
+     * Configuration includes business settings like currency, tax rates,
+     * feature toggles, and discount limits.
+     *
+     * @param shopId Shop ID
+     * @return Shop configuration settings
+     */
+    @Operation(
+        summary = "Get shop configuration",
+        description = "Retrieves the business configuration settings for a shop including currency, tax rates, and feature toggles."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration retrieved successfully",
+            content = @Content(schema = @Schema(implementation = com.princely.shopmanager.core.dto.ShopConfigurationResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        )
+    })
+    @GetMapping("/{shopId}/configuration")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_READ)")
+    public ResponseEntity<com.princely.shopmanager.core.dto.ShopConfigurationResponse> getConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId
+    ) {
+        log.debug("Retrieving configuration for shop: {}", shopId);
+        ShopResponse shopResponse = shopService.getShop(shopId);
+        return ResponseEntity.ok(shopResponse.getConfiguration());
+    }
+
+    /**
+     * Updates the configuration settings for a specific shop.
+     *
+     * Supports partial updates - only provided fields are updated.
+     *
+     * @param shopId Shop ID
+     * @param request Configuration settings to update
+     * @return Updated shop with new configuration
+     */
+    @Operation(
+        summary = "Update shop configuration",
+        description = "Updates business configuration settings for a shop. Supports partial updates - only provided fields are updated."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid configuration data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PutMapping("/{shopId}/configuration")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    public ResponseEntity<ShopResponse> updateConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody com.princely.shopmanager.core.dto.ShopConfigurationRequest request
+    ) {
+        log.info("Updating configuration for shop: {}", shopId);
+
+        // Use ShopUpdateRequest to update configuration via existing service method
+        ShopUpdateRequest updateRequest = ShopUpdateRequest.builder()
+            .configuration(request)
+            .build();
+
+        ShopResponse response = shopService.updateShop(shopId, updateRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Partially update shop configuration",
+        description = "Partially updates business configuration settings for a shop (PATCH). All fields are optional. Preferred over PUT for partial updates."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated successfully",
+            content = @Content(schema = @Schema(implementation = ShopResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid configuration data",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires OWNER or MANAGER role"
+        )
+    })
+    @PatchMapping("/{shopId}/configuration")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SHOP_UPDATE)")
+    public ResponseEntity<ShopResponse> patchConfiguration(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Valid @RequestBody com.princely.shopmanager.core.dto.ShopConfigurationRequest request
+    ) {
+        log.info("Patching configuration for shop: {}", shopId);
+
+        // Reuse the same update logic - current implementation already does partial updates
+        ShopUpdateRequest updateRequest = ShopUpdateRequest.builder()
+            .configuration(request)
+            .build();
+
+        ShopResponse response = shopService.updateShop(shopId, updateRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all users in a shop.
+     * Accessible by System Admin, Tenant Admin, Owner, and Manager.
+     *
+     * @param shopId Shop ID
+     * @param status Optional status filter
+     * @return List of users in the shop
+     */
+    @Operation(
+        summary = "Get shop users",
+        description = "Retrieves all users in a shop. Accessible by System Admin, Tenant Admin, Owner, and Manager. Optionally filter by status."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Users retrieved successfully",
+            content = @Content(schema = @Schema(implementation = UserResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions - requires USER_LIST permission"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Shop not found"
+        )
+    })
+    @GetMapping("/{shopId}/users")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_LIST)")
+    public ResponseEntity<List<UserResponse>> getShopUsers(
+        @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String shopId,
+        @Parameter(description = "Optional status filter (ACTIVE, INACTIVE, PENDING)")
+        @RequestParam(required = false) User.UserStatus status
+    ) {
+        log.debug("Retrieving users for shop {} with status filter: {}", shopId, status);
+        List<User> users = userService.getUsersByShop(shopId, status);
+        List<UserResponse> response = users.stream()
+            .map(UserResponse::fromEntity)
+            .toList();
+        return ResponseEntity.ok(response);
+    }
+
 }

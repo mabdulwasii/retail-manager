@@ -1,9 +1,7 @@
 package com.princely.shopmanager.shared.domain;
 
 import com.princely.shopmanager.shared.listener.EntityAuditListener;
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
@@ -36,6 +34,19 @@ public abstract class BaseEntity {
     @Column(name = "updated_by")
     private String updatedBy;
 
-    @Column(name = "version")
+    @Version
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
+
+    /**
+     * JPA lifecycle callback to ensure version is never null.
+     * This prevents "uninitialized version value" errors for detached entities.
+     */
+    @PrePersist
+    @PreUpdate
+    protected void initializeVersion() {
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
 }

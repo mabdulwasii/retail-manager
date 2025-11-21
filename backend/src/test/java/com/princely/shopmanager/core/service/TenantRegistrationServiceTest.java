@@ -8,6 +8,7 @@ import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.dto.registration.*;
 import com.princely.shopmanager.core.event.TenantActivationNotificationEvent;
 import com.princely.shopmanager.core.event.TenantRegistrationNotificationEvent;
+import com.princely.shopmanager.core.exception.TenantRegistrationException;
 import com.princely.shopmanager.core.repository.RoleRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;

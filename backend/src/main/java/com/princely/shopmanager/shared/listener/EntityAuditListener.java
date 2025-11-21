@@ -2,6 +2,8 @@ package com.princely.shopmanager.shared.listener;
 
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.domain.Tenant;
+import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.domain.BaseEntity;
@@ -74,8 +76,17 @@ public class EntityAuditListener {
     }
 
     private boolean shouldAudit(Object entity) {
-        // Audit all BaseEntity instances except AuditLog itself to avoid infinite loops
-        return entity instanceof BaseEntity && !(entity instanceof AuditLog);
+        // Audit all BaseEntity instances except:
+        // - AuditLog itself (to avoid infinite loops)
+        // - AnalyticsCache (to avoid lazy-loading issues with detached entities)
+        // - Tenant, User, Shop (to avoid circular reference serialization issues)
+        //   These entities have explicit service-level auditing in their respective services
+        return entity instanceof BaseEntity
+            && !(entity instanceof AuditLog)
+            && !(entity instanceof Tenant)
+            && !(entity instanceof User)
+            && !(entity instanceof Shop)
+            && !entity.getClass().getSimpleName().equals("AnalyticsCache");
     }
 
     private void logEntityEvent(Object entity, AuditLog.ActionType actionType,

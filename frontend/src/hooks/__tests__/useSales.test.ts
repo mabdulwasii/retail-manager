@@ -88,7 +88,7 @@ describe('useSales', () => {
       })
 
       expect(fetch).toHaveBeenCalledWith(
-        '/api/v1/products/search?q=test',
+        '/api/products/search?q=test',
         expect.objectContaining({
           headers: expect.objectContaining({
             'Authorization': 'Bearer mock-token',
@@ -378,7 +378,7 @@ describe('useSales', () => {
       })
 
       expect(fetch).toHaveBeenCalledWith(
-        '/api/v1/sales?startDate=2024-01-01&endDate=2024-01-31&status=COMPLETED',
+        '/api/sales?startDate=2024-01-01&endDate=2024-01-31&status=COMPLETED',
         expect.any(Object)
       )
     })

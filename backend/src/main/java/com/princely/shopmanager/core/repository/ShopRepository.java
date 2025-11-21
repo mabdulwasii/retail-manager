@@ -34,7 +34,6 @@ public interface ShopRepository extends JpaRepository<Shop, String> {
 
     // Paginated queries for ShopService
     Page<Shop> findByTenant_Id(String tenantId, Pageable pageable);
-
     List<Shop> findByTenant_IdAndStatus(String tenantId, Shop.ShopStatus status);
 
     // Optimized queries with fetch joins to avoid N+1 problems

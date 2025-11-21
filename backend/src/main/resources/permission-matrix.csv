@@ -1,0 +1,100 @@
+Resource,Permission,Description,SYSTEM_ADMIN,TENANT_ADMIN,OWNER,MANAGER,EMPLOYEE,INVESTOR,Permission_Constant
+SYSTEM,SYSTEM_ADMIN,System-level administrative access,✓,,,,,,SYSTEM_ADMIN
+TENANT,TENANT_CREATE,Create new tenants,✓,,,,,, TENANT_CREATE
+TENANT,TENANT_READ,View tenant details,✓,✓,✓,,,, TENANT_READ
+TENANT,TENANT_LIST,List all tenants,✓,,,,,, TENANT_LIST
+TENANT,TENANT_UPDATE,Update tenant information,✓,,,,,, TENANT_UPDATE
+TENANT,TENANT_DELETE,Delete tenants,✓,,,,,, TENANT_DELETE
+TENANT,TENANT_CONFIG_READ,View tenant configuration settings,✓,✓,✓,✓,,,TENANT_CONFIG_READ
+TENANT,TENANT_CONFIG_CREATE,Create tenant configuration settings,✓,✓,✓,,,,TENANT_CONFIG_CREATE
+TENANT,TENANT_CONFIG_UPDATE,Update tenant configuration settings,✓,✓,✓,,,,TENANT_CONFIG_UPDATE
+TENANT,TENANT_CONFIG_DELETE,Delete tenant configuration settings,✓,✓,,,,,TENANT_CONFIG_DELETE
+SHOP,SHOP_CREATE,Create new shops,✓,✓,✓,,,, SHOP_CREATE
+SHOP,SHOP_READ,View shop details,✓,✓,✓,✓,,,SHOP_READ
+SHOP,SHOP_LIST,List shops within context,✓,✓,✓,✓,,,SHOP_LIST
+SHOP,SHOP_LIST_ALL,List all shops across tenant,✓,✓,✓,,,, SHOP_LIST_ALL
+SHOP,SHOP_UPDATE,Update shop configuration,✓,✓,✓,,,, SHOP_UPDATE
+SHOP,SHOP_DELETE,Delete shops,✓,✓,✓,,,, SHOP_DELETE
+USER,USER_CREATE,Create new users,✓,✓,✓,✓,,,USER_CREATE
+USER,USER_READ,View user details,✓,✓,✓,✓,,,USER_READ
+USER,USER_LIST,"List users (all scopes: system, tenant, shop)",✓,✓,✓,✓,,,USER_LIST
+USER,USER_LIST_ALL,List all users across all tenants in the system,✓,,,,,, USER_LIST_ALL
+USER,USER_UPDATE,Update user information,✓,✓,✓,✓,,,USER_UPDATE
+USER,USER_TRANSFER_SHOP,Transfer user to different shop within tenant,✓,✓,✓,,,,USER_TRANSFER_SHOP
+USER,USER_DELETE,Delete users,✓,✓,✓,,,, USER_DELETE
+ROLE,ROLE_CREATE,Create custom roles,✓,✓,✓,,,, ROLE_CREATE
+ROLE,ROLE_READ,View role details,✓,✓,✓,✓,,,ROLE_READ
+ROLE,ROLE_LIST,List available roles,✓,✓,✓,✓,,,ROLE_LIST
+ROLE,ROLE_UPDATE,Update role permissions,✓,✓,✓,,,, ROLE_UPDATE
+ROLE,ROLE_DELETE,Delete custom roles,✓,✓,✓,,,, ROLE_DELETE
+ROLE,ROLE_ASSIGN,Assign roles to users,✓,✓,✓,,,, ROLE_ASSIGN
+ROLE,ROLE_PERMISSION_ADD,Add permissions to roles,✓,✓,✓,,,, ROLE_PERMISSION_ADD
+ROLE,ROLE_PERMISSION_REMOVE,Remove permissions from roles,✓,✓,✓,,,, ROLE_PERMISSION_REMOVE
+PERMISSION,PERMISSION_READ,View permission details,✓,✓,✓,,,, PERMISSION_READ
+PERMISSION,PERMISSION_LIST,List all permissions,✓,✓,✓,,,, PERMISSION_LIST
+PRODUCT,PRODUCT_CREATE,Create new products,✓,✓,✓,✓,,,PRODUCT_CREATE
+PRODUCT,PRODUCT_READ,View product details,✓,✓,✓,✓,✓,,PRODUCT_READ
+PRODUCT,PRODUCT_LIST,List and search products,✓,✓,✓,✓,✓,,PRODUCT_LIST
+PRODUCT,PRODUCT_UPDATE,Edit product information,✓,✓,✓,✓,,,PRODUCT_UPDATE
+PRODUCT,PRODUCT_DELETE,Delete products,✓,✓,✓,,,, PRODUCT_DELETE
+CATEGORY,CATEGORY_CREATE,Create product categories,✓,✓,✓,✓,,,CATEGORY_CREATE
+CATEGORY,CATEGORY_READ,View category details,✓,✓,✓,✓,✓,,CATEGORY_READ
+CATEGORY,CATEGORY_LIST,List and search categories,✓,✓,✓,✓,✓,,CATEGORY_LIST
+CATEGORY,CATEGORY_UPDATE,Update category information,✓,✓,✓,✓,,,CATEGORY_UPDATE
+CATEGORY,CATEGORY_DELETE,Delete categories,✓,✓,✓,,,, CATEGORY_DELETE
+INVENTORY,INVENTORY_CREATE,Add stock to inventory,✓,✓,✓,✓,✓,,INVENTORY_CREATE
+INVENTORY,INVENTORY_READ,View inventory details,✓,✓,✓,✓,✓,,INVENTORY_READ
+INVENTORY,INVENTORY_LIST,List and search inventory,✓,✓,✓,✓,✓,,INVENTORY_LIST
+INVENTORY,INVENTORY_UPDATE,Update inventory records,✓,✓,✓,✓,,,INVENTORY_UPDATE
+INVENTORY,INVENTORY_DELETE,Remove inventory records,✓,✓,✓,✓,,,INVENTORY_DELETE
+INVENTORY,INVENTORY_ADJUST,Adjust inventory stock levels,✓,✓,✓,✓,,,INVENTORY_ADJUST
+INVENTORY,INVENTORY_RESERVE,Reserve inventory stock,✓,✓,✓,✓,,,INVENTORY_RESERVE
+INVENTORY,INVENTORY_HISTORY,View inventory history,✓,✓,✓,✓,✓,,INVENTORY_HISTORY
+INVENTORY,INVENTORY_HISTORY_VIEW,View inventory history and movements,✓,✓,✓,✓,✓,,INVENTORY_HISTORY_VIEW
+INVENTORY,INVENTORY_FORECAST,View inventory forecasts,✓,✓,✓,✓,,,INVENTORY_FORECAST
+SALES,SALES_CREATE,Process sales transactions,✓,✓,✓,✓,✓,,SALES_CREATE
+SALES,SALES_READ,View sale transaction details,✓,✓,✓,✓,✓,,SALES_READ
+SALES,SALES_LIST,List and search sales,✓,✓,✓,✓,✓,,SALES_LIST
+SALES,SALES_UPDATE,Update sales information,✓,✓,✓,✓,,,SALES_UPDATE
+SALES,SALES_DELETE,Delete sales transactions,✓,✓,✓,,,, SALES_DELETE
+SALES,SALES_VOID,Void sales transactions,✓,✓,✓,✓,,,SALES_VOID
+RECEIPT,RECEIPT_CREATE,Create receipts,✓,✓,✓,✓,✓,,RECEIPT_CREATE
+RECEIPT,RECEIPT_READ,View receipt details,✓,✓,✓,✓,✓,,RECEIPT_READ
+RECEIPT,RECEIPT_LIST,List receipts,✓,✓,✓,✓,✓,,RECEIPT_LIST
+RECEIPT,RECEIPT_SEND,Send receipts to customers,✓,✓,✓,✓,✓,,RECEIPT_SEND
+RECEIPT,RECEIPT_EMAIL,Mark receipts as emailed,✓,✓,✓,✓,✓,,RECEIPT_EMAIL
+EXPENSE,EXPENSE_CREATE,Create expense records,✓,✓,✓,✓,✓,,EXPENSE_CREATE
+EXPENSE,EXPENSE_READ,View expense details,✓,✓,✓,✓,✓,,EXPENSE_READ
+EXPENSE,EXPENSE_LIST,List and search expenses,✓,✓,✓,✓,✓,,EXPENSE_LIST
+EXPENSE,EXPENSE_UPDATE,Update expense information,✓,✓,✓,✓,,,EXPENSE_UPDATE
+EXPENSE,EXPENSE_DELETE,Delete expense records,✓,✓,✓,,,, EXPENSE_DELETE
+EXPENSE,EXPENSE_APPROVE,Approve or reject expenses,✓,✓,✓,✓,,,EXPENSE_APPROVE
+EXPENSE_CATEGORY,EXPENSE_CATEGORY_CREATE,Create expense categories,✓,✓,✓,✓,,,EXPENSE_CATEGORY_CREATE
+EXPENSE_CATEGORY,EXPENSE_CATEGORY_READ,View expense category details,✓,✓,✓,✓,✓,,EXPENSE_CATEGORY_READ
+EXPENSE_CATEGORY,EXPENSE_CATEGORY_LIST,List expense categories,✓,✓,✓,✓,✓,,EXPENSE_CATEGORY_LIST
+EXPENSE_CATEGORY,EXPENSE_CATEGORY_UPDATE,Update expense categories,✓,✓,✓,✓,,,EXPENSE_CATEGORY_UPDATE
+EXPENSE_CATEGORY,EXPENSE_CATEGORY_DELETE,Delete expense categories,✓,✓,✓,,,, EXPENSE_CATEGORY_DELETE
+INVESTMENT,INVESTMENT_CREATE,Create investment rounds,✓,✓,✓,,,,INVESTMENT_CREATE
+INVESTMENT,INVESTMENT_READ,View investment details,✓,✓,✓,✓,,✓,INVESTMENT_READ
+INVESTMENT,INVESTMENT_LIST,List and search investments,✓,✓,✓,✓,,✓,INVESTMENT_LIST
+INVESTMENT,INVESTMENT_UPDATE,Update investment rounds,✓,✓,✓,,,,INVESTMENT_UPDATE
+INVESTMENT,INVESTMENT_DELETE,Delete investment records,✓,✓,✓,,,, INVESTMENT_DELETE
+INVESTMENT,INVESTMENT_CLOSE,Close investments,✓,✓,✓,,,,INVESTMENT_CLOSE
+INVESTMENT,INVESTMENT_PROFIT_DISTRIBUTE,Distribute investment profits,✓,✓,✓,,,,INVESTMENT_PROFIT_DISTRIBUTE
+RETURN,RETURN_CREATE,Create product return records,✓,✓,✓,✓,✓,,RETURN_CREATE
+RETURN,RETURN_READ,View return details,✓,✓,✓,✓,✓,,RETURN_READ
+RETURN,RETURN_LIST,List product returns,✓,✓,✓,✓,✓,,RETURN_LIST
+RETURN,RETURN_UPDATE,Update return information,✓,✓,✓,✓,,,RETURN_UPDATE
+RETURN,RETURN_DELETE,Delete return records,✓,✓,✓,,,, RETURN_DELETE
+RETURN,RETURN_APPROVE,Approve product returns,✓,✓,✓,✓,,,RETURN_APPROVE
+AUDIT_LOG,AUDIT_LOG_VIEW_SHOP,View shop-level audit logs,✓,✓,✓,✓,,,AUDIT_LOG_VIEW_SHOP
+AUDIT_LOG,AUDIT_LOG_VIEW_TENANT,View tenant-level audit logs,✓,✓,✓,,,, AUDIT_LOG_VIEW_TENANT
+ANALYTICS,ANALYTICS_SALES_VIEW,View sales and revenue analytics,✓,✓,✓,✓,,,ANALYTICS_SALES_VIEW
+ANALYTICS,ANALYTICS_INVESTMENT_VIEW,View investment ROI analytics,✓,✓,✓,✓,,✓,ANALYTICS_INVESTMENT_VIEW
+ANALYTICS,ANALYTICS_MANAGE,Manage analytics cache and exports,✓,✓,✓,,,,ANALYTICS_MANAGE
+FRAUD,FRAUD_VIEW,View fraud alerts,✓,✓,✓,✓,,,FRAUD_VIEW
+FRAUD,FRAUD_MANAGE,Manage fraud detection,✓,✓,✓,,,, FRAUD_MANAGE
+FRAUD,FRAUD_LIST,List fraud alerts and assessments,✓,✓,✓,✓,,,FRAUD_LIST
+FRAUD,FRAUD_INVESTIGATE,Investigate fraud alerts,✓,✓,✓,✓,,,FRAUD_INVESTIGATE
+FRAUD,FRAUD_RESOLVE,Resolve fraud alerts and assessments,✓,✓,✓,,,,FRAUD_RESOLVE
+FRAUD,FRAUD_DETECT,Manage fraud detection rules,✓,✓,✓,,,,FRAUD_DETECT

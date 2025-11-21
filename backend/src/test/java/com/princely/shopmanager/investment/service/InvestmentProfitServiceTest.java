@@ -6,6 +6,7 @@ import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.investment.config.ProfitCalculationConfig;
 import com.princely.shopmanager.investment.domain.Investment;
+import com.princely.shopmanager.investment.domain.InvestmentRound;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
@@ -72,15 +73,22 @@ class InvestmentProfitServiceTest {
         testProduct.setName("Test Product");
         testProduct.setCategory(testCategory);
 
+        InvestmentRound testRound = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TEST-2025-Q1-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .build();
+
         testInvestment = Investment.builder()
             .id("investment-1")
             .investmentNumber("INV-001")
             .investor(testInvestor)
             .shop(testShop)
-            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .investmentRound(testRound)
             .amount(BigDecimal.valueOf(10000))
-            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
             .status(Investment.InvestmentStatus.ACTIVE)
             .totalProfitEarned(BigDecimal.ZERO)
             .build();
@@ -97,6 +105,10 @@ class InvestmentProfitServiceTest {
         LocalDateTime periodStart = LocalDateTime.now().minusDays(30);
         LocalDateTime periodEnd = LocalDateTime.now();
         BigDecimal totalRevenue = BigDecimal.valueOf(50000);
+
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
 
         when(distributionRepository.existsByInvestmentAndPeriodStartAndPeriodEnd(testInvestment, periodStart, periodEnd))
             .thenReturn(false);
@@ -128,18 +140,21 @@ class InvestmentProfitServiceTest {
 
     @Test
     void testCalculateInvestmentDistribution_ProductSpecificInvestment() {
-        // Given
-        testInvestment.setInvestmentType(Investment.InvestmentType.PRODUCT_SPECIFIC);
-        testInvestment.getProducts().add(testProduct);
+        // Given - Product-specific now uses shop-wide revenue (see InvestmentProfitService)
+        testInvestment.getInvestmentRound().setInvestmentType(Investment.InvestmentType.PRODUCT_SPECIFIC);
 
         LocalDateTime periodStart = LocalDateTime.now().minusDays(30);
         LocalDateTime periodEnd = LocalDateTime.now();
-        BigDecimal productRevenue = BigDecimal.valueOf(20000);
+        BigDecimal shopRevenue = BigDecimal.valueOf(20000);
+
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
 
         when(distributionRepository.existsByInvestmentAndPeriodStartAndPeriodEnd(testInvestment, periodStart, periodEnd))
             .thenReturn(false);
-        when(salesTransactionRepository.getTotalRevenueByProductsAndPeriod(anyList(), eq(periodStart), eq(periodEnd)))
-            .thenReturn(Optional.of(productRevenue));
+        when(salesTransactionRepository.getTotalRevenueByShopAndPeriod(eq(testShop.getId()), eq(periodStart), eq(periodEnd)))
+            .thenReturn(Optional.of(shopRevenue));
         when(distributionRepository.save(any(InvestorDistribution.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(investmentRepository.save(any(Investment.class)))
@@ -153,7 +168,7 @@ class InvestmentProfitServiceTest {
         assertTrue(result.isPresent());
         InvestorDistribution distribution = result.get();
 
-        assertEquals(productRevenue, distribution.getTotalSalesRevenue());
+        assertEquals(shopRevenue, distribution.getTotalSalesRevenue());
         assertEquals(0, BigDecimal.valueOf(1800).compareTo(distribution.getTotalProfit())); // Net profit: (20000 - 14000) * 0.30 = 1800
         assertEquals(0, BigDecimal.valueOf(20).compareTo(distribution.getInvestorSharePercentage()));
         assertEquals(0, BigDecimal.valueOf(360).compareTo(distribution.getInvestorProfitAmount())); // 20% of 1800
@@ -274,6 +289,10 @@ class InvestmentProfitServiceTest {
         // Given
         LocalDateTime periodStart = LocalDateTime.now().minusDays(30);
         LocalDateTime periodEnd = LocalDateTime.now();
+
+        // Mock round aggregation: testInvestment has 10,000, total round is 50,000 = 20%
+        when(investmentRepository.sumAmountByInvestmentRoundId("round-1"))
+            .thenReturn(BigDecimal.valueOf(50000));
 
         when(investmentRepository.findActiveInvestments())
             .thenReturn(List.of(testInvestment));

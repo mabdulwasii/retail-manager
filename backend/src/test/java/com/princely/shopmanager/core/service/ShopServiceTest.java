@@ -10,6 +10,8 @@ import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
+import com.princely.shopmanager.core.statemachine.ShopStatusStateMachine;
+import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +57,9 @@ class ShopServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private TenantSecurityValidator tenantSecurityValidator;
+
     @InjectMocks
     private ShopService shopService;
 
@@ -92,40 +97,47 @@ class ShopServiceTest {
     }
 
     @Test
-    void createShop_ShouldCreateShopWithNewTenant() {
+    void createShop_WithExistingTenant_ShouldCreateShop() {
         // Arrange
-        User mockContactUser = User.builder()
-            .id("user-1")
-            .tenant(testTenant)
-            .email("admin@testshop.com")
-            .username("admin-testshop")
-            .firstName("Admin")
-            .lastName("User")
-            .status(User.UserStatus.ACTIVE)
-            .build();
-
         when(shopRepository.findByName("New Shop")).thenReturn(Optional.empty());
-        when(tenantRepository.existsById(anyString())).thenReturn(false);
-        when(tenantRepository.save(any(Tenant.class))).thenReturn(testTenant);
-        when(userRepository.save(any(User.class))).thenReturn(mockContactUser);
+        when(tenantRepository.findById("tenant-test-shop")).thenReturn(Optional.of(testTenant));
         when(shopRepository.save(any(Shop.class))).thenReturn(testShop);
 
-        // Act
-        ShopResponse result = shopService.createShop(createRequest);
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::requireCurrentTenant).thenReturn("tenant-test-shop");
 
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo("Test Shop");
+            // Act
+            ShopResponse result = shopService.createShop(createRequest);
 
-        ArgumentCaptor<Tenant> tenantCaptor = ArgumentCaptor.forClass(Tenant.class);
-        verify(tenantRepository, times(2)).save(tenantCaptor.capture());
-        List<Tenant> savedTenants = tenantCaptor.getAllValues();
-        assertThat(savedTenants.get(0).getName()).isEqualTo("New Shop Organization");
-        assertThat(savedTenants.get(0).getId()).startsWith("tenant-new-shop");
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getName()).isEqualTo("Test Shop");
 
-        verify(userRepository).save(any(User.class));
-        verify(shopRepository).save(any(Shop.class));
-        verify(auditService).logEntityCreation(eq("Shop"), anyString(), anyString());
+            verify(tenantRepository).findById("tenant-test-shop");
+            verify(tenantRepository, never()).save(any(Tenant.class));
+            verify(userRepository, never()).save(any(User.class));
+            verify(shopRepository).save(any(Shop.class));
+            verify(auditService).logEntityCreation(eq("Shop"), anyString(), anyString());
+        }
+    }
+
+    @Test
+    void createShop_WithNoTenantContext_ShouldThrowException() {
+        // Arrange
+        when(shopRepository.findByName("New Shop")).thenReturn(Optional.empty());
+
+        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
+            mockedTenantContext.when(TenantContext::requireCurrentTenant)
+                .thenThrow(new IllegalStateException("No tenant context available"));
+
+            // Act & Assert
+            assertThatThrownBy(() -> shopService.createShop(createRequest))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No tenant context available");
+
+            verify(tenantRepository, never()).save(any(Tenant.class));
+            verify(shopRepository, never()).save(any(Shop.class));
+        }
     }
 
     @Test
@@ -146,18 +158,16 @@ class ShopServiceTest {
     void getShop_WithValidIdAndAccess_ShouldReturnShop() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doNothing().when(tenantSecurityValidator).validateShopAccess(testShop);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+        // Act
+        ShopResponse result = shopService.getShop("shop-1");
 
-            // Act
-            ShopResponse result = shopService.getShop("shop-1");
-
-            // Assert
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo("shop-1");
-            assertThat(result.getName()).isEqualTo("Test Shop");
-        }
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("shop-1");
+        assertThat(result.getName()).isEqualTo("Test Shop");
+        verify(tenantSecurityValidator).validateShopAccess(testShop);
     }
 
     @Test
@@ -175,15 +185,13 @@ class ShopServiceTest {
     void getShop_WithAccessDenied_ShouldThrowException() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doThrow(new com.princely.shopmanager.shared.exception.TenantAccessDeniedException("Resource belongs to different tenant"))
+            .when(tenantSecurityValidator).validateShopAccess(testShop);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("different-tenant");
-
-            // Act & Assert
-            assertThatThrownBy(() -> shopService.getShop("shop-1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Access denied to shop: shop-1");
-        }
+        // Act & Assert
+        assertThatThrownBy(() -> shopService.getShop("shop-1"))
+            .isInstanceOf(com.princely.shopmanager.shared.exception.TenantAccessDeniedException.class)
+            .hasMessageContaining("Resource belongs to different tenant");
     }
 
     @Test
@@ -193,20 +201,16 @@ class ShopServiceTest {
         Page<Shop> mockPage = new PageImpl<>(List.of(testShop));
         when(shopRepository.findAll(pageable)).thenReturn(mockPage);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn(null);
+        // Act - System admin uses dedicated method
+        Page<ShopResponse> result = shopService.getAllShopsSystemAdmin(pageable);
 
-            // Act
-            Page<ShopResponse> result = shopService.getShops(pageable);
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo("shop-1");
 
-            // Assert
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getId()).isEqualTo("shop-1");
-
-            verify(shopRepository).findAll(pageable);
-            verify(shopRepository, never()).findByTenant_Id(anyString(), any());
-        }
+        verify(shopRepository).findAll(pageable);
+        verify(shopRepository, never()).findByTenant_Id(anyString(), any());
     }
 
     @Test
@@ -217,7 +221,7 @@ class ShopServiceTest {
         when(shopRepository.findByTenant_Id("tenant-test-shop", pageable)).thenReturn(mockPage);
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+            mockedTenantContext.when(TenantContext::requireCurrentTenant).thenReturn("tenant-test-shop");
 
             // Act
             Page<ShopResponse> result = shopService.getShops(pageable);
@@ -280,20 +284,18 @@ class ShopServiceTest {
         updateRequest.setDescription("Updated description");
 
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doNothing().when(tenantSecurityValidator).validateShopAccess(testShop);
         when(shopRepository.save(any(Shop.class))).thenReturn(testShop);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+        // Act
+        ShopResponse result = shopService.updateShop("shop-1", updateRequest);
 
-            // Act
-            ShopResponse result = shopService.updateShop("shop-1", updateRequest);
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("shop-1");
 
-            // Assert
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo("shop-1");
-
-            verify(shopRepository).save(testShop);
-        }
+        verify(tenantSecurityValidator).validateShopAccess(testShop);
+        verify(shopRepository).save(testShop);
     }
 
     @Test
@@ -301,21 +303,19 @@ class ShopServiceTest {
         // Arrange
         testShop.setStatus(Shop.ShopStatus.ACTIVE);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doNothing().when(tenantSecurityValidator).validateShopAccess(testShop);
         when(shopRepository.save(any(Shop.class))).thenReturn(testShop);
         doNothing().when(stateMachine).validateTransition(Shop.ShopStatus.ACTIVE, Shop.ShopStatus.SUSPENDED, "shop-1");
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+        // Act
+        ShopResponse result = shopService.changeShopStatus("shop-1", Shop.ShopStatus.SUSPENDED);
 
-            // Act
-            ShopResponse result = shopService.changeShopStatus("shop-1", Shop.ShopStatus.SUSPENDED);
+        // Assert
+        assertThat(result).isNotNull();
 
-            // Assert
-            assertThat(result).isNotNull();
-
-            verify(shopRepository).save(testShop);
-            verify(auditService).logEntityModification(eq("Shop"), eq("shop-1"), anyString());
-        }
+        verify(tenantSecurityValidator).validateShopAccess(testShop);
+        verify(shopRepository).save(testShop);
+        verify(auditService).logEntityModification(eq("Shop"), eq("shop-1"), anyString());
     }
 
     @Test
@@ -323,58 +323,51 @@ class ShopServiceTest {
         // Arrange
         testShop.setStatus(Shop.ShopStatus.CLOSED);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doNothing().when(tenantSecurityValidator).validateShopAccess(testShop);
         doThrow(new IllegalArgumentException("Cannot change status of closed shop"))
             .when(stateMachine).validateTransition(Shop.ShopStatus.CLOSED, Shop.ShopStatus.ACTIVE, "shop-1");
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+        // Act & Assert
+        assertThatThrownBy(() -> shopService.changeShopStatus("shop-1", Shop.ShopStatus.ACTIVE))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Cannot change status of closed shop");
 
-            // Act & Assert
-            assertThatThrownBy(() -> shopService.changeShopStatus("shop-1", Shop.ShopStatus.ACTIVE))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Cannot change status of closed shop");
-
-            verify(shopRepository, never()).save(any());
-        }
+        verify(shopRepository, never()).save(any());
     }
 
     @Test
     void deleteShop_ShouldSoftDeleteShop() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doNothing().when(tenantSecurityValidator).validateShopAccess(testShop);
         when(shopRepository.save(any(Shop.class))).thenReturn(testShop);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("tenant-test-shop");
+        // Act
+        shopService.deleteShop("shop-1");
 
-            // Act
-            shopService.deleteShop("shop-1");
+        // Assert
+        ArgumentCaptor<Shop> shopCaptor = ArgumentCaptor.forClass(Shop.class);
+        verify(shopRepository).save(shopCaptor.capture());
 
-            // Assert
-            ArgumentCaptor<Shop> shopCaptor = ArgumentCaptor.forClass(Shop.class);
-            verify(shopRepository).save(shopCaptor.capture());
+        Shop savedShop = shopCaptor.getValue();
+        assertThat(savedShop.getStatus()).isEqualTo(Shop.ShopStatus.CLOSED);
 
-            Shop savedShop = shopCaptor.getValue();
-            assertThat(savedShop.getStatus()).isEqualTo(Shop.ShopStatus.CLOSED);
-
-            verify(auditService).logEntityDeletion(eq("Shop"), eq("shop-1"), anyString());
-        }
+        verify(tenantSecurityValidator).validateShopAccess(testShop);
+        verify(auditService).logEntityDeletion(eq("Shop"), eq("shop-1"), anyString());
     }
 
     @Test
     void deleteShop_WithAccessDenied_ShouldThrowException() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        doThrow(new com.princely.shopmanager.shared.exception.TenantAccessDeniedException("Resource belongs to different tenant"))
+            .when(tenantSecurityValidator).validateShopAccess(testShop);
 
-        try (var mockedTenantContext = mockStatic(TenantContext.class)) {
-            mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn("different-tenant");
+        // Act & Assert
+        assertThatThrownBy(() -> shopService.deleteShop("shop-1"))
+            .isInstanceOf(com.princely.shopmanager.shared.exception.TenantAccessDeniedException.class)
+            .hasMessageContaining("Resource belongs to different tenant");
 
-            // Act & Assert
-            assertThatThrownBy(() -> shopService.deleteShop("shop-1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Access denied to shop: shop-1");
-
-            verify(shopRepository, never()).save(any());
-        }
+        verify(shopRepository, never()).save(any());
     }
 }

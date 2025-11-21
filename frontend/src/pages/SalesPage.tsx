@@ -10,11 +10,14 @@ import { PaymentModal } from '@/components/sales/PaymentModal'
 import { SalesHistory } from '@/components/sales/SalesHistory'
 import { useSales } from '@/hooks/useSales'
 import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon } from 'lucide-react'
+import { useAuth } from '@/context/ManualAuthContext'
 
 export const SalesPage: React.FC = () => {
   const {
     cart,
     cartSummary,
+    sales,
+    fetchSales,
     isLoading,
     error,
     addToCart,
@@ -29,15 +32,22 @@ export const SalesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos')
   const [barcodeInput, setBarcodeInput] = useState('')
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [scannerActive, setScannerActive] = useState(false)
+  const { user } = useAuth()
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError()
-      }, 5000)
-      return () => clearTimeout(timer)
+    if (activeTab === 'history') {
+      fetchSales()
     }
+  }, [activeTab, fetchSales])
+
+  useEffect(() => {
+    if (!error) return
+
+    const timer = setTimeout(() => {
+      clearError()
+    }, 5000)
+    
+    return () => clearTimeout(timer)
   }, [error, clearError])
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
@@ -58,15 +68,25 @@ export const SalesPage: React.FC = () => {
 
   const handlePaymentComplete = async (paymentData: any) => {
     const saleData = {
-      items: cart.map(item => ({
+      lineItems: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: item.product.price
+        unitPrice: item.product.price,
+        discount: 0
       })),
       paymentMethod: paymentData.method,
       discountAmount: paymentData.discount || 0,
-      notes: paymentData.notes
+      notes: paymentData.notes,
+      shopId: user?.shopId as string,
+      customerName: paymentData.customerName,
+      customerPhone: paymentData.customerPhone,
+      customerEmail: paymentData.customerEmail,
+      taxAmount: cartSummary.taxAmount,
+      paymentReference: paymentData.paymentReference
     }
+
+    console.log('saleData', saleData);
+    
 
     const sale = await processSale(saleData)
     if (sale) {
@@ -207,7 +227,7 @@ export const SalesPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <SalesHistory />
+        <SalesHistory transactions={sales} />
       )}
 
       {/* Payment Modal */}

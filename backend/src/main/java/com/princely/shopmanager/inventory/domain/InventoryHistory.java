@@ -53,6 +53,10 @@ public class InventoryHistory extends BaseEntity {
     private User performedBy;
 
     @Builder.Default
+    @Column(name = "performed_at", nullable = false)
+    private LocalDateTime performedAt = LocalDateTime.now();
+
+    @Builder.Default
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 

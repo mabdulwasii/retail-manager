@@ -6,14 +6,12 @@ import lombok.*;
 
 /**
  * Entity representing shop customization settings including branding, UI themes, and visual elements.
- *
  * This entity stores all customization preferences for a shop including:
  * - Brand colors and styling
  * - Logo and image assets
  * - Website and contact information
  * - UI theme preferences
  * - Custom styling options
- *
  * Each shop can have one customization configuration that defines their unique brand identity.
  */
 @Entity
@@ -198,6 +196,7 @@ public class ShopCustomization extends BaseEntity {
     /**
      * Theme variant options for the user interface
      */
+    @Getter
     public enum ThemeVariant {
         LIGHT("Light theme with bright background"),
         DARK("Dark theme with dark background"),
@@ -209,14 +208,12 @@ public class ShopCustomization extends BaseEntity {
             this.description = description;
         }
 
-        public String getDescription() {
-            return description;
-        }
     }
 
     /**
      * Font size options for the user interface
      */
+    @Getter
     public enum FontSize {
         SMALL("Small font size"),
         MEDIUM("Medium font size (default)"),
@@ -228,14 +225,12 @@ public class ShopCustomization extends BaseEntity {
             this.description = description;
         }
 
-        public String getDescription() {
-            return description;
-        }
     }
 
     /**
      * Dashboard layout options
      */
+    @Getter
     public enum DashboardLayout {
         GRID("Grid-based dashboard layout"),
         LIST("List-based dashboard layout"),
@@ -247,9 +242,6 @@ public class ShopCustomization extends BaseEntity {
             this.description = description;
         }
 
-        public String getDescription() {
-            return description;
-        }
     }
 
     /**
@@ -274,6 +266,30 @@ public class ShopCustomization extends BaseEntity {
      */
     public String getSecondaryColorWithDefault() {
         return secondaryColor != null ? secondaryColor : "#6c757d";
+    }
+
+    /**
+     * Gets the accent color with fallback to default
+     * @return accent color or default green if not set
+     */
+    public String getAccentColorWithDefault() {
+        return accentColor != null ? accentColor : "#28a745";
+    }
+
+    /**
+     * Gets the background color with fallback to default
+     * @return background color or default white if not set
+     */
+    public String getBackgroundColorWithDefault() {
+        return backgroundColor != null ? backgroundColor : "#ffffff";
+    }
+
+    /**
+     * Gets the text color with fallback to default
+     * @return text color or default dark gray if not set
+     */
+    public String getTextColorWithDefault() {
+        return textColor != null ? textColor : "#212529";
     }
 
     /**

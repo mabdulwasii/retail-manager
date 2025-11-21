@@ -8,8 +8,8 @@
     "emailVerified": true,
     "attributes": {
       "role": ["TENANT_ADMIN"],
-      "tenant_id": ["default-tenant"],
-      "shop_id": ["default-shop"]
+      "tenant_id": ["default-tenant-id"],
+      "shop_id": ["default-shop-id"]
     },
     "credentials": [
       {
@@ -28,9 +28,9 @@
     "enabled": true,
     "emailVerified": true,
     "attributes": {
-      "role": ["SHOP_MANAGER"],
-      "tenant_id": ["default-tenant"],
-      "shop_id": ["default-shop"]
+      "role": ["MANAGER"],
+      "tenant_id": ["default-tenant-id"],
+      "shop_id": ["default-shop-id"]
     },
     "credentials": [
       {
@@ -39,7 +39,7 @@
         "temporary": false
       }
     ],
-    "realmRoles": ["SHOP_MANAGER"]
+    "realmRoles": ["MANAGER"]
   },
   {
     "username": "employee",
@@ -49,9 +49,9 @@
     "enabled": true,
     "emailVerified": true,
     "attributes": {
-      "role": ["SHOP_EMPLOYEE"],
-      "tenant_id": ["default-tenant"],
-      "shop_id": ["default-shop"]
+      "role": ["EMPLOYEE"],
+      "tenant_id": ["default-tenant-id"],
+      "shop_id": ["default-shop-id"]
     },
     "credentials": [
       {
@@ -60,7 +60,7 @@
         "temporary": false
       }
     ],
-    "realmRoles": ["SHOP_EMPLOYEE"]
+    "realmRoles": ["EMPLOYEE"]
   },
   {
     "username": "investor",
@@ -71,7 +71,7 @@
     "emailVerified": true,
     "attributes": {
       "role": ["INVESTOR"],
-      "tenant_id": ["default-tenant"]
+      "tenant_id": ["default-tenant-id"]
     },
     "credentials": [
       {
@@ -91,7 +91,7 @@
     "emailVerified": true,
     "attributes": {
       "role": ["CUSTOMER"],
-      "tenant_id": ["default-tenant"]
+      "tenant_id": ["default-tenant-id"]
     },
     "credentials": [
       {
@@ -111,8 +111,8 @@
     "emailVerified": true,
     "attributes": {
       "role": ["CASHIER"],
-      "tenant_id": ["default-tenant"],
-      "shop_id": ["default-shop"]
+      "tenant_id": ["default-tenant-id"],
+      "shop_id": ["default-shop-id"]
     },
     "credentials": [
       {
@@ -132,7 +132,7 @@
     "emailVerified": true,
     "attributes": {
       "role": ["ACCOUNTANT"],
-      "tenant_id": ["default-tenant"]
+      "tenant_id": ["default-tenant-id"]
     },
     "credentials": [
       {
@@ -152,7 +152,7 @@
     "emailVerified": true,
     "attributes": {
       "role": ["AUDITOR"],
-      "tenant_id": ["default-tenant"]
+      "tenant_id": ["default-tenant-id"]
     },
     "credentials": [
       {

@@ -1,0 +1,31 @@
+-- ========================================
+-- Migration V25: User Listing Endpoints Documentation
+-- ========================================
+-- This migration documents the addition of new user listing endpoints
+-- with filtering capabilities. No new permissions are added - the endpoints
+-- use existing USER_LIST and SYSTEM_ADMIN permissions from V12.
+--
+-- New Endpoints Added:
+-- 1. GET /api/users?status={status}
+--    - Description: List all users system-wide (System Admin only)
+--    - Permission: SYSTEM_ADMIN
+--    - Filter: Optional status parameter (ACTIVE, INACTIVE, PENDING)
+--
+-- 2. GET /api/shops/{shopId}/users?status={status}
+--    - Description: List all users in a shop
+--    - Permission: USER_LIST (System Admin, Tenant Admin, Owner, Manager)
+--    - Filter: Optional status parameter (ACTIVE, INACTIVE, PENDING)
+--
+-- Existing Endpoint (no changes):
+-- 3. GET /api/tenants/{tenantId}/users
+--    - Description: List all users in a tenant
+--    - Permission: USER_LIST (System Admin, Tenant Admin, Owner)
+--    - Note: Could be enhanced with status filtering in future
+--
+-- Permission Matrix Reference:
+-- - USER_LIST: Already grants access to System Admin, Tenant Admin, Owner, Manager
+-- - SYSTEM_ADMIN: Already grants system-wide administrative access
+--
+-- See docs/PERMISSION_MATRIX.md for complete permission assignments.
+--
+-- No database schema changes required for this migration.

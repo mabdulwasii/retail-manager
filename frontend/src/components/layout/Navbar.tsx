@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useTheme } from '@/context/ThemeContext'
+import { useSidebar } from '@/context/SidebarContext'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,11 +14,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { CurrencySelector } from '@/components/ui/currency-selector'
-import { Moon, Sun, User, LogOut, Settings } from 'lucide-react'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { Moon, Sun, User, LogOut, Settings, Menu } from 'lucide-react'
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { toggle } = useSidebar()
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -31,30 +34,44 @@ export const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
       <div className="flex h-14 items-center px-4">
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="mr-2 lg:hidden" 
+          onClick={toggle}
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        
         <div className="mr-4 flex">
           <h1 className="text-xl font-bold">Shop Manager</h1>
         </div>
 
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Search can be added here */}
-          </div>
+        <div className="flex flex-1 items-center justify-end space-x-2 md:justify-end">
+          {/* Breadcrumb - visible only on mobile */}
+          {/* <div className="w-full flex-1 md:w-auto md:flex-none overflow-hidden">
+            <div className="lg:hidden">
+              <Breadcrumb className="max-w-full truncate" />
+            </div>
+          </div> */}
 
           <div className="flex items-center space-x-2">
-            {/* Currency Selector */}
-            <CurrencySelector variant="ghost" size="sm" />
-
-            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
+              className="md:hidden"
+              aria-label="Toggle theme"
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              {theme === 'dark' ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
             </Button>
 
             {/* User Menu */}

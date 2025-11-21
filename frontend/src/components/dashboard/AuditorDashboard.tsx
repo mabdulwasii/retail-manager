@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useAlerts } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Users,
   Search,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -26,6 +27,7 @@ interface AuditLog {
   resource: string
   status: 'success' | 'warning' | 'error'
   details: string
+  ipAddress?: string
 }
 
 interface ComplianceItem {
@@ -35,11 +37,18 @@ interface ComplianceItem {
   status: 'compliant' | 'non_compliant' | 'needs_review'
   lastChecked: string
   nextReview: string
+  severity?: 'high' | 'medium' | 'low'
 }
 
 export const AuditorDashboard: React.FC = () => {
   const { user } = useAuth()
-  const { alerts, loading: alertsLoading } = useAlerts()
+  const { data: alerts, isLoading: alertsLoading } = useAlerts()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    setTimeout(() => setIsRefreshing(false), 1000)
+  }
 
   const auditStats = [
     {
@@ -77,25 +86,27 @@ export const AuditorDashboard: React.FC = () => {
       id: '1',
       action: 'Financial Transaction',
       user: 'john.doe@company.com',
-      timestamp: '2024-01-15T14:30:00Z',
+      timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
       resource: 'Sales Transaction #ST-2024-001',
       status: 'success',
-      details: 'Large sale transaction completed successfully'
+      details: 'Large sale transaction completed successfully',
+      ipAddress: '192.168.1.100'
     },
     {
       id: '2',
       action: 'User Permission Change',
       user: 'admin@company.com',
-      timestamp: '2024-01-15T13:45:00Z',
+      timestamp: new Date(Date.now() - 75 * 60000).toISOString(),
       resource: 'User: jane.smith@company.com',
       status: 'warning',
-      details: 'Elevated user permissions granted'
+      details: 'Elevated user permissions granted',
+      ipAddress: '192.168.1.50'
     },
     {
       id: '3',
       action: 'Data Export',
       user: 'manager@company.com',
-      timestamp: '2024-01-15T12:20:00Z',
+      timestamp: new Date(Date.now() - 140 * 60000).toISOString(),
       resource: 'Customer Database',
       status: 'success',
       details: 'Customer data exported for analysis'
@@ -111,38 +122,42 @@ export const AuditorDashboard: React.FC = () => {
     }
   ]
 
-  const complianceItems: ComplianceItem[] = [
+  const complianceStatus: ComplianceItem[] = [
     {
       id: '1',
       category: 'Data Protection',
-      requirement: 'GDPR Compliance Review',
+      requirement: 'GDPR Compliance',
       status: 'compliant',
-      lastChecked: '2024-01-10',
-      nextReview: '2024-04-10'
+      lastChecked: new Date(Date.now() - 5 * 24 * 60 * 60000).toISOString().split('T')[0],
+      nextReview: new Date(Date.now() + 85 * 24 * 60 * 60000).toISOString().split('T')[0],
+      severity: 'high'
     },
     {
       id: '2',
       category: 'Financial',
-      requirement: 'SOX Internal Controls',
-      status: 'needs_review',
-      lastChecked: '2023-12-15',
-      nextReview: '2024-03-15'
+      requirement: 'SOX Compliance',
+      status: 'compliant',
+      lastChecked: new Date(Date.now() - 10 * 24 * 60 * 60000).toISOString().split('T')[0],
+      nextReview: new Date(Date.now() + 50 * 24 * 60 * 60000).toISOString().split('T')[0],
+      severity: 'high'
     },
     {
       id: '3',
       category: 'Security',
-      requirement: 'ISO 27001 Standards',
-      status: 'compliant',
-      lastChecked: '2024-01-05',
-      nextReview: '2024-07-05'
+      requirement: 'ISO 27001',
+      status: 'needs_review',
+      lastChecked: new Date(Date.now() - 25 * 24 * 60 * 60000).toISOString().split('T')[0],
+      nextReview: new Date(Date.now() + 5 * 24 * 60 * 60000).toISOString().split('T')[0],
+      severity: 'high'
     },
     {
       id: '4',
-      category: 'Operational',
-      requirement: 'Business Continuity Plan',
-      status: 'non_compliant',
-      lastChecked: '2023-11-20',
-      nextReview: '2024-02-20'
+      category: 'Payment Processing',
+      requirement: 'PCI DSS',
+      status: 'compliant',
+      lastChecked: new Date(Date.now() - 3 * 24 * 60 * 60000).toISOString().split('T')[0],
+      nextReview: new Date(Date.now() + 87 * 24 * 60 * 60000).toISOString().split('T')[0],
+      severity: 'high'
     }
   ]
 
@@ -221,6 +236,10 @@ export const AuditorDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/audit">
               <Eye className="mr-2 h-4 w-4" />
@@ -341,7 +360,7 @@ export const AuditorDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {alerts.length > 0 ? (
+                {(alerts && alerts.length > 0) ? (
                   alerts.slice(0, 5).map((alert) => (
                     <div key={alert.id} className="p-3 rounded-lg border bg-background">
                       <div className="flex items-start space-x-3">
@@ -353,13 +372,8 @@ export const AuditorDashboard: React.FC = () => {
                         <div className="flex-1">
                           <p className="text-sm font-medium">{alert.message}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {alert.time}
+                            {new Date(alert.timestamp).toLocaleString()}
                           </p>
-                          {alert.action && (
-                            <Button size="sm" variant="outline" className="mt-2">
-                              {alert.action}
-                            </Button>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -385,7 +399,7 @@ export const AuditorDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
-            {complianceItems.map((item) => (
+            {complianceStatus.map((item) => (
               <div key={item.id} className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium">{item.requirement}</h4>

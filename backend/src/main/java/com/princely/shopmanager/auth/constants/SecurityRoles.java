@@ -15,12 +15,12 @@ public final class SecurityRoles {
 
     // System-level roles
     public static final String ROLE_SYSTEM_ADMIN = "ROLE_SYSTEM_ADMIN";
-    public static final String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
+    public static final String ROLE_TENANT_ADMIN = "ROLE_TENANT_ADMIN";
 
-    // Shop management roles
-    public static final String ROLE_SHOP_OWNER = "ROLE_SHOP_OWNER";
-    public static final String ROLE_SHOP_MANAGER = "ROLE_SHOP_MANAGER";
-    public static final String ROLE_SHOP_EMPLOYEE = "ROLE_SHOP_EMPLOYEE";
+    // Shop management roles - Simplified names
+    public static final String ROLE_OWNER = "ROLE_OWNER";
+    public static final String ROLE_MANAGER = "ROLE_MANAGER";
+    public static final String ROLE_EMPLOYEE = "ROLE_EMPLOYEE";
 
     // Operations roles
     public static final String ROLE_CASHIER = "ROLE_CASHIER";
@@ -38,10 +38,10 @@ public final class SecurityRoles {
 
     // Role names without prefix (for use in @PreAuthorize)
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
-    public static final String SUPER_ADMIN = "SUPER_ADMIN";
-    public static final String SHOP_OWNER = "SHOP_OWNER";
-    public static final String SHOP_MANAGER = "SHOP_MANAGER";
-    public static final String SHOP_EMPLOYEE = "SHOP_EMPLOYEE";
+    public static final String TENANT_ADMIN = "TENANT_ADMIN";
+    public static final String OWNER = "OWNER";
+    public static final String MANAGER = "MANAGER";
+    public static final String EMPLOYEE = "EMPLOYEE";
     public static final String CASHIER = "CASHIER";
     public static final String INVENTORY_MANAGER = "INVENTORY_MANAGER";
     public static final String SALES_MANAGER = "SALES_MANAGER";

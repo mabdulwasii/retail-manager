@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -49,6 +50,7 @@ public class Shop extends BaseEntity {
     @NotNull(message = "Tenant is required")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
+    @JsonIgnoreProperties({"contactUser", "users", "shops"})
     private Tenant tenant;
 
     @NotEmpty(message = "Name is required")

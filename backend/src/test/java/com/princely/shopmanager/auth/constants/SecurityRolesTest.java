@@ -17,10 +17,10 @@ class SecurityRolesTest {
     void testAllRoleConstantsAreDefined() {
         // Test that all role constants are properly defined and non-null
         assertThat(SecurityRoles.ROLE_SYSTEM_ADMIN).isEqualTo("ROLE_SYSTEM_ADMIN");
-        assertThat(SecurityRoles.ROLE_SUPER_ADMIN).isEqualTo("ROLE_SUPER_ADMIN");
-        assertThat(SecurityRoles.ROLE_SHOP_OWNER).isEqualTo("ROLE_SHOP_OWNER");
-        assertThat(SecurityRoles.ROLE_SHOP_MANAGER).isEqualTo("ROLE_SHOP_MANAGER");
-        assertThat(SecurityRoles.ROLE_SHOP_EMPLOYEE).isEqualTo("ROLE_SHOP_EMPLOYEE");
+        assertThat(SecurityRoles.ROLE_TENANT_ADMIN).isEqualTo("ROLE_TENANT_ADMIN");
+        assertThat(SecurityRoles.ROLE_OWNER).isEqualTo("ROLE_OWNER");
+        assertThat(SecurityRoles.ROLE_MANAGER).isEqualTo("ROLE_MANAGER");
+        assertThat(SecurityRoles.ROLE_EMPLOYEE).isEqualTo("ROLE_EMPLOYEE");
         assertThat(SecurityRoles.ROLE_CASHIER).isEqualTo("ROLE_CASHIER");
         assertThat(SecurityRoles.ROLE_INVENTORY_MANAGER).isEqualTo("ROLE_INVENTORY_MANAGER");
         assertThat(SecurityRoles.ROLE_SALES_MANAGER).isEqualTo("ROLE_SALES_MANAGER");
@@ -35,10 +35,10 @@ class SecurityRolesTest {
     void testRoleNamesWithoutPrefix() {
         // Test role names without ROLE_ prefix
         assertThat(SecurityRoles.SYSTEM_ADMIN).isEqualTo("SYSTEM_ADMIN");
-        assertThat(SecurityRoles.SUPER_ADMIN).isEqualTo("SUPER_ADMIN");
-        assertThat(SecurityRoles.SHOP_OWNER).isEqualTo("SHOP_OWNER");
-        assertThat(SecurityRoles.SHOP_MANAGER).isEqualTo("SHOP_MANAGER");
-        assertThat(SecurityRoles.SHOP_EMPLOYEE).isEqualTo("SHOP_EMPLOYEE");
+        assertThat(SecurityRoles.TENANT_ADMIN).isEqualTo("TENANT_ADMIN");
+        assertThat(SecurityRoles.OWNER).isEqualTo("OWNER");
+        assertThat(SecurityRoles.MANAGER).isEqualTo("MANAGER");
+        assertThat(SecurityRoles.EMPLOYEE).isEqualTo("EMPLOYEE");
         assertThat(SecurityRoles.CASHIER).isEqualTo("CASHIER");
         assertThat(SecurityRoles.INVENTORY_MANAGER).isEqualTo("INVENTORY_MANAGER");
         assertThat(SecurityRoles.SALES_MANAGER).isEqualTo("SALES_MANAGER");
@@ -65,11 +65,11 @@ class SecurityRolesTest {
     void testRoleHierarchy() {
         // Test that system roles are correctly defined
         assertThat(SecurityRoles.ROLE_SYSTEM_ADMIN).contains("SYSTEM_ADMIN");
-        assertThat(SecurityRoles.ROLE_SUPER_ADMIN).contains("SUPER_ADMIN");
+        assertThat(SecurityRoles.ROLE_TENANT_ADMIN).contains("TENANT_ADMIN");
 
         // Test that shop roles are correctly defined
-        assertThat(SecurityRoles.ROLE_SHOP_OWNER).contains("SHOP_OWNER");
-        assertThat(SecurityRoles.ROLE_SHOP_MANAGER).contains("SHOP_MANAGER");
+        assertThat(SecurityRoles.ROLE_OWNER).contains("OWNER");
+        assertThat(SecurityRoles.ROLE_MANAGER).contains("MANAGER");
 
         // Test that operational roles are correctly defined
         assertThat(SecurityRoles.ROLE_CASHIER).contains("CASHIER");

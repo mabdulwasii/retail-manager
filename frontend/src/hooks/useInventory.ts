@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from './useCurrency'
+import { api } from '@/services/api'
 
 export interface Product {
   id: string
@@ -23,6 +24,9 @@ export interface InventoryItem {
   shopName: string
   productId: string
   product: Product
+  productName?: string
+  productSku?: string
+  productBarcode?: string
   currentStock: number
   reservedStock: number
   availableStock: number
@@ -71,7 +75,7 @@ export interface CreateInventoryRequest {
 export interface AdjustStockRequest {
   newStock: number
   reason: string
-  changeType: 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'
+  changeType?: 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT'
 }
 
 export interface ReserveStockRequest {
@@ -133,24 +137,40 @@ export const useInventory = () => {
       if (filter?.maxStock !== undefined) queryParams.append('maxStock', filter.maxStock.toString())
       if (filter?.searchQuery) queryParams.append('search', filter.searchQuery)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory')
-      }
-
-      const data = await response.json()
-      setInventory(data)
-      return data
+      const data = await api.get<any>(`/shops/${shopId}/inventory?${queryParams}`)
+      // Handle paginated response
+      const items = Array.isArray(data) ? data : (data?.content || [])
+      setInventory(items)
+      return items
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       return []
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Fetch a single inventory item by ID
+  const fetchInventoryItem = useCallback(async (inventoryId: string): Promise<InventoryItem | null> => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const item = await api.get<InventoryItem>(`/inventory/${inventoryId}`)
+      // Update the inventory array with the fetched item
+      setInventory(prevInventory => {
+        const existing = prevInventory.find(i => i.id === inventoryId)
+        if (existing) {
+          return prevInventory.map(i => i.id === inventoryId ? item : i)
+        }
+        return [item, ...prevInventory]
+      })
+      return item
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+      return null
     } finally {
       setIsLoading(false)
     }
@@ -162,20 +182,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create inventory item')
-      }
-
-      const item = await response.json()
+      const item = await api.post<InventoryItem>(`/shops/${shopId}/inventory`, request)
       setInventory(prevInventory => [item, ...prevInventory])
       return item
     } catch (err) {
@@ -193,20 +200,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/adjust`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to adjust stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}/adjust-stock`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -228,20 +222,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/reserve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to reserve stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/reserve`, request)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -263,20 +244,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/release`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to release reserved stock')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.post<InventoryItem>(`/inventory/${inventoryId}/release`, { quantity })
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -298,18 +266,9 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/history`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory history')
-      }
-
-      const history = await response.json()
+      const data = await api.get<any>(`/inventory/${inventoryId}/history`)
+      // Handle paginated response
+      const history = Array.isArray(data) ? data : (data?.content || [])
       setInventoryHistory(history)
       return history
     } catch (err) {
@@ -327,18 +286,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/summary`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory summary')
-      }
-
-      const summaryData = await response.json()
+      const summaryData = await api.get<InventorySummary>(`/shops/${shopId}/inventory/summary`)
       setSummary(summaryData)
       return summaryData
     } catch (err) {
@@ -356,20 +304,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update inventory settings')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}`, updates)
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -391,20 +326,7 @@ export const useInventory = () => {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/v1/inventory/${inventoryId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update inventory status')
-      }
-
-      const updatedItem = await response.json()
+      const updatedItem = await api.patch<InventoryItem>(`/inventory/${inventoryId}/status`, { status })
       setInventory(prevInventory =>
         prevInventory.map(item =>
           item.id === inventoryId ? updatedItem : item
@@ -423,18 +345,9 @@ export const useInventory = () => {
   // Get low stock alerts
   const getLowStockAlerts = useCallback(async (shopId: string): Promise<InventoryItem[]> => {
     try {
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/low-stock`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch low stock alerts')
-      }
-
-      return await response.json()
+      const data = await api.get<any>(`/shops/${shopId}/inventory/low-stock`)
+      // Handle paginated response
+      return Array.isArray(data) ? data : (data?.content || [])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -445,18 +358,9 @@ export const useInventory = () => {
   // Get expiring items
   const getExpiringItems = useCallback(async (shopId: string, daysAhead: number = 30): Promise<InventoryItem[]> => {
     try {
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch expiring items')
-      }
-
-      return await response.json()
+      const data = await api.get<any>(`/shops/${shopId}/inventory/expiring?daysAhead=${daysAhead}`)
+      // Handle paginated response
+      return Array.isArray(data) ? data : (data?.content || [])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
@@ -464,51 +368,19 @@ export const useInventory = () => {
     }
   }, [])
 
-  // Export inventory data
-  const exportInventory = useCallback(async (shopId: string, format: 'csv' | 'excel' = 'csv'): Promise<string | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const response = await fetch(`/api/v1/shops/${shopId}/inventory/export?format=${format}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to export inventory')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      return url
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
-      setError(errorMessage)
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
 
   // Clear error state
   const clearError = useCallback(() => {
     setError(null)
   }, [])
 
-  // Permission checks
-  const canManageInventory = user?.roles.some(role =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
-  ) || false
-
-  const canViewInventory = user?.roles.some(role =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER', 'ROLE_CASHIER', 'ROLE_SHOP_EMPLOYEE'].includes(role)
-  ) || false
-
-  const canAdjustStock = user?.roles.some(role =>
-    ['ROLE_SHOP_OWNER', 'ROLE_SHOP_MANAGER', 'ROLE_INVENTORY_MANAGER'].includes(role)
-  ) || false
+  // Permission checks based on backend permission matrix
+  const { hasPermission } = useAuth();
+  const canManageInventory = hasPermission('INVENTORY_CREATE') || hasPermission('INVENTORY_UPDATE');  // MANAGER and above
+  const canViewInventory = hasPermission('INVENTORY_LIST');        // EMPLOYEE and above
+  const canAdjustStock = hasPermission('INVENTORY_UPDATE');        // MANAGER and above
+  const canDeleteInventory = hasPermission('INVENTORY_DELETE');    // OWNER and above
+  const canViewHistory = hasPermission('INVENTORY_HISTORY_VIEW');  // MANAGER and above
 
   return {
     // State
@@ -523,9 +395,12 @@ export const useInventory = () => {
     canManageInventory,
     canViewInventory,
     canAdjustStock,
+    canDeleteInventory,
+    canViewHistory,
 
     // Operations
     fetchInventory,
+    fetchInventoryItem,
     createInventoryItem,
     adjustStock,
     reserveStock,
@@ -536,7 +411,6 @@ export const useInventory = () => {
     updateInventoryStatus,
     getLowStockAlerts,
     getExpiringItems,
-    exportInventory,
 
     // Utility
     clearError

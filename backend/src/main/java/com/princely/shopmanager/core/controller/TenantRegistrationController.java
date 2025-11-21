@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Controller for tenant registration (open endpoint - no authentication required)
  */
 @RestController
-@RequestMapping("/api/v1/public/registration")
+@RequestMapping("/api/public/registration")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Tenant Registration", description = "Public endpoints for tenant registration")

@@ -1,13 +1,32 @@
 package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.Map;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "products", indexes = {
@@ -55,22 +74,6 @@ public class Product extends BaseEntity {
     private BigDecimal costPrice;
 
     @Builder.Default
-    @Column(name = "quantity_in_stock", nullable = false)
-    private Integer quantityInStock = 0;
-
-    @Builder.Default
-    @Column(name = "minimum_stock_level")
-    private Integer minimumStockLevel = 0;
-
-    @Builder.Default
-    @Column(name = "maximum_stock_level")
-    private Integer maximumStockLevel = 1000;
-
-    @Builder.Default
-    @Column(name = "reorder_point")
-    private Integer reorderPoint = 10;
-
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductStatus status = ProductStatus.ACTIVE;
@@ -91,8 +94,6 @@ public class Product extends BaseEntity {
     @Column(name = "weight_in_grams")
     private Double weightInGrams;
 
-    private String location;
-
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
@@ -107,28 +108,6 @@ public class Product extends BaseEntity {
     public enum ProductStatus {
         ACTIVE,
         INACTIVE,
-        OUT_OF_STOCK,
         DISCONTINUED
-    }
-
-    public void decreaseStock(int quantity) {
-        if (this.quantityInStock < quantity) {
-            throw new IllegalArgumentException("Insufficient stock");
-        }
-        this.quantityInStock -= quantity;
-        if (this.quantityInStock == 0) {
-            this.status = ProductStatus.OUT_OF_STOCK;
-        }
-    }
-
-    public void increaseStock(int quantity) {
-        this.quantityInStock += quantity;
-        if (this.status == ProductStatus.OUT_OF_STOCK && this.quantityInStock > 0) {
-            this.status = ProductStatus.ACTIVE;
-        }
-    }
-
-    public boolean needsReorder() {
-        return this.quantityInStock <= this.reorderPoint;
     }
 }

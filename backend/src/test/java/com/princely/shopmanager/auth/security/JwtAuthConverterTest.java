@@ -1,5 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
+import com.princely.shopmanager.core.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -17,13 +18,15 @@ import static org.mockito.Mockito.*;
 class JwtAuthConverterTest {
 
     private JwtAuthConverter jwtAuthConverter;
+    private UserRepository userRepository;
     private Jwt mockJwt;
     private Instant now;
     private Instant futureExpiry;
 
     @BeforeEach
     void setUp() {
-        jwtAuthConverter = new JwtAuthConverter();
+        userRepository = mock(UserRepository.class);
+        jwtAuthConverter = new JwtAuthConverter(userRepository);
         ReflectionTestUtils.setField(jwtAuthConverter, "clientId", "shop-manager");
 
         now = Instant.now();
@@ -217,7 +220,7 @@ class JwtAuthConverterTest {
         // Arrange
         Map<String, Object> resourceAccess = new HashMap<>();
         Map<String, Object> clientResource = new HashMap<>();
-        List<String> roles = Arrays.asList("Admin", "User", "MANAGER", "shop_owner");
+        List<String> roles = Arrays.asList("Admin", "User", "MANAGER", "owner");
         clientResource.put("roles", roles);
         resourceAccess.put("shop-manager", clientResource);
 
@@ -238,7 +241,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(4);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER", "ROLE_SHOP_OWNER");
+            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER", "ROLE_OWNER");
     }
 
     @Test

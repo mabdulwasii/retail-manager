@@ -9,15 +9,20 @@ imagePullSecrets:
 # Backend configuration
 backend:
   image:
-    repository: ghcr.io/mabdulwasii/shop-manager
-    tag: backend-v0.0.1
+    repository: princely/shop-manager
+    tag: backend-latest
     pullPolicy: Always
+  podAnnotations:
+    configVersion: "34"  # Multi-platform builds and latest tags
+  env:
+    SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
 # Frontend configuration
 frontend:
+  enabled: true
   image:
-    repository: ghcr.io/mabdulwasii/shop-manager
-    tag: frontend-v0.0.2
+    repository: princely/shop-manager
+    tag: frontend-latest
     pullPolicy: Always
 
 branding:
@@ -27,6 +32,11 @@ branding:
   colors:
     primary: "#2E7D32"
     secondary: "#FF6F00"
+
+# Application configuration
+application:
+  testUsers:
+    enabled: true  # Set to false to disable test user creation in Keycloak
 
 # TLS Configuration
 tls:
@@ -42,5 +52,10 @@ postgresql:
     existingSecret: ""
 
 minio:
+  enabled: false
   auth:
     existingSecret: ""
+
+kafka:
+  enabled: false
+  

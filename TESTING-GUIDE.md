@@ -39,17 +39,24 @@ Role: TENANT_ADMIN
 Access: Full system administration, tenant management
 Default Context: default-tenant/default-shop
 
+👤 SHOP OWNER
+Email: owner@shopmanager.com
+Password: DevOwner@2024!Test
+Role: OWNER
+Access: Full business control, financial oversight
+Default Context: default-tenant/default-shop
+
 👤 SHOP MANAGER
 Email: manager@shopmanager.com
 Password: DevManager@2024!Test
-Role: SHOP_MANAGER
+Role: MANAGER
 Access: Shop operations, inventory, sales, reports
 Default Context: default-tenant/default-shop
 
 👤 SHOP EMPLOYEE
 Email: employee@shopmanager.com
 Password: DevEmployee@2024!Test
-Role: SHOP_EMPLOYEE
+Role: EMPLOYEE
 Access: Sales transactions, basic inventory queries
 Default Context: default-tenant/default-shop
 
@@ -219,8 +226,9 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/api/shops
 | User Type | Expected Access | Test URLs |
 |-----------|----------------|-----------|
 | **TENANT_ADMIN** | Full system access | All endpoints |
-| **SHOP_MANAGER** | Shop operations | `/api/shops`, `/api/products`, `/api/sales` |
-| **SHOP_EMPLOYEE** | Limited operations | `/api/sales`, `/api/products` (read-only) |
+| **OWNER** | Shop ownership | `/api/shops`, `/api/investments`, `/api/analytics` |
+| **MANAGER** | Shop operations | `/api/shops`, `/api/products`, `/api/sales` |
+| **EMPLOYEE** | Limited operations | `/api/sales`, `/api/products` (read-only) |
 | **INVESTOR** | Investment data | `/api/investments`, `/api/analytics` |
 | **CUSTOMER** | Personal data | `/api/receipts`, `/api/orders` |
 
@@ -366,5 +374,98 @@ After completing authentication testing:
 
 ---
 
-**📅 Last Updated**: January 2025
+---
+
+## 🔧 Recent Updates
+
+### JWT Token Claims Enhancement (October 2025)
+
+The Keycloak realm configuration has been updated to include additional JWT claims for improved multi-tenancy support:
+
+#### New JWT Claims
+- `tenant_id`: User's tenant identifier (mapped from user attribute)
+- `shop_id`: User's shop identifier (mapped from user attribute)
+
+These claims are automatically included in the JWT access token and are used by the backend for:
+- Tenant-based data isolation
+- Shop-level access control
+- Expense management permissions
+
+#### Verification Steps
+```bash
+# Get a token
+TOKEN=$(curl -s -X POST "http://localhost:8080/realms/shop-manager/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin@shopmanager.com" \
+  -d "password=DevAdmin@2024!Test" \
+  -d "grant_type=password" \
+  -d "client_id=shop-manager-frontend" | jq -r .access_token)
+
+# Decode and verify claims
+echo $TOKEN | cut -d'.' -f2 | base64 -d | jq '.tenant_id, .shop_id'
+```
+
+Expected output should show the tenant_id and shop_id values if configured for the user.
+
+### Error Handling Improvements (October 2025)
+
+The application now uses a centralized error handling system with:
+
+#### ErrorCode Enum
+All error codes are now defined in `ErrorCode.java` enum with:
+- Standardized error codes (e.g., `EXPENSE_NOT_FOUND`, `CATEGORY_NOT_FOUND`)
+- HTTP status codes (e.g., `404 NOT_FOUND`, `403 FORBIDDEN`, `409 CONFLICT`)
+- Message keys for internationalization
+
+#### Internationalized Error Messages
+Error messages are now stored in `messages/errors.properties` with:
+- Support for multiple languages (extensible to `errors_es.properties`, `errors_fr.properties`, etc.)
+- Parameterized messages using `{0}`, `{1}` placeholders
+- Consistent error message format across the application
+
+#### Testing Error Responses
+```bash
+# Test expense not found error
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8081/api/expenses/00000000-0000-0000-0000-000000000000
+
+# Expected response:
+# {
+#   "error": "EXPENSE_NOT_FOUND",
+#   "message": "The expense with id 00000000-0000-0000-0000-000000000000 was not found",
+#   "status": 404
+# }
+
+# Test category not found error
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"categoryId":"00000000-0000-0000-0000-000000000000","amount":100}' \
+  http://localhost:8081/api/expenses
+
+# Expected response:
+# {
+#   "error": "EXPENSE_CATEGORY_NOT_FOUND",
+#   "message": "The expense category with id 00000000-0000-0000-0000-000000000000 was not found",
+#   "status": 404
+# }
+```
+
+#### Available Error Codes
+| Code | Description | HTTP Status |
+|------|-------------|-------------|
+| `EXPENSE_NOT_FOUND` | Expense record not found | 404 |
+| `EXPENSE_CATEGORY_NOT_FOUND` | Expense category not found | 404 |
+| `EXPENSE_CANNOT_EDIT` | Expense cannot be edited in current status | 409 |
+| `EXPENSE_CANNOT_APPROVE` | Expense cannot be approved | 409 |
+| `EXPENSE_CANNOT_DELETE_PAID` | Cannot delete paid expenses | 409 |
+| `SHOP_NOT_FOUND` | Shop not found | 404 |
+| `SHOP_ACCESS_DENIED` | No permission to access shop | 403 |
+| `INVENTORY_NOT_FOUND` | Inventory record not found | 404 |
+| `INSUFFICIENT_STOCK` | Not enough stock available | 409 |
+
+See `ErrorCode.java` for the complete list of error codes.
+
+---
+
+**📅 Last Updated**: October 2025
 **🔗 Related Docs**: [DEPLOYMENT.md](./DEPLOYMENT.md) | [CLAUDE.md](./CLAUDE.md) | [docker-compose.yml](./docker-compose.yml)

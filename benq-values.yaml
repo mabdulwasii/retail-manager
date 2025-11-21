@@ -1,0 +1,54 @@
+global:
+  appName: "sales"
+  domain: "benq.com"
+
+# Image pull secrets for private GitHub Container Registry
+imagePullSecrets:
+  - name: regcred
+
+# Backend configuration
+backend:
+  image:
+    repository: princely/shop-manager
+    tag: backend-v0.0.15
+    pullPolicy: Always
+  podAnnotations:
+    configVersion: "11"  # Force pod restart with fixed error messages and Keycloak protocol mappers
+
+# Frontend configuration
+frontend:
+  enabled: true
+  image:
+    repository: princely/shop-manager
+    tag: frontend-v0.0.4
+    pullPolicy: Always
+
+branding:
+  platformName: "Benq Sales"
+  companyName: "Benq Electronics"
+  platformDescription: "Advanced Electronics"
+  colors:
+    primary: "#2A6D32"
+    secondary: "#EE6F00"
+
+# TLS Configuration
+tls:
+  enabled: true
+  issuer: "local-ca-issuer"  # Use local-ca-issuer for local development
+  email: "sales@benq.com"
+  localCertInstallation:
+    enabled: true
+
+# Disable existingSecret - let Helm create secrets
+postgresql:
+  auth:
+    existingSecret: ""
+
+minio:
+  enabled: false
+  auth:
+    existingSecret: ""
+
+kafka:
+  enabled: false
+  

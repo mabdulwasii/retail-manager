@@ -55,8 +55,9 @@ public class AuditLog extends BaseEntity {
     @JoinColumn(name = "shop_id")
     private Shop shop;
 
+    @Builder.Default
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private String userId = "SYSTEM";
 
     @Column(name = "username")
     private String username;
@@ -154,6 +155,9 @@ public class AuditLog extends BaseEntity {
         ACCOUNT_LOCKED,
         ACCOUNT_UNLOCKED,
         // Investment and Financial specific actions
+        INVESTMENT_CREATED,
+        INVESTMENT_UPDATED,
+        INVESTMENT_DELETED,
         PROFIT_CALCULATED,
         DISTRIBUTION_APPROVED,
         DISTRIBUTION_PAID

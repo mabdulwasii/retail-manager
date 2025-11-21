@@ -49,6 +49,7 @@ Shop Manager is a multi-tenant retail management platform:
 - Update test cases for every code change and run tests
 - Prefer static imports over fully qualified names
 - Use conventional commits (feat:, fix:, docs:, test:, refactor:)
+- **NEVER add "Generated with Claude Code" or "Co-Authored-By: Claude" to commit messages** - keep commits professional
 
 ### Code Review Focus
 - Business logic correctness and security
@@ -57,6 +58,34 @@ Shop Manager is a multi-tenant retail management platform:
 - Performance implications
 - Code style, formatting, and maintainability
 - Docker Compose and Helm chart updates
+
+### Critical Conventions
+
+**IMPORTANT**: These conventions MUST be followed for all code changes:
+
+1. **Permission Matrix Updates**
+   - **ALWAYS update `backend/src/main/resources/permission-matrix.csv`** whenever a new API endpoint is added, edited, or deleted
+   - The permission-matrix.csv is the single source of truth for all permissions and role assignments
+   - After updating CSV, also update:
+     - `docs/PERMISSION_MATRIX.md`
+     - `src/docs/asciidoc/permission-matrix.adoc`
+   - Create a new migration file to add the permissions to the database
+
+2. **Test Naming Convention**
+   - Integration tests **MUST** end with `*IT.java` (e.g., `RoleControllerIT.java`)
+   - Unit tests **MUST** end with `*Test.java` (e.g., `RoleServiceTest.java`)
+   - This convention is enforced in architecture tests
+
+3. **Permission Granularity**
+   - Make permission constants as granular as possible without making them excessive
+   - CREATE, READ, UPDATE, DELETE should ALWAYS be distinct permission constants
+   - Never reuse a permission for multiple distinct operations
+   - Example: `ROLE_PERMISSION_ADD` and `ROLE_PERMISSION_REMOVE` are separate from `ROLE_UPDATE`
+
+4. **Database Migrations**
+   - **NEVER modify existing migration files** in `src/main/resources/db/migration/`
+   - Always create a new versioned migration file (e.g., V19, V20, etc.)
+   - Migrations are immutable once committed
 
 ---
 
@@ -92,14 +121,54 @@ Shop Manager is a multi-tenant retail management platform:
 ### Module Structure
 ```
 backend/src/main/java/com/princely/shopmanager/
-├── core/         # Tenant, Shop, User, Role entities
-├── sales/        # Sales, Receipt management
-├── inventory/    # Stock tracking, reservations
+├── core/         # Tenant, Shop, User, Role, Product (catalog) entities
+├── sales/        # Sales, Receipt management with FEFO inventory deduction
+├── inventory/    # Stock tracking, batch management, reservations
 ├── investment/   # Investment tracking, profit sharing
 ├── analytics/    # Analytics engine with caching
 ├── auth/         # Authentication, JWT principal
 └── shared/       # Cross-cutting concerns
 ```
+
+### Product & Inventory Architecture (Two-Tier Model)
+
+**Implemented:** January 2025 (Migration V10)
+
+The system uses a **two-tier model** separating product catalog from inventory:
+
+#### **Product (Master Catalog)**
+- Represents **what you sell** (SKU, price, description, category)
+- **No stock fields** - stock tracking moved to Inventory
+- Status: ACTIVE, INACTIVE, DISCONTINUED (OUT_OF_STOCK removed)
+- Endpoints: `/api/shops/{shopId}/products`, `/api/products/{productId}`
+
+#### **Inventory (Stock Tracking)**
+- Represents **what you have** (batches, locations, expiry dates)
+- Fields: currentStock, reservedStock, batchNumber, expiryDate, location
+- Status: ACTIVE, INACTIVE, QUARANTINED, EXPIRED
+- One Product → Many Inventory records (multi-batch support)
+
+#### **Stock Aggregation**
+```java
+Product.totalStock = SUM(Inventory.currentStock) WHERE productId
+Product.availableStock = SUM(currentStock - reservedStock) WHERE productId AND status=ACTIVE
+```
+
+#### **FEFO Sales Strategy**
+Sales use **First Expiry, First Out (FEFO)** to minimize waste:
+1. Sort inventory by expiry date (ascending)
+2. Allocate from oldest expiring batches first
+3. FIFO for same expiry date (by creation date)
+4. Automatic deduction across multiple batches if needed
+
+**Benefits:**
+- ✅ Batch/lot tracking for compliance
+- ✅ Expiry date management
+- ✅ Multi-location inventory
+- ✅ Flexible unit costing per batch
+- ✅ Product recall traceability
+
+**Documentation:** See [docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)
 
 ---
 

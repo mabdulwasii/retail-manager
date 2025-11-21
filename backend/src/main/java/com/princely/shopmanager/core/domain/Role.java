@@ -47,4 +47,8 @@ public class Role extends BaseEntity {
     @Builder.Default
     @Column(name = "is_system")
     private boolean isSystem = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }

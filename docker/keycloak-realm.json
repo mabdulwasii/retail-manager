@@ -23,19 +23,43 @@
   "ssoSessionMaxLifespan": 300,
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 300,
+  "passwordPolicy": "length(8) and digits(1) and lowerCase(1) and upperCase(1) and specialChars(1) and notUsername",
+  "loginTheme": "retail",
+  "accountTheme": "retail",
+  "emailTheme": "retail",
   "roles": {
     "realm": [
+      {
+        "name": "SYSTEM_ADMIN",
+        "description": "System administrator with full access to all tenants"
+      },
       {
         "name": "TENANT_ADMIN",
         "description": "Tenant administrator with full access to tenant resources"
       },
       {
-        "name": "SHOP_MANAGER",
+        "name": "OWNER",
+        "description": "Shop owner with full access to shop operations"
+      },
+      {
+        "name": "MANAGER",
         "description": "Shop manager with operational access"
       },
       {
-        "name": "SHOP_EMPLOYEE",
+        "name": "EMPLOYEE",
         "description": "Shop employee with limited access"
+      },
+      {
+        "name": "CASHIER",
+        "description": "Cashier with POS and sales access"
+      },
+      {
+        "name": "ACCOUNTANT",
+        "description": "Accountant with financial data access"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Auditor with read-only audit access"
       },
       {
         "name": "INVESTOR",
@@ -54,11 +78,11 @@
     },
     {
       "name": "shop-managers",
-      "realmRoles": ["SHOP_MANAGER"]
+      "realmRoles": ["MANAGER"]
     },
     {
       "name": "shop-employees",
-      "realmRoles": ["SHOP_EMPLOYEE"]
+      "realmRoles": ["EMPLOYEE"]
     },
     {
       "name": "investors",
@@ -80,15 +104,35 @@
       "credentials": [
         {
           "type": "password",
-          "value": "admin123",
+          "value": "DevAdmin@2024!Test",
           "temporary": false
         }
       ],
       "realmRoles": ["TENANT_ADMIN"],
       "groups": ["tenant-admins"],
       "attributes": {
-        "tenant_id": ["default-tenant"],
-        "shop_ids": ["default-shop"]
+        "tenantId": ["default-tenant"],
+        "shopId": ["default-shop"]
+      }
+    },
+    {
+      "username": "owner@shopmanager.com",
+      "email": "owner@shopmanager.com",
+      "firstName": "Shop",
+      "lastName": "Owner",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevOwner@2024!Test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["OWNER"],
+      "attributes": {
+        "tenantId": ["default-tenant"],
+        "shopId": ["default-shop"]
       }
     },
     {
@@ -101,15 +145,15 @@
       "credentials": [
         {
           "type": "password",
-          "value": "manager123",
+          "value": "DevManager@2024!Test",
           "temporary": false
         }
       ],
-      "realmRoles": ["SHOP_MANAGER"],
+      "realmRoles": ["MANAGER"],
       "groups": ["shop-managers"],
       "attributes": {
-        "tenant_id": ["default-tenant"],
-        "shop_ids": ["default-shop"]
+        "tenantId": ["default-tenant"],
+        "shopId": ["default-shop"]
       }
     },
     {
@@ -122,15 +166,15 @@
       "credentials": [
         {
           "type": "password",
-          "value": "employee123",
+          "value": "DevEmployee@2024!Test",
           "temporary": false
         }
       ],
-      "realmRoles": ["SHOP_EMPLOYEE"],
+      "realmRoles": ["EMPLOYEE"],
       "groups": ["shop-employees"],
       "attributes": {
-        "tenant_id": ["default-tenant"],
-        "shop_ids": ["default-shop"]
+        "tenantId": ["default-tenant"],
+        "shopId": ["default-shop"]
       }
     },
     {
@@ -143,14 +187,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "investor123",
+          "value": "DevInvestor@2024!Test",
           "temporary": false
         }
       ],
       "realmRoles": ["INVESTOR"],
       "groups": ["investors"],
       "attributes": {
-        "tenant_id": ["default-tenant"]
+        "tenantId": ["default-tenant"]
       }
     },
     {
@@ -163,14 +207,72 @@
       "credentials": [
         {
           "type": "password",
-          "value": "customer123",
+          "value": "DevCustomer@2024!Test",
           "temporary": false
         }
       ],
       "realmRoles": ["CUSTOMER"],
       "groups": ["customers"],
       "attributes": {
-        "tenant_id": ["default-tenant"]
+        "tenantId": ["default-tenant"]
+      }
+    },
+    {
+      "username": "cashier@shopmanager.com",
+      "email": "cashier@shopmanager.com",
+      "firstName": "Cashier",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevCashier@2024!Test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["CASHIER"],
+      "attributes": {
+        "tenantId": ["default-tenant"],
+        "shopId": ["default-shop"]
+      }
+    },
+    {
+      "username": "accountant@shopmanager.com",
+      "email": "accountant@shopmanager.com",
+      "firstName": "Accountant",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevAccountant@2024!Test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ACCOUNTANT"],
+      "attributes": {
+        "tenantId": ["default-tenant"]
+      }
+    },
+    {
+      "username": "auditor@shopmanager.com",
+      "email": "auditor@shopmanager.com",
+      "firstName": "Auditor",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevAuditor@2024!Test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["AUDITOR"],
+      "attributes": {
+        "tenantId": ["default-tenant"]
       }
     }
   ],
@@ -212,6 +314,9 @@
         "http://localhost:3001/*",
         "http://localhost:3001/auth/callback",
         "http://localhost:3001/silent-check-sso.html",
+        "http://localhost:3002/*",
+        "http://localhost:3002/auth/callback",
+        "http://localhost:3002/silent-check-sso.html",
         "http://shop-manager.local/*",
         "http://shop-manager.local/auth/callback",
         "https://shop-manager.local/*",
@@ -220,12 +325,13 @@
       "webOrigins": [
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:3002",
         "http://shop-manager.local",
         "https://shop-manager.local"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://shop-manager.local/*##https://shop-manager.local/*",
+        "post.logout.redirect.uris": "http://localhost:3000/##http://localhost:3001/##http://localhost:3002/##http://shop-manager.local/*##https://shop-manager.local/*",
         "access.token.lifespan": "300",
         "sso.session.idle.timeout": "300",
         "sso.session.max.lifespan": "300"

@@ -1,6 +1,10 @@
 package com.princely.shopmanager.auth.security;
 
+import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -16,9 +20,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    private final UserRepository userRepository;
 
     @Value("${app.keycloak.client-id}")
     private String clientId;
@@ -36,7 +43,24 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             .toList();
         principal.setRoles(roleNames);
 
+        // Lookup user by Keycloak ID and set database User ID
+        enrichPrincipalWithUserId(principal);
+
         return new CustomJwtAuthenticationToken(jwt, authorities, principal);
+    }
+
+    /**
+     * Enriches the JwtPrincipal with the database User ID.
+     * Looks up the user by Keycloak ID and sets the internal database user ID.
+     */
+    private void enrichPrincipalWithUserId(JwtPrincipal principal) {
+        try {
+            userRepository.findByKeycloakId(principal.getSubject())
+                .ifPresent(user -> principal.setUserId(user.getId()));
+        } catch (Exception e) {
+            log.warn("Failed to lookup user by Keycloak ID: {}. UserId will not be set.",
+                principal.getSubject(), e);
+        }
     }
 
     private String getPrincipalClaimName(Jwt jwt) {
@@ -54,7 +78,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             Collection<String> realmRoles = (Collection<String>) realmAccess.get("roles");
             if (realmRoles != null) {
                 authorities.addAll(realmRoles.stream()
-                    .map(role -> new SimpleGrantedAuthority(role.toUpperCase()))
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                     .collect(Collectors.toSet()));
             }
         }
@@ -67,7 +91,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                 Collection<String> clientRoles = (Collection<String>) clientResource.get("roles");
                 if (clientRoles != null) {
                     authorities.addAll(clientRoles.stream()
-                        .map(role -> new SimpleGrantedAuthority(role.toUpperCase()))
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                         .collect(Collectors.toSet()));
                 }
             }

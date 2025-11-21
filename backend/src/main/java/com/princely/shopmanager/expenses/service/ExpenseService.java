@@ -1,33 +1,46 @@
 package com.princely.shopmanager.expenses.service;
 
-import com.princely.shopmanager.auth.context.TenantContext;
-import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.expenses.domain.Expense;
 import com.princely.shopmanager.expenses.domain.ExpenseCategory;
 import com.princely.shopmanager.expenses.domain.ExpenseStatus;
-import com.princely.shopmanager.expenses.dto.*;
+import com.princely.shopmanager.expenses.dto.ExpenseApprovalRequest;
+import com.princely.shopmanager.expenses.dto.ExpenseCategoryResponse;
+import com.princely.shopmanager.expenses.dto.ExpenseCreateRequest;
+import com.princely.shopmanager.expenses.dto.ExpenseFilterCriteria;
+import com.princely.shopmanager.expenses.dto.ExpenseResponse;
+import com.princely.shopmanager.expenses.dto.ExpenseSummaryDto;
+import com.princely.shopmanager.expenses.dto.ExpenseUpdateRequest;
 import com.princely.shopmanager.expenses.repository.ExpenseCategoryRepository;
 import com.princely.shopmanager.expenses.repository.ExpenseRepository;
-import com.princely.shopmanager.shared.domain.AuditLog;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.exception.BusinessException;
 import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;
+import com.princely.shopmanager.shared.exception.ErrorCode;
 import com.princely.shopmanager.shared.exception.ShopNotFoundException;
 import com.princely.shopmanager.shared.service.AuditService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing expenses and expenditures
@@ -41,22 +54,29 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseCategoryRepository categoryRepository;
     private final AuditService auditService;
+    private final ShopAccessValidator shopAccessValidator;
+    private final com.princely.shopmanager.core.repository.ShopRepository shopRepository;
 
     /**
      * Create a new expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT')")
-    public ExpenseResponse createExpense(UUID shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
+    public ExpenseResponse createExpense(String shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
         log.info("Creating expense for shop: {}, title: {}", shopId, request.title());
 
         validateShopAccess(shopId, principal);
 
         // Validate category exists and belongs to the shop
-        ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), shopId)
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found or does not belong to this shop"));
+        ExpenseCategory category = categoryRepository.findById(request.categoryId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, request.categoryId()));
 
-        if (!category.getIsActive()) {
+        // Validate category belongs to the shop
+        if (!category.getShopId().equals(shopId)) {
+            throw new AccessDeniedException("You don't have permission to use this expense category");
+        }
+
+        if (Boolean.FALSE.equals(category.getIsActive())) {
             throw new BusinessRuleViolationException("Cannot create expense for inactive category");
         }
 
@@ -109,7 +129,7 @@ public class ExpenseService {
      * Update an existing expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
     public ExpenseResponse updateExpense(UUID expenseId, ExpenseUpdateRequest request, JwtPrincipal principal) {
         log.info("Updating expense: {}", expenseId);
 
@@ -129,10 +149,15 @@ public class ExpenseService {
         }
 
         if (request.categoryId() != null) {
-            ExpenseCategory category = categoryRepository.findByIdAndShopId(request.categoryId(), expense.getShopId())
-                .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense category not found"));
+            ExpenseCategory category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, request.categoryId()));
 
-            if (!category.getIsActive()) {
+            // Validate category belongs to the same shop
+            if (!category.getShopId().equals(expense.getShopId())) {
+                throw new AccessDeniedException("You don't have permission to use this expense category");
+            }
+
+            if (Boolean.FALSE.equals(category.getIsActive())) {
                 throw new BusinessRuleViolationException("Cannot assign expense to inactive category");
             }
 
@@ -179,8 +204,9 @@ public class ExpenseService {
 
         log.info("Expense updated successfully: {}", expense.getId());
 
-        ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+        UUID categoryId = expense.getCategoryId();
+        ExpenseCategory category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, categoryId));
 
         return mapToResponse(expense, category);
     }
@@ -189,13 +215,13 @@ public class ExpenseService {
      * Approve an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ExpenseResponse approveExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Approving expense: {}", expenseId);
 
         Expense expense = findExpenseForUser(expenseId, principal);
 
-        if (!expense.canBeApproved()) {
+        if (expense.cannotBeApproved()) {
             throw new BusinessRuleViolationException("Expense cannot be approved in current status: " + expense.getStatus());
         }
 
@@ -207,8 +233,9 @@ public class ExpenseService {
 
         log.info("Expense approved successfully: {}", expense.getId());
 
-        ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+        UUID categoryId = expense.getCategoryId();
+        ExpenseCategory category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, categoryId));
 
         return mapToResponse(expense, category);
     }
@@ -217,13 +244,13 @@ public class ExpenseService {
      * Reject an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ExpenseResponse rejectExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Rejecting expense: {}", expenseId);
 
         Expense expense = findExpenseForUser(expenseId, principal);
 
-        if (!expense.canBeApproved()) {
+        if (expense.cannotBeApproved()) {
             throw new BusinessRuleViolationException("Expense cannot be rejected in current status: " + expense.getStatus());
         }
 
@@ -235,8 +262,9 @@ public class ExpenseService {
 
         log.info("Expense rejected successfully: {}", expense.getId());
 
-        ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+        UUID categoryId = expense.getCategoryId();
+        ExpenseCategory category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, categoryId));
 
         return mapToResponse(expense, category);
     }
@@ -247,8 +275,9 @@ public class ExpenseService {
     public ExpenseResponse getExpenseById(UUID expenseId, JwtPrincipal principal) {
         Expense expense = findExpenseForUser(expenseId, principal);
 
-        ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+        UUID categoryId = expense.getCategoryId();
+        ExpenseCategory category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, categoryId));
 
         return mapToResponse(expense, category);
     }
@@ -256,7 +285,7 @@ public class ExpenseService {
     /**
      * Get expenses for a shop with filtering and pagination
      */
-    public Page<ExpenseResponse> getExpenses(UUID shopId, ExpenseFilterCriteria criteria, Pageable pageable, JwtPrincipal principal) {
+    public Page<ExpenseResponse> getExpenses(String shopId, ExpenseFilterCriteria criteria, Pageable pageable, JwtPrincipal principal) {
         validateShopAccess(shopId, principal);
 
         Specification<Expense> spec = createExpenseSpecification(shopId, criteria);
@@ -269,7 +298,7 @@ public class ExpenseService {
      * Delete an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('SHOP_OWNER', 'SHOP_MANAGER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public void deleteExpense(UUID expenseId, JwtPrincipal principal) {
         log.info("Deleting expense: {}", expenseId);
 
@@ -294,7 +323,7 @@ public class ExpenseService {
     /**
      * Get expense summary for a shop
      */
-    public ExpenseSummaryDto getExpenseSummary(UUID shopId, LocalDate startDate, LocalDate endDate, JwtPrincipal principal) {
+    public ExpenseSummaryDto getExpenseSummary(String shopId, LocalDate startDate, LocalDate endDate, JwtPrincipal principal) {
         validateShopAccess(shopId, principal);
 
         if (startDate == null) {
@@ -334,20 +363,29 @@ public class ExpenseService {
     // Private helper methods
 
     private Expense findExpenseForUser(UUID expenseId, JwtPrincipal principal) {
-        return expenseRepository.findById(expenseId)
-            .filter(expense -> hasAccessToShop(expense.getShopId(), principal))
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Expense not found or access denied"));
-    }
+        // Step 1: Check if expense exists
+        Expense expense = expenseRepository.findById(expenseId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND, expenseId));
 
-    private void validateShopAccess(UUID shopId, JwtPrincipal principal) {
-        if (!hasAccessToShop(shopId, principal)) {
-            throw new ShopNotFoundException("Shop not found or access denied");
+        // Step 2: Check permissions using ShopAccessValidator
+        if (shopAccessValidator.hasNoAccessToShop(expense.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this expense");
         }
+
+        return expense;
     }
 
-    private boolean hasAccessToShop(UUID shopId, JwtPrincipal principal) {
-        // For now, we'll use the tenant context to validate access
-        return TenantContext.getCurrentTenantId() != null;
+    private void validateShopAccess(String shopId, JwtPrincipal principal) {
+        // Step 1: Check if shop exists
+        boolean shopExists = shopRepository.existsById(shopId);
+        if (!shopExists) {
+            throw new ShopNotFoundException("The shop with id " + shopId + " was not found");
+        }
+
+        // Step 2: Check permissions using ShopAccessValidator
+        if (shopAccessValidator.hasNoAccessToShop(shopId, principal)) {
+            throw new AccessDeniedException("You don't have permission to access shop with id " + shopId);
+        }
     }
 
     private Set<String> cleanTags(Set<String> tags) {
@@ -359,7 +397,7 @@ public class ExpenseService {
             .collect(Collectors.toSet());
     }
 
-    private Specification<Expense> createExpenseSpecification(UUID shopId, ExpenseFilterCriteria criteria) {
+    private Specification<Expense> createExpenseSpecification(String shopId, ExpenseFilterCriteria criteria) {
         return (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
@@ -408,7 +446,7 @@ public class ExpenseService {
 
     private ExpenseResponse mapToResponseWithCategory(Expense expense) {
         ExpenseCategory category = categoryRepository.findById(expense.getCategoryId())
-            .orElseThrow(() -> new BusinessException("BUSINESS_ERROR", "Category not found"));
+            .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, expense.getCategoryId()));
         return mapToResponse(expense, category);
     }
 

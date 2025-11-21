@@ -8,6 +8,7 @@ import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
+import com.princely.shopmanager.core.statemachine.ShopStatusStateMachine;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.events.ShopCreatedEvent;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,21 +54,24 @@ public class ShopService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final ShopStatusStateMachine stateMachine;
+    private final com.princely.shopmanager.shared.security.TenantSecurityValidator tenantSecurityValidator;
 
     /**
-     * Creates a new shop with automatic tenant ID generation.
+     * Creates a new shop for the current tenant.
      *
      * This method:
-     * - Generates a unique tenant ID based on shop name
+     * - Retrieves the tenant ID from the authenticated user's context
+     * - Associates the shop with the user's existing tenant
      * - Creates the shop entity with proper defaults
      * - Saves to database with audit logging
-     * - Sets up default shop configuration
      *
      * @param request Shop creation request with validation
      * @return Created shop response DTO
      * @throws IllegalArgumentException if shop name already exists
+     * @throws IllegalStateException if no tenant context or tenant not found
      */
     @Transactional
+    @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
     public ShopResponse createShop(ShopCreateRequest request) {
         log.info("Creating new shop: {}", request.getName());
 
@@ -75,13 +80,14 @@ public class ShopService {
             throw new IllegalArgumentException("Shop with name '" + request.getName() + "' already exists");
         }
 
-        // Create or get tenant
-        Tenant tenant = getOrCreateTenant(request.getName());
+        // Get tenant ID from logged-in user's context
+        String tenantId = TenantContext.requireCurrentTenant();
+        Tenant tenant = tenantRepository.findById(tenantId)
+            .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
 
-        // Create shop entity
+        // Build shop entity
         Shop shop = Shop.builder()
             .name(request.getName())
-            .tenant(tenant)
             .description(request.getDescription())
             .address(request.getAddress())
             .city(request.getCity())
@@ -93,18 +99,19 @@ public class ShopService {
             .taxId(request.getTaxId())
             .status(Shop.ShopStatus.ACTIVE)
             .openingDate(request.getOpeningDate() != null ? request.getOpeningDate() : LocalDateTime.now())
+            .tenant(tenant)
             .build();
 
         shop = shopRepository.save(shop);
 
         // Audit the creation
         auditService.logEntityCreation("Shop", shop.getId(),
-            "Shop created: " + shop.getName() + " with tenant ID: " + tenant.getId());
+            "Shop created: " + shop.getName() + " for tenant ID: " + tenant.getId());
 
         // Publish shop created event
         eventPublisher.publishEvent(new ShopCreatedEvent(shop.getId(), tenant.getId(), shop.getName()));
 
-        log.info("Successfully created shop with ID: {} and tenant ID: {}", shop.getId(), tenant.getId());
+        log.info("Successfully created shop with ID: {} for tenant ID: {}", shop.getId(), tenant.getId());
         return ShopResponse.fromEntity(shop);
     }
 
@@ -123,18 +130,18 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional
-    @CacheEvict(key = "#shopId")
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public ShopResponse updateShop(String shopId, ShopUpdateRequest request) {
         log.info("Updating shop: {}", shopId);
 
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         // Store original values for audit
         String originalName = shop.getName();
@@ -172,11 +179,8 @@ public class ShopService {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         return ShopResponse.fromEntity(shop);
     }
@@ -184,27 +188,38 @@ public class ShopService {
     /**
      * Retrieves shops accessible to the current user with pagination.
      *
-     * For system administrators, returns all shops.
-     * For tenant users, returns only shops within their tenant context.
+     * Returns only shops within the user's tenant. Tenant context is required.
+     * For system admin access to all shops, use getAllShopsSystemAdmin() instead.
      *
      * @param pageable Pagination parameters
      * @return Page of shop response DTOs
+     * @throws IllegalStateException if no tenant context is available
      */
     @Transactional(readOnly = true)
     public Page<ShopResponse> getShops(Pageable pageable) {
-        String currentTenantId = TenantContext.getCurrentTenantId();
+        // Require tenant context - system admins should use getAllShopsSystemAdmin()
+        String currentTenantId = TenantContext.requireCurrentTenant();
 
-        Page<Shop> shops;
-        if (currentTenantId == null) {
-            // System admin - can see all shops
-            shops = shopRepository.findAll(pageable);
-            log.debug("Retrieved {} shops for system admin", shops.getContent().size());
-        } else {
-            // Tenant user - can only see shops in their tenant
-            shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
-            log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
-        }
+        Page<Shop> shops = shopRepository.findByTenant_Id(currentTenantId, pageable);
+        log.debug("Retrieved {} shops for tenant: {}", shops.getContent().size(), currentTenantId);
 
+        return shops.map(ShopResponse::fromEntity);
+    }
+
+    /**
+     * Retrieves ALL shops across ALL tenants (System Admin only).
+     *
+     * This method explicitly bypasses tenant isolation and returns all shops
+     * in the system. Should only be called from endpoints restricted to SYSTEM_ADMIN.
+     *
+     * @param pageable Pagination parameters
+     * @return Page of all shop response DTOs
+     */
+    @Transactional(readOnly = true)
+    public Page<ShopResponse> getAllShopsSystemAdmin(Pageable pageable) {
+        log.debug("System admin retrieving all shops across all tenants");
+        Page<Shop> shops = shopRepository.findAll(pageable);
+        log.debug("Retrieved {} shops total", shops.getTotalElements());
         return shops.map(ShopResponse::fromEntity);
     }
 
@@ -245,18 +260,18 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or invalid status transition
      */
     @Transactional
-    @CacheEvict(key = "#shopId")
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public ShopResponse changeShopStatus(String shopId, Shop.ShopStatus newStatus) {
         log.info("Changing shop status: {} to {}", shopId, newStatus);
 
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         Shop.ShopStatus originalStatus = shop.getStatus();
 
@@ -284,17 +299,18 @@ public class ShopService {
      * @throws IllegalArgumentException if shop not found or access denied
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(key = "#shopId"),
+        @CacheEvict(key = "'active-shops-' + T(com.princely.shopmanager.auth.context.TenantContext).getCurrentTenantId()")
+    })
     public void deleteShop(String shopId) {
         log.info("Deleting shop: {}", shopId);
 
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
 
-        // Verify tenant access
-        String currentTenantId = TenantContext.getCurrentTenantId();
-        if (currentTenantId != null && !currentTenantId.equals(shop.getTenant().getId())) {
-            throw new IllegalArgumentException("Access denied to shop: " + shopId);
-        }
+        // Verify tenant access using centralized validator
+        tenantSecurityValidator.validateShopAccess(shop);
 
         // Soft delete by changing status
         shop.setStatus(Shop.ShopStatus.CLOSED);
@@ -307,46 +323,4 @@ public class ShopService {
         log.info("Successfully deleted shop: {}", shopId);
     }
 
-    /**
-     * Creates or retrieves a tenant based on shop name.
-     *
-     * @param shopName Name of the shop
-     * @return Tenant entity
-     */
-    private Tenant getOrCreateTenant(String shopName) {
-        String baseTenantId = shopName.toLowerCase()
-            .replaceAll("[^a-z0-9]", "-")
-            .replaceAll("-+", "-")
-            .replaceAll("^-|-$", "");
-
-        // Ensure uniqueness by appending UUID suffix if needed
-        String tenantId = "tenant-" + baseTenantId;
-        if (tenantRepository.existsById(tenantId)) {
-            tenantId = tenantId + "-" + UUID.randomUUID().toString().substring(0, 8);
-        }
-
-        // Create new tenant first
-        Tenant tenant = tenantRepository.save(Tenant.builder()
-            .id(tenantId)
-            .name(shopName + " Organization")
-            .contactEmail("admin@" + baseTenantId.replaceAll("-", "") + ".com")
-            .status(Tenant.TenantStatus.ACTIVE)
-            .build());
-
-        // Create contact user for the tenant
-        String contactEmail = "admin@" + baseTenantId.replaceAll("-", "") + ".com";
-        User contactUser = userRepository.save(User.builder()
-            .tenant(tenant)
-            .keycloakId("admin-" + tenantId)
-            .username("admin-" + shopName.toLowerCase().replaceAll("[^a-z0-9]", ""))
-            .email(contactEmail)
-            .firstName("Admin")
-            .lastName("User")
-            .status(User.UserStatus.ACTIVE)
-            .build());
-
-        // Update tenant with contact user reference
-        tenant.setContactUser(contactUser);
-        return tenantRepository.save(tenant);
-    }
 }

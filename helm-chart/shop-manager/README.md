@@ -1146,6 +1146,12 @@ kubectl create secret generic <name> --from-literal=key=value -n <namespace>
 kubectl get secret <name> -n <namespace> -o yaml
 ```
 
+```bash
+kubectx 
+helm uninstall retail -n gomco
+kubectl delete pvc -n gomco -l app.kubernetes.io/instance=retail
+helm install retail ./helm-chart/shop-manager -n gomco -f gomco-values.yaml
+```
 ---
 
 ## Values Reference

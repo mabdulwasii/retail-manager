@@ -68,15 +68,8 @@ public class TenantFilter extends OncePerRequestFilter {
             String tenantId = extractTenant(request);
 
             if (tenantId != null) {
-                // Check if multi-tenancy is enabled for this tenant
-                boolean multiTenancyEnabled = featureFlagService.isFeatureEnabled(tenantId, "multi-tenant.enabled");
-
-                if (multiTenancyEnabled) {
-                    TenantContext.setCurrentTenant(tenantId);
-                    log.debug("Set tenant context for tenant: {}", tenantId);
-                } else {
-                    log.debug("Multi-tenancy disabled for tenant: {}, skipping tenant context", tenantId);
-                }
+                TenantContext.setCurrentTenant(tenantId);
+                log.debug("Set tenant context for tenant: {}", tenantId);
             }
 
             // Extract and set user information from JWT token or Principal

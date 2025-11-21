@@ -18,6 +18,9 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
 
     Optional<Product> findByBarcode(String barcode);
 
+    @Query("SELECT p FROM Product p WHERE p.barcode = :barcode AND p.shop.id = :shopId")
+    Optional<Product> findByBarcodeAndShopId(@Param("barcode") String barcode, @Param("shopId") String shopId);
+
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId")
     List<Product> findByShopId(@Param("shopId") String shopId);
 
@@ -37,22 +40,18 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
         @Param("maxPrice") BigDecimal maxPrice
     );
 
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.quantityInStock <= p.reorderPoint")
-    List<Product> findProductsNeedingReorder(@Param("shopId") String shopId);
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.quantityInStock = 0")
-    List<Product> findOutOfStockProducts(@Param("shopId") String shopId);
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.location = :location")
-    List<Product> findByShopIdAndLocation(@Param("shopId") String shopId, @Param("location") String location);
-
     @Query("SELECT COUNT(p) FROM Product p WHERE p.shop.id = :shopId AND p.status = 'ACTIVE'")
     Long countActiveProductsByShopId(@Param("shopId") String shopId);
 
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.supplierName = :supplierName")
     List<Product> findByShopIdAndSupplierName(@Param("shopId") String shopId, @Param("supplierName") String supplierName);
 
-    boolean existsBySkuAndShopId(String sku, String shopId);
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p WHERE p.sku = :sku AND p.shop.id = :shopId")
+    boolean existsBySkuAndShopId(@Param("sku") String sku, @Param("shopId") String shopId);
 
-    boolean existsByBarcodeAndShopId(String barcode, String shopId);
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p WHERE p.barcode = :barcode AND p.shop.id = :shopId")
+    boolean existsByBarcodeAndShopId(@Param("barcode") String barcode, @Param("shopId") String shopId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId")
+    Long countByCategory_Id(@Param("categoryId") String categoryId);
 }

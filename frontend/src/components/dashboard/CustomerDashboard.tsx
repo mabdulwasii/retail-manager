@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +13,9 @@ import {
   MapPin,
   Clock,
   Tag,
-  TrendingUp
+  TrendingUp,
+  Package,
+  RefreshCw
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -24,6 +26,7 @@ interface Purchase {
   total: number
   date: string
   status: 'completed' | 'processing' | 'refunded'
+  trackingNumber?: string
 }
 
 interface Recommendation {
@@ -34,11 +37,27 @@ interface Recommendation {
   image: string
   rating: number
   discount?: number
+  category: string
+}
+
+interface LoyaltyReward {
+  id: string
+  title: string
+  description: string
+  pointsRequired: number
+  expiryDate: string
+  category: 'discount' | 'gift' | 'voucher'
 }
 
 export const CustomerDashboard: React.FC = () => {
   const { user } = useAuth()
   const { formatCurrency } = useCurrency()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    setTimeout(() => setIsRefreshing(false), 1000)
+  }
 
   const customerStats = [
     {
@@ -77,15 +96,16 @@ export const CustomerDashboard: React.FC = () => {
       shop: 'Downtown Electronics',
       items: ['iPhone 15 Pro', 'AirPods Pro'],
       total: 425000,
-      date: '2024-01-15',
-      status: 'completed'
+      date: new Date(Date.now() - 7 * 24 * 60 * 60000).toISOString().split('T')[0],
+      status: 'completed',
+      trackingNumber: 'TRK-2024-12345'
     },
     {
       id: 'P-2024-002',
       shop: 'Fashion Forward',
       items: ['Designer Jeans', 'Cotton T-Shirt'],
       total: 35000,
-      date: '2024-01-10',
+      date: new Date(Date.now() - 12 * 24 * 60 * 60000).toISOString().split('T')[0],
       status: 'completed'
     },
     {
@@ -93,37 +113,68 @@ export const CustomerDashboard: React.FC = () => {
       shop: 'Grocery Express',
       items: ['Fresh Groceries', 'Organic Produce'],
       total: 18500,
-      date: '2024-01-08',
-      status: 'processing'
+      date: new Date(Date.now() - 15 * 24 * 60 * 60000).toISOString().split('T')[0],
+      status: 'processing',
+      trackingNumber: 'TRK-2024-67890'
     }
   ]
 
   const recommendations: Recommendation[] = [
     {
-      id: '1',
-      name: 'Wireless Headphones',
-      shop: 'Downtown Electronics',
-      price: 65000,
-      image: '/api/placeholder/200/200',
+      id: 'R-001',
+      name: 'Wireless Gaming Mouse',
+      shop: 'Tech Central',
+      price: 2999,
+      image: '/placeholder.jpg',
+      rating: 4.5,
+      discount: 20,
+      category: 'Electronics'
+    },
+    {
+      id: 'R-002',
+      name: 'Running Shoes',
+      shop: 'Sports World',
+      price: 8999,
+      image: '/placeholder.jpg',
       rating: 4.8,
-      discount: 15
+      category: 'Sports'
     },
     {
-      id: '2',
-      name: 'Smart Watch',
-      shop: 'Tech World',
-      price: 120000,
-      image: '/api/placeholder/200/200',
-      rating: 4.6
+      id: 'R-003',
+      name: 'Coffee Maker',
+      shop: 'Home Essentials',
+      price: 15999,
+      image: '/placeholder.jpg',
+      rating: 4.3,
+      discount: 15,
+      category: 'Home'
+    }
+  ]
+
+  const loyaltyRewards: LoyaltyReward[] = [
+    {
+      id: 'RW-001',
+      title: '10% Off Next Purchase',
+      description: 'Get 10% discount on your next order',
+      pointsRequired: 1000,
+      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60000).toISOString().split('T')[0],
+      category: 'discount'
     },
     {
-      id: '3',
-      name: 'Casual Sneakers',
-      shop: 'Fashion Forward',
-      price: 45000,
-      image: '/api/placeholder/200/200',
-      rating: 4.7,
-      discount: 20
+      id: 'RW-002',
+      title: 'Free Shipping',
+      description: 'Free delivery on orders over $50',
+      pointsRequired: 500,
+      expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60000).toISOString().split('T')[0],
+      category: 'voucher'
+    },
+    {
+      id: 'RW-003',
+      title: 'Gift Voucher',
+      description: '$25 gift voucher for any shop',
+      pointsRequired: 2000,
+      expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60000).toISOString().split('T')[0],
+      category: 'gift'
     }
   ]
 
@@ -182,13 +233,19 @@ export const CustomerDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user?.firstName || user?.username}!
-        </h1>
-        <p className="text-muted-foreground">
-          Discover great products and track your shopping journey.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {user?.firstName || user?.username}!
+          </h1>
+          <p className="text-muted-foreground">
+            Discover great products and track your shopping journey.
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Customer Stats */}

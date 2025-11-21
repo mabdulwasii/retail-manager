@@ -42,9 +42,6 @@ buildNumber.properties
 
 # Backend specific
 backend/target/
-backend/.mvn/
-backend/mvnw
-backend/mvnw.cmd
 
 # IDE Files
 .idea/
@@ -78,9 +75,6 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Documentation (as requested)
-docs/
 
 # Claude files (as requested)
 .claude/
@@ -120,3 +114,8 @@ jacoco.exec
 application-*.properties
 !application.properties
 !application-test.properties
+docs/frontend/CHECKLIST_INDEX.md
+docs/frontend/checklists
+docs/frontend/IMPLEMENTATION_STATUS.md
+docs/frontend/PRIORITY_IMPLEMENTATION.md
+frontend/docs/

@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service responsible for handling image uploads and file management operations.
- *
  * This service provides:
  * - Image file validation
  * - File upload handling

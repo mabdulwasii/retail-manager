@@ -101,6 +101,49 @@ data:
             "phone",
             "offline_access",
             "microprofile-jwt"
+          ],
+          "protocolMappers": [
+            {
+              "name": "sub-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-sub-mapper",
+              "consentRequired": false,
+              "config": {
+                "access.token.claim": "true",
+                "id.token.claim": "true",
+                "userinfo.token.claim": "true"
+              }
+            },
+            {
+              "name": "tenant-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "tenantId",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "tenant_id",
+                "jsonType.label": "String",
+                "multivalued": "false"
+              }
+            },
+            {
+              "name": "shop-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "shopId",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "shop_id",
+                "jsonType.label": "String",
+                "multivalued": "false"
+              }
+            }
           ]
         },
         {
@@ -124,17 +167,27 @@ data:
       "roles": {
         "realm": [
           {
+            "name": "SYSTEM_ADMIN",
+            "description": "System administrator with full access to all tenants",
+            "composite": false
+          },
+          {
             "name": "TENANT_ADMIN",
             "description": "Full administrative access to tenant",
             "composite": false
           },
           {
-            "name": "SHOP_MANAGER",
+            "name": "OWNER",
+            "description": "Shop owner with full access to shop operations",
+            "composite": false
+          },
+          {
+            "name": "MANAGER",
             "description": "Shop management and operations",
             "composite": false
           },
           {
-            "name": "SHOP_EMPLOYEE",
+            "name": "EMPLOYEE",
             "description": "Basic shop operations",
             "composite": false
           },
@@ -164,7 +217,7 @@ data:
             "composite": false
           }
         ]
-      },
+      }{{- if and .Values.application .Values.application.testUsers .Values.application.testUsers.enabled }},
       "users": [
         {
           "username": "admin@shopmanager.com",
@@ -182,8 +235,28 @@ data:
           ],
           "realmRoles": ["TENANT_ADMIN"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
+          }
+        },
+        {
+          "username": "owner@shopmanager.com",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Shop",
+          "lastName": "Owner",
+          "email": "owner@shopmanager.com",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "DevOwner@2024!Test",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["OWNER"],
+          "attributes": {
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -200,10 +273,10 @@ data:
               "temporary": false
             }
           ],
-          "realmRoles": ["SHOP_MANAGER"],
+          "realmRoles": ["MANAGER"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -220,10 +293,10 @@ data:
               "temporary": false
             }
           ],
-          "realmRoles": ["SHOP_EMPLOYEE"],
+          "realmRoles": ["EMPLOYEE"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -242,7 +315,7 @@ data:
           ],
           "realmRoles": ["INVESTOR"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -261,7 +334,7 @@ data:
           ],
           "realmRoles": ["CUSTOMER"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -280,8 +353,8 @@ data:
           ],
           "realmRoles": ["CASHIER"],
           "attributes": {
-            "tenantId": ["default-tenant"],
-            "shopId": ["default-shop"]
+            "tenantId": ["default-tenant-id"],
+            "shopId": ["default-shop-id"]
           }
         },
         {
@@ -300,7 +373,7 @@ data:
           ],
           "realmRoles": ["ACCOUNTANT"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         },
         {
@@ -319,10 +392,10 @@ data:
           ],
           "realmRoles": ["AUDITOR"],
           "attributes": {
-            "tenantId": ["default-tenant"]
+            "tenantId": ["default-tenant-id"]
           }
         }
-      ]
+      ]{{- end }}
     }
 
   setup-realm.sh: |
@@ -400,8 +473,9 @@ data:
         echo "✓ Realm configuration completed successfully"
         echo "✓ Test users created with credentials:"
         echo "  - admin@shopmanager.com / DevAdmin@2024!Test (TENANT_ADMIN)"
-        echo "  - manager@shopmanager.com / DevManager@2024!Test (SHOP_MANAGER)"
-        echo "  - employee@shopmanager.com / DevEmployee@2024!Test (SHOP_EMPLOYEE)"
+        echo "  - owner@shopmanager.com / DevOwner@2024!Test (OWNER)"
+        echo "  - manager@shopmanager.com / DevManager@2024!Test (MANAGER)"
+        echo "  - employee@shopmanager.com / DevEmployee@2024!Test (EMPLOYEE)"
         echo "  - investor@shopmanager.com / DevInvestor@2024!Test (INVESTOR)"
         echo "  - customer@shopmanager.com / DevCustomer@2024!Test (CUSTOMER)"
         echo "  - cashier@shopmanager.com / DevCashier@2024!Test (CASHIER)"

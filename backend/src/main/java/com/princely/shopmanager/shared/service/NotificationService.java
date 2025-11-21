@@ -1,6 +1,7 @@
 package com.princely.shopmanager.shared.service;
 
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.shared.dto.EmailTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,5 @@
 package com.princely.shopmanager.investment.domain;
 
-import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.shared.domain.BaseEntity;
@@ -13,32 +12,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Investment entity representing an investment made by a user in a shop or specific products.
+ * Investment entity representing an individual investor's participation in an InvestmentRound.
  *
- * <p>This entity tracks investment details including:
+ * <p>This entity tracks investor-specific details:
  * <ul>
- *   <li>Investment amount and type (shop-wide or product-specific)</li>
- *   <li>Expected and actual returns</li>
- *   <li>Investment duration and maturity dates</li>
- *   <li>Profit distribution preferences</li>
- *   <li>Risk assessment and status tracking</li>
+ *   <li>Investment amount contributed by this investor</li>
+ *   <li>Fixed shares (for FIXED_SHARES model)</li>
+ *   <li>Total profit earned and withdrawn by this investor</li>
+ *   <li>Investment status (ACTIVE, WITHDRAWN, etc.)</li>
  * </ul>
  *
- * <p>Investments can be either:
- * <ul>
- *   <li><b>SHOP_WIDE:</b> Investment in the entire shop's performance</li>
- *   <li><b>PRODUCT_SPECIFIC:</b> Investment targeting specific products</li>
- *   <li><b>CATEGORY_BASED:</b> Investment in product categories</li>
- * </ul>
+ * <p>Shared configuration (investment type, profit sharing model, maturity date)
+ * is stored in the InvestmentRound entity that this investment belongs to.
  *
  * @author Shop Manager Development Team
- * @version 1.0
+ * @version 2.0
  * @since 1.0
  */
 @Entity
 @Table(name = "investments", indexes = {
     @Index(name = "idx_investment_investor", columnList = "investor_id"),
     @Index(name = "idx_investment_shop", columnList = "shop_id"),
+    @Index(name = "idx_investment_round", columnList = "investment_round_id"),
     @Index(name = "idx_investment_date", columnList = "investment_date")
 })
 @Getter
@@ -46,8 +41,8 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"investor", "shop", "products", "shares"})
-@EqualsAndHashCode(callSuper = true, exclude = {"investor", "shop", "products", "shares"})
+@ToString(exclude = {"investor", "shop", "investmentRound", "shares"})
+@EqualsAndHashCode(callSuper = true, exclude = {"investor", "shop", "investmentRound", "shares"})
 public class Investment extends BaseEntity {
 
     @Id
@@ -65,37 +60,18 @@ public class Investment extends BaseEntity {
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "investment_type", nullable = false)
-    private InvestmentType investmentType;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "investment_products",
-        joinColumns = @JoinColumn(name = "investment_id"),
-        inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    @Builder.Default
-    private Set<Product> products = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "investment_round_id", nullable = false)
+    private InvestmentRound investmentRound;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "profit_sharing_model", nullable = false)
-    private ProfitSharingModel profitSharingModel;
-
-    @Column(name = "profit_percentage", precision = 5, scale = 2)
-    private BigDecimal profitPercentage;
 
     @Column(name = "fixed_shares")
     private Integer fixedShares;
 
     @Column(name = "investment_date", nullable = false)
     private LocalDateTime investmentDate;
-
-    @Column(name = "maturity_date")
-    private LocalDateTime maturityDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -120,26 +96,47 @@ public class Investment extends BaseEntity {
     @Column(name = "notes", length = 1000)
     private String notes;
 
+    @Getter
     public enum InvestmentType {
-        SHOP_WIDE,
-        PRODUCT_SPECIFIC,
-        CATEGORY_SPECIFIC
+        SHOP_WIDE("Shop Wide"),
+        PRODUCT_SPECIFIC("Product Specific"),
+        CATEGORY_SPECIFIC("Category Specific");
+
+        private final String displayName;
+
+        InvestmentType(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
+    @Getter
     public enum ProfitSharingModel {
-        PROPORTIONAL_BY_AMOUNT,
-        FIXED_SHARES,
-        TIME_WEIGHTED,
-        TIERED
+        PROPORTIONAL_BY_AMOUNT("Proportional by Amount"),
+        FIXED_SHARES("Fixed Shares"),
+        TIME_WEIGHTED("Time Weighted"),
+        TIERED("Tiered");
+
+        private final String displayName;
+
+        ProfitSharingModel(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
+    @Getter
     public enum InvestmentStatus {
-        PENDING,
-        ACTIVE,
-        INACTIVE,
-        MATURED,
-        WITHDRAWN,
-        CANCELLED
+        PENDING("Pending"),
+        ACTIVE("Active"),
+        INACTIVE("Inactive"),
+        MATURED("Matured"),
+        WITHDRAWN("Withdrawn"),
+        CANCELLED("Cancelled");
+
+        private final String displayName;
+
+        InvestmentStatus(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
     public BigDecimal getAvailableBalance() {
@@ -148,5 +145,32 @@ public class Investment extends BaseEntity {
 
     public boolean canWithdraw(BigDecimal withdrawAmount) {
         return getAvailableBalance().compareTo(withdrawAmount) >= 0;
+    }
+
+    /**
+     * Gets the investment type from the associated round.
+     *
+     * @return Investment type
+     */
+    public InvestmentType getInvestmentType() {
+        return investmentRound != null ? investmentRound.getInvestmentType() : null;
+    }
+
+    /**
+     * Gets the profit sharing model from the associated round.
+     *
+     * @return Profit sharing model
+     */
+    public ProfitSharingModel getProfitSharingModel() {
+        return investmentRound != null ? investmentRound.getProfitSharingModel() : null;
+    }
+
+    /**
+     * Gets the maturity date from the associated round.
+     *
+     * @return Maturity date
+     */
+    public LocalDateTime getMaturityDate() {
+        return investmentRound != null ? investmentRound.getMaturityDate() : null;
     }
 }
