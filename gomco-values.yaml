@@ -27,7 +27,7 @@ frontend:
 
 branding:
   platformName: "GOMCO Retail Pro"
-  companyName: "GOMCO Corporation"
+  companyName: "GOMCO Enterprise"
   platformDescription: "Advanced Retail Management System"
   colors:
     primary: "#2E7D32"
