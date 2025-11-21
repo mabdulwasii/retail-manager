@@ -19,7 +19,7 @@ This document explains how to configure GitHub Actions secrets for automated bui
 **How to add to GitHub**:
 1. Go to your repository: https://github.com/mabdulwasii/retail-manager
 2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
+3. Click **New repository secret**K
 4. Name: `DOCKER_PASSWORD`
 5. Value: Paste your Docker Hub access token
 6. Click **Add secret**
