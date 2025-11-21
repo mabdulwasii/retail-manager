@@ -147,7 +147,7 @@ jobs:
       - name: Trigger backend build
         if: steps.release-type.outputs.RELEASE_BACKEND == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
         run: |
           echo "Triggering backend build workflow for version ${{ steps.backend-release.outputs.NEW_VERSION }}"
           gh workflow run build-backend.yml \
@@ -219,7 +219,7 @@ jobs:
       - name: Trigger frontend build
         if: steps.release-type.outputs.RELEASE_FRONTEND == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
         run: |
           echo "Triggering frontend build workflow for version ${{ steps.frontend-release.outputs.NEW_VERSION }}"
           gh workflow run build-frontend.yml \
