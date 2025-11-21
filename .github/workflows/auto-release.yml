@@ -142,6 +142,21 @@ jobs:
           echo "TAG_NAME=backend-v$NEW_VERSION" >> $GITHUB_OUTPUT
 
       # ================================================================
+      # Step 3b: Trigger Backend Build Workflow
+      # ================================================================
+      - name: Trigger backend build
+        if: steps.release-type.outputs.RELEASE_BACKEND == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering backend build workflow for version ${{ steps.backend-release.outputs.NEW_VERSION }}"
+          gh workflow run build-backend.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            --field version="${{ steps.backend-release.outputs.NEW_VERSION }}" \
+            --field push_latest=true
+
+      # ================================================================
       # Step 4: Release Frontend
       # ================================================================
       - name: Release frontend
@@ -197,6 +212,21 @@ jobs:
 
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "TAG_NAME=frontend-v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # ================================================================
+      # Step 4b: Trigger Frontend Build Workflow
+      # ================================================================
+      - name: Trigger frontend build
+        if: steps.release-type.outputs.RELEASE_FRONTEND == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering frontend build workflow for version ${{ steps.frontend-release.outputs.NEW_VERSION }}"
+          gh workflow run build-frontend.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            --field version="${{ steps.frontend-release.outputs.NEW_VERSION }}" \
+            --field push_latest=true
 
       # ================================================================
       # Step 5: Summary
