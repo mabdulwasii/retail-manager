@@ -132,11 +132,7 @@ jobs:
           git commit -m "chore(backend): bump version to $NEW_VERSION"
 
           # Create tag
-          git tag -a "backend-v$NEW_VERSION" -m "Backend v$NEW_VERSION
-
-Auto-released via PR #${{ github.event.pull_request.number }}
-
-${{ github.event.pull_request.title }}"
+          git tag -a "backend-v$NEW_VERSION" -m "Backend v$NEW_VERSION - Auto-released via PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}"
 
           # Push changes and tag
           git push origin main
@@ -193,11 +189,7 @@ ${{ github.event.pull_request.title }}"
           git commit -m "chore(frontend): bump version to $NEW_VERSION"
 
           # Create tag
-          git tag -a "frontend-v$NEW_VERSION" -m "Frontend v$NEW_VERSION
-
-Auto-released via PR #${{ github.event.pull_request.number }}
-
-${{ github.event.pull_request.title }}"
+          git tag -a "frontend-v$NEW_VERSION" -m "Frontend v$NEW_VERSION - Auto-released via PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}"
 
           # Push changes and tag
           git push origin main
