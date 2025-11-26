@@ -19,7 +19,7 @@ vi my-values.yaml
 
 # Install
 helm install retail oci://registry-1.docker.io/princely/shop-manager \
-  --version 0.0.1 \
+  --version 0.0.46 \
   -n gomco \
   --create-namespace \
   -f my-values.yaml
@@ -180,3 +180,5 @@ This project is part of a retail management system demonstration.
 ---
 
 **🔗 Quick Links**: [Test Credentials](./TESTING-GUIDE.md#-test-user-accounts) | [Local Development](./LOCAL_DEVELOPMENT.md) | [Architecture](./CLAUDE.md)
+
+Thanks.

@@ -217,7 +217,7 @@ data:
             "composite": false
           }
         ]
-      }{{- if .Values.application.testUsers.enabled }},
+      }{{- if and .Values.application .Values.application.testUsers .Values.application.testUsers.enabled }},
       "users": [
         {
           "username": "admin@shopmanager.com",

@@ -1,0 +1,282 @@
+name: Auto-Release on PR Merge
+
+# Automatically create releases when PRs with release labels are merged
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  auto-release:
+    name: Auto Release Backend/Frontend
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      # ================================================================
+      # Step 1: Checkout Code
+      # ================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog
+
+      # ================================================================
+      # Step 2: Detect Release Type from Labels
+      # ================================================================
+      - name: Detect release type
+        id: release-type
+        run: |
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          echo "Labels: $LABELS"
+
+          # Initialize flags
+          RELEASE_BACKEND=false
+          RELEASE_FRONTEND=false
+          BUMP_TYPE=""
+
+          # Check for backend release labels
+          if echo "$LABELS" | grep -q "release:backend-patch"; then
+            RELEASE_BACKEND=true
+            BUMP_TYPE="patch"
+          elif echo "$LABELS" | grep -q "release:backend-minor"; then
+            RELEASE_BACKEND=true
+            BUMP_TYPE="minor"
+          elif echo "$LABELS" | grep -q "release:backend-major"; then
+            RELEASE_BACKEND=true
+            BUMP_TYPE="major"
+          fi
+
+          # Check for frontend release labels
+          if echo "$LABELS" | grep -q "release:frontend-patch"; then
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="patch"
+          elif echo "$LABELS" | grep -q "release:frontend-minor"; then
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="minor"
+          elif echo "$LABELS" | grep -q "release:frontend-major"; then
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="major"
+          fi
+
+          # Check for both release labels
+          if echo "$LABELS" | grep -q "release:both-patch"; then
+            RELEASE_BACKEND=true
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="patch"
+          elif echo "$LABELS" | grep -q "release:both-minor"; then
+            RELEASE_BACKEND=true
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="minor"
+          elif echo "$LABELS" | grep -q "release:both-major"; then
+            RELEASE_BACKEND=true
+            RELEASE_FRONTEND=true
+            BUMP_TYPE="major"
+          fi
+
+          echo "RELEASE_BACKEND=$RELEASE_BACKEND" >> $GITHUB_OUTPUT
+          echo "RELEASE_FRONTEND=$RELEASE_FRONTEND" >> $GITHUB_OUTPUT
+          echo "BUMP_TYPE=$BUMP_TYPE" >> $GITHUB_OUTPUT
+
+          echo "🔍 Release Detection:"
+          echo "  Backend: $RELEASE_BACKEND"
+          echo "  Frontend: $RELEASE_FRONTEND"
+          echo "  Bump Type: $BUMP_TYPE"
+
+      # ================================================================
+      # Step 3: Release Backend
+      # ================================================================
+      - name: Release backend
+        if: steps.release-type.outputs.RELEASE_BACKEND == 'true'
+        id: backend-release
+        run: |
+          # Read current version
+          CURRENT_VERSION=$(cat backend/VERSION)
+          echo "Current backend version: $CURRENT_VERSION"
+
+          # Parse version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Bump version based on type
+          case "${{ steps.release-type.outputs.BUMP_TYPE }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New backend version: $NEW_VERSION"
+
+          # Update VERSION file
+          echo "$NEW_VERSION" > backend/VERSION
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit VERSION file
+          git add backend/VERSION
+          git commit -m "chore(backend): bump version to $NEW_VERSION"
+
+          # Create tag
+          git tag -a "backend-v$NEW_VERSION" -m "Backend v$NEW_VERSION - Auto-released via PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}"
+
+          # Push changes and tag
+          git push origin main
+          git push origin "backend-v$NEW_VERSION"
+
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=backend-v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # ================================================================
+      # Step 3b: Trigger Backend Build Workflow
+      # ================================================================
+      - name: Trigger backend build
+        if: steps.release-type.outputs.RELEASE_BACKEND == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
+        run: |
+          echo "Triggering backend build workflow for version ${{ steps.backend-release.outputs.NEW_VERSION }}"
+          gh workflow run build-backend.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            --field version="${{ steps.backend-release.outputs.NEW_VERSION }}" \
+            --field push_latest=true
+
+      # ================================================================
+      # Step 4: Release Frontend
+      # ================================================================
+      - name: Release frontend
+        if: steps.release-type.outputs.RELEASE_FRONTEND == 'true'
+        id: frontend-release
+        run: |
+          # Pull latest changes (in case backend was released first)
+          git pull origin main
+
+          # Read current version
+          CURRENT_VERSION=$(cat frontend/VERSION)
+          echo "Current frontend version: $CURRENT_VERSION"
+
+          # Parse version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Bump version based on type
+          case "${{ steps.release-type.outputs.BUMP_TYPE }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New frontend version: $NEW_VERSION"
+
+          # Update VERSION file
+          echo "$NEW_VERSION" > frontend/VERSION
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit VERSION file
+          git add frontend/VERSION
+          git commit -m "chore(frontend): bump version to $NEW_VERSION"
+
+          # Create tag
+          git tag -a "frontend-v$NEW_VERSION" -m "Frontend v$NEW_VERSION - Auto-released via PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}"
+
+          # Push changes and tag
+          git push origin main
+          git push origin "frontend-v$NEW_VERSION"
+
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=frontend-v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # ================================================================
+      # Step 4b: Trigger Frontend Build Workflow
+      # ================================================================
+      - name: Trigger frontend build
+        if: steps.release-type.outputs.RELEASE_FRONTEND == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
+        run: |
+          echo "Triggering frontend build workflow for version ${{ steps.frontend-release.outputs.NEW_VERSION }}"
+          gh workflow run build-frontend.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            --field version="${{ steps.frontend-release.outputs.NEW_VERSION }}" \
+            --field push_latest=true
+
+      # ================================================================
+      # Step 5: Summary
+      # ================================================================
+      - name: Job Summary
+        if: steps.release-type.outputs.RELEASE_BACKEND == 'true' || steps.release-type.outputs.RELEASE_FRONTEND == 'true'
+        run: |
+          echo "## 🚀 Auto-Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR**: #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Merged by**: @${{ github.event.pull_request.merged_by.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.release-type.outputs.RELEASE_BACKEND }}" = "true" ]; then
+            echo "### Backend Release" >> $GITHUB_STEP_SUMMARY
+            echo "- **Version**: ${{ steps.backend-release.outputs.NEW_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Tag**: \`${{ steps.backend-release.outputs.TAG_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Build**: Triggered automatically" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.release-type.outputs.RELEASE_FRONTEND }}" = "true" ]; then
+            echo "### Frontend Release" >> $GITHUB_STEP_SUMMARY
+            echo "- **Version**: ${{ steps.frontend-release.outputs.NEW_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Tag**: \`${{ steps.frontend-release.outputs.TAG_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Build**: Triggered automatically" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Monitor builds: [Actions](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify images: [Docker Hub](https://hub.docker.com/r/princely/shop-manager/tags)" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check releases: [Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
+
+  # Notify if no release labels found
+  no-release:
+    name: No Release Needed
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for release labels
+        run: |
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+
+          if ! echo "$LABELS" | grep -q "release:"; then
+            echo "ℹ️ No release labels found on this PR."
+            echo "If you intended to release, add a release label and re-run the workflow manually."
+            echo ""
+            echo "Available labels:"
+            echo "  - release:backend-patch, release:backend-minor, release:backend-major"
+            echo "  - release:frontend-patch, release:frontend-minor, release:frontend-major"
+            echo "  - release:both-patch, release:both-minor, release:both-major"
+          fi

@@ -1,0 +1,18 @@
+# JVM configuration for Maven Wrapper
+# This file configures JVM options for Maven execution
+
+# Compiler settings for Java 21 (these affect compilation, not runtime Java selection)
+-Dmaven.compiler.source=21
+-Dmaven.compiler.target=21
+-Dmaven.compiler.release=21
+
+# JVM memory and performance settings
+-Xmx2048m
+-Xms512m
+-XX:+UseG1GC
+-XX:+UseStringDeduplication
+-Dfile.encoding=UTF-8
+-Duser.timezone=UTC
+
+# Note: To ensure Java 21 runtime, modify the mvnw script directly
+# or use JAVA_HOME environment variable

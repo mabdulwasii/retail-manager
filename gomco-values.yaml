@@ -10,10 +10,10 @@ imagePullSecrets:
 backend:
   image:
     repository: princely/shop-manager
-    tag: backend-v0.0.45
+    tag: backend-latest
     pullPolicy: Always
   podAnnotations:
-    configVersion: "32"  # PATCH endpoints for all PUT endpoints
+    configVersion: "34"  # Multi-platform builds and latest tags
   env:
     SWAGGER_SECURITY_ENABLED: "false"  # Disable Swagger authentication for public access
 
@@ -22,12 +22,12 @@ frontend:
   enabled: true
   image:
     repository: princely/shop-manager
-    tag: frontend-v0.0.9
+    tag: frontend-latest
     pullPolicy: Always
 
 branding:
   platformName: "GOMCO Retail Pro"
-  companyName: "GOMCO Corporation"
+  companyName: "GOMCO Enterprise"
   platformDescription: "Advanced Retail Management System"
   colors:
     primary: "#2E7D32"

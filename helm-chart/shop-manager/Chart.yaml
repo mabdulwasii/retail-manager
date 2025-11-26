@@ -4,10 +4,10 @@ description: Enterprise multi-tenant retail management platform with investment 
 type: application
 
 # Chart version - increment for chart changes
-version: 0.0.1
+version: 0.0.46
 
 # Application version - matches backend version
-appVersion: "0.0.1"
+appVersion: "0.0.46"
 
 # Project URLs
 home: https://github.com/shop-manager/shop-manager
@@ -44,9 +44,9 @@ annotations:
   # Images used by this chart
   artifacthub.io/images: |
     - name: backend
-      image: princely/shop-manager:backend-v0.0.45
+      image: princely/shop-manager:backend-v0.0.46
     - name: frontend
-      image: princely/shop-manager:frontend-v0.0.9
+      image: princely/shop-manager:frontend-v0.0.10
     - name: postgresql
       image: postgres:16-alpine
     - name: keycloak
@@ -65,11 +65,17 @@ annotations:
   # Changelog
   artifacthub.io/changes: |
     - kind: added
-      description: PATCH endpoints for all PUT endpoints
+      description: ShopAccessValidator utility for centralized shop access control
+    - kind: added
+      description: Database migration V31 to fix shop required fields
+    - kind: added
+      description: Windows PowerShell installer for customer deployments
     - kind: fixed
-      description: User list permissions and authentication issues
+      description: Shop validation error handling with clear constraint violation messages
+    - kind: fixed
+      description: Tenant admin access to all shops within their tenant
     - kind: changed
-      description: Jackson configuration for unknown properties
+      description: Test users now optional with secure default (disabled)
 
   # Operator capabilities (for Helm charts that manage CRDs)
   artifacthub.io/operator: "false"

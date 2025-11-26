@@ -342,6 +342,27 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse("REGISTRATION_ERROR", e.getMessage()));
     }
 
+    @ExceptionHandler(jakarta.persistence.RollbackException.class)
+    public ResponseEntity<ErrorResponse> handleRollbackException(jakarta.persistence.RollbackException e) {
+        logger.warn("TRANSACTION ROLLBACK - Message: {}", e.getMessage());
+
+        // Check if the cause is a ConstraintViolationException
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException) {
+                // Delegate to the existing ConstraintViolationException handler
+                return handleConstraintViolationException((ConstraintViolationException) cause);
+            }
+            cause = cause.getCause();
+        }
+
+        // If no ConstraintViolationException found, return generic rollback error
+        logger.error("Transaction rollback without ConstraintViolationException", e);
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("TRANSACTION_ERROR",
+                "Transaction failed due to validation or constraint violation. Please check your input data."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e, WebRequest request) {
         // Log comprehensive error information for unexpected exceptions
