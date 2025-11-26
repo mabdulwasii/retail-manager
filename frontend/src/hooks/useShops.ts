@@ -5,12 +5,13 @@ import { toast } from 'sonner'
 
 
 export const useShops = (page = 0, size = 20) => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   return useQuery({
     queryKey: ['shops', 'paginated', page, size],
     queryFn: () => shopService.getShops({ page, size }),
-    enabled: isAuthenticated,
+    enabled: !!(isAuthenticated && user?.roles && 
+      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN'].includes(r.name))),
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 2
   })
@@ -18,12 +19,13 @@ export const useShops = (page = 0, size = 20) => {
 
 
 export const useActiveShops = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   return useQuery({
     queryKey: ['shops', 'active'],
     queryFn: () => shopService.getActiveShops(),
-    enabled: isAuthenticated,
+    enabled: !!(isAuthenticated && user?.roles && 
+      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'CASHIER'].includes(r.name))),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2
   })

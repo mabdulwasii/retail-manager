@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,12 +28,21 @@ import {
 import { Link } from 'react-router-dom'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useDashboardData, useAllShopsPerformance } from '@/hooks/useDashboard'
+import { ShopSelector } from '@/components/ui/shop-selector'
 
 export const OwnerManagerDashboard: React.FC = () => {
   const { user } = useAuth()
   const permissions = usePermissions()
   const { formatCurrency } = useCurrency()
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month')
+  const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined)
+
+  // Set selectedShopId once user is loaded to prevent double API calls
+  useEffect(() => {
+    if (user?.shopId && !selectedShopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId, selectedShopId])
 
   const {
     shops,
@@ -46,21 +55,22 @@ export const OwnerManagerDashboard: React.FC = () => {
     isLoading,
     hasError,
     refetch
-  } = useDashboardData(period)
+  } = useDashboardData(period, selectedShopId)
 
   // Use fraudStatistics from useDashboardData instead of calling useFraudStatistics again
   const fraudStats = fraudStatistics
   const { data: shopsPerformance, isLoading: loadingPerformance } = useAllShopsPerformance(period)
 
-  // Calculate business stats from real data
-  const businessStats = [
+  // Calculate business stats from real data - filter based on permissions
+  const allBusinessStats = [
     {
       title: 'Total Revenue',
       value: formatCurrency(revenueAnalytics?.currentRevenue || 0),
       description: `This ${period}`,
       icon: DollarSign,
       trend: revenueAnalytics ? `${revenueAnalytics.growthRate > 0 ? '+' : ''}${revenueAnalytics.growthRate?.toFixed(1) || 0}%` : '0%',
-      color: 'text-green-600'
+      color: 'text-green-600',
+      show: true // Always show revenue
     },
     {
       title: 'Active Shops',
@@ -68,7 +78,8 @@ export const OwnerManagerDashboard: React.FC = () => {
       description: 'Across locations',
       icon: Store,
       trend: `${shops.filter(s => s.status === 'ACTIVE').length} operational`,
-      color: 'text-blue-600'
+      color: 'text-blue-600',
+      show: permissions.canViewShops() // Only show if can view shops
     },
     {
       title: 'Transactions',
@@ -76,7 +87,8 @@ export const OwnerManagerDashboard: React.FC = () => {
       description: `This ${period}`,
       icon: Package,
       trend: salesSummary ? `Avg: ${formatCurrency(salesSummary.averageTransactionValue || 0)}` : 'No sales',
-      color: 'text-purple-600'
+      color: 'text-purple-600',
+      show: permissions.canViewSales() // Only show if can view sales
     },
     {
       title: 'Investment ROI',
@@ -84,9 +96,13 @@ export const OwnerManagerDashboard: React.FC = () => {
       description: `${period} return`,
       icon: TrendingUp,
       trend: investmentROI ? `${formatCurrency(investmentROI.totalDistributions || 0)} earned` : 'No returns',
-      color: 'text-emerald-600'
+      color: 'text-emerald-600',
+      show: permissions.canViewInvestments() // Only show if can view investments
     }
   ]
+
+  // Filter stats based on permissions
+  const businessStats = allBusinessStats.filter(stat => stat.show)
 
   // Format shop performance data from API
   const shopPerformance = (shopsPerformance || []).map((shop) => {
@@ -149,8 +165,8 @@ export const OwnerManagerDashboard: React.FC = () => {
     (fraudStats?.criticalRiskCount || 0)
   )
 
-  // Handle loading state
-  if (isLoading && !salesSummary && !revenueAnalytics && !investmentROI) {
+  // Handle loading state - wait for shopId to be set before showing content
+  if (!selectedShopId || (isLoading && !salesSummary && !revenueAnalytics && !investmentROI)) {
     return (
       <div className="space-y-6">
         <Card>
@@ -159,7 +175,7 @@ export const OwnerManagerDashboard: React.FC = () => {
               <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
               <h3 className="text-lg font-semibold mb-2">Loading Dashboard</h3>
               <p className="text-muted-foreground">
-                Fetching your business analytics...
+                {!selectedShopId ? 'Initializing...' : 'Fetching your business analytics...'}
               </p>
             </div>
           </CardContent>
@@ -181,6 +197,11 @@ export const OwnerManagerDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <ShopSelector 
+            value={selectedShopId || ''}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+          />
           <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />
@@ -286,6 +307,7 @@ export const OwnerManagerDashboard: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Shop Performance */}
+        {permissions.canViewShops() && (
         <Card className="col-span-2">
           <CardHeader>
             <CardTitle>Shop Performance</CardTitle>
@@ -351,6 +373,7 @@ export const OwnerManagerDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Recent Activities */}
         <Card>
@@ -533,7 +556,7 @@ export const OwnerManagerDashboard: React.FC = () => {
       {/* Inventory & Expense Overview */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Inventory Summary */}
-        {inventorySummary && (
+        {inventorySummary && permissions.canViewInventory() && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -579,7 +602,7 @@ export const OwnerManagerDashboard: React.FC = () => {
         )}
 
         {/* Expense Summary */}
-        {expenseSummary && (
+        {expenseSummary && permissions.canViewExpenses() && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -626,7 +649,7 @@ export const OwnerManagerDashboard: React.FC = () => {
       </div>
 
       {/* Investment Summary */}
-      {investmentROI && (
+      {investmentROI && permissions.canViewInvestments() && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -662,7 +685,7 @@ export const OwnerManagerDashboard: React.FC = () => {
       )}
 
       {/* Fraud & Risk Analytics */}
-      {fraudStats && (
+      {fraudStats && permissions.canViewFraudDetection() && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">

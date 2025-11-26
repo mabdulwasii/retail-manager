@@ -91,7 +91,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       }
     }
     //category, open, reset, selectedShopId, user?.shopId
-  }, []);
+  }, [category]);
+
+  console.log('category', category);
+  
 
   const onSubmit = async (data: CategoryCreateRequest) => {
     try {   

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useRevenueAnalytics, useExpenseSummary, TimePeriod } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useCurrency } from '@/hooks/useCurrency'
+import { ShopSelector } from '@/components/ui/shop-selector'
 
 interface FinancialRecord {
   id: string
@@ -33,9 +34,17 @@ export const AccountantDashboard: React.FC = () => {
   const { user } = useAuth()
   const { formatCurrency } = useCurrency()
   const [period, setPeriod] = useState<TimePeriod>('month')
+  const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined)
+
+  // Set selectedShopId once user is loaded to prevent double API calls
+  useEffect(() => {
+    if (user?.shopId && !selectedShopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId, selectedShopId])
   
-  const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics(undefined, period)
-  const { data: expenseSummary, isLoading: expensesLoading } = useExpenseSummary(undefined, period)
+  const { data: revenueAnalytics, isLoading: analyticsLoading } = useRevenueAnalytics(selectedShopId, period)
+  const { data: expenseSummary, isLoading: expensesLoading } = useExpenseSummary(selectedShopId, period)
   
   const statsLoading = analyticsLoading || expensesLoading
 
@@ -242,6 +251,11 @@ export const AccountantDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <ShopSelector 
+            value={selectedShopId || ''}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+          />
           <Select value={period} onValueChange={(value) => setPeriod(value as TimePeriod)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />

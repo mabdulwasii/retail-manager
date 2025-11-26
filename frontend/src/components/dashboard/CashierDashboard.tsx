@@ -19,14 +19,23 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useCurrency } from '@/hooks/useCurrency'
+import { ShopSelector } from '@/components/ui/shop-selector'
 
 export const CashierDashboard: React.FC = () => {
   const { user } = useAuth()
   const { formatCurrency } = useCurrency()
   const [period, setPeriod] = useState<TimePeriod>('today')
-  const { data: salesSummary, isLoading: salesLoading, refetch } = useSalesSummary(undefined, period)
+  const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined)
+  const { data: salesSummary, isLoading: salesLoading, refetch } = useSalesSummary(selectedShopId, period)
   const [currentTime, setCurrentTime] = useState(new Date())
   
+  // Set selectedShopId once user is loaded to prevent double API calls
+  useEffect(() => {
+    if (user?.shopId && !selectedShopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId, selectedShopId])
+
   // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
@@ -169,6 +178,11 @@ export const CashierDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <ShopSelector 
+            value={selectedShopId || ''}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+          />
           <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />

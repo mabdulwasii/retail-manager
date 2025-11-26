@@ -28,7 +28,7 @@ export function DashboardRedirect() {
     } else if (hasRole("MANAGER") || hasRole("SALES_MANAGER")) {
       return "/dashboard?view=operations";
     } else if (hasRole("INVESTOR")) {
-      return "/investments";
+      return "/dashboard?view=investor";
     } else if (hasRole("ACCOUNTANT")) {
       return "/dashboard?view=financial";
     } else if (hasRole("CASHIER")) {

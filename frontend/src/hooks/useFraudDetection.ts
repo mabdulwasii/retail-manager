@@ -1,5 +1,25 @@
-import { useState, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@/context/ManualAuthContext'
+import { toast } from 'sonner'
 import { api } from '@/services/api'
+
+// Type definitions
+export type AlertType =
+  | 'SUSPICIOUS_TRANSACTION'
+  | 'UNUSUAL_INVESTMENT_PATTERN'
+  | 'EXCESSIVE_WITHDRAWALS'
+  | 'DUPLICATE_TRANSACTIONS'
+  | 'VELOCITY_FRAUD'
+  | 'ACCOUNT_TAKEOVER'
+  | 'PRICE_MANIPULATION'
+  | 'RETURN_FRAUD'
+  | 'COLLUSION_DETECTION'
+  | 'ANOMALOUS_BEHAVIOR'
+
+export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+export type AlertStatus = 'ACTIVE' | 'ACKNOWLEDGED' | 'INVESTIGATING' | 'RESOLVED' | 'FALSE_POSITIVE' | 'DISMISSED'
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+export type AssessmentStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'ESCALATED'
 
 export interface FraudAlert {
   id: string
@@ -36,7 +56,7 @@ export interface RiskAssessment {
   shopName?: string
   transactionId?: string
   transactionNumber?: string
-  assessmentType: AssessmentType
+  assessmentType: string
   riskLevel: RiskLevel
   riskScore: number
   assessmentDate: string
@@ -46,7 +66,7 @@ export interface RiskAssessment {
   reviewedBy?: string
   reviewedAt?: string
   reviewNotes?: string
-  resolutionAction?: ResolutionAction
+  resolutionAction?: string
   createdAt: string
   updatedAt?: string
 }
@@ -55,7 +75,7 @@ export interface FraudRule {
   id: string
   shopId?: string
   ruleName: string
-  ruleType: FraudRuleType
+  ruleType: string
   description?: string
   enabled: boolean
   thresholdAmount?: number
@@ -70,103 +90,7 @@ export interface FraudRule {
   updatedAt?: string
 }
 
-export interface CreateFraudRuleRequest {
-  ruleName: string
-  ruleType: FraudRuleType
-  description?: string
-  shopId?: string
-  enabled?: boolean
-  thresholdAmount?: number
-  thresholdCount?: number
-  timeWindowMinutes?: number
-  riskScoreWeight?: number
-  severity?: RiskLevel
-  autoBlock?: boolean
-  requiresManualReview?: boolean
-  ruleConfiguration?: string
-}
-
-export interface FraudStatistics {
-  alerts: {
-    total: number
-    highSeverity: number
-    critical: number
-    byType: Array<{ type: string; count: number }>
-  }
-  riskAssessments: {
-    pending: number
-    underReview: number
-    byRiskLevel: Array<{ level: string; count: number }>
-  }
-  rules: {
-    total: number
-    byType: Array<{ type: string; count: number }>
-  }
-  dateRange: {
-    startDate: string
-    endDate: string
-  }
-}
-
-export type AlertType =
-  | 'SUSPICIOUS_TRANSACTION'
-  | 'UNUSUAL_INVESTMENT_PATTERN'
-  | 'EXCESSIVE_WITHDRAWALS'
-  | 'DUPLICATE_TRANSACTIONS'
-  | 'VELOCITY_FRAUD'
-  | 'ACCOUNT_TAKEOVER'
-  | 'PRICE_MANIPULATION'
-  | 'RETURN_FRAUD'
-  | 'COLLUSION_DETECTION'
-  | 'ANOMALOUS_BEHAVIOR'
-
-export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-
-export type AlertStatus =
-  | 'ACTIVE'
-  | 'ACKNOWLEDGED'
-  | 'INVESTIGATING'
-  | 'RESOLVED'
-  | 'FALSE_POSITIVE'
-  | 'DISMISSED'
-
-export type AssessmentType =
-  | 'TRANSACTION_FRAUD'
-  | 'INVESTMENT_RISK'
-  | 'OPERATIONAL_RISK'
-  | 'COMPLIANCE_CHECK'
-
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-
-export type AssessmentStatus =
-  | 'PENDING'
-  | 'UNDER_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'ESCALATED'
-
-export type ResolutionAction =
-  | 'NO_ACTION'
-  | 'MONITOR'
-  | 'INVESTIGATE'
-  | 'BLOCK_TRANSACTION'
-  | 'SUSPEND_ACCOUNT'
-  | 'REPORT_AUTHORITIES'
-
-export type FraudRuleType =
-  | 'HIGH_AMOUNT_TRANSACTION'
-  | 'HIGH_FREQUENCY_TRANSACTIONS'
-  | 'UNUSUAL_TIME_TRANSACTION'
-  | 'RAPID_SUCCESSIVE_TRANSACTIONS'
-  | 'UNUSUAL_PAYMENT_METHOD'
-  | 'SUSPICIOUS_CUSTOMER_PATTERN'
-  | 'INVENTORY_MISMATCH'
-  | 'GEOGRAPHIC_ANOMALY'
-  | 'VELOCITY_CHECK'
-  | 'BLACKLIST_CHECK'
-  | 'CUSTOM_RULE'
-
-export interface PaginatedResponse<T> {
+interface PaginatedResponse<T> {
   content: T[]
   totalElements: number
   totalPages: number
@@ -174,336 +98,194 @@ export interface PaginatedResponse<T> {
   size: number
 }
 
-export const useFraudDetection = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+// Query hook for fetching fraud alerts with permission check
+export const useFraudAlerts = (params?: {
+  shopId?: string
+  status?: AlertStatus
+  severity?: AlertSeverity
+  alertType?: AlertType
+  page?: number
+  size?: number
+}) => {
+  const { isAuthenticated, user } = useAuth()
+  const targetShopId = params?.shopId || user?.shopId
 
-  const getFraudAlerts = useCallback(async (
-    params: {
-      shopId?: string
-      status?: AlertStatus
-      severity?: AlertSeverity
-      alertType?: AlertType
-      page?: number
-      size?: number
-      sortBy?: string
-      sortDir?: string
-    } = {}
-  ): Promise<PaginatedResponse<FraudAlert> | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
+  return useQuery({
+    queryKey: ['fraud', 'alerts', targetShopId, params],
+    queryFn: async () => {
       const searchParams = new URLSearchParams()
-      if (params.shopId) searchParams.append('shopId', params.shopId)
-      if (params.status) searchParams.append('status', params.status)
-      if (params.severity) searchParams.append('severity', params.severity)
-      if (params.alertType) searchParams.append('alertType', params.alertType)
-      if (params.page !== undefined) searchParams.append('page', params.page.toString())
-      if (params.size !== undefined) searchParams.append('size', params.size.toString())
-      if (params.sortBy) searchParams.append('sortBy', params.sortBy)
-      if (params.sortDir) searchParams.append('sortDir', params.sortDir)
+      if (targetShopId) searchParams.append('shopId', targetShopId)
+      if (params?.status) searchParams.append('status', params.status)
+      if (params?.severity) searchParams.append('severity', params.severity)
+      if (params?.alertType) searchParams.append('alertType', params.alertType)
+      if (params?.page !== undefined) searchParams.append('page', params.page.toString())
+      if (params?.size !== undefined) searchParams.append('size', params.size.toString())
 
-      const response = await api.get(`/fraud/alerts?${searchParams}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch fraud alerts')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+      return await api.get<PaginatedResponse<FraudAlert>>(`/fraud/alerts?${searchParams}`)
+    },
+    enabled: !!(isAuthenticated && user?.roles && 
+      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
+    staleTime: 1 * 60 * 1000, // 1 minute - fraud data should be fresh
+    retry: 1
+  })
+}
 
-  const getFraudAlertById = useCallback(async (alertId: string): Promise<FraudAlert | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Query hook for fetching fraud alert by ID
+export const useFraudAlertById = (alertId?: string) => {
+  const { isAuthenticated, user } = useAuth()
 
-      const response = await api.get(`/fraud/alerts/${alertId}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch fraud alert')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  return useQuery({
+    queryKey: ['fraud', 'alerts', alertId],
+    queryFn: () => api.get<FraudAlert>(`/fraud/alerts/${alertId}`),
+    enabled: !!(isAuthenticated && alertId && user?.roles && 
+      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
+    staleTime: 2 * 60 * 1000,
+    retry: 1
+  })
+}
 
-  const acknowledgeFraudAlert = useCallback(async (alertId: string): Promise<FraudAlert | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Query hook for fetching risk assessments
+export const useRiskAssessments = (params?: {
+  shopId?: string
+  status?: AssessmentStatus
+  riskLevel?: RiskLevel
+  page?: number
+  size?: number
+}) => {
+  const { isAuthenticated, user } = useAuth()
+  const targetShopId = params?.shopId || user?.shopId
 
-      const response = await api.post(`/fraud/alerts/${alertId}/acknowledge`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to acknowledge fraud alert')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const resolveFraudAlert = useCallback(async (
-    alertId: string,
-    resolutionNotes: string
-  ): Promise<FraudAlert | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams({ resolutionNotes })
-      const response = await api.post(`/fraud/alerts/${alertId}/resolve?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resolve fraud alert')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const markAlertAsFalsePositive = useCallback(async (
-    alertId: string,
-    reason: string
-  ): Promise<FraudAlert | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams({ reason })
-      const response = await api.post(`/fraud/alerts/${alertId}/false-positive?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark alert as false positive')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const getRiskAssessments = useCallback(async (
-    params: {
-      shopId?: string
-      riskLevel?: RiskLevel
-      status?: AssessmentStatus
-      assessmentType?: AssessmentType
-      page?: number
-      size?: number
-      sortBy?: string
-      sortDir?: string
-    } = {}
-  ): Promise<PaginatedResponse<RiskAssessment> | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
+  return useQuery({
+    queryKey: ['fraud', 'assessments', targetShopId, params],
+    queryFn: async () => {
       const searchParams = new URLSearchParams()
-      if (params.shopId) searchParams.append('shopId', params.shopId)
-      if (params.riskLevel) searchParams.append('riskLevel', params.riskLevel)
-      if (params.status) searchParams.append('status', params.status)
-      if (params.assessmentType) searchParams.append('assessmentType', params.assessmentType)
-      if (params.page !== undefined) searchParams.append('page', params.page.toString())
-      if (params.size !== undefined) searchParams.append('size', params.size.toString())
-      if (params.sortBy) searchParams.append('sortBy', params.sortBy)
-      if (params.sortDir) searchParams.append('sortDir', params.sortDir)
+      if (targetShopId) searchParams.append('shopId', targetShopId)
+      if (params?.status) searchParams.append('status', params.status)
+      if (params?.riskLevel) searchParams.append('riskLevel', params.riskLevel)
+      if (params?.page !== undefined) searchParams.append('page', params.page.toString())
+      if (params?.size !== undefined) searchParams.append('size', params.size.toString())
 
-      const response = await api.get(`/fraud/risk-assessments?${searchParams}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch risk assessments')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+      return await api.get<PaginatedResponse<RiskAssessment>>(`/fraud/risk-assessments?${searchParams}`)
+    },
+    enabled: !!(isAuthenticated && user?.roles && 
+      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
+    staleTime: 2 * 60 * 1000,
+    retry: 1
+  })
+}
 
-  const approveRiskAssessment = useCallback(async (
-    assessmentId: string,
-    reviewNotes?: string
-  ): Promise<RiskAssessment | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Query hook for fetching fraud rules
+export const useFraudRules = (shopId?: string) => {
+  const { isAuthenticated, user } = useAuth()
+  const targetShopId = shopId || user?.shopId
 
-      const params = new URLSearchParams()
-      if (reviewNotes) params.append('reviewNotes', reviewNotes)
+  return useQuery({
+    queryKey: ['fraud', 'rules', targetShopId],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams()
+      if (targetShopId) searchParams.append('shopId', targetShopId)
+      return await api.get<FraudRule[]>(`/fraud/rules?${searchParams}`)
+    },
+    enabled: !!(isAuthenticated && user?.roles && 
+      user.roles.some(r => ['OWNER', 'TENANT_ADMIN'].includes(r.name))),
+    staleTime: 5 * 60 * 1000,
+    retry: 1
+  })
+}
 
-      const response = await api.post(`/fraud/risk-assessments/${assessmentId}/approve?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve risk assessment')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+// Mutation hook for acknowledging fraud alert
+export const useAcknowledgeFraudAlert = () => {
+  const queryClient = useQueryClient()
 
-  const rejectRiskAssessment = useCallback(async (
-    assessmentId: string,
-    reviewNotes: string,
-    action: ResolutionAction
-  ): Promise<RiskAssessment | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams({
-        reviewNotes,
-        action
+  return useMutation({
+    mutationFn: ({ alertId, notes }: { alertId: string; notes?: string }) => 
+      api.post(`/fraud/alerts/${alertId}/acknowledge`, { notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud', 'alerts'] })
+      toast.success('Alert acknowledged')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to acknowledge alert', {
+        description: error.response?.data?.message || error.message
       })
-
-      const response = await api.post(`/fraud/risk-assessments/${assessmentId}/reject?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject risk assessment')
-      return null
-    } finally {
-      setIsLoading(false)
     }
-  }, [])
+  })
+}
 
-  const getFraudRules = useCallback(async (
-    params: {
-      shopId?: string
-      ruleType?: FraudRuleType
-      enabled?: boolean
-      page?: number
-      size?: number
-      sortBy?: string
-      sortDir?: string
-    } = {}
-  ): Promise<PaginatedResponse<FraudRule> | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Mutation hook for resolving fraud alert
+export const useResolveFraudAlert = () => {
+  const queryClient = useQueryClient()
 
-      const searchParams = new URLSearchParams()
-      if (params.shopId) searchParams.append('shopId', params.shopId)
-      if (params.ruleType) searchParams.append('ruleType', params.ruleType)
-      if (params.enabled !== undefined) searchParams.append('enabled', params.enabled.toString())
-      if (params.page !== undefined) searchParams.append('page', params.page.toString())
-      if (params.size !== undefined) searchParams.append('size', params.size.toString())
-      if (params.sortBy) searchParams.append('sortBy', params.sortBy)
-      if (params.sortDir) searchParams.append('sortDir', params.sortDir)
-
-      const response = await api.get(`/fraud/rules?${searchParams}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch fraud rules')
-      return null
-    } finally {
-      setIsLoading(false)
+  return useMutation({
+    mutationFn: ({ alertId, notes, falsePositive }: { 
+      alertId: string
+      notes?: string
+      falsePositive?: boolean 
+    }) => api.post(`/fraud/alerts/${alertId}/resolve`, { notes, falsePositive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud', 'alerts'] })
+      toast.success('Alert resolved')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to resolve alert', {
+        description: error.response?.data?.message || error.message
+      })
     }
-  }, [])
+  })
+}
 
-  const createFraudRule = useCallback(async (request: CreateFraudRuleRequest): Promise<FraudRule | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Mutation hook for creating fraud rule
+export const useCreateFraudRule = () => {
+  const queryClient = useQueryClient()
 
-      const response = await api.post('/fraud/rules', request)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create fraud rule')
-      return null
-    } finally {
-      setIsLoading(false)
+  return useMutation({
+    mutationFn: (data: Partial<FraudRule>) => 
+      api.post('/fraud/rules', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud', 'rules'] })
+      toast.success('Fraud rule created successfully')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to create fraud rule', {
+        description: error.response?.data?.message || error.message
+      })
     }
-  }, [])
+  })
+}
 
-  const updateFraudRule = useCallback(async (
-    ruleId: string,
-    request: CreateFraudRuleRequest
-  ): Promise<FraudRule | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Mutation hook for updating fraud rule
+export const useUpdateFraudRule = () => {
+  const queryClient = useQueryClient()
 
-      const response = await api.put(`/fraud/rules/${ruleId}`, request)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update fraud rule')
-      return null
-    } finally {
-      setIsLoading(false)
+  return useMutation({
+    mutationFn: ({ ruleId, data }: { ruleId: string; data: Partial<FraudRule> }) => 
+      api.patch(`/fraud/rules/${ruleId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud', 'rules'] })
+      toast.success('Fraud rule updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to update fraud rule', {
+        description: error.response?.data?.message || error.message
+      })
     }
-  }, [])
+  })
+}
 
-  const deleteFraudRule = useCallback(async (ruleId: string): Promise<boolean> => {
-    try {
-      setIsLoading(true)
-      setError(null)
+// Mutation hook for deleting fraud rule
+export const useDeleteFraudRule = () => {
+  const queryClient = useQueryClient()
 
-      await api.delete(`/fraud/rules/${ruleId}`)
-      return true
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete fraud rule')
-      return false
-    } finally {
-      setIsLoading(false)
+  return useMutation({
+    mutationFn: (ruleId: string) => api.delete(`/fraud/rules/${ruleId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud', 'rules'] })
+      toast.success('Fraud rule deleted successfully')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to delete fraud rule', {
+        description: error.response?.data?.message || error.message
+      })
     }
-  }, [])
-
-  const updateRuleStatus = useCallback(async (
-    ruleId: string,
-    enabled: boolean
-  ): Promise<FraudRule | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams({ enabled: enabled.toString() })
-      const response = await api.put(`/fraud/rules/${ruleId}/status?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update rule status')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const getFraudStatistics = useCallback(async (
-    shopId?: string,
-    startDate?: string,
-    endDate?: string
-  ): Promise<FraudStatistics | null> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const params = new URLSearchParams()
-      if (shopId) params.append('shopId', shopId)
-      if (startDate) params.append('startDate', startDate)
-      if (endDate) params.append('endDate', endDate)
-
-      const response = await api.get(`/fraud/statistics?${params}`)
-      return response.data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch fraud statistics')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  return {
-    isLoading,
-    error,
-    getFraudAlerts,
-    getFraudAlertById,
-    acknowledgeFraudAlert,
-    resolveFraudAlert,
-    markAlertAsFalsePositive,
-    getRiskAssessments,
-    approveRiskAssessment,
-    rejectRiskAssessment,
-    getFraudRules,
-    createFraudRule,
-    updateFraudRule,
-    deleteFraudRule,
-    updateRuleStatus,
-    getFraudStatistics
-  }
+  })
 }
