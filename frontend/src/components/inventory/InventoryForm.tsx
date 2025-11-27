@@ -46,14 +46,24 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
   const [formData, setFormData] = useState({
     currentStock: '',
-    minimumStock: '',
+    minimumStock: '0',
     maximumStock: '',
-    reorderPoint: '',
+    reorderPoint: '0',
     unitCost: '',
     location: '',
     batchNumber: '',
     expiryDate: ''
   })
+  
+  // Auto-generate batch number on mount
+  useEffect(() => {
+    if (isOpen && !formData.batchNumber) {
+      const timestamp = Date.now()
+      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+      const generatedBatch = `BATCH-${timestamp}-${randomNum}`
+      setFormData(prev => ({ ...prev, batchNumber: generatedBatch }))
+    }
+  }, [isOpen])
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
@@ -65,9 +75,9 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       setAvailableProducts([])
       setFormData({
         currentStock: '',
-        minimumStock: '',
+        minimumStock: '0',
         maximumStock: '',
-        reorderPoint: '',
+        reorderPoint: '0',
         unitCost: '',
         location: '',
         batchNumber: '',
@@ -168,9 +178,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       }
     }
 
-    if (!formData.minimumStock || formData.minimumStock.trim() === '') {
-      errors.minimumStock = 'Minimum stock is required'
-    } else {
+    // Minimum stock is now optional, defaults to 0
+    if (formData.minimumStock && formData.minimumStock.trim() !== '') {
       const minStock = parseInt(formData.minimumStock, 10)
       if (isNaN(minStock) || minStock < 0) {
         errors.minimumStock = 'Minimum stock must be a non-negative number'
@@ -187,9 +196,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       }
     }
 
-    if (!formData.reorderPoint || formData.reorderPoint.trim() === '') {
-      errors.reorderPoint = 'Reorder point is required'
-    } else {
+    // Reorder point is now optional, defaults to 0
+    if (formData.reorderPoint && formData.reorderPoint.trim() !== '') {
       const reorderPoint = parseInt(formData.reorderPoint, 10)
       if (isNaN(reorderPoint) || reorderPoint < 0) {
         errors.reorderPoint = 'Reorder point must be a non-negative number'
@@ -226,9 +234,9 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
     const request: CreateInventoryRequest = {
       productId: selectedProduct.id,
       currentStock: parseInt(formData.currentStock, 10),
-      minimumStock: parseInt(formData.minimumStock, 10),
+      minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       maximumStock: formData.maximumStock ? parseInt(formData.maximumStock, 10) : undefined,
-      reorderPoint: parseInt(formData.reorderPoint, 10),
+      reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       unitCost: formData.unitCost ? parseFloat(formData.unitCost) : undefined,
       location: formData.location || undefined,
       batchNumber: formData.batchNumber || undefined,
@@ -355,7 +363,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="minimumStock">Minimum Stock *</Label>
+              <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
               <Input
                 id="minimumStock"
                 type="number"
@@ -389,7 +397,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorderPoint">Reorder Point *</Label>
+              <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
               <Input
                 id="reorderPoint"
                 type="number"
@@ -409,9 +417,11 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
           {/* Additional Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="unitCost">Unit Cost</Label>
+              <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
               <div className="relative">
-                <DollarSignIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <span className="absolute left-3 top-3 text-muted-foreground text-sm">
+                  {formatCurrency(0).replace(/[0-9.,]/g, '')}
+                </span>
                 <Input
                   id="unitCost"
                   type="number"
@@ -420,9 +430,10 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                   value={formData.unitCost}
                   onChange={(e) => handleInputChange('unitCost', e.target.value)}
                   placeholder="0.00"
-                  className={`pl-10 ${validationErrors.unitCost ? 'border-red-500' : ''}`}
+                  className={`pl-8 ${validationErrors.unitCost ? 'border-red-500' : ''}`}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
               {validationErrors.unitCost && (
                 <p className="text-sm text-red-600">{validationErrors.unitCost}</p>
               )}
@@ -444,14 +455,15 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="batchNumber">Batch Number</Label>
+              <Label htmlFor="batchNumber">Batch Number (auto-generated)</Label>
               <Input
                 id="batchNumber"
                 type="text"
                 value={formData.batchNumber}
                 onChange={(e) => handleInputChange('batchNumber', e.target.value)}
-                placeholder="Optional batch/lot number"
+                placeholder="Auto-generated batch number"
               />
+              <p className="text-xs text-muted-foreground">Auto-generated, but you can modify if needed</p>
             </div>
 
             <div className="space-y-2">
@@ -461,11 +473,13 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                 <Input
                   id="expiryDate"
                   type="date"
+                  min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
                   value={formData.expiryDate}
                   onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                   className={`pl-10 ${validationErrors.expiryDate ? 'border-red-500' : ''}`}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">Must be a future date</p>
               {validationErrors.expiryDate && (
                 <p className="text-sm text-red-600">{validationErrors.expiryDate}</p>
               )}

@@ -31,14 +31,24 @@ export const CreateInventoryPage: React.FC = () => {
   const [formData, setFormData] = useState({
     productId: '',
     currentStock: '',
-    minimumStock: '',
+    minimumStock: '0',
     maximumStock: '',
-    reorderPoint: '',
+    reorderPoint: '0',
     unitCost: '',
     location: '',
     batchNumber: '',
     expiryDate: ''
   })
+  
+  // Auto-generate batch number on mount
+  useEffect(() => {
+    if (!formData.batchNumber) {
+      const timestamp = Date.now()
+      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+      const generatedBatch = `BATCH-${timestamp}-${randomNum}`
+      setFormData(prev => ({ ...prev, batchNumber: generatedBatch }))
+    }
+  }, [])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [productSearch, setProductSearch] = useState('')
@@ -85,9 +95,8 @@ export const CreateInventoryPage: React.FC = () => {
       }
     }
 
-    if (!formData.minimumStock || formData.minimumStock.trim() === '') {
-      newErrors.minimumStock = 'Minimum stock is required'
-    } else {
+    // Minimum stock is now optional, defaults to 0
+    if (formData.minimumStock && formData.minimumStock.trim() !== '') {
       const minStock = parseInt(formData.minimumStock, 10)
       if (isNaN(minStock) || minStock < 0) {
         newErrors.minimumStock = 'Minimum stock must be a non-negative number'
@@ -104,9 +113,8 @@ export const CreateInventoryPage: React.FC = () => {
       }
     }
 
-    if (!formData.reorderPoint || formData.reorderPoint.trim() === '') {
-      newErrors.reorderPoint = 'Reorder point is required'
-    } else {
+    // Reorder point is now optional, defaults to 0
+    if (formData.reorderPoint && formData.reorderPoint.trim() !== '') {
       const reorderPoint = parseInt(formData.reorderPoint, 10)
       if (isNaN(reorderPoint) || reorderPoint < 0) {
         newErrors.reorderPoint = 'Reorder point must be a non-negative number'
@@ -149,8 +157,8 @@ export const CreateInventoryPage: React.FC = () => {
     const request: CreateInventoryRequest = {
       productId: formData.productId,
       currentStock: parseInt(formData.currentStock, 10),
-      minimumStock: parseInt(formData.minimumStock, 10),
-      reorderPoint: parseInt(formData.reorderPoint, 10),
+      minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
+      reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       ...(formData.maximumStock != null && {
         maximumStock: parseInt(formData.maximumStock, 10),
       }),
@@ -302,7 +310,7 @@ export const CreateInventoryPage: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="minimumStock">
-                  Minimum Stock <span className="text-red-500">*</span>
+                  Minimum Stock (optional)
                 </Label>
                 <Input
                   id="minimumStock"
@@ -336,7 +344,7 @@ export const CreateInventoryPage: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="reorderPoint">
-                  Reorder Point <span className="text-red-500">*</span>
+                  Reorder Point (optional)
                 </Label>
                 <Input
                   id="reorderPoint"
@@ -356,17 +364,22 @@ export const CreateInventoryPage: React.FC = () => {
             {/* Cost & Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="unitCost">Unit Cost</Label>
-                <Input
-                  id="unitCost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={formData.unitCost}
-                  onChange={(e) => handleInputChange('unitCost', e.target.value)}
-                  disabled={isLoading}
-                />
+                <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-muted-foreground text-sm">₦</span>
+                  <Input
+                    id="unitCost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.unitCost}
+                    onChange={(e) => handleInputChange('unitCost', e.target.value)}
+                    disabled={isLoading}
+                    className="pl-8"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
                 {errors.unitCost && (
                   <p className="text-sm text-red-500">{errors.unitCost}</p>
                 )}
@@ -387,14 +400,15 @@ export const CreateInventoryPage: React.FC = () => {
             {/* Batch & Expiry */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="batchNumber">Batch Number</Label>
+                <Label htmlFor="batchNumber">Batch Number (auto-generated)</Label>
                 <Input
                   id="batchNumber"
-                  placeholder="e.g., BATCH-2024-001"
+                  placeholder="Auto-generated batch number"
                   value={formData.batchNumber}
                   onChange={(e) => handleInputChange('batchNumber', e.target.value)}
                   disabled={isLoading}
                 />
+                <p className="text-xs text-muted-foreground">Auto-generated, but you can modify if needed</p>
               </div>
 
               <div className="space-y-2">
@@ -402,10 +416,12 @@ export const CreateInventoryPage: React.FC = () => {
                 <Input
                   id="expiryDate"
                   type="date"
+                  min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
                   value={formData.expiryDate}
                   onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                   disabled={isLoading}
                 />
+                <p className="text-xs text-muted-foreground">Must be a future date</p>
                 {errors.expiryDate && (
                   <p className="text-sm text-red-500">{errors.expiryDate}</p>
                 )}

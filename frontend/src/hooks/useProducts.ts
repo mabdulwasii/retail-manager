@@ -182,15 +182,17 @@ export const useUpdateProductStatus = () => {
 
 /**
  * Hook to search products
+ * @param query - Search query string
+ * @param shopId - Optional shop ID to search in (defaults to user's shop)
  */
-export const useProductSearch = (query: string) => {
+export const useProductSearch = (query: string, shopId?: string) => {
   const { user } = useAuth()
-  const shopId = user?.shopId
+  const effectiveShopId = shopId || user?.shopId
 
   return useQuery({
-    queryKey: ['productSearch', shopId, query],
-    queryFn: () => productService.searchProducts(shopId!, query),
-    enabled: !!shopId && query.length >= 2,
+    queryKey: ['productSearch', effectiveShopId, query],
+    queryFn: () => productService.searchProducts(effectiveShopId!, query),
+    enabled: !!effectiveShopId && query.length >= 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 }

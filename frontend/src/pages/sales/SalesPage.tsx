@@ -37,11 +37,14 @@ import {
   ShoppingBag,
   TrendingUp,
   FileDown,
+  ExternalLink,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useNavigate } from "react-router-dom";
 
 export const SalesPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const { sales, fetchSales, isLoading, error } = useSales();
@@ -222,6 +225,14 @@ export const SalesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => navigate('/pos')}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            size="lg"
+          >
+            <ExternalLink className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Open POS Terminal</span>
+          </Button>
           <Button variant="outline" onClick={handleReset}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Reset

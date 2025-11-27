@@ -9,6 +9,8 @@ interface SelectContextType {
   items: Map<string, React.ReactNode>
   registerItem: (value: string, label: React.ReactNode) => void
   unregisterItem: (value: string) => void
+  contentRef: React.RefObject<HTMLDivElement>
+  dropdownPosition: 'bottom' | 'top'
 }
 
 const SelectContext = createContext<SelectContextType | undefined>(undefined)
@@ -29,7 +31,27 @@ export const Select: React.FC<SelectProps> = ({
   const [open, setOpen] = useState(false)
   const itemsRef = useRef<Map<string, React.ReactNode>>(new Map())
   const containerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const [, forceUpdate] = useState({})
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
+
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (!open || !containerRef.current || !contentRef.current) return
+
+    const triggerRect = containerRef.current.getBoundingClientRect()
+    const contentHeight = contentRef.current.offsetHeight || 300 // Fallback height
+    const viewportHeight = window.innerHeight
+    const spaceBelow = viewportHeight - triggerRect.bottom
+    const spaceAbove = triggerRect.top
+
+    // Show above if not enough space below and more space above
+    if (spaceBelow < contentHeight && spaceAbove > spaceBelow) {
+      setDropdownPosition('top')
+    } else {
+      setDropdownPosition('bottom')
+    }
+  }, [open])
 
   // Close on outside click
   useEffect(() => {
@@ -75,7 +97,9 @@ export const Select: React.FC<SelectProps> = ({
         onOpenChange: disabled ? () => {} : setOpen,
         items: itemsRef.current,
         registerItem,
-        unregisterItem
+        unregisterItem,
+        contentRef,
+        dropdownPosition
       }}
     >
       <div ref={containerRef} className="relative">{children}</div>
@@ -95,7 +119,7 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({ children, classNam
   return (
     <button
       className={cn(
-        'flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+        'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       onClick={() => context.onOpenChange(!context.open)}
@@ -147,8 +171,10 @@ export const SelectContent: React.FC<SelectContentProps> = ({ children, classNam
   // Always render children (so SelectItems can register) but hide the dropdown
   return (
     <div
+      ref={context.contentRef}
       className={cn(
-        'absolute top-full left-0 z-50 w-full rounded-md border border-gray-300 bg-white shadow-lg',
+        'absolute left-0 z-50 w-full rounded-md border bg-popover text-popover-foreground shadow-lg max-h-[300px] overflow-auto',
+        context.dropdownPosition === 'bottom' ? 'top-full mt-1' : 'bottom-full mb-1',
         !context.open && 'hidden', // Hide with CSS instead of not rendering
         className
       )}
@@ -181,8 +207,8 @@ export const SelectItem: React.FC<SelectItemProps> = ({ children, value, classNa
   return (
     <div
       className={cn(
-        'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100',
-        isSelected && 'bg-blue-100 text-blue-600',
+        'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+        isSelected && 'bg-accent text-accent-foreground font-medium',
         className
       )}
       onClick={() => {

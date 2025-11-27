@@ -27,8 +27,8 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md bg-background">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Loading shops...</span>
       </div>
     )
@@ -36,7 +36,7 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
 
   if (!shops || shops.length === 0) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md bg-muted">
+      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md bg-muted/50">
         <Building2 className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">No shops available</span>
       </div>
@@ -46,9 +46,9 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
   // If there's only one shop, show it as read-only
   if (shops.length === 1) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md bg-muted">
-        <Building2 className="h-4 w-4" />
-        <span className="text-sm font-medium">{shops[0].name}</span>
+      <div className="flex items-center space-x-2 px-3 py-2 border rounded-md bg-muted/50">
+        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">{shops[0].name}</span>
       </div>
     )
   }
@@ -74,7 +74,7 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
             <div className="flex items-center justify-between w-full">
               <span>{shop.name}</span>
               {shop.status === 'ACTIVE' && (
-                <span className="ml-2 text-xs text-green-600">●</span>
+                <span className="ml-2 text-xs text-green-600 dark:text-green-400">●</span>
               )}
             </div>
           </SelectItem>
