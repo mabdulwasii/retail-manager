@@ -30,7 +30,7 @@ import {
   useUpdateProductStatus,
 } from "@/hooks/useProducts";
 import { Product, ProductStatus } from "@/types/api";
-import { Plus, Tag } from "lucide-react";
+import { Plus, Tag, ShoppingCart } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -125,6 +125,14 @@ export const ProductsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/pos")}
+            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Quick POS
+          </Button>
           {canViewCategories && (
             <Button variant="outline" onClick={() => navigate("/categories")}>
               <Tag className="h-4 w-4 mr-2" />

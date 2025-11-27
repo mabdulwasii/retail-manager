@@ -7,9 +7,11 @@ import { Separator } from '@/components/ui/separator'
 import { ProductSearch } from '@/components/sales/ProductSearch'
 import { ShoppingCart } from '@/components/sales/ShoppingCart'
 import { PaymentModal } from '@/components/sales/PaymentModal'
-import { useSales, Product, CreateSaleRequest } from '@/hooks/useSales'
+import { useSales, CreateSaleRequest } from '@/hooks/useSales'
+import { Product } from '@/types/api'
 import { useAuth } from '@/context/ManualAuthContext'
 import { toast } from 'sonner'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import {
   ShoppingCartIcon,
   AlertCircle,
@@ -18,9 +20,14 @@ import {
   X,
   ScanBarcode
 } from 'lucide-react'
+import { ShopSelector } from '@/components/ui/shop-selector'
 
 export const POSPage: React.FC = () => {
   const { user } = useAuth()
+  
+  // Selected shop state - default to user's shop or first available
+  const [selectedShopId, setSelectedShopId] = useState<string>(user?.shopId || '')
+  
   const {
     cart,
     cartSummary,
@@ -40,6 +47,13 @@ export const POSPage: React.FC = () => {
   const [lastSaleId, setLastSaleId] = useState<string | null>(null)
   const [barcodeInput, setBarcodeInput] = useState('')
   const [isBarcodeMode, setIsBarcodeMode] = useState(false)
+  
+  // Update selected shop when user shop changes
+  useEffect(() => {
+    if (user?.shopId && !selectedShopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId])
 
   // Barcode scanner handler
   useEffect(() => {
@@ -110,7 +124,7 @@ export const POSPage: React.FC = () => {
       paymentMethod: paymentData.method,
       discountAmount: paymentData.discount || 0,
       notes: paymentData.notes,
-      shopId: user?.shopId as string,
+      shopId: selectedShopId || user?.shopId as string,
       customerName: paymentData.customerName,
       customerPhone: paymentData.customerPhone,
       customerEmail: paymentData.customerEmail,
@@ -152,34 +166,43 @@ export const POSPage: React.FC = () => {
   const isCartEmpty = cart.length === 0
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-gradient-to-br from-background to-muted/30">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 bg-card/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border">
         <div>
-          <h1 className="text-3xl font-bold">Point of Sale</h1>
-          <p className="text-muted-foreground mt-1">
-            Cashier: {user?.firstName} {user?.lastName}
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 dark:from-primary dark:to-purple-400 bg-clip-text text-transparent">Point of Sale</h1>
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
+            <span className="text-sm">Cashier: {user?.firstName} {user?.lastName}</span>
           </p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Shop Selector */}
+          <ShopSelector
+            value={selectedShopId}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+            placeholder="Select shop"
+          />
+          
           {/* Barcode Scanner Toggle */}
           <Button
             variant={isBarcodeMode ? 'default' : 'outline'}
             onClick={() => setIsBarcodeMode(!isBarcodeMode)}
             className="gap-2"
+            size="sm"
           >
             <ScanBarcode className="w-4 h-4" />
-            Barcode Mode {isBarcodeMode && '(Active)'}
+            <span className="hidden sm:inline">{isBarcodeMode ? 'Scanning...' : 'Scan Mode'}</span>
           </Button>
 
           {/* Cart Badge */}
-          <div className="relative">
-            <ShoppingCartIcon className="w-6 h-6 text-muted-foreground" />
+          <div className="relative p-2">
+            <ShoppingCartIcon className="w-5 h-5 text-muted-foreground" />
             {cartItemCount > 0 && (
               <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-primary text-primary-foreground"
               >
                 {cartItemCount}
               </Badge>
@@ -190,7 +213,7 @@ export const POSPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive" className="mb-4 animate-in fade-in slide-in-from-top-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{error}</span>
@@ -203,14 +226,15 @@ export const POSPage: React.FC = () => {
 
       {/* Success Message */}
       {lastSaleId && !isLoading && (
-        <Alert className="mb-4 border-green-500 bg-green-50">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          <AlertDescription className="flex items-center justify-between text-green-700">
+        <Alert className="mb-4 border-green-500 bg-green-500/10 dark:bg-green-500/20 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="flex items-center justify-between text-green-700 dark:text-green-300">
             <span>Sale completed successfully!</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => lastSaleId && printReceipt(lastSaleId)}
+              className="hover:bg-green-500/20"
             >
               <Printer className="h-4 w-4 mr-2" />
               Print Receipt
@@ -223,103 +247,106 @@ export const POSPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
         {/* Left Column - Product Search (2/3 width) */}
         <div className="lg:col-span-2 overflow-auto">
-          <ProductSearch onProductSelect={handleProductSelect} />
+          <ProductSearch 
+            onProductSelect={handleProductSelect} 
+            shopId={selectedShopId}
+          />
         </div>
 
         {/* Right Column - Shopping Cart (1/3 width) */}
-        <div className="lg:col-span-1 flex flex-col">
-          <Card className="flex-1 flex flex-col">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <ShoppingCartIcon className="w-5 h-5" />
-                  Cart ({cartItemCount} items)
-                </span>
-                {!isCartEmpty && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearCart}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    Clear
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Cart Items */}
-              <div className="flex-1 overflow-auto px-6">
-                {isCartEmpty ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                    <ShoppingCartIcon className="w-16 h-16 text-muted-foreground/20 mb-4" />
-                    <p className="text-muted-foreground font-medium">Cart is empty</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Search and add products to get started
-                    </p>
-                  </div>
-                ) : (
-                  <ShoppingCart
-                    items={cart}
-                    summary={cartSummary}
-                    onUpdateQuantity={updateCartItemQuantity}
-                    onRemoveItem={removeFromCart}
-                    onClearCart={handleClearCart}
-                  />
-                )}
-              </div>
-
-              {/* Cart Summary & Checkout */}
+        <Card className="flex flex-col h-full overflow-hidden shadow-xl border-2">
+          <CardHeader className="pb-4 bg-muted/30">
+            <CardTitle className="flex items-center justify-between text-xl">
+              <span className="flex items-center gap-2">
+                <ShoppingCartIcon className="w-5 h-5 text-primary" />
+                <span>Cart</span>
+                <Badge variant="secondary" className="text-xs">{cartItemCount}</Badge>
+              </span>
               {!isCartEmpty && (
-                <>
-                  <Separator className="my-4" />
-                  
-                  <div className="px-6 pb-6">
-                    {/* Summary */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span className="font-medium">{cartSummary.formattedSubtotal}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Tax</span>
-                        <span className="font-medium">{cartSummary.formattedTaxAmount}</span>
-                      </div>
-                      <Separator className="my-2" />
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total</span>
-                        <span className="text-primary">{cartSummary.formattedTotal}</span>
-                      </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearCart}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+            <div className="flex-1 overflow-auto px-6">
+              {isCartEmpty ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <div className="rounded-full bg-muted p-6 mb-4">
+                    <ShoppingCartIcon className="w-12 h-12 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-muted-foreground font-medium">Cart is empty</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">
+                    Add products to get started
+                  </p>
+                </div>
+              ) : (
+                <ShoppingCart
+                  items={cart}
+                  summary={cartSummary}
+                  onUpdateQuantity={updateCartItemQuantity}
+                  onRemoveItem={removeFromCart}
+                  onClearCart={handleClearCart}
+                />
+              )}
+            </div>
+
+            {/* Cart Summary & Checkout */}
+            {!isCartEmpty && (
+              <>
+                <Separator />
+                
+                <div className="px-6 py-6 bg-muted/20">
+                  {/* Summary */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span className="font-medium text-foreground">{cartSummary.formattedSubtotal}</span>
                     </div>
 
-                    {/* Checkout Button */}
-                    <Button
-                      size="lg"
-                      className="w-full"
-                      onClick={handleCheckout}
-                      disabled={isLoading || isCartEmpty}
-                    >
-                      {isLoading ? 'Processing...' : 'Proceed to Payment'}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                    {cartSummary.taxAmount > 0 && (
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Tax</span>
+                        <span className="font-medium text-foreground">{cartSummary.formattedTaxAmount}</span>
+                      </div>
+                    )}
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <Card className="p-3">
-              <p className="text-xs text-muted-foreground">Items</p>
-              <p className="text-2xl font-bold">{cartItemCount}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold text-primary">{cartSummary.formattedTotal}</p>
-            </Card>
-          </div>
-        </div>
+                    <Separator />
+                    
+                    <div className="flex justify-between font-bold text-xl pt-2">
+                      <span>Total</span>
+                      <span className="text-primary">{cartSummary.formattedTotal}</span>
+                    </div>
+                  </div>
+
+                  {/* Checkout Button */}
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={isCartEmpty || isLoading}
+                    className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
+                  >
+                    {isLoading ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Checkout
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Payment Modal */}

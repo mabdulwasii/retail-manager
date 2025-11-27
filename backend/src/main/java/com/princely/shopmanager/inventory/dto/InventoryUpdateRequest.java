@@ -47,7 +47,11 @@ public class InventoryUpdateRequest {
     @Min(value = 0, message = "Reorder point cannot be negative")
     private Integer reorderPoint;
 
-    @Schema(description = "Unit cost for this batch", example = "15.50")
-    @Min(value = 0, message = "Unit cost cannot be negative")
-    private BigDecimal unitCost;
+    @Schema(description = "Cost price for this batch", example = "15.50")
+    @Min(value = 0, message = "Cost price cannot be negative")
+    private BigDecimal costPrice;
+
+    @Schema(description = "Selling price for this batch", example = "25.00")
+    @Min(value = 0, message = "Selling price cannot be negative")
+    private BigDecimal sellingPrice;
 }

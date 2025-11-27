@@ -42,7 +42,7 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
         <div className={`
           fixed inset-y-0 left-0 z-30 w-64 transform overflow-y-auto
           bg-background transition duration-200 ease-in-out
-          lg:static lg:translate-x-0 lg:transition-none lg:shrink-0
+          lg:static lg:translate-x-0 lg:transition-none lg:shrink-0 border-r
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <Sidebar />

@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,6 +59,12 @@ public class InventoryService {
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
+        // Auto-generate batch number if not provided
+        String batchNumber = request.getBatchNumber();
+        if (batchNumber == null || batchNumber.isBlank()) {
+            batchNumber = generateBatchNumber(shop, product);
+        }
+
         Inventory inventory = Inventory.builder()
             .shop(shop)
             .product(product)
@@ -65,9 +72,10 @@ public class InventoryService {
             .minimumStock(request.getMinimumStock())
             .maximumStock(request.getMaximumStock())
             .reorderPoint(request.getReorderPoint())
-            .unitCost(request.getUnitCost())
+            .costPrice(request.getCostPrice())
+            .sellingPrice(request.getSellingPrice())
             .location(request.getLocation())
-            .batchNumber(request.getBatchNumber())
+            .batchNumber(batchNumber)
             .expiryDate(request.getExpiryDate())
             .lastStockUpdate(LocalDateTime.now())
             .build();
@@ -290,10 +298,16 @@ public class InventoryService {
             changes.append(String.format("Reorder point: %s → %s; ", oldValue, request.getReorderPoint()));
         }
 
-        if (request.getUnitCost() != null) {
-            BigDecimal oldValue = inventory.getUnitCost();
-            inventory.setUnitCost(request.getUnitCost());
-            changes.append(String.format("Unit cost: %s → %s; ", oldValue, request.getUnitCost()));
+        if (request.getCostPrice() != null) {
+            BigDecimal oldValue = inventory.getCostPrice();
+            inventory.setCostPrice(request.getCostPrice());
+            changes.append(String.format("Cost price: %s → %s; ", oldValue, request.getCostPrice()));
+        }
+
+        if (request.getSellingPrice() != null) {
+            BigDecimal oldValue = inventory.getSellingPrice();
+            inventory.setSellingPrice(request.getSellingPrice());
+            changes.append(String.format("Selling price: %s → %s; ", oldValue, request.getSellingPrice()));
         }
 
         inventory = inventoryRepository.save(inventory);
@@ -487,8 +501,8 @@ public class InventoryService {
         );
 
         BigDecimal totalValue = allInventory.stream()
-            .filter(inv -> inv.getUnitCost() != null)
-            .map(inv -> inv.getUnitCost().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .filter(inv -> inv.getCostPrice() != null)
+            .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         int lowStockCount = (int) allInventory.stream()
@@ -516,8 +530,8 @@ public class InventoryService {
                 List<Inventory> categoryItems = entry.getValue();
 
                 BigDecimal categoryValue = categoryItems.stream()
-                    .filter(inv -> inv.getUnitCost() != null)
-                    .map(inv -> inv.getUnitCost().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+                    .filter(inv -> inv.getCostPrice() != null)
+                    .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 int categoryLowStockCount = (int) categoryItems.stream()
@@ -558,7 +572,8 @@ public class InventoryService {
             .minimumStock(inventory.getMinimumStock())
             .maximumStock(inventory.getMaximumStock())
             .reorderPoint(inventory.getReorderPoint())
-            .unitCost(inventory.getUnitCost())
+            .costPrice(inventory.getCostPrice())
+            .sellingPrice(inventory.getSellingPrice())
             .location(inventory.getLocation())
             .batchNumber(inventory.getBatchNumber())
             .expiryDate(inventory.getExpiryDate())
@@ -568,5 +583,23 @@ public class InventoryService {
             .isExpired(inventory.isExpired())
             .isExpiringSoon(inventory.isExpiringSoon(30))
             .build();
+    }
+
+    /**
+     * Generate unique batch number: BATCH-{SHOP_CODE}-{YYYYMMDD}-{SEQ}
+     * Example: BATCH-GOM-20251128-001
+     */
+    private String generateBatchNumber(Shop shop, Product product) {
+        String shopCode = shop.getName().length() >= 3 ?
+            shop.getName().substring(0, 3).toUpperCase() :
+            shop.getName().toUpperCase();
+
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // Get count of inventory records for this product today
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        long countToday = inventoryRepository.countByProductIdAndCreatedAtAfter(product.getId(), startOfDay);
+
+        return String.format("BATCH-%s-%s-%03d", shopCode, dateStr, countToday + 1);
     }
 }

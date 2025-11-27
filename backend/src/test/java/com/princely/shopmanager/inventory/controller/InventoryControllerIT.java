@@ -45,7 +45,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // First create a product
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Inventory Test Product")
-            .price(BigDecimal.valueOf(50.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -65,7 +64,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .batchNumber("BATCH-001")
             .expiryDate(LocalDate.now().plusMonths(12))
             .location("Warehouse A")
-            .unitCost(BigDecimal.valueOf(40.00))
+            .costPrice(BigDecimal.valueOf(40.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
@@ -85,7 +85,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
     void managerShouldCreateInventory() throws Exception {
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Manager Inventory Product")
-            .price(BigDecimal.valueOf(30.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -103,7 +102,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .currentStock(50)
             .batchNumber("MGR-BATCH-001")
             .expiryDate(LocalDate.now().plusMonths(6))
-            .unitCost(BigDecimal.valueOf(25.00))
+            .costPrice(BigDecimal.valueOf(25.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
@@ -122,7 +122,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .productId(TestConstants.PROD_WIRELESS_MOUSE)
             .currentStock(20)
             .batchNumber("EMP-BATCH-001")
-            .unitCost(BigDecimal.valueOf(15.00))
+            .costPrice(BigDecimal.valueOf(15.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
@@ -176,7 +177,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Adjustment Test Product")
-            .price(BigDecimal.valueOf(60.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -193,7 +193,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .productId(productId)
             .currentStock(100)
             .batchNumber("ADJ-BATCH-001")
-            .unitCost(BigDecimal.valueOf(50.00))
+            .costPrice(BigDecimal.valueOf(50.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
@@ -315,7 +316,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Update Test Product")
-            .price(BigDecimal.valueOf(45.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -333,7 +333,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .currentStock(0)  // Zero stock so we can delete later
             .batchNumber("OLD-BATCH")
             .location("Old Location")
-            .unitCost(BigDecimal.valueOf(35.00))
+            .costPrice(BigDecimal.valueOf(35.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .minimumStock(5)
             .build();
 
@@ -354,7 +355,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .minimumStock(10)
             .maximumStock(500)
             .reorderPoint(30)
-            .unitCost(BigDecimal.valueOf(38.00))
+            .costPrice(BigDecimal.valueOf(38.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         mockMvc.perform(put("/api/inventory/{inventoryId}", inventoryId)
@@ -405,7 +407,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory with zero stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Delete Test Product")
-            .price(BigDecimal.valueOf(25.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -422,7 +423,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .productId(productId)
             .currentStock(0)  // Zero stock so we can delete
             .batchNumber("DEL-BATCH")
-            .unitCost(BigDecimal.valueOf(20.00))
+            .costPrice(BigDecimal.valueOf(20.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)
@@ -447,7 +449,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory with stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Active Stock Product")
-            .price(BigDecimal.valueOf(35.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -464,7 +465,8 @@ class InventoryControllerIT extends AbstractIntegrationTest {
             .productId(productId)
             .currentStock(50)  // Has stock
             .batchNumber("STOCK-BATCH")
-            .unitCost(BigDecimal.valueOf(30.00))
+            .costPrice(BigDecimal.valueOf(30.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         String inventoryResponse = mockMvc.perform(post("/api/shops/{shopId}/inventory", TestConstants.TEST_SHOP_001)

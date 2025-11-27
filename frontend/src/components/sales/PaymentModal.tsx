@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -150,81 +151,107 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <CreditCardIcon className="h-5 w-5" />
-            <span>Payment Processing</span>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex items-center space-x-3 text-2xl">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <CreditCardIcon className="h-6 w-6 text-primary" />
+            </div>
+            <span className="bg-gradient-to-r from-primary to-purple-600 dark:from-primary dark:to-purple-400 bg-clip-text text-transparent">Complete Payment</span>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Order Summary */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          <div className="bg-muted/40 dark:bg-muted/20 rounded-xl p-5 space-y-3 border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Order Summary</p>
+            
             <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
-              <span>{cartSummary.formattedSubtotal}</span>
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="font-medium">{cartSummary.formattedSubtotal}</span>
             </div>
 
             {cartSummary.taxAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span>Tax:</span>
-                <span>{cartSummary.formattedTaxAmount}</span>
+                <span className="text-muted-foreground">Tax</span>
+                <span className="font-medium">{cartSummary.formattedTaxAmount}</span>
               </div>
             )}
 
             {discountAmount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Discount:</span>
-                <span>-{formatCurrency(discountAmount)}</span>
+              <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                <span>Discount</span>
+                <span className="font-medium">-{formatCurrency(discountAmount)}</span>
               </div>
             )}
 
-            <div className="flex justify-between font-semibold text-lg border-t pt-2">
-              <span>Total:</span>
-              <span>{formatCurrency(finalTotal)}</span>
+            <div className="flex justify-between font-bold text-xl border-t pt-3 mt-2">
+              <span>Total</span>
+              <span className="text-primary">{formatCurrency(finalTotal)}</span>
             </div>
 
             {paymentMethod === 'CASH' && changeAmount > 0 && (
-              <div className="flex justify-between text-sm text-blue-600 border-t pt-2">
-                <span>Change:</span>
-                <span>{formatCurrency(changeAmount)}</span>
+              <div className="flex justify-between text-sm bg-blue-500/10 dark:bg-blue-500/20 rounded-lg p-3 mt-2">
+                <span className="text-blue-700 dark:text-blue-300 font-medium">Change Due</span>
+                <span className="text-blue-700 dark:text-blue-300 font-bold">{formatCurrency(changeAmount)}</span>
               </div>
             )}
           </div>
 
           {/* Discount */}
           <div className="space-y-2">
-            <Label htmlFor="discount">Discount Amount</Label>
-            <Input
+            <Label htmlFor="discount" className="text-sm font-semibold">Discount Amount (Optional)</Label>
+            <NumericInput
               id="discount"
-              type="number"
-              step="0.01"
-              min="0"
-              max={cartSummary.total}
               value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
+              onValueChange={(values) => {
+                setDiscount(values.value || '0')
+              }}
               placeholder="0.00"
+              className="h-11"
+              decimalScale={2}
+              fixedDecimalScale={false}
+              allowNegative={false}
+              isAllowed={(values) => {
+                const { floatValue } = values
+                return floatValue === undefined || floatValue <= cartSummary.total
+              }}
             />
             {validationErrors.discount && (
-              <p className="text-sm text-red-600">{validationErrors.discount}</p>
+              <p className="text-sm text-destructive font-medium">{validationErrors.discount}</p>
             )}
           </div>
 
           {/* Payment Method */}
           <div className="space-y-3">
-            <Label>Payment Method</Label>
-            <RadioGroup value={paymentMethod} onValueChange={handlePaymentMethodChange}>
+            <Label className="text-sm font-semibold">Payment Method</Label>
+            <RadioGroup value={paymentMethod} onValueChange={handlePaymentMethodChange} className="grid grid-cols-2 gap-3">
               {paymentMethods.map((method) => {
                 const IconComponent = method.icon
+                const isSelected = paymentMethod === method.id
                 return (
-                  <div key={method.id} className="flex items-center space-x-2 border rounded-lg p-3">
-                    <RadioGroupItem value={method.id} id={method.id} />
-                    <IconComponent className="h-5 w-5 text-gray-600" />
-                    <label htmlFor={method.id} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{method.name}</div>
-                      <div className="text-sm text-gray-600">{method.description}</div>
+                  <div key={method.id} className={`relative flex items-center space-x-3 border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    isSelected 
+                      ? 'border-primary bg-primary/5 shadow-md' 
+                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                  }`}>
+                    <RadioGroupItem value={method.id} id={method.id} className="sr-only" />
+                    <label htmlFor={method.id} className="flex items-center space-x-3 cursor-pointer flex-1">
+                      <div className={`p-2 rounded-lg ${
+                        isSelected ? 'bg-primary/20' : 'bg-muted'
+                      }`}>
+                        <IconComponent className={`h-5 w-5 ${
+                          isSelected ? 'text-primary' : 'text-muted-foreground'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm">{method.name}</div>
+                        <div className="text-xs text-muted-foreground">{method.description}</div>
+                      </div>
                     </label>
+                    {isSelected && (
+                      <CheckCircleIcon className="h-5 w-5 text-primary absolute top-2 right-2" />
+                    )}
                   </div>
                 )
               })}
@@ -233,48 +260,56 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Amount Paid (for CASH payments) */}
           {paymentMethod === 'CASH' && (
-            <div className="space-y-2">
-              <Label htmlFor="amountPaid">Amount Paid</Label>
-              <Input
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+              <Label htmlFor="amountPaid" className="text-sm font-semibold">Amount Paid (Cash)</Label>
+              <NumericInput
                 id="amountPaid"
-                type="number"
-                step="0.01"
-                min={finalTotal}
                 value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
-                placeholder={finalTotal.toString()}
+                onValueChange={(values) => {
+                  setAmountPaid(values.value || '')
+                }}
+                placeholder={`Minimum: ${finalTotal.toFixed(2)}`}
+                className="h-11 text-lg font-semibold"
+                decimalScale={2}
+                fixedDecimalScale={false}
+                allowNegative={false}
+                autoFocus
               />
               {validationErrors.amountPaid && (
-                <p className="text-sm text-red-600">{validationErrors.amountPaid}</p>
+                <p className="text-sm text-destructive font-medium">{validationErrors.amountPaid}</p>
               )}
             </div>
           )}
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes" className="text-sm font-semibold">Notes (Optional)</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any additional notes..."
+              placeholder="Add any additional notes about this transaction..."
               rows={3}
+              className="resize-none"
             />
           </div>
 
-          <DialogFooter className="space-x-2">
+          <DialogFooter className="gap-3 sm:gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isLoading}
+              className="flex-1 sm:flex-none h-12"
+              size="lg"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isLoading || Object.keys(validationErrors).length > 0}
-              className="min-w-32"
+              className="flex-1 sm:flex-none min-w-40 h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+              size="lg"
             >
               {isLoading ? (
                 <>
@@ -283,7 +318,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </>
               ) : (
                 <>
-                  <CheckCircleIcon className="h-4 w-4 mr-2" />
+                  <CheckCircleIcon className="h-5 w-5 mr-2" />
                   Complete Sale
                 </>
               )}

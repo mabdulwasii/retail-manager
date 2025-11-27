@@ -69,7 +69,8 @@ class InventoryServiceSimpleTest {
         testInventory.setMinimumStock(10);
         testInventory.setMaximumStock(500);
         testInventory.setReorderPoint(25);
-        testInventory.setUnitCost(BigDecimal.valueOf(15.50));
+        testInventory.setCostPrice(BigDecimal.valueOf(15.50));
+        testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
     }
 
     @Test
@@ -84,7 +85,7 @@ class InventoryServiceSimpleTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo("inventory-1");
         assertThat(result.getCurrentStock()).isEqualTo(100);
-        assertThat(result.getUnitCost()).isEqualByComparingTo(BigDecimal.valueOf(15.50));
+        assertThat(result.getCostPrice()).isEqualByComparingTo(BigDecimal.valueOf(15.50));
         assertThat(result.getShopName()).isEqualTo("Test Shop");
         assertThat(result.getProductName()).isEqualTo("Test Product");
     }

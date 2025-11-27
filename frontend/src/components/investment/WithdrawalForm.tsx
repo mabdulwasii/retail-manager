@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -159,16 +160,20 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
             <Label htmlFor="amount">Withdrawal Amount *</Label>
             <div className="relative">
               <DollarSignIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
+              <NumericInput
                 id="amount"
-                type="number"
-                min="1"
-                max={investment.availableBalance}
-                step="0.01"
                 value={formData.amount || ''}
-                onChange={(e) => handleInputChange('amount', parseFloat(e.target.value) || 0)}
+                onValueChange={(values) => {
+                  handleInputChange('amount', values.floatValue || 0)
+                }}
                 placeholder="Enter withdrawal amount"
                 className={`pl-10 ${validationErrors.amount ? 'border-red-500' : ''}`}
+                decimalScale={2}
+                fixedDecimalScale={true}
+                isAllowed={(values) => {
+                  const { floatValue } = values
+                  return floatValue === undefined || (floatValue >= 1 && floatValue <= investment.availableBalance)
+                }}
               />
             </div>
             {validationErrors.amount && (

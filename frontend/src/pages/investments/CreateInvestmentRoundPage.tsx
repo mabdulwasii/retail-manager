@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Plus, Trash2, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -539,23 +540,29 @@ export const CreateInvestmentRoundPage: React.FC = () => {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Label>Amount *</Label>
-                              <Input
-                                type="number"
+                              <NumericInput
                                 value={investor.amount}
-                                onChange={(e) => handleInvestorChange(index, 'amount', parseFloat(e.target.value) || 0)}
+                                onValueChange={(values) => {
+                                  handleInvestorChange(index, 'amount', values.floatValue || 0)
+                                }}
                                 placeholder="0.00"
+                                decimalScale={2}
+                                fixedDecimalScale={false}
+                                allowNegative={false}
                               />
                             </div>
                             {formData.profitSharingModel === ProfitSharingModel.FIXED_SHARES && (
                               <div>
                                 <Label>Fixed Shares *</Label>
-                                <Input
-                                  type="number"
+                                <NumericInput
                                   value={investor.fixedShares || ''}
-                                  onChange={(e) =>
-                                    handleInvestorChange(index, 'fixedShares', parseInt(e.target.value) || undefined)
-                                  }
+                                  onValueChange={(values) => {
+                                    handleInvestorChange(index, 'fixedShares', values.floatValue ? Math.floor(values.floatValue) : undefined)
+                                  }}
                                   placeholder="0"
+                                  isNumberInput={true}
+                                  allowNegative={false}
+                                  decimalScale={0}
                                 />
                               </div>
                             )}

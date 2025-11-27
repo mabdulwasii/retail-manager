@@ -28,7 +28,8 @@ public class InventoryResponse {
     private Integer minimumStock;
     private Integer maximumStock;
     private Integer reorderPoint;
-    private BigDecimal unitCost;
+    private BigDecimal costPrice;
+    private BigDecimal sellingPrice;
     private String location;
     private String batchNumber;
     private LocalDate expiryDate;

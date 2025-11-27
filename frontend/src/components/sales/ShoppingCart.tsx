@@ -2,6 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Badge } from '@/components/ui/badge'
 import { CartItem } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
@@ -75,8 +76,8 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <ShoppingCartIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <ShoppingCartIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground/40" />
             <p>Cart is empty</p>
             <p className="text-sm">Add products to get started</p>
           </div>
@@ -85,17 +86,17 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
             {/* Cart Items */}
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {items.map((item) => (
-                <div key={item.product.id} className="border rounded-lg p-3">
+                <div key={item.product.id} className="border rounded-lg p-3 bg-card">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">
+                      <h4 className="font-medium text-foreground truncate">
                         {item.product.name}
                       </h4>
-                      <p className="text-sm text-gray-600 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {formatCurrency(item.product.price)} each
                       </p>
                       {item.product.taxRate && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           Tax: {item.product.taxRate}%
                         </p>
                       )}
@@ -105,7 +106,7 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onRemoveItem(item.product.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </Button>
@@ -124,20 +125,26 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
                         <MinusIcon className="h-3 w-3" />
                       </Button>
 
-                      <Input
-                        type="number"
+                      <NumericInput
                         value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.product.id, e.target.value)}
-                        min="1"
-                        max={item.product.stock}
+                        onValueChange={(values) => {
+                          handleQuantityChange(item.product.id, values.value || '1')
+                        }}
                         className="w-16 h-8 text-center"
+                        isNumberInput={true}
+                        allowNegative={false}
+                        decimalScale={0}
+                        isAllowed={(values) => {
+                          const { floatValue } = values
+                          return floatValue === undefined || (floatValue >= 1 && floatValue <= (item.product.availableStock || 9999))
+                        }}
                       />
 
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => incrementQuantity(item.product.id, item.quantity, item.product.stock)}
-                        disabled={item.quantity >= item.product.stock}
+                        onClick={() => incrementQuantity(item.product.id, item.quantity, item.product.availableStock || 9999)}
+                        disabled={item.quantity >= (item.product.availableStock || 9999)}
                         className="h-8 w-8 p-0"
                       >
                         <PlusIcon className="h-3 w-3" />
@@ -146,11 +153,11 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
 
                     {/* Item Total */}
                     <div className="text-right">
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-foreground">
                         {formatCurrency(item.total)}
                       </div>
                       {item.taxAmount > 0 && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           incl. {formatCurrency(item.taxAmount)} tax
                         </div>
                       )}
@@ -158,8 +165,8 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
                   </div>
 
                   {/* Stock Warning */}
-                  {item.quantity >= item.product.stock && (
-                    <div className="mt-2 text-xs text-orange-600">
+                  {item.product.availableStock && item.quantity >= item.product.availableStock && (
+                    <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
                       Maximum stock quantity reached
                     </div>
                   )}

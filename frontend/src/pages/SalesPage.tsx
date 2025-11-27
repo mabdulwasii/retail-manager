@@ -9,10 +9,12 @@ import { ShoppingCart } from '@/components/sales/ShoppingCart'
 import { PaymentModal } from '@/components/sales/PaymentModal'
 import { SalesHistory } from '@/components/sales/SalesHistory'
 import { useSales } from '@/hooks/useSales'
-import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon } from 'lucide-react'
+import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/context/ManualAuthContext'
+import { useNavigate } from 'react-router-dom'
 
 export const SalesPage: React.FC = () => {
+  const navigate = useNavigate()
   const {
     cart,
     cartSummary,
@@ -104,6 +106,14 @@ export const SalesPage: React.FC = () => {
           <p className="text-gray-600">Process sales and manage transactions</p>
         </div>
         <div className="flex space-x-2">
+          <Button
+            onClick={() => navigate('/pos')}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            size="lg"
+          >
+            <ExternalLink className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Open POS Terminal</span>
+          </Button>
           <Button
             variant={activeTab === 'pos' ? 'default' : 'outline'}
             onClick={() => setActiveTab('pos')}

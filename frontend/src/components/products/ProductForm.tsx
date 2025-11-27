@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { useEffect, useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
@@ -19,6 +20,7 @@ import { Loader2, Sparkles } from 'lucide-react'
 import { Product, ProductStatus } from '@/types/api'
 import { productService } from '@/services/productService'
 import { useCategories } from '@/hooks/useCategories'
+import { useCurrency } from '@/hooks/useCurrency'
 
 const productSchema = yup.object({
   name: yup.string()
@@ -34,8 +36,7 @@ const productSchema = yup.object({
   price: yup.number()
     .typeError('Price must be a number')
     .required('Price is required')
-    .min(0.01, 'Price must be greater than 0')
-    .max(1000000, 'Price must be less than 1,000,000'),
+    .min(0.01, 'Price must be greater than 0'),
   costPrice: yup.number()
     .typeError('Cost price must be a number')
     .min(0, 'Cost price must be 0 or greater')
@@ -43,7 +44,8 @@ const productSchema = yup.object({
     .nullable()
     .transform((value, originalValue) => originalValue === '' ? null : value),
   unit: yup.string().optional(),
-  weightInGrams: yup.number()
+  customUnit: yup.string().optional(),
+  weightInKg: yup.number()
     .typeError('Weight must be a number')
     .min(0, 'Weight must be 0 or greater')
     .optional()
@@ -60,7 +62,9 @@ const productSchema = yup.object({
   //   .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
   barcode: yup.string()
     .optional()
-    .matches(/^[0-9]+$/, 'Barcode must contain only numbers'),
+    .nullable()
+    .transform((value, originalValue) => originalValue === '' ? null : value)
+    .matches(/^[0-9]*$/, 'Barcode must contain only numbers'),  // Allow empty string
   status: yup.string()
     .oneOf(Object.values(ProductStatus))
     .optional(),
@@ -75,6 +79,22 @@ interface ProductFormProps {
   isSubmitting?: boolean
 }
 
+// Common product units
+const PRODUCT_UNITS = [
+  { value: 'piece', label: 'Piece' },
+  { value: 'pack', label: 'Pack' },
+  { value: 'box', label: 'Box' },
+  { value: 'bottle', label: 'Bottle' },
+  { value: 'can', label: 'Can' },
+  { value: 'kg', label: 'Kilogram (kg)' },
+  { value: 'g', label: 'Gram (g)' },
+  { value: 'l', label: 'Liter (L)' },
+  { value: 'ml', label: 'Milliliter (ml)' },
+  { value: 'carton', label: 'Carton' },
+  { value: 'dozen', label: 'Dozen' },
+  { value: 'other', label: 'Other (specify)' },
+]
+
 export const ProductForm: React.FC<ProductFormProps> = ({
   product,
   onSubmit,
@@ -82,12 +102,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isSubmitting = false,
 }) => {
   const { data: categories = [], isLoading: categoriesLoading } = useCategories()
+  const { formatCurrency } = useCurrency()
+  const [showCustomUnit, setShowCustomUnit] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: yupResolver(productSchema),
@@ -98,8 +121,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       category: product?.category || '', // For display
       price: product?.price || 0,
       costPrice: product?.costPrice || undefined,
-      unit: product?.unit || '',
-      weightInGrams: product?.weightInGrams || undefined,
+      unit: product?.unit && PRODUCT_UNITS.find(u => u.value === product.unit) ? product.unit : product?.unit ? 'other' : '',
+      customUnit: product?.unit && !PRODUCT_UNITS.find(u => u.value === product.unit) ? product.unit : '',
+      weightInKg: product?.weightInGrams ? product.weightInGrams / 1000 : undefined,
       // location: product?.location || '',
       dimensions: product?.dimensions || '',
       supplierName: product?.supplierName || '',
@@ -115,6 +139,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const categoryId = watch('categoryId')
   const status = watch('status')
+  const selectedUnit = watch('unit')
+  
+  // Show custom unit input when 'other' is selected
+  useEffect(() => {
+    setShowCustomUnit(selectedUnit === 'other')
+  }, [selectedUnit])
 
   // const handleGenerateSKU = () => {
   //   const newSKU = productService.generateSKU()
@@ -213,39 +243,57 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             )}
           </div>
 
-          {/* Price and Cost Price */}
+          {/* Cost Price and Selling Price - Cost Price First */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">
-                Selling Price <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                {...register("price")}
-                placeholder="0.00"
-                disabled={isSubmitting}
-              />
-              {errors.price && (
-                <p className="text-sm text-red-500">{errors.price.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="costPrice">Cost Price</Label>
-              <Input
-                id="costPrice"
-                type="number"
-                step="0.01"
-                {...register("costPrice")}
-                placeholder="0.00"
-                disabled={isSubmitting}
+              <Controller
+                name="costPrice"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    id="costPrice"
+                    value={field.value ?? ''}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue ?? null)
+                    }}
+                    placeholder="0.00"
+                    disabled={isSubmitting}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  />
+                )}
               />
               {errors.costPrice && (
                 <p className="text-sm text-red-500">
                   {errors.costPrice.message}
                 </p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="price">
+                Selling Price <span className="text-red-500">*</span>
+              </Label>
+              <Controller
+                name="price"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    id="price"
+                    value={field.value ?? ''}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue ?? 0)
+                    }}
+                    placeholder="0.00"
+                    disabled={isSubmitting}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  />
+                )}
+              />
+              {errors.price && (
+                <p className="text-sm text-red-500">{errors.price.message}</p>
               )}
             </div>
           </div>
@@ -319,33 +367,69 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
-              <Input
-                id="unit"
-                {...register("unit")}
-                placeholder="e.g., bottle, pack, kg"
+              <Select
+                value={selectedUnit || ''}
+                onValueChange={(value) => setValue('unit', value)}
                 disabled={isSubmitting}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRODUCT_UNITS.map((unit) => (
+                    <SelectItem key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.unit && (
                 <p className="text-sm text-red-500">{errors.unit.message}</p>
               )}
             </div>
+            
+            {showCustomUnit && (
+              <div className="space-y-2">
+                <Label htmlFor="customUnit">Custom Unit</Label>
+                <Input
+                  id="customUnit"
+                  {...register("customUnit")}
+                  placeholder="Specify custom unit"
+                  disabled={isSubmitting}
+                />
+                {errors.customUnit && (
+                  <p className="text-sm text-red-500">{errors.customUnit.message}</p>
+                )}
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="weightInGrams">Weight (grams)</Label>
-              <Input
-                id="weightInGrams"
-                type="number"
-                step="0.01"
-                {...register("weightInGrams")}
-                placeholder="520.5"
-                disabled={isSubmitting}
-              />
-              {errors.weightInGrams && (
-                <p className="text-sm text-red-500">
-                  {errors.weightInGrams.message}
-                </p>
-              )}
-            </div>
+            {!showCustomUnit && (
+              <div className="space-y-2">
+                <Label htmlFor="weightInKg">Weight (kg)</Label>
+                <Controller
+                  name="weightInKg"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericInput
+                      id="weightInKg"
+                      value={field.value ?? ''}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue ?? null)
+                      }}
+                      placeholder="0.520"
+                      disabled={isSubmitting}
+                      suffix=" kg"
+                      prefix=""
+                      decimalScale={3}
+                      allowNegative={false}
+                    />
+                  )}
+                />
+                {errors.weightInKg && (
+                  <p className="text-sm text-red-500">{errors.weightInKg.message}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Location and Dimensions */}

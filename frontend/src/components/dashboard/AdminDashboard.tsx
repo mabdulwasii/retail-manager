@@ -39,11 +39,13 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { ShopSelector } from "@/components/ui/shop-selector";
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const [period, setPeriod] = useState<TimePeriod>("month");
+  const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined); // Admins see all shops by default
 
   // Call only the APIs we actually need (not the heavy useDashboardData)
   const {
@@ -55,22 +57,22 @@ export const AdminDashboard: React.FC = () => {
     data: salesSummary,
     isLoading: salesLoading,
     refetch: refetchSales,
-  } = useSalesSummary(undefined, period);
+  } = useSalesSummary(selectedShopId, period);
   const {
     data: revenueAnalytics,
     isLoading: revenueLoading,
     refetch: refetchRevenue,
-  } = useRevenueAnalytics(undefined, period);
+  } = useRevenueAnalytics(selectedShopId, period);
   const {
     data: inventorySummary,
     isLoading: inventoryLoading,
     refetch: refetchInventory,
-  } = useInventorySummary();
+  } = useInventorySummary(selectedShopId);
   const {
     data: fraudStats,
     isLoading: fraudLoading,
     refetch: refetchFraud,
-  } = useFraudStatistics(undefined, period);
+  } = useFraudStatistics(selectedShopId, period);
 
   // useAllShops already returns the array (not a paginated response)
   const shops = shopsData || [];
@@ -323,6 +325,13 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <ShopSelector 
+            value={selectedShopId || ''}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+            placeholder="All Shops"
+            showAllOption={true}
+          />
           <Select
             value={period}
             onValueChange={(value) => setPeriod(value as TimePeriod)}
