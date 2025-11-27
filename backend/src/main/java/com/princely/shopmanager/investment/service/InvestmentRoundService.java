@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -365,13 +366,29 @@ public class InvestmentRoundService {
     }
 
     /**
-     * Generate investment number: INV-{ROUND_NUMBER}-{SEQUENCE}
+     * Generate unique investment number: INV-{ROUND_NUMBER}-{UUID_SUFFIX}
+     * Uses UUID suffix to ensure uniqueness even under concurrent requests
      */
     private String generateInvestmentNumber(Shop shop, InvestmentRound round) {
-        // Query database for actual count (thread-safe)
-        long count = investmentRepository.countByInvestmentRoundId(round.getId());
-        int sequence = (int) count + 1;
-        return String.format("INV-%s-%03d", round.getRoundNumber(), sequence);
+        String prefix = "INV-" + round.getRoundNumber() + "-";
+        String investmentNumber;
+        int maxRetries = 10;
+        int attempt = 0;
+
+        do {
+            // Use UUID for guaranteed uniqueness
+            String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            investmentNumber = prefix + suffix;
+            attempt++;
+
+            // Check if it exists (very unlikely with UUID, but checking anyway)
+            if (!investmentRepository.existsByInvestmentNumber(investmentNumber)) {
+                return investmentNumber;
+            }
+        } while (attempt < maxRetries);
+
+        // Fallback to timestamp-based if UUID collision (extremely unlikely)
+        return prefix + System.currentTimeMillis();
     }
 
     /**
