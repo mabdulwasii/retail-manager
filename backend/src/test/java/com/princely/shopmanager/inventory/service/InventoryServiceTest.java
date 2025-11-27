@@ -88,7 +88,8 @@ class InventoryServiceTest {
         testInventory.setMinimumStock(10);
         testInventory.setMaximumStock(500);
         testInventory.setReorderPoint(25);
-        testInventory.setUnitCost(BigDecimal.valueOf(15.50));
+        testInventory.setCostPrice(BigDecimal.valueOf(15.50));
+        testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
 
         createRequest = InventoryCreateRequest.builder()
             .productId("product-1")
@@ -96,7 +97,8 @@ class InventoryServiceTest {
             .minimumStock(10)
             .maximumStock(500)
             .reorderPoint(25)
-            .unitCost(BigDecimal.valueOf(15.50))
+            .costPrice(BigDecimal.valueOf(15.50))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .location("A1-B2")
             .batchNumber("BATCH001")
             .expiryDate(LocalDate.now().plusMonths(6))
@@ -438,7 +440,8 @@ class InventoryServiceTest {
             .minimumStock(20)
             .maximumStock(1000)
             .reorderPoint(50)
-            .unitCost(BigDecimal.valueOf(18.00))
+            .costPrice(BigDecimal.valueOf(18.00))
+            .sellingPrice(BigDecimal.valueOf(50.00))
             .build();
 
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));

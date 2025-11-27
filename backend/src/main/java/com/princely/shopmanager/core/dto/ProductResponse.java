@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -48,18 +47,6 @@ public class ProductResponse {
 
     @Schema(description = "Category name", example = "Beverages")
     private String categoryName;
-
-    @Schema(description = "Selling price", example = "500.00")
-    private BigDecimal price;
-
-    @Schema(description = "Cost price", example = "350.00")
-    private BigDecimal costPrice;
-
-    @Schema(description = "Profit margin", example = "150.00")
-    private BigDecimal profitMargin;
-
-    @Schema(description = "Profit margin percentage", example = "42.86")
-    private BigDecimal profitMarginPercentage;
 
     @Schema(description = "Unit of measurement", example = "bottle")
     private String unit;

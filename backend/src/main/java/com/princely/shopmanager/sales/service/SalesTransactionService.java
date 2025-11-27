@@ -108,12 +108,20 @@ public class SalesTransactionService {
             .notes(request.getNotes())
             .build();
 
-        // Add line items
+        // Add line items with denormalized product info and inventory-based pricing
         for (InventoryAllocation allocation : allocations) {
+            // Get selling price from first allocated inventory batch
+            BigDecimal sellingPrice = allocation.inventories.isEmpty() ?
+                allocation.request.getUnitPrice() :
+                allocation.inventories.get(0).getSellingPrice();
+
             LineItem lineItem = LineItem.builder()
                 .product(allocation.product)
+                .productName(allocation.product.getName())
+                .productSku(allocation.product.getSku())
+                .productCategory(allocation.product.getCategory() != null ? allocation.product.getCategory().getName() : null)
                 .quantity(allocation.request.getQuantity())
-                .unitPrice(allocation.request.getUnitPrice())
+                .unitPrice(allocation.request.getUnitPrice() != null ? allocation.request.getUnitPrice() : sellingPrice)
                 .discountAmount(allocation.request.getDiscount() != null ? allocation.request.getDiscount() : BigDecimal.ZERO)
                 .build();
             lineItem.calculateLineTotal();

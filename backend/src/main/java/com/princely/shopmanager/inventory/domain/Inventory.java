@@ -48,14 +48,17 @@ public class Inventory extends BaseEntity {
     private Integer minimumStock = 0;
 
     @Column(name = "maximum_stock")
-    private Integer maximumStock;
+    private Integer maximumStock = 0;
 
     @Builder.Default
     @Column(name = "reorder_point", nullable = false)
     private Integer reorderPoint = 0;
 
-    @Column(name = "unit_cost", precision = 10, scale = 2)
-    private BigDecimal unitCost;
+    @Column(name = "cost_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
+    @Column(name = "selling_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal sellingPrice;
 
     private String location;
 

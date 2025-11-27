@@ -97,8 +97,8 @@ class ProductServiceTest {
             .barcode("5449000000996")
             .shop(testShop)
             .category(testCategory)
-            .price(new BigDecimal("500.00"))
-            .costPrice(new BigDecimal("350.00"))
+            .REMOVED_PRICE(new BigDecimal("500.00"))
+            .REMOVED_COST_PRICE(new BigDecimal("350.00"))
             .status(Product.ProductStatus.ACTIVE)
             .build();
 
@@ -107,8 +107,8 @@ class ProductServiceTest {
             .barcode("5449000000996")
             .shopId("shop-1")
             .categoryId("category-1")
-            .price(new BigDecimal("500.00"))
-            .costPrice(new BigDecimal("350.00"))
+            .REMOVED_PRICE(new BigDecimal("500.00"))
+            .REMOVED_COST_PRICE(new BigDecimal("350.00"))
             .build();
     }
 
@@ -133,8 +133,8 @@ class ProductServiceTest {
                 .barcode(product.getBarcode())
                 .shop(product.getShop())
                 .category(product.getCategory())
-                .price(product.getPrice())
-                .costPrice(product.getCostPrice())
+                .REMOVED_PRICE(product.REMOVED_GET_PRICE())
+                .REMOVED_COST_PRICE(product.REMOVED_GET_COST_PRICE())
                 .status(product.getStatus())
                 .unit(product.getUnit())
                 .weightInGrams(product.getWeightInGrams())
@@ -164,7 +164,7 @@ class ProductServiceTest {
         // SKU is auto-generated, just verify it exists and follows pattern
         assertThat(response.getSku()).isNotNull();
         assertThat(response.getSku()).matches("[A-Z]{3,4}-[A-Z]{3}-\\d{8}-[A-Z0-9]{4}");
-        assertThat(response.getPrice()).isEqualByComparingTo("500.00");
+        assertThat(response.REMOVED_GET_PRICE()).isEqualByComparingTo("500.00");
         assertThat(response.getTotalStock()).isZero();
         assertThat(response.getAvailableStock()).isZero();
 
@@ -225,7 +225,7 @@ class ProductServiceTest {
         // Arrange
         ProductUpdateRequest updateRequest = ProductUpdateRequest.builder()
             .name("Coca-Cola 500ml (Updated)")
-            .price(new BigDecimal("550.00"))
+            .REMOVED_PRICE(new BigDecimal("550.00"))
             .build();
 
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
@@ -468,7 +468,7 @@ class ProductServiceTest {
             .name("Coca-Cola 500ml")
             .shop(testShop)
             .category(testCategory)
-            .price(new BigDecimal("500.00"))
+            .REMOVED_PRICE(new BigDecimal("500.00"))
             .status(Product.ProductStatus.ACTIVE)
             .build();
         when(productRepository.save(any(Product.class))).thenReturn(savedProduct);

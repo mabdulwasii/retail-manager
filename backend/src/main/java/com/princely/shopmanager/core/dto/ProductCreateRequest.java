@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -52,17 +51,6 @@ public class ProductCreateRequest {
 
     @Schema(description = "Category ID")
     private String categoryId;
-
-    @Schema(description = "Selling price", example = "500.00", required = true)
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than zero")
-    @Digits(integer = 10, fraction = 2, message = "Price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal price;
-
-    @Schema(description = "Cost price (for profit calculation)", example = "350.00")
-    @DecimalMin(value = "0.00", message = "Cost price cannot be negative")
-    @Digits(integer = 10, fraction = 2, message = "Cost price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal costPrice;
 
     @Schema(description = "Unit of measurement", example = "bottle")
     @Size(max = MAX_UNIT_LENGTH, message = "Unit must not exceed " + MAX_UNIT_LENGTH + " characters")

@@ -5,7 +5,6 @@ import com.princely.shopmanager.shared.domain.BaseEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 import jakarta.persistence.Column;
@@ -66,12 +65,6 @@ public class Product extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
-
-    @Column(name = "cost_price", precision = 10, scale = 2)
-    private BigDecimal costPrice;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

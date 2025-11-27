@@ -25,8 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -105,8 +103,6 @@ public class ProductService {
             .barcode(request.getBarcode())
             .shop(shop)
             .category(category)
-            .price(request.getPrice())
-            .costPrice(request.getCostPrice())
             .unit(request.getUnit())
             .weightInGrams(request.getWeightInGrams())
             .dimensions(request.getDimensions())
@@ -182,15 +178,6 @@ public class ProductService {
             Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found: " + request.getCategoryId()));
             product.setCategory(category);
-        }
-
-        if (request.getPrice() != null && !request.getPrice().equals(product.getPrice())) {
-            changes.append("Price: ").append(product.getPrice()).append(" → ").append(request.getPrice()).append("; ");
-            product.setPrice(request.getPrice());
-        }
-
-        if (request.getCostPrice() != null) {
-            product.setCostPrice(request.getCostPrice());
         }
 
         if (request.getUnit() != null) {
@@ -451,8 +438,6 @@ public class ProductService {
             .barcode(product.getBarcode())
             .shopId(product.getShop().getId())
             .shopName(product.getShop().getName())
-            .price(product.getPrice())
-            .costPrice(product.getCostPrice())
             .unit(product.getUnit())
             .weightInGrams(product.getWeightInGrams())
             .dimensions(product.getDimensions())
@@ -472,17 +457,6 @@ public class ProductService {
         if (product.getCategory() != null) {
             builder.categoryId(product.getCategory().getId())
                    .categoryName(product.getCategory().getName());
-        }
-
-        // Calculate profit margin if cost price is available
-        if (product.getCostPrice() != null && product.getCostPrice().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal profitMargin = product.getPrice().subtract(product.getCostPrice());
-            BigDecimal profitMarginPercentage = profitMargin
-                .divide(product.getCostPrice(), 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100));
-
-            builder.profitMargin(profitMargin)
-                   .profitMarginPercentage(profitMarginPercentage.setScale(2, RoundingMode.HALF_UP));
         }
 
         // Include inventory summary if requested

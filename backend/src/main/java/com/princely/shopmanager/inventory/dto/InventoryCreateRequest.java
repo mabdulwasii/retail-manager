@@ -33,8 +33,13 @@ public class InventoryCreateRequest {
     @Builder.Default
     private Integer reorderPoint = 0;
 
-    @Min(value = 0, message = "Unit cost cannot be negative")
-    private BigDecimal unitCost;
+    @NotNull(message = "Cost price is required")
+    @Min(value = 0, message = "Cost price cannot be negative")
+    private BigDecimal costPrice;
+
+    @NotNull(message = "Selling price is required")
+    @Min(value = 0, message = "Selling price cannot be negative")
+    private BigDecimal sellingPrice;
 
     private String location;
 

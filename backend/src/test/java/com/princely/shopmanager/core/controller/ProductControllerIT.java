@@ -48,7 +48,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
             .name("Test Product")
             .barcode("1234567890123")
             .description("Test product description")
-            .price(BigDecimal.valueOf(99.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(99.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -71,7 +71,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest request = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Manager Product")
-            .price(BigDecimal.valueOf(49.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(49.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -90,7 +90,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest request = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Employee Product")
-            .price(BigDecimal.valueOf(29.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(29.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -146,7 +146,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest createRequest = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Read Test Product")
-            .price(BigDecimal.valueOf(79.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(79.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -174,7 +174,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest createRequest = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Employee Read Product")
-            .price(BigDecimal.valueOf(39.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(39.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -205,7 +205,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest createRequest = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Update Test Product")
-            .price(BigDecimal.valueOf(59.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(59.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -221,7 +221,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         // Update product
         ProductUpdateRequest updateRequest = ProductUpdateRequest.builder()
             .name("Updated Product Name")
-            .price(BigDecimal.valueOf(69.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(69.99))
             .description("Updated description")
             .build();
 
@@ -242,7 +242,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest createRequest = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Manager Update Product")
-            .price(BigDecimal.valueOf(44.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(44.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -291,7 +291,7 @@ class ProductControllerIT extends AbstractIntegrationTest {
         ProductCreateRequest createRequest = ProductCreateRequest.builder()
             .shopId(TestConstants.TEST_SHOP_001)
             .name("Delete Test Product")
-            .price(BigDecimal.valueOf(19.99))
+            .REMOVED_PRICE(BigDecimal.valueOf(19.99))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
