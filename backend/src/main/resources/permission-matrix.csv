@@ -66,6 +66,7 @@ RECEIPT,RECEIPT_EMAIL,Mark receipts as emailed,✓,✓,✓,✓,✓,,RECEIPT_EMAI
 EXPENSE,EXPENSE_CREATE,Create expense records,✓,✓,✓,✓,✓,,EXPENSE_CREATE
 EXPENSE,EXPENSE_READ,View expense details,✓,✓,✓,✓,✓,,EXPENSE_READ
 EXPENSE,EXPENSE_LIST,List and search expenses,✓,✓,✓,✓,✓,,EXPENSE_LIST
+EXPENSE,EXPENSE_SUMMARY,View expense summary and analytics,✓,✓,✓,✓,,✓,EXPENSE_SUMMARY
 EXPENSE,EXPENSE_UPDATE,Update expense information,✓,✓,✓,✓,,,EXPENSE_UPDATE
 EXPENSE,EXPENSE_DELETE,Delete expense records,✓,✓,✓,,,, EXPENSE_DELETE
 EXPENSE,EXPENSE_APPROVE,Approve or reject expenses,✓,✓,✓,✓,,,EXPENSE_APPROVE

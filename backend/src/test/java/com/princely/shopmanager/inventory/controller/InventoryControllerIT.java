@@ -45,7 +45,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // First create a product
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Inventory Test Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(50.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -86,7 +85,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
     void managerShouldCreateInventory() throws Exception {
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Manager Inventory Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(30.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -179,7 +177,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Adjustment Test Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(60.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -319,7 +316,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory first
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Update Test Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(45.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -411,7 +407,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory with zero stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Delete Test Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(25.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 
@@ -454,7 +449,6 @@ class InventoryControllerIT extends AbstractIntegrationTest {
         // Create product and inventory with stock
         ProductCreateRequest productRequest = ProductCreateRequest.builder()
             .name("Active Stock Product")
-            .REMOVED_PRICE(BigDecimal.valueOf(35.00))
             .categoryId(TestConstants.CAT_ELECTRONICS)
             .build();
 

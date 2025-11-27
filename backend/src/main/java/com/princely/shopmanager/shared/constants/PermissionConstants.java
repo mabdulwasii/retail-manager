@@ -130,6 +130,7 @@ public final class PermissionConstants {
     public static final String EXPENSE_CREATE = "EXPENSE_CREATE";
     public static final String EXPENSE_READ = "EXPENSE_READ";
     public static final String EXPENSE_LIST = "EXPENSE_LIST";
+    public static final String EXPENSE_SUMMARY = "EXPENSE_SUMMARY";
     public static final String EXPENSE_UPDATE = "EXPENSE_UPDATE";
     public static final String EXPENSE_DELETE = "EXPENSE_DELETE";
     public static final String EXPENSE_APPROVE = "EXPENSE_APPROVE";

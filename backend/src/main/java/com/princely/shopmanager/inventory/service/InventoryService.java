@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,6 +59,12 @@ public class InventoryService {
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
+        // Auto-generate batch number if not provided
+        String batchNumber = request.getBatchNumber();
+        if (batchNumber == null || batchNumber.isBlank()) {
+            batchNumber = generateBatchNumber(shop, product);
+        }
+
         Inventory inventory = Inventory.builder()
             .shop(shop)
             .product(product)
@@ -68,7 +75,7 @@ public class InventoryService {
             .costPrice(request.getCostPrice())
             .sellingPrice(request.getSellingPrice())
             .location(request.getLocation())
-            .batchNumber(request.getBatchNumber())
+            .batchNumber(batchNumber)
             .expiryDate(request.getExpiryDate())
             .lastStockUpdate(LocalDateTime.now())
             .build();
@@ -576,5 +583,23 @@ public class InventoryService {
             .isExpired(inventory.isExpired())
             .isExpiringSoon(inventory.isExpiringSoon(30))
             .build();
+    }
+
+    /**
+     * Generate unique batch number: BATCH-{SHOP_CODE}-{YYYYMMDD}-{SEQ}
+     * Example: BATCH-GOM-20251128-001
+     */
+    private String generateBatchNumber(Shop shop, Product product) {
+        String shopCode = shop.getName().length() >= 3 ?
+            shop.getName().substring(0, 3).toUpperCase() :
+            shop.getName().toUpperCase();
+
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // Get count of inventory records for this product today
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        long countToday = inventoryRepository.countByProductIdAndCreatedAtAfter(product.getId(), startOfDay);
+
+        return String.format("BATCH-%s-%s-%03d", shopCode, dateStr, countToday + 1);
     }
 }

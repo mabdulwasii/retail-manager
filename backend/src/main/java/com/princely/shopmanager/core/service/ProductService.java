@@ -143,7 +143,7 @@ public class ProductService {
      * @throws EntityNotFoundException if product not found
      * @throws IllegalArgumentException if SKU/barcode uniqueness violated
      */
-    @CacheEvict(key = "#productId")
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public ProductResponse updateProduct(String productId, ProductUpdateRequest request) {
         log.info("Updating product: {}", productId);
 
@@ -276,7 +276,7 @@ public class ProductService {
      *
      * @param productId Product ID to delete
      */
-    @CacheEvict(key = "#productId")
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public void deleteProduct(String productId) {
         log.info("Soft deleting product: {}", productId);
 

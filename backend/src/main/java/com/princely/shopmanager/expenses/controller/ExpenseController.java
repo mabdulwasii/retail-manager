@@ -248,7 +248,7 @@ public class ExpenseController {
     @ApiResponse(responseCode = "200", description = "Summary retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @GetMapping("/shops/{shopId}/expenses/summary")
-    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_LIST)")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).EXPENSE_SUMMARY)")
     public ResponseEntity<ExpenseSummaryDto> getExpenseSummary(
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @Parameter(description = "Start date for summary") @RequestParam(required = false)

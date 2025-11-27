@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,4 +77,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
 
     @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId")
     List<Inventory> findByProductId(@Param("productId") String productId);
+
+    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.product.id = :productId AND i.createdAt >= :startOfDay")
+    long countByProductIdAndCreatedAtAfter(@Param("productId") String productId, @Param("startOfDay") LocalDateTime startOfDay);
 }
