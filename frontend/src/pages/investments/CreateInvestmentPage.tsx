@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { ArrowLeft, ArrowRight, Check, DollarSign, InfoIcon, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -143,6 +144,7 @@ export const CreateInvestmentPage: React.FC = () => {
     watch,
     setValue,
     formState: { errors, isSubmitting },
+    control,
   } = form
 
   // Watch form values for preview
@@ -471,14 +473,27 @@ export const CreateInvestmentPage: React.FC = () => {
                 <Label htmlFor="amount">Investment Amount *</Label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="amount"
-                    type="number"
-                    min="100"
-                    step="0.01"
-                    placeholder="50000"
-                    className="pl-10"
-                    {...register('amount', { valueAsNumber: true })}
+                  <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                      <NumericInput
+                        id="amount"
+                        value={field.value ?? ''}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue ?? 0)
+                        }}
+                        placeholder="50000"
+                        className="pl-10"
+                        decimalScale={2}
+                        fixedDecimalScale={false}
+                        allowNegative={false}
+                        isAllowed={(values) => {
+                          const { floatValue } = values
+                          return floatValue === undefined || floatValue >= 100
+                        }}
+                      />
+                    )}
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">Minimum: ₦1,000</p>
@@ -596,14 +611,28 @@ export const CreateInvestmentPage: React.FC = () => {
               {(watch('profitSharingModel') === 'PROPORTIONAL_BY_AMOUNT' || watch('profitSharingModel') === 'TIERED') && (
                 <div className="space-y-2">
                   <Label htmlFor="profitPercentage">Expected Profit Percentage (%)</Label>
-                  <Input
-                    id="profitPercentage"
-                    type="number"
-                    min="0.1"
-                    max="100"
-                    step="0.1"
-                    placeholder="Enter expected profit percentage"
-                    {...register('profitPercentage', { valueAsNumber: true })}
+                  <Controller
+                    name="profitPercentage"
+                    control={control}
+                    render={({ field }) => (
+                      <NumericInput
+                        id="profitPercentage"
+                        value={field.value ?? ''}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue ?? 0)
+                        }}
+                        placeholder="Enter expected profit percentage"
+                        suffix="%"
+                        prefix=""
+                        decimalScale={2}
+                        fixedDecimalScale={false}
+                        allowNegative={false}
+                        isAllowed={(values) => {
+                          const { floatValue } = values
+                          return floatValue === undefined || (floatValue >= 0.1 && floatValue <= 100)
+                        }}
+                      />
+                    )}
                   />
                   {errors.profitPercentage && (
                     <p className="text-sm text-red-600">{errors.profitPercentage.message}</p>
@@ -614,13 +643,26 @@ export const CreateInvestmentPage: React.FC = () => {
               {watch('profitSharingModel') === 'FIXED_SHARES' && (
                 <div className="space-y-2">
                   <Label htmlFor="fixedShares">Number of Fixed Shares</Label>
-                  <Input
-                    id="fixedShares"
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="Enter number of shares"
-                    {...register('fixedShares', { valueAsNumber: true })}
+                  <Controller
+                    name="fixedShares"
+                    control={control}
+                    render={({ field }) => (
+                      <NumericInput
+                        id="fixedShares"
+                        value={field.value ?? ''}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue ? Math.floor(values.floatValue) : 0)
+                        }}
+                        placeholder="Enter number of shares"
+                        isNumberInput={true}
+                        allowNegative={false}
+                        decimalScale={0}
+                        isAllowed={(values) => {
+                          const { floatValue } = values
+                          return floatValue === undefined || floatValue >= 1
+                        }}
+                      />
+                    )}
                   />
                   {errors.fixedShares && (
                     <p className="text-sm text-red-600">{errors.fixedShares.message}</p>

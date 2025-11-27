@@ -64,12 +64,12 @@ export interface CreateInventoryRequest {
   productId: string
   currentStock: number
   minimumStock: number
-  maximumStock?: number
+  maximumStock?: number | undefined
   reorderPoint: number
-  unitCost?: number
-  location?: string
-  batchNumber?: string
-  expiryDate?: string
+  unitCost?: number | undefined
+  location?: string | undefined
+  batchNumber?: string | undefined
+  expiryDate?: string | undefined
 }
 
 export interface AdjustStockRequest {

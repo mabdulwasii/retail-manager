@@ -2,6 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Badge } from '@/components/ui/badge'
 import { CartItem } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
@@ -124,13 +125,19 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
                         <MinusIcon className="h-3 w-3" />
                       </Button>
 
-                      <Input
-                        type="number"
+                      <NumericInput
                         value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.product.id, e.target.value)}
-                        min="1"
-                        max={item.product.availableStock || 9999}
+                        onValueChange={(values) => {
+                          handleQuantityChange(item.product.id, values.value || '1')
+                        }}
                         className="w-16 h-8 text-center"
+                        isNumberInput={true}
+                        allowNegative={false}
+                        decimalScale={0}
+                        isAllowed={(values) => {
+                          const { floatValue } = values
+                          return floatValue === undefined || (floatValue >= 1 && floatValue <= (item.product.availableStock || 9999))
+                        }}
                       />
 
                       <Button

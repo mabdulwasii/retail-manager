@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -200,16 +201,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {/* Discount */}
           <div className="space-y-2">
             <Label htmlFor="discount" className="text-sm font-semibold">Discount Amount (Optional)</Label>
-            <Input
+            <NumericInput
               id="discount"
-              type="number"
-              step="0.01"
-              min="0"
-              max={cartSummary.total}
               value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
+              onValueChange={(values) => {
+                setDiscount(values.value || '0')
+              }}
               placeholder="0.00"
               className="h-11"
+              decimalScale={2}
+              fixedDecimalScale={false}
+              allowNegative={false}
+              isAllowed={(values) => {
+                const { floatValue } = values
+                return floatValue === undefined || floatValue <= cartSummary.total
+              }}
             />
             {validationErrors.discount && (
               <p className="text-sm text-destructive font-medium">{validationErrors.discount}</p>
@@ -256,15 +262,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {paymentMethod === 'CASH' && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
               <Label htmlFor="amountPaid" className="text-sm font-semibold">Amount Paid (Cash)</Label>
-              <Input
+              <NumericInput
                 id="amountPaid"
-                type="number"
-                step="0.01"
-                min={finalTotal}
                 value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
-                placeholder={finalTotal.toString()}
+                onValueChange={(values) => {
+                  setAmountPaid(values.value || '')
+                }}
+                placeholder={`Minimum: ${finalTotal.toFixed(2)}`}
                 className="h-11 text-lg font-semibold"
+                decimalScale={2}
+                fixedDecimalScale={false}
+                allowNegative={false}
                 autoFocus
               />
               {validationErrors.amountPaid && (

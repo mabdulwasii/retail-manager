@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -182,15 +183,17 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <Label htmlFor="quantity">
               Quantity {adjustmentType === 'set' ? '(New Total)' : '(Amount)'}
             </Label>
-            <Input
+            <NumericInput
               id="quantity"
-              type="number"
-              min="0"
-              step="1"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onValueChange={(values) => {
+                setQuantity(values.value || '')
+              }}
               placeholder="Enter quantity..."
               className={validationErrors.quantity ? 'border-red-500' : ''}
+              isNumberInput={true}
+              allowNegative={false}
+              decimalScale={0}
             />
             {validationErrors.quantity && (
               <p className="text-sm text-red-600">{validationErrors.quantity}</p>

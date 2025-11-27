@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -347,15 +348,17 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="currentStock">Current Stock *</Label>
-              <Input
+              <NumericInput
                 id="currentStock"
-                type="number"
-                min="0"
-                step="1"
                 value={formData.currentStock}
-                onChange={(e) => handleInputChange('currentStock', e.target.value)}
+                onValueChange={(values) => {
+                  handleInputChange('currentStock', values.value || '')
+                }}
                 placeholder="0"
                 className={validationErrors.currentStock ? 'border-red-500' : ''}
+                isNumberInput={true}
+                allowNegative={false}
+                decimalScale={0}
               />
               {validationErrors.currentStock && (
                 <p className="text-sm text-red-600">{validationErrors.currentStock}</p>
@@ -364,15 +367,17 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
-              <Input
+              <NumericInput
                 id="minimumStock"
-                type="number"
-                min="0"
-                step="1"
                 value={formData.minimumStock}
-                onChange={(e) => handleInputChange('minimumStock', e.target.value)}
+                onValueChange={(values) => {
+                  handleInputChange('minimumStock', values.value || '0')
+                }}
                 placeholder="0"
                 className={validationErrors.minimumStock ? 'border-red-500' : ''}
+                isNumberInput={true}
+                allowNegative={false}
+                decimalScale={0}
               />
               {validationErrors.minimumStock && (
                 <p className="text-sm text-red-600">{validationErrors.minimumStock}</p>
@@ -381,15 +386,17 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="maximumStock">Maximum Stock</Label>
-              <Input
+              <NumericInput
                 id="maximumStock"
-                type="number"
-                min="0"
-                step="1"
                 value={formData.maximumStock}
-                onChange={(e) => handleInputChange('maximumStock', e.target.value)}
-                placeholder="Optional"
+                onValueChange={(values) => {
+                  handleInputChange('maximumStock', values.value || '')
+                }}
+                placeholder="0"
                 className={validationErrors.maximumStock ? 'border-red-500' : ''}
+                isNumberInput={true}
+                allowNegative={false}
+                decimalScale={0}
               />
               {validationErrors.maximumStock && (
                 <p className="text-sm text-red-600">{validationErrors.maximumStock}</p>
@@ -398,15 +405,17 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
-              <Input
+              <NumericInput
                 id="reorderPoint"
-                type="number"
-                min="0"
-                step="1"
                 value={formData.reorderPoint}
-                onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                onValueChange={(values) => {
+                  handleInputChange('reorderPoint', values.value || '0')
+                }}
                 placeholder="0"
                 className={validationErrors.reorderPoint ? 'border-red-500' : ''}
+                isNumberInput={true}
+                allowNegative={false}
+                decimalScale={0}
               />
               {validationErrors.reorderPoint && (
                 <p className="text-sm text-red-600">{validationErrors.reorderPoint}</p>
@@ -418,21 +427,18 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-muted-foreground text-sm">
-                  {formatCurrency(0).replace(/[0-9.,]/g, '')}
-                </span>
-                <Input
-                  id="unitCost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.unitCost}
-                  onChange={(e) => handleInputChange('unitCost', e.target.value)}
-                  placeholder="0.00"
-                  className={`pl-8 ${validationErrors.unitCost ? 'border-red-500' : ''}`}
-                />
-              </div>
+              <NumericInput
+                id="unitCost"
+                value={formData.unitCost}
+                onValueChange={(values) => {
+                  handleInputChange('unitCost', values.value || '')
+                }}
+                placeholder="0.00"
+                className={validationErrors.unitCost ? 'border-red-500' : ''}
+                decimalScale={2}
+                fixedDecimalScale={true}
+                allowNegative={false}
+              />
               <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
               {validationErrors.unitCost && (
                 <p className="text-sm text-red-600">{validationErrors.unitCost}</p>

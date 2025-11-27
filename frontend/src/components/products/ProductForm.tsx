@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
@@ -109,6 +110,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: yupResolver(productSchema),
@@ -245,20 +247,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="costPrice">Cost Price</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-muted-foreground text-sm">
-                  {formatCurrency(0).replace(/[0-9.,]/g, '')}
-                </span>
-                <Input
-                  id="costPrice"
-                  type="number"
-                  step="0.01"
-                  {...register("costPrice")}
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                  className="pl-8"
-                />
-              </div>
+              <Controller
+                name="costPrice"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    id="costPrice"
+                    value={field.value ?? ''}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue ?? null)
+                    }}
+                    placeholder="0.00"
+                    disabled={isSubmitting}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  />
+                )}
+              />
               {errors.costPrice && (
                 <p className="text-sm text-red-500">
                   {errors.costPrice.message}
@@ -270,20 +275,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <Label htmlFor="price">
                 Selling Price <span className="text-red-500">*</span>
               </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-muted-foreground text-sm">
-                  {formatCurrency(0).replace(/[0-9.,]/g, '')}
-                </span>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  {...register("price")}
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                  className="pl-8"
-                />
-              </div>
+              <Controller
+                name="price"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    id="price"
+                    value={field.value ?? ''}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue ?? 0)
+                    }}
+                    placeholder="0.00"
+                    disabled={isSubmitting}
+                    decimalScale={2}
+                    fixedDecimalScale={true}
+                  />
+                )}
+              />
               {errors.price && (
                 <p className="text-sm text-red-500">{errors.price.message}</p>
               )}
@@ -398,18 +406,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             {!showCustomUnit && (
               <div className="space-y-2">
                 <Label htmlFor="weightInKg">Weight (kg)</Label>
-                <Input
-                  id="weightInKg"
-                  type="number"
-                  step="0.001"
-                  {...register("weightInKg")}
-                  placeholder="0.520"
-                  disabled={isSubmitting}
+                <Controller
+                  name="weightInKg"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericInput
+                      id="weightInKg"
+                      value={field.value ?? ''}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue ?? null)
+                      }}
+                      placeholder="0.520"
+                      disabled={isSubmitting}
+                      suffix=" kg"
+                      prefix=""
+                      decimalScale={3}
+                      allowNegative={false}
+                    />
+                  )}
                 />
                 {errors.weightInKg && (
-                  <p className="text-sm text-red-500">
-                    {errors.weightInKg.message}
-                  </p>
+                  <p className="text-sm text-red-500">{errors.weightInKg.message}</p>
                 )}
               </div>
             )}
