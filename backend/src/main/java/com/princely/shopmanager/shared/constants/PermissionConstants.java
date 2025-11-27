@@ -99,7 +99,6 @@ public final class PermissionConstants {
     public static final String INVENTORY_LIST = "INVENTORY_LIST";
     public static final String INVENTORY_UPDATE = "INVENTORY_UPDATE";
     public static final String INVENTORY_DELETE = "INVENTORY_DELETE";
-    public static final String INVENTORY_HISTORY_VIEW = "INVENTORY_HISTORY_VIEW";
     public static final String INVENTORY_ADJUST = "INVENTORY_ADJUST";
     public static final String INVENTORY_RESERVE = "INVENTORY_RESERVE";
     public static final String INVENTORY_HISTORY = "INVENTORY_HISTORY";
