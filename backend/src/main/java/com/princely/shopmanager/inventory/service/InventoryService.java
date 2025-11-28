@@ -422,8 +422,13 @@ public class InventoryService {
         log.info("Creating reorder suggestion for inventory {}", inventory.getId());
 
         // Calculate suggested reorder quantity
+        // Use maximumStock if available, otherwise use minimumStock * 3 as default target
+        int targetStock = inventory.getMaximumStock() != null
+            ? inventory.getMaximumStock()
+            : inventory.getMinimumStock() * 3;
+
         int suggestedQuantity = Math.max(
-            inventory.getMaximumStock() - inventory.getAvailableStock(),
+            targetStock - inventory.getAvailableStock(),
             inventory.getMinimumStock() * 2
         );
 
