@@ -63,13 +63,14 @@ public class KeycloakUserService {
         user.setEmailVerified(false);
 
         // Set user attributes for tenant information
+        // Note: phoneNumber is NOT set as Keycloak attribute (not configured in Keycloak)
+        // It's only stored in the database via UserService
         Map<String, List<String>> attributes = new HashMap<>();
         attributes.put("tenantId", List.of(request.tenantId()));
         if (request.shopId() != null) {
             attributes.put("shopId", List.of(request.shopId()));
         }
 
-        attributes.put("phoneNumber", List.of(request.phoneNumber()));
         user.setAttributes(attributes);
 
         try {
@@ -259,6 +260,7 @@ public class KeycloakUserService {
             user.setEnabled(enabled);
 
             // Update attributes
+            // Note: phoneNumber is NOT set as Keycloak attribute (not configured in Keycloak)
             Map<String, List<String>> attributes = user.getAttributes();
             if (attributes == null) {
                 attributes = new HashMap<>();
@@ -269,9 +271,6 @@ public class KeycloakUserService {
             }
             if (shopId != null) {
                 attributes.put("shopId", List.of(shopId));
-            }
-            if (phoneNumber != null) {
-                attributes.put("phoneNumber", List.of(phoneNumber));
             }
 
             user.setAttributes(attributes);
