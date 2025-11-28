@@ -59,14 +59,14 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
     @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND i.product.name ILIKE %:productName%")
     List<Inventory> findByProductNameContaining(@Param("shopId") String shopId, @Param("productName") String productName);
 
-    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND i.product.price BETWEEN :minPrice AND :maxPrice")
+    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND i.sellingPrice BETWEEN :minPrice AND :maxPrice")
     List<Inventory> findByPriceRange(
         @Param("shopId") String shopId,
         @Param("minPrice") BigDecimal minPrice,
         @Param("maxPrice") BigDecimal maxPrice
     );
 
-    @Query("SELECT SUM(i.currentStock * i.unitCost) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
+    @Query("SELECT SUM(i.currentStock * i.costPrice) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
     BigDecimal calculateTotalInventoryValue(@Param("shopId") String shopId);
 
     @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
