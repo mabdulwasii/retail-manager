@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,13 +31,6 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
 
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.name ILIKE %:name%")
     List<Product> findByShopIdAndNameContaining(@Param("shopId") String shopId, @Param("name") String name);
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.price BETWEEN :minPrice AND :maxPrice")
-    List<Product> findByShopIdAndPriceBetween(
-        @Param("shopId") String shopId,
-        @Param("minPrice") BigDecimal minPrice,
-        @Param("maxPrice") BigDecimal maxPrice
-    );
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.shop.id = :shopId AND p.status = 'ACTIVE'")
     Long countActiveProductsByShopId(@Param("shopId") String shopId);
