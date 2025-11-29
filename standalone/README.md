@@ -602,6 +602,110 @@ docker compose exec backend java -jar app.jar --version
 ./scripts/check-updates.sh
 ```
 
+## 🔄 Release Management
+
+### For End Users
+
+Shop Manager Standalone uses automated releases for easy updates:
+
+**Check for Updates:**
+```bash
+# Check if a new version is available
+./scripts/check-updates.sh
+
+# Update to latest version (with automatic backup)
+./scripts/update.sh
+```
+
+**Electron App Users:**
+- Updates are checked automatically on startup
+- You'll be notified when a new version is available
+- Click "Download" to install updates
+
+### For Developers
+
+Releases are automated via GitHub Actions using PR labels:
+
+#### Release Labels
+
+Add one of these labels to your PR before merging:
+
+| Label | Effect | Example |
+|-------|--------|---------|
+| `release:standalone-patch` | Bug fixes | v1.0.0 → v1.0.1 |
+| `release:standalone-minor` | New features | v1.0.0 → v1.1.0 |
+| `release:standalone-major` | Breaking changes | v1.0.0 → v2.0.0 |
+
+#### Automated Release Process
+
+1. **Create PR** with your standalone changes
+2. **Add Label** (e.g., `release:standalone-minor`)
+3. **Merge PR** to main branch
+4. **GitHub Actions** automatically:
+   - Bumps version in `standalone/VERSION`
+   - Creates git tag (e.g., `v1.1.0`)
+   - Builds all packages:
+     - Docker Compose (lightweight ~50MB)
+     - Docker Compose (full with images ~2GB)
+     - Windows installer (.exe)
+     - macOS installer (.dmg)
+     - Linux packages (.AppImage, .deb, .rpm)
+   - Publishes GitHub release (draft)
+5. **Edit Release** to add changelog
+6. **Publish** when ready
+
+#### What Gets Built
+
+Each release automatically builds:
+
+**For Non-Technical Users:**
+- ✅ Windows NSIS Installer (`.exe`)
+- ✅ Windows Portable (`.exe`)
+- ✅ macOS DMG Installer (`.dmg`)
+- ✅ macOS Auto-Update Package (`.zip`)
+- ✅ Linux AppImage (universal)
+- ✅ Debian Package (`.deb`)
+- ✅ RPM Package (`.rpm`)
+
+**For Technical Users:**
+- ✅ Docker Compose Package (lightweight, downloads images)
+- ✅ Docker Compose Package (full, includes images)
+- ✅ SHA256 checksums for verification
+
+#### Manual Release (Alternative)
+
+If you prefer manual releases:
+
+```bash
+# 1. Update VERSION file
+echo "1.2.0" > standalone/VERSION
+
+# 2. Commit and tag
+git add standalone/VERSION
+git commit -m "chore(standalone): bump version to 1.2.0"
+git tag v1.2.0
+git push origin main
+git push origin v1.2.0
+
+# 3. GitHub Actions builds automatically from tag
+```
+
+#### Version Tracking
+
+Current version is stored in `standalone/VERSION`:
+```bash
+cat standalone/VERSION
+# Output: 1.0.0
+```
+
+#### Build Workflow
+
+The build workflow (`.github/workflows/build-standalone-release.yml`) triggers on:
+- Version tags (`v*.*.*`)
+- Manual dispatch with version input
+
+Monitor builds at: https://github.com/yourorg/shop-manager/actions
+
 ## 📝 License
 
 See `LICENSE` file for licensing information.
