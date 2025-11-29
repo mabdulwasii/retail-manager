@@ -98,10 +98,38 @@ check_command() {
 # Step 1: Welcome and Prerequisites Check
 # ============================================================================
 
+clear
 print_header "Shop Manager Standalone Installer"
 
 echo -e "Welcome to the ${CYAN}Shop Manager${NC} installation wizard!"
 echo "This installer will set up Shop Manager on your local machine using Docker."
+echo ""
+echo "Before we begin, you can configure Shop Manager with your business"
+echo "details using the Configuration Wizard."
+echo ""
+
+read -p "Would you like to configure now? (Y/N) [Y]: " RUN_CONFIG
+RUN_CONFIG=${RUN_CONFIG:-Y}
+
+if [[ "$RUN_CONFIG" =~ ^[Yy]$ ]]; then
+    echo ""
+    print_info "Starting Configuration Wizard..."
+    echo ""
+    cd "$SCRIPT_DIR/scripts"
+    if ./configure.sh; then
+        print_success "Configuration complete"
+    else
+        echo ""
+        print_warning "Configuration was cancelled or failed."
+        read -p "Continue with installation using default config? (Y/N): " CONTINUE
+        if [[ ! "$CONTINUE" =~ ^[Yy]$ ]]; then
+            print_error "Installation cancelled"
+            exit 1
+        fi
+    fi
+    cd "$SCRIPT_DIR"
+fi
+
 echo ""
 
 print_header "Step 1/7: Checking Prerequisites"

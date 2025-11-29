@@ -56,6 +56,7 @@ REM ============================================================================
 REM Welcome Message
 REM ============================================================================
 
+cls
 echo.
 echo ========================================================================
 echo   Shop Manager Standalone Installer
@@ -63,6 +64,30 @@ echo ========================================================================
 echo.
 echo Welcome to the Shop Manager installation wizard!
 echo This installer will set up Shop Manager on your Windows machine.
+echo.
+echo Before we begin, you can configure Shop Manager with your business
+echo details using the Configuration Wizard.
+echo.
+set /p RUN_CONFIG="Would you like to configure now? (Y/N) [Y]: "
+if /i "%RUN_CONFIG%"=="" set RUN_CONFIG=Y
+if /i "%RUN_CONFIG%"=="Y" (
+    echo.
+    echo Starting Configuration Wizard...
+    echo.
+    cd /d "%SCRIPT_DIR%scripts"
+    call configure.bat
+    if errorlevel 1 (
+        echo.
+        echo Configuration was cancelled or failed.
+        set /p CONTINUE="Continue with installation using default config? (Y/N): "
+        if /i not "%CONTINUE%"=="Y" (
+            echo Installation cancelled.
+            pause
+            exit /b 1
+        )
+    )
+    cd /d "%SCRIPT_DIR%"
+)
 echo.
 
 REM ============================================================================

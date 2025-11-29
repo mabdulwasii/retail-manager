@@ -9,9 +9,15 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
 const Docker = require('dockerode');
+const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
 
 // Initialize electron-store for persistent settings
 const store = new Store();
+
+// Configure auto-updater logging
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 // Global variables
 let mainWindow = null;
@@ -27,6 +33,92 @@ const resourcesPath = isDev
 
 const configPath = path.join(resourcesPath, 'config.yaml');
 const dockerComposePath = path.join(resourcesPath, 'docker-compose.yml');
+
+/**
+ * Auto-updater configuration and event handlers
+ */
+function setupAutoUpdater() {
+  // Configure auto-updater (GitHub releases)
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'yourorg',  // Update with actual GitHub org
+    repo: 'shop-manager',
+    private: false
+  });
+
+  // Don't automatically download updates
+  autoUpdater.autoDownload = false;
+
+  // Update available
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available:', info.version);
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Update Available',
+      message: `A new version (${info.version}) is available!`,
+      detail: 'Would you like to download it now?',
+      buttons: ['Download', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.downloadUpdate();
+        if (mainWindow) {
+          mainWindow.webContents.send('update-downloading');
+        }
+      }
+    });
+  });
+
+  // Update not available
+  autoUpdater.on('update-not-available', () => {
+    log.info('Update not available - running latest version');
+  });
+
+  // Download progress
+  autoUpdater.on('download-progress', (progressObj) => {
+    let message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`;
+    log.info(message);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-download-progress', {
+        percent: progressObj.percent,
+        bytesPerSecond: progressObj.bytesPerSecond
+      });
+    }
+  });
+
+  // Update downloaded
+  autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded');
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Update Ready',
+      message: `Update to version ${info.version} has been downloaded.`,
+      detail: 'The update will be installed when you restart the application.',
+      buttons: ['Restart Now', 'Restart Later'],
+      defaultId: 0,
+      cancelId: 1
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall(false, true);
+      }
+    });
+  });
+
+  // Error handler
+  autoUpdater.on('error', (error) => {
+    log.error('Auto-updater error:', error);
+  });
+}
+
+/**
+ * Check for updates manually (called by user)
+ */
+function checkForUpdates() {
+  autoUpdater.checkForUpdates();
+}
 
 /**
  * Create main application window
@@ -479,6 +571,11 @@ function setupIPCHandlers() {
     return app.getVersion();
   });
 
+  // Check for updates manually
+  ipcMain.handle('check-for-updates', () => {
+    checkForUpdates();
+  });
+
   // Get settings
   ipcMain.handle('get-settings', () => {
     return {
@@ -524,10 +621,16 @@ if (!gotTheLock) {
     setupIPCHandlers();
     createMainWindow();
     createTray();
+    setupAutoUpdater();
+
+    // Check for updates on startup (after 10 seconds delay)
+    setTimeout(() => {
+      autoUpdater.checkForUpdates();
+    }, 10000);
 
     // Check for updates periodically (every 24 hours)
     setInterval(() => {
-      // TODO: Implement auto-update check
+      autoUpdater.checkForUpdates();
     }, 24 * 60 * 60 * 1000);
   });
 
