@@ -1,0 +1,371 @@
+# ============================================================================
+# Shop Manager Standalone Configuration
+# ============================================================================
+#
+# This file controls all aspects of your Shop Manager installation.
+# It provides the same customization capabilities as the Kubernetes Helm chart
+# but in a simpler format for Docker Compose deployments.
+#
+# For detailed documentation, see: docs/STANDALONE-CONFIG.md
+#
+# ============================================================================
+
+# Global Application Settings
+# ============================================================================
+global:
+  # Application name - used in URLs and service names
+  # Default: shop-manager
+  appName: "shop-manager"
+
+  # Your business domain (used for SSL certificates and URLs)
+  # Examples: myshop.local, retail.mycompany.com
+  domain: "localhost"
+
+  # Environment: development, staging, or production
+  environment: "production"
+
+# Branding & Customization
+# ============================================================================
+branding:
+  # Platform identity - what your users see
+  platformName: "Shop Manager"
+  companyName: "Your Company"
+  platformDescription: "Retail Management Platform"
+
+  # Visual identity
+  logos:
+    # Path to your logo files (relative to standalone/ directory)
+    # Leave empty to use defaults
+    primary: ""              # Main logo (SVG/PNG recommended, displayed in header)
+    favicon: ""              # Browser favicon (ICO format, 32x32 or 64x64)
+    loginLogo: ""            # Login page logo (can be different from primary)
+
+  # Color scheme (hex color codes)
+  colors:
+    primary: "#1976d2"       # Primary brand color (buttons, links)
+    secondary: "#dc004e"     # Secondary accent color
+    success: "#388e3c"       # Success states (green)
+    warning: "#f57c00"       # Warning states (orange)
+    error: "#d32f2f"         # Error states (red)
+    background: "#fafafa"    # Page background
+    surface: "#ffffff"       # Card/panel background
+
+  # Typography
+  fonts:
+    family: "Roboto, Arial, sans-serif"
+    sizes:
+      small: "12px"
+      medium: "14px"
+      large: "16px"
+      title: "20px"
+
+  # UI customization
+  ui:
+    showCompanyName: true
+    showPoweredBy: false     # Hide "Powered by Shop Manager" footer
+    customFooterText: ""     # Custom footer text
+
+  # Email branding
+  email:
+    headerColor: "#1976d2"
+    logoUrl: ""              # URL to logo for emails
+    companyAddress: ""       # Physical address for email footer
+
+# Keycloak Authentication Settings
+# ============================================================================
+keycloak:
+  # Realm configuration
+  realm: "shop-manager"      # Keycloak realm name
+
+  # Admin credentials (CHANGE THESE IN PRODUCTION!)
+  admin:
+    username: "admin"
+    password: "Adm1n!SecureP@ss2024"
+    email: "admin@shopmanager.local"
+
+  # Session configuration
+  session:
+    ssoSessionIdleTimeout: 1800      # 30 minutes (in seconds)
+    ssoSessionMaxLifespan: 43200     # 12 hours (in seconds)
+    accessTokenLifespan: 300         # 5 minutes (in seconds)
+
+  # Frontend client configuration
+  client:
+    clientId: "shop-manager-frontend"
+    redirectUris:
+      - "http://localhost:3001/*"
+      - "https://localhost:3001/*"
+
+# Test Users Configuration (DEVELOPMENT ONLY)
+# ============================================================================
+# WARNING: These users are automatically created with weak passwords
+# Set enabled: false in production environments
+testUsers:
+  enabled: true              # Set to false in production
+
+  users:
+    - username: "admin@shopmanager.com"
+      password: "admin123"
+      email: "admin@shopmanager.com"
+      firstName: "System"
+      lastName: "Administrator"
+      role: "TENANT_ADMIN"
+      tenantId: "default-tenant"
+      shopId: "default-shop"
+
+    - username: "manager@shopmanager.com"
+      password: "manager123"
+      email: "manager@shopmanager.com"
+      firstName: "Shop"
+      lastName: "Manager"
+      role: "SHOP_MANAGER"
+      tenantId: "default-tenant"
+      shopId: "default-shop"
+
+    - username: "employee@shopmanager.com"
+      password: "employee123"
+      email: "employee@shopmanager.com"
+      firstName: "Shop"
+      lastName: "Employee"
+      role: "SHOP_EMPLOYEE"
+      tenantId: "default-tenant"
+      shopId: "default-shop"
+
+# SSL/TLS Certificate Configuration
+# ============================================================================
+certificates:
+  # Auto-generate self-signed certificates
+  autoGenerate: true
+
+  # Certificate details
+  commonName: "localhost"    # Should match your domain
+  organization: "Your Company"
+  country: "US"
+  state: "California"
+  locality: "San Francisco"
+  validityDays: 365
+
+  # Automatic installation to system trust store
+  autoInstall:
+    enabled: true            # Auto-install to OS trust store
+
+    # Platform-specific settings
+    platforms:
+      macOS:
+        keychain: true       # Install to system keychain
+        browsers: ["safari", "chrome", "firefox"]
+
+      linux:
+        systemStore: true    # Install to /usr/local/share/ca-certificates
+        updateCa: true       # Run update-ca-certificates
+        browsers: ["chrome", "firefox"]
+
+      windows:
+        certStore: true      # Install to Windows certificate store
+        scope: "LocalMachine" # LocalMachine or CurrentUser
+        browsers: ["chrome", "firefox", "edge"]
+
+# Database Configuration
+# ============================================================================
+database:
+  # PostgreSQL settings
+  postgres:
+    # Main application database
+    app:
+      database: "shopdb"
+      username: "shop"
+      password: "P@ssw0rd!2024#Shop"  # CHANGE IN PRODUCTION!
+
+    # Keycloak database
+    keycloak:
+      database: "keycloak"
+      username: "keycloak"
+      password: "KeycloakDB@2024!SecurePassword"  # CHANGE IN PRODUCTION!
+
+    # Admin user (for both databases)
+    admin:
+      username: "postgres"
+      password: "PostgresAdm1n@2024!SecureDB"  # CHANGE IN PRODUCTION!
+
+  # Connection pool settings
+  pool:
+    minIdle: 10
+    maxPoolSize: 20
+    connectionTimeout: 30000
+
+# Kafka Configuration
+# ============================================================================
+kafka:
+  enabled: true              # Set to false to disable Kafka
+  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"  # Base64 UUID for KRaft
+
+  # Retention settings
+  retention:
+    hours: 168               # 7 days
+    bytes: 1073741824        # 1GB
+
+# MinIO Object Storage
+# ============================================================================
+minio:
+  enabled: true              # Set to false to disable MinIO
+
+  # Credentials (CHANGE IN PRODUCTION!)
+  rootUser: "shopmanager"
+  rootPassword: "Min1o!SecureK3y2024#"
+
+  # Storage buckets
+  buckets:
+    - "receipts"
+    - "reports"
+    - "uploads"
+
+# Business Rules & Settings
+# ============================================================================
+business:
+  # Regional settings
+  defaultCurrency: "NGN"
+  defaultTaxRate: "0.075"    # 7.5%
+  timezone: "UTC"
+  locale: "en_US"
+
+  # Business policies
+  maxReturnDays: 30
+  minReorderPoint: 10
+
+  # Inventory management
+  inventory:
+    lowStockThreshold: 10
+    expiryWarningDays: 30
+    autoReorderEnabled: false
+    stockCheckIntervalHours: 6
+
+# Security Settings
+# ============================================================================
+security:
+  # Multi-tenancy
+  tenantIsolation: true
+
+  # Session management
+  sessionTimeoutMinutes: 30
+  jwtExpirationHours: 24
+
+  # Password policy
+  password:
+    minLength: 8
+    requireUppercase: true
+    requireLowercase: true
+    requireNumbers: true
+    requireSpecialChars: true
+
+  # Account security
+  maxLoginAttempts: 5
+  accountLockDurationMinutes: 30
+
+  # CORS settings
+  cors:
+    allowedOrigins: ""       # Auto-generated from domain if empty
+    allowedMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+    allowedHeaders: "*"
+    allowCredentials: "true"
+
+# Feature Flags
+# ============================================================================
+features:
+  investment: true           # Investment tracking module
+  analytics: true            # Analytics dashboard
+  fraud: false               # Fraud detection (coming soon)
+  multiCurrency: false       # Multi-currency support
+  barcodeScanning: true      # Barcode scanning
+  loyaltyProgram: false      # Loyalty/rewards program
+
+# Backup Configuration
+# ============================================================================
+backup:
+  enabled: true
+
+  # Backup schedule (cron format)
+  schedule: "0 2 * * *"      # Daily at 2 AM
+
+  # Retention policy
+  retentionDays: 30
+
+  # Backup location
+  path: "./backups"
+
+  # Compression
+  compression: true
+  compressionLevel: 6        # 1-9 (9 = best compression)
+
+  # Encryption (recommended for production)
+  encryption:
+    enabled: false
+    algorithm: "AES256"
+    # Key will be auto-generated if not provided
+    key: ""
+
+# Monitoring & Logging
+# ============================================================================
+monitoring:
+  # Health check endpoints
+  health:
+    enabled: true
+    showDetails: "always"    # always, when-authorized, never
+
+  # Prometheus metrics
+  metrics:
+    enabled: true
+
+  # Logging levels
+  logging:
+    root: "INFO"
+    app: "INFO"
+    security: "INFO"
+    web: "INFO"
+    database: "WARN"
+
+# Performance Tuning
+# ============================================================================
+performance:
+  # Cache settings
+  cache:
+    defaultTtlMinutes: 60
+    analyticsTtlHours: 1
+
+  # Query optimization
+  database:
+    queryTimeoutSeconds: 30
+    bulkBatchSize: 1000
+
+  # Upload limits
+  upload:
+    maxFileSizeMb: 10
+    allowedExtensions: "csv,xlsx,xls,pdf,jpg,jpeg,png"
+
+# Advanced Settings
+# ============================================================================
+advanced:
+  # Maintenance mode
+  maintenanceMode: false
+
+  # Debug mode (disable in production)
+  debugMode: false
+
+  # API documentation
+  swagger:
+    enabled: true
+    securityEnabled: false   # Set to true in production
+
+  # Scheduler configuration
+  scheduler:
+    profitDistribution:
+      enabled: true
+      monthlyDay: 1          # 1st of each month
+      monthlyHour: 2         # 2 AM
+
+    cacheCleanup:
+      enabled: true
+      intervalHours: 6
+
+    auditCleanup:
+      enabled: true
+      intervalDays: 7
