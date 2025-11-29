@@ -104,9 +104,18 @@ jobs:
 
           # Create tag (v prefix for standalone releases)
           TAG_NAME="v$NEW_VERSION"
+          git tag -a "$TAG_NAME" -m "Standalone v$NEW_VERSION
 
-          # Create and push tag with message
-          git tag -a "$TAG_NAME" -m "Standalone v$NEW_VERSION - Auto-released via PR #${{ github.event.pull_request.number }}"
+Auto-released via PR #${{ github.event.pull_request.number }}
+PR Title: ${{ github.event.pull_request.title }}
+Merged by: @${{ github.event.pull_request.merged_by.login }}
+
+This release includes:
+- Docker Compose packages (lightweight and full offline)
+- Electron desktop apps for Windows, macOS, and Linux
+- Auto-updater support for all platforms
+
+See release notes for details."
 
           # Push changes and tag
           git push origin main
