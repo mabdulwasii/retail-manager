@@ -161,11 +161,6 @@
     },
     "appImage": {
       "license": "LICENSE.txt"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "yourorg",
-      "repo": "shop-manager"
     }
   }
 }

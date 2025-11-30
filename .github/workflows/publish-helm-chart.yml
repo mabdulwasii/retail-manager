@@ -124,48 +124,10 @@ jobs:
           helm show chart oci://$REGISTRY/$REGISTRY_USERNAME/shop-manager --version $VERSION
 
       # ================================================================
-      # Step 10: Create GitHub Release (Optional)
+      # Step 10: Summary
       # ================================================================
-      - name: Create GitHub Release
-        if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: shop-manager-${{ steps.version.outputs.VERSION }}.tgz
-          generate_release_notes: true
-          body: |
-            ## Helm Chart v${{ steps.version.outputs.VERSION }}
-
-            ### Installation
-
-            ```bash
-            helm install retail oci://${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/shop-manager \
-              --version ${{ steps.version.outputs.VERSION }} \
-              -n gomco \
-              --create-namespace \
-              -f my-values.yaml
-            ```
-
-            ### What's Included
-
-            - Backend: `princely/shop-manager:backend-v${{ steps.version.outputs.VERSION }}`
-            - Frontend: `princely/shop-manager:frontend-v0.0.9`
-            - PostgreSQL: `postgres:16-alpine`
-            - Keycloak: `quay.io/keycloak/keycloak:24.0.1`
-
-            ### Documentation
-
-            - [Customer Installation Guide](https://github.com/${{ github.repository }}/blob/main/CUSTOMER_INSTALL.md)
-            - [Deployment Guide](https://github.com/${{ github.repository }}/blob/main/DEPLOYMENT_GUIDE.md)
-
-            ### Support
-
-            - Report issues: https://github.com/${{ github.repository }}/issues
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # ================================================================
-      # Step 11: Summary
-      # ================================================================
+      # Note: GitHub release is created by build-standalone-release.yml
+      # This workflow only publishes the Helm chart to Docker Hub OCI registry
       - name: Summary
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
