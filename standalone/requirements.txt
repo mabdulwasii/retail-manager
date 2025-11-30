@@ -1,0 +1,12 @@
+# Shop Manager Configuration Generator Dependencies
+# Install with: pip3 install -r requirements.txt
+
+# Core dependencies
+PyYAML>=6.0
+Jinja2>=3.1.0
+
+# Optional but recommended
+MarkupSafe>=2.1.0
+
+# For enhanced YAML parsing (optional)
+ruamel.yaml>=0.17.0

@@ -1,0 +1,232 @@
+{
+  "realm": "{{ config.keycloak.realm }}",
+  "displayName": "{{ config.branding.platformName }}",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": {{ config.security.maxLoginAttempts }},
+  "defaultSignatureAlgorithm": "RS256",
+  "offlineSessionMaxLifespanEnabled": false,
+  "offlineSessionMaxLifespan": 5184000,
+  "clientSessionIdleTimeout": 0,
+  "clientSessionMaxLifespan": 0,
+  "clientOfflineSessionIdleTimeout": 0,
+  "clientOfflineSessionMaxLifespan": 0,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
+  "accessCodeLifespanLogin": 1800,
+  "actionTokenGeneratedByAdminLifespan": 43200,
+  "actionTokenGeneratedByUserLifespan": 300,
+  "oauth2DeviceCodeLifespan": 600,
+  "oauth2DevicePollingInterval": 5,
+  "accessTokenLifespan": {{ config.keycloak.session.accessTokenLifespan }},
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": {{ config.keycloak.session.ssoSessionIdleTimeout }},
+  "ssoSessionMaxLifespan": {{ config.keycloak.session.ssoSessionMaxLifespan }},
+  "ssoSessionIdleTimeoutRememberMe": 0,
+  "ssoSessionMaxLifespanRememberMe": 0,
+  "refreshTokenMaxReuse": 0,
+  "revokeRefreshToken": false,
+  "notBefore": 0,
+  "defaultLocale": "{{ config.business.locale }}",
+  "supportedLocales": ["en", "fr", "es"],
+  "loginTheme": "keycloak",
+  "accountTheme": "keycloak",
+  "adminTheme": "keycloak",
+  "emailTheme": "keycloak",
+  "users": [
+    {% if config.testUsers.enabled %}
+    {% for user in config.testUsers.users %}
+    {
+      "username": "{{ user.username }}",
+      "email": "{{ user.email }}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "{{ user.firstName }}",
+      "lastName": "{{ user.lastName }}",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "{{ user.password }}",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "tenantId": ["{{ user.tenantId }}"],
+        "shopId": ["{{ user.shopId }}"]
+      },
+      "realmRoles": ["{{ user.role }}"]
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    {% endif %}
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "TENANT_ADMIN",
+        "description": "Tenant Administrator - Full access to tenant resources"
+      },
+      {
+        "name": "SHOP_MANAGER",
+        "description": "Shop Manager - Manage shop operations"
+      },
+      {
+        "name": "SHOP_EMPLOYEE",
+        "description": "Shop Employee - Basic shop access"
+      },
+      {
+        "name": "CASHIER",
+        "description": "Cashier - Sales and transactions only"
+      },
+      {
+        "name": "INVESTOR",
+        "description": "Investor - View investment reports"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Auditor - Read-only access for auditing"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "{{ config.keycloak.client.clientId }}",
+      "name": "{{ config.branding.platformName }} Frontend",
+      "description": "Frontend application client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": {{ config.keycloak.client.redirectUris | tojson }},
+      "webOrigins": ["*"],
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenantId",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "shop_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "shopId",
+            "claim.name": "shop_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "given_name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "claim.name": "given_name",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "family_name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "lastName",
+            "claim.name": "family_name",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "directGrantFlow": "direct grant",
+  "resetCredentialsFlow": "reset credentials",
+  "clientAuthenticationFlow": "clients",
+  "dockerAuthenticationFlow": "docker auth",
+  "attributes": {
+    "frontendUrl": "",
+    "displayName": "{{ config.branding.platformName }}",
+    "displayNameHtml": "<div class='kc-logo-text'><span>{{ config.branding.platformName }}</span></div>"
+  },
+  "userManagedAccessAllowed": false,
+  "internationalizationEnabled": true,
+  "eventsEnabled": true,
+  "eventsListeners": ["jboss-logging"],
+  "enabledEventTypes": [
+    "LOGIN",
+    "LOGIN_ERROR",
+    "LOGOUT",
+    "REGISTER",
+    "UPDATE_PASSWORD",
+    "UPDATE_PROFILE"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true
+}

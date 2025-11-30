@@ -1,0 +1,326 @@
+name: Build Standalone Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Shop Manager v${{ steps.get_version.outputs.version }}
+          draft: true
+          prerelease: false
+          body: |
+            # Shop Manager v${{ steps.get_version.outputs.version }}
+
+            ## 📦 Downloads
+
+            Choose the package that best fits your needs:
+
+            ### For Non-Technical Users (Recommended)
+            - **Windows**: `Shop-Manager-Setup-${{ steps.get_version.outputs.version }}.exe`
+            - **macOS**: `Shop-Manager-${{ steps.get_version.outputs.version }}.dmg`
+            - **Linux**: `Shop-Manager-${{ steps.get_version.outputs.version }}.AppImage`
+
+            ### For Technical Users / Developers
+            - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
+            - **Docker Compose (Offline)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}-full.zip`
+
+            ## 🚀 Quick Start
+
+            See [Installation Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
+
+            ## ✨ What's New
+
+            - [Changelog will be added here]
+
+            ## 📋 System Requirements
+
+            - **OS**: Windows 10+, macOS 11+, Ubuntu 20.04+
+            - **RAM**: 8 GB minimum
+            - **Disk**: 20 GB free space
+            - **Docker**: Required (Desktop or Engine)
+
+            ## 📞 Support
+
+            - [Documentation](https://github.com/${{ github.repository }}/tree/main/standalone/docs)
+            - [Issues](https://github.com/${{ github.repository }}/issues)
+
+  build-docker-compose-package:
+    name: Build Docker Compose Package
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          cd standalone
+          pip install -r requirements.txt
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker images
+        run: |
+          cd shop-manager
+          docker compose build
+
+      - name: Create lightweight package
+        run: |
+          cd standalone/scripts
+          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }}
+
+      - name: Create full package (with images)
+        run: |
+          cd standalone/scripts
+          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --include-images
+
+      - name: Upload lightweight package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/scripts/dist/shop-manager-standalone-v${{ needs.create-release.outputs.version }}.zip
+          asset_name: shop-manager-standalone-v${{ needs.create-release.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload full package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/scripts/dist/shop-manager-standalone-v${{ needs.create-release.outputs.version }}-full.zip
+          asset_name: shop-manager-standalone-v${{ needs.create-release.outputs.version }}-full.zip
+          asset_content_type: application/zip
+
+      - name: Upload checksums
+        run: |
+          cd standalone/scripts/dist
+          for file in *.sha256; do
+            gh release upload v${{ needs.create-release.outputs.version }} "$file"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    needs: create-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: standalone/electron-app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd standalone/electron-app
+          npm ci
+
+      - name: Update version
+        run: |
+          cd standalone/electron-app
+          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+
+      - name: Build Windows installer
+        run: |
+          cd standalone/electron-app
+          npm run build:win
+
+      - name: Upload Windows NSIS installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}.exe
+          asset_name: Shop-Manager-Setup-${{ needs.create-release.outputs.version }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows portable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}.exe
+          asset_name: Shop-Manager-Portable-${{ needs.create-release.outputs.version }}.exe
+          asset_content_type: application/octet-stream
+        continue-on-error: true  # Portable build might not exist
+
+  build-macos:
+    name: Build macOS Installer
+    runs-on: macos-latest
+    needs: create-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: standalone/electron-app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd standalone/electron-app
+          npm ci
+
+      - name: Update version
+        run: |
+          cd standalone/electron-app
+          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+
+      - name: Build macOS installer
+        run: |
+          cd standalone/electron-app
+          npm run build:mac
+
+      - name: Upload macOS DMG
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}.dmg
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}.dmg
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS ZIP (auto-update)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}-mac.zip
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+  build-linux:
+    name: Build Linux Packages
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: standalone/electron-app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd standalone/electron-app
+          npm ci
+
+      - name: Update version
+        run: |
+          cd standalone/electron-app
+          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+
+      - name: Build Linux packages
+        run: |
+          cd standalone/electron-app
+          npm run build:linux
+
+      - name: Upload AppImage
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}.AppImage
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}.AppImage
+          asset_content_type: application/octet-stream
+
+      - name: Upload Debian package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/shop-manager_${{ needs.create-release.outputs.version }}_amd64.deb
+          asset_name: shop-manager_${{ needs.create-release.outputs.version }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
+        continue-on-error: true
+
+      - name: Upload RPM package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/shop-manager-${{ needs.create-release.outputs.version }}.x86_64.rpm
+          asset_name: shop-manager-${{ needs.create-release.outputs.version }}.x86_64.rpm
+          asset_content_type: application/x-rpm
+        continue-on-error: true
+
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [create-release, build-docker-compose-package, build-windows, build-macos, build-linux]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Publish release
+        run: |
+          gh release edit v${{ needs.create-release.outputs.version }} --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify success
+        run: |
+          echo "✅ Release v${{ needs.create-release.outputs.version }} published successfully!"
+          echo "Download URL: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}"
