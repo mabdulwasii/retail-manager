@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SalesTransaction } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
+import { usePDFReceipt } from '@/hooks/usePDFReceipt'
+import { useShopContext } from '@/context/ShopContext'
 import {
   ReceiptIcon,
   PrinterIcon,
@@ -17,14 +19,23 @@ interface SalesHistoryProps {
 export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
   const navigate = useNavigate()
   const { formatCurrency } = useCurrency()
+  const { printReceiptByTransactionId } = usePDFReceipt()
+  const { selectedShop } = useShopContext()
 
   const handleViewTransaction = (transactionId: string) => {
     navigate(`/sales/${transactionId}`)
   }
 
-  const handlePrintReceipt = (transactionId: string) => {
-    // This will be handled by the parent component or service
-    console.log('Print receipt:', transactionId)
+  const handlePrintReceipt = async (transactionId: string) => {
+    try {
+      await printReceiptByTransactionId(transactionId, {
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
+      })
+    } catch (error) {
+      // Error already handled in hook
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -84,7 +95,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
                       <div className="flex items-center space-x-4">
                         <div>
                           <h3 className="font-medium text-gray-900">
-                            Receipt #{sale.receiptNumber}
+                            Receipt #{sale.receiptNumber || sale.transactionNumber}
                           </h3>
                           <p className="text-sm text-gray-600">
                             {formatDate(sale.transactionDate)}
@@ -107,7 +118,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
 
                         <div>
                           <span className="text-gray-600">Items:</span>
-                          <p className="font-medium">{sale.items.length}</p>
+                          <p className="font-medium">{sale.lineItems?.length || 0}</p>
                         </div>
 
                         <div>
@@ -119,7 +130,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
 
                         <div>
                           <span className="text-gray-600">Cashier:</span>
-                          <p className="font-medium">{sale.cashierId}</p>
+                          <p className="font-medium">{sale.cashierName || sale.cashierId}</p>
                         </div>
                       </div>
                     </div>

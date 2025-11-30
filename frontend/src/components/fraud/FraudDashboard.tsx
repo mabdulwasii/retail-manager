@@ -5,12 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useAuth } from '@/context/ManualAuthContext'
+import { Permission } from '@/types/permissions'
 import {
-  useFraudDetection,
-  FraudStatistics,
   AlertSeverity,
   RiskLevel
 } from '@/hooks/useFraudDetection'
+
+type FraudStatistics = any
 import {
   ShieldAlertIcon,
   AlertTriangleIcon,
@@ -37,16 +38,14 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
   shopId,
   viewMode: propViewMode
 }) => {
-  const { user } = useAuth()
-  const { getFraudStatistics, isLoading } = useFraudDetection()
+  const { hasAnyPermission } = useAuth()
+  const isLoading = false // TODO: Implement proper loading state
 
   const getViewMode = () => {
     if (propViewMode) return propViewMode
-    if (!user) return 'admin'
 
-    const roles = user.roles || []
-    if (roles.includes('TENANT_ADMIN')) return 'admin'
-    if (roles.includes('SHOP_OWNER') || roles.includes('MANAGER')) return 'shop'
+    if (hasAnyPermission([Permission.TENANT_MANAGE, Permission.FRAUD_MANAGE])) return 'admin'
+    if (hasAnyPermission([Permission.SHOP_MANAGE, Permission.FRAUD_VIEW, Permission.FRAUD_LIST])) return 'shop'
     return 'admin'
   }
 
@@ -62,10 +61,11 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
   const fetchStatistics = async () => {
     try {
       setIsRefreshing(true)
-      const stats = await getFraudStatistics(shopId)
-      if (stats) {
-        setStatistics(stats)
-      }
+      // TODO: Implement getFraudStatistics API call
+      // const stats = await getFraudStatistics(shopId)
+      // if (stats) {
+      //   setStatistics(stats)
+      // }
     } catch (error) {
       console.error('Failed to fetch fraud statistics:', error)
     } finally {
@@ -133,7 +133,9 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
           onClick={fetchStatistics}
           disabled={isRefreshing}
         >
-          <RefreshCwIcon className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCwIcon
+            className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -231,7 +233,10 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
             <AlertTriangleIcon className="h-4 w-4" />
             <span>Alerts</span>
           </TabsTrigger>
-          <TabsTrigger value="assessments" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="assessments"
+            className="flex items-center space-x-2"
+          >
             <EyeIcon className="h-4 w-4" />
             <span>Risk Assessments</span>
           </TabsTrigger>
@@ -251,11 +256,16 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {statistics.alerts.byType.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                    {statistics.alerts.byType.map((item: { type: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Iterable<React.ReactNode> | null | undefined; count: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined }, index: React.Key | null | undefined) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                          <span className="text-sm font-medium">{item.type}</span>
+                          <span className="text-sm font-medium">
+                            {item.type}
+                          </span>
                         </div>
                         <Badge variant="outline">{item.count}</Badge>
                       </div>
@@ -277,21 +287,36 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {statistics.riskAssessments.byRiskLevel.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${
-                            item.level.toLowerCase() === 'critical' ? 'bg-red-500' :
-                            item.level.toLowerCase() === 'high' ? 'bg-orange-500' :
-                            item.level.toLowerCase() === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                          }`}></div>
-                          <span className={`text-sm font-medium ${getRiskLevelColor(item.level)}`}>
-                            {item.level}
-                          </span>
+                    {statistics.riskAssessments.byRiskLevel.map(
+                      (item: { level: string; count: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined }, index: React.Key | null | undefined) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div
+                              className={`w-3 h-3 rounded-full ${
+                                item.level.toLowerCase() === "critical"
+                                  ? "bg-red-500"
+                                  : item.level.toLowerCase() === "high"
+                                  ? "bg-orange-500"
+                                  : item.level.toLowerCase() === "medium"
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                              }`}
+                            ></div>
+                            <span
+                              className={`text-sm font-medium ${getRiskLevelColor(
+                                item.level
+                              )}`}
+                            >
+                              {item.level}
+                            </span>
+                          </div>
+                          <Badge variant="outline">{item.count}</Badge>
                         </div>
-                        <Badge variant="outline">{item.count}</Badge>
-                      </div>
-                    ))}
+                      )
+                    )}
                     {statistics.riskAssessments.byRiskLevel.length === 0 && (
                       <div className="text-center py-8 text-gray-500">
                         <TrendingUpIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
@@ -309,15 +334,51 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {statistics.rules.byType.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                          <span className="text-sm font-medium">{item.type}</span>
+                    {statistics.rules.byType.map(
+                      (
+                        item: {
+                          type:
+                            | string
+                            | number
+                            | boolean
+                            | React.ReactElement<
+                                any,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | React.ReactPortal
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined;
+                          count:
+                            | string
+                            | number
+                            | boolean
+                            | React.ReactElement<
+                                any,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | React.ReactPortal
+                            | null
+                            | undefined;
+                        },
+                        index: React.Key | null | undefined
+                      ) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span className="text-sm font-medium">
+                              {item.type}
+                            </span>
+                          </div>
+                          <Badge variant="outline">{item.count}</Badge>
                         </div>
-                        <Badge variant="outline">{item.count}</Badge>
-                      </div>
-                    ))}
+                      )
+                    )}
                     {statistics.rules.byType.length === 0 && (
                       <div className="text-center py-8 text-gray-500">
                         <FilterIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
@@ -338,16 +399,27 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Date Range:</span>
                       <span className="text-sm font-medium">
-                        {new Date(statistics.dateRange.startDate).toLocaleDateString()} - {' '}
-                        {new Date(statistics.dateRange.endDate).toLocaleDateString()}
+                        {new Date(
+                          statistics.dateRange.startDate
+                        ).toLocaleDateString()}{" "}
+                        -{" "}
+                        {new Date(
+                          statistics.dateRange.endDate
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Total Active Rules:</span>
-                      <span className="text-sm font-medium">{statistics.rules.total}</span>
+                      <span className="text-sm text-gray-600">
+                        Total Active Rules:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {statistics.rules.total}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Last Updated:</span>
+                      <span className="text-sm text-gray-600">
+                        Last Updated:
+                      </span>
                       <span className="text-sm font-medium">
                         {new Date().toLocaleTimeString()}
                       </span>
@@ -368,11 +440,18 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
             <Card>
               <CardContent className="text-center py-12">
                 <BarChart3Icon className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Statistics Available</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Statistics Available
+                </h3>
                 <p className="text-gray-600">
-                  Unable to load fraud detection statistics. Please try refreshing the page.
+                  Unable to load fraud detection statistics. Please try
+                  refreshing the page.
                 </p>
-                <Button variant="outline" className="mt-4" onClick={fetchStatistics}>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={fetchStatistics}
+                >
                   <RefreshCwIcon className="h-4 w-4 mr-2" />
                   Retry
                 </Button>
@@ -381,18 +460,22 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
           )}
         </TabsContent>
 
-        <TabsContent value="alerts">
-          <FraudAlertList shopId={shopId} viewMode={viewMode} />
-        </TabsContent>
+        {shopId && (
+          <>
+            <TabsContent value="alerts">
+              <FraudAlertList shopId={shopId} />
+            </TabsContent>
 
-        <TabsContent value="assessments">
-          <RiskAssessmentList shopId={shopId} viewMode={viewMode} />
-        </TabsContent>
+            <TabsContent value="assessments">
+              <RiskAssessmentList shopId={shopId} />
+            </TabsContent>
 
-        <TabsContent value="rules">
-          <FraudRuleList shopId={shopId} viewMode={viewMode} />
-        </TabsContent>
+            <TabsContent value="rules">
+              <FraudRuleList shopId={shopId} />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
-  )
+  );
 }

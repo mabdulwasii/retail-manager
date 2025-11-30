@@ -1,109 +1,102 @@
-import React, { useEffect, useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from 'yup'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { NumericInput } from '@/components/ui/numeric-input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Sparkles } from 'lucide-react'
-import { Product, ProductStatus } from '@/types/api'
-import { productService } from '@/services/productService'
-import { useCategories } from '@/hooks/useCategories'
-import { useCurrency } from '@/hooks/useCurrency'
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useCategories } from "@/hooks/useCategories";
+import { useCurrency } from "@/hooks/useCurrency";
+import { Product, ProductStatus } from "@/types/api";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as yup from "yup";
 
 const productSchema = yup.object({
-  name: yup.string()
-    .required('Product name is required')
-    .min(2, 'Product name must be at least 2 characters')
-    .max(200, 'Product name must be at most 200 characters'),
-  description: yup.string()
+  name: yup
+    .string()
+    .required("Product name is required")
+    .min(2, "Product name must be at least 2 characters")
+    .max(200, "Product name must be at most 200 characters"),
+  description: yup
+    .string()
     .optional()
-    .max(1000, 'Description must be at most 1000 characters'),
-  categoryId: yup.string()
-    .required('Category is required'),
+    .max(1000, "Description must be at most 1000 characters"),
+  categoryId: yup.string().required("Category is required"),
   category: yup.string().optional(), // For display only
-  price: yup.number()
-    .typeError('Price must be a number')
-    .required('Price is required')
-    .min(0.01, 'Price must be greater than 0'),
-  costPrice: yup.number()
-    .typeError('Cost price must be a number')
-    .min(0, 'Cost price must be 0 or greater')
-    .optional()
-    .nullable()
-    .transform((value, originalValue) => originalValue === '' ? null : value),
   unit: yup.string().optional(),
   customUnit: yup.string().optional(),
-  weightInKg: yup.number()
-    .typeError('Weight must be a number')
-    .min(0, 'Weight must be 0 or greater')
+  weightInKg: yup
+    .number()
+    .typeError("Weight must be a number")
+    .min(0, "Weight must be 0 or greater")
     .optional()
     .nullable()
-    .transform((value, originalValue) => originalValue === '' ? null : value),
+    .transform((value, originalValue) => (originalValue === "" ? null : value)),
   dimensions: yup.string().optional(),
   supplierName: yup.string().optional(),
   supplierContact: yup.string().optional(),
-  imageUrl: yup.string().url('Must be a valid URL').optional(),
+  imageUrl: yup.string().url("Must be a valid URL").optional(),
   isTaxable: yup.boolean().optional(),
   isDiscountable: yup.boolean().optional(),
   // sku: yup.string()
   //   .optional()
   //   .matches(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
-  barcode: yup.string()
+  barcode: yup
+    .string()
     .optional()
     .nullable()
-    .transform((value, originalValue) => originalValue === '' ? null : value)
-    .matches(/^[0-9]*$/, 'Barcode must contain only numbers'),  // Allow empty string
-  status: yup.string()
-    .oneOf(Object.values(ProductStatus))
-    .optional(),
-})
+    .transform((value, originalValue) => (originalValue === "" ? null : value))
+    .matches(/^[0-9]*$/, "Barcode must contain only numbers"), // Allow empty string
+  status: yup.string().oneOf(Object.values(ProductStatus)).optional(),
+});
 
-export type ProductFormData = yup.InferType<typeof productSchema>
+export type ProductFormData = yup.InferType<typeof productSchema>;
 
 interface ProductFormProps {
-  product?: Product
-  onSubmit: (data: ProductFormData) => void | Promise<void>
-  onCancel: () => void
-  isSubmitting?: boolean
+  product?: Product;
+  onSubmit: (data: ProductFormData) => void | Promise<void>;
+  onCancel: () => void;
+  isSubmitting?: boolean;
+  shopId?: string;
 }
 
 // Common product units
 const PRODUCT_UNITS = [
-  { value: 'piece', label: 'Piece' },
-  { value: 'pack', label: 'Pack' },
-  { value: 'box', label: 'Box' },
-  { value: 'bottle', label: 'Bottle' },
-  { value: 'can', label: 'Can' },
-  { value: 'kg', label: 'Kilogram (kg)' },
-  { value: 'g', label: 'Gram (g)' },
-  { value: 'l', label: 'Liter (L)' },
-  { value: 'ml', label: 'Milliliter (ml)' },
-  { value: 'carton', label: 'Carton' },
-  { value: 'dozen', label: 'Dozen' },
-  { value: 'other', label: 'Other (specify)' },
-]
+  { value: "piece", label: "Piece" },
+  { value: "pack", label: "Pack" },
+  { value: "box", label: "Box" },
+  { value: "bottle", label: "Bottle" },
+  { value: "can", label: "Can" },
+  { value: "kg", label: "Kilogram (kg)" },
+  { value: "g", label: "Gram (g)" },
+  { value: "l", label: "Liter (L)" },
+  { value: "ml", label: "Milliliter (ml)" },
+  { value: "carton", label: "Carton" },
+  { value: "dozen", label: "Dozen" },
+  { value: "other", label: "Other" },
+];
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   product,
   onSubmit,
   onCancel,
   isSubmitting = false,
+  shopId,
 }) => {
-  const { data: categories = [], isLoading: categoriesLoading } = useCategories()
-  const { formatCurrency } = useCurrency()
-  const [showCustomUnit, setShowCustomUnit] = useState(false)
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useCategories(false, shopId);
+  const { formatCurrency } = useCurrency();
+  const [showCustomUnit, setShowCustomUnit] = useState(false);
 
   const {
     register,
@@ -115,51 +108,49 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   } = useForm<ProductFormData>({
     resolver: yupResolver(productSchema),
     defaultValues: {
-      name: product?.name || '',
-      description: product?.description || '',
-      categoryId: product?.categoryId || '',
-      category: product?.category || '', // For display
-      price: product?.price || 0,
-      costPrice: product?.costPrice || undefined,
-      unit: product?.unit && PRODUCT_UNITS.find(u => u.value === product.unit) ? product.unit : product?.unit ? 'other' : '',
-      customUnit: product?.unit && !PRODUCT_UNITS.find(u => u.value === product.unit) ? product.unit : '',
-      weightInKg: product?.weightInGrams ? product.weightInGrams / 1000 : undefined,
+      name: product?.name || "",
+      description: product?.description || "",
+      categoryId: product?.categoryId || "",
+      category: product?.category || "", // For display
+      unit:
+        product?.unit && PRODUCT_UNITS.find((u) => u.value === product.unit)
+          ? product.unit
+          : product?.unit
+          ? "other"
+          : "",
+      customUnit:
+        product?.unit && !PRODUCT_UNITS.find((u) => u.value === product.unit)
+          ? product.unit
+          : "",
+      weightInKg: product?.weightInGrams
+        ? product.weightInGrams / 1000
+        : undefined,
       // location: product?.location || '',
-      dimensions: product?.dimensions || '',
-      supplierName: product?.supplierName || '',
-      supplierContact: product?.supplierContact || '',
-      imageUrl: product?.imageUrl || '',
+      dimensions: product?.dimensions || "",
+      supplierName: product?.supplierName || "",
+      supplierContact: product?.supplierContact || "",
+      imageUrl: product?.imageUrl || "",
       isTaxable: product?.isTaxable ?? product?.taxable ?? true,
       isDiscountable: product?.isDiscountable ?? product?.discountable ?? true,
       // sku: product?.sku || '',
-      barcode: product?.barcode || '',
+      barcode: product?.barcode || "",
       status: product?.status || ProductStatus.ACTIVE,
     },
-  })
+  });
 
-  const categoryId = watch('categoryId')
-  const status = watch('status')
-  const selectedUnit = watch('unit')
-  
+  const categoryId = watch("categoryId");
+  const status = watch("status");
+  const selectedUnit = watch("unit");
+
   // Show custom unit input when 'other' is selected
   useEffect(() => {
-    setShowCustomUnit(selectedUnit === 'other')
-  }, [selectedUnit])
+    setShowCustomUnit(selectedUnit === "other");
+  }, [selectedUnit]);
 
   // const handleGenerateSKU = () => {
   //   const newSKU = productService.generateSKU()
   //   setValue('sku', newSKU)
   // }
-
-  const calculateProfitMargin = () => {
-    const price = watch('price')
-    const costPrice = watch('costPrice')
-    if (price && costPrice && costPrice > 0) {
-      const margin = ((price - costPrice) / price) * 100
-      return margin.toFixed(2) + '%'
-    }
-    return 'N/A'
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -243,69 +234,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             )}
           </div>
 
-          {/* Cost Price and Selling Price - Cost Price First */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="costPrice">Cost Price</Label>
-              <Controller
-                name="costPrice"
-                control={control}
-                render={({ field }) => (
-                  <NumericInput
-                    id="costPrice"
-                    value={field.value ?? ''}
-                    onValueChange={(values) => {
-                      field.onChange(values.floatValue ?? null)
-                    }}
-                    placeholder="0.00"
-                    disabled={isSubmitting}
-                    decimalScale={2}
-                    fixedDecimalScale={true}
-                  />
-                )}
-              />
-              {errors.costPrice && (
-                <p className="text-sm text-red-500">
-                  {errors.costPrice.message}
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="price">
-                Selling Price <span className="text-red-500">*</span>
-              </Label>
-              <Controller
-                name="price"
-                control={control}
-                render={({ field }) => (
-                  <NumericInput
-                    id="price"
-                    value={field.value ?? ''}
-                    onValueChange={(values) => {
-                      field.onChange(values.floatValue ?? 0)
-                    }}
-                    placeholder="0.00"
-                    disabled={isSubmitting}
-                    decimalScale={2}
-                    fixedDecimalScale={true}
-                  />
-                )}
-              />
-              {errors.price && (
-                <p className="text-sm text-red-500">{errors.price.message}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Profit Margin Display */}
-          {(watch("price") || 0) > 0 && (watch("costPrice") || 0) > 0 && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">
-                <strong>Profit Margin:</strong> {calculateProfitMargin()}
-              </p>
-            </div>
-          )}
 
           {/* SKU */}
           {/* <div className="space-y-2">
@@ -334,42 +262,44 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </div> */}
 
           {/* Barcode */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="barcode">Barcode</Label>
-            <Input
-              id="barcode"
-              {...register("barcode")}
-              placeholder="Enter barcode"
-              disabled={isSubmitting}
-            />
-            {errors.barcode && (
-              <p className="text-sm text-red-500">{errors.barcode.message}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="barcode">Barcode</Label>
+              <Input
+                id="barcode"
+                {...register("barcode")}
+                placeholder="Enter barcode"
+                disabled={isSubmitting}
+              />
+              {errors.barcode && (
+                <p className="text-sm text-red-500">{errors.barcode.message}</p>
+              )}
+            </div>
 
-          {/* Image URL */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              {...register("imageUrl")}
-              placeholder="https://cdn.example.com/products/product-image.jpg"
-              disabled={isSubmitting}
-            />
-            {errors.imageUrl && (
-              <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
-            )}
-          </div>
+            {/* Image URL */}
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl">Image URL</Label>
+              <Input
+                id="imageUrl"
+                type="url"
+                {...register("imageUrl")}
+                placeholder="https://cdn.example.com/products/product-image.jpg"
+                disabled={isSubmitting}
+              />
+              {errors.imageUrl && (
+                <p className="text-sm text-red-500">
+                  {errors.imageUrl.message}
+                </p>
+              )}
+            </div>
           </div>
           {/* Unit and Weight */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
               <Select
-                value={selectedUnit || ''}
-                onValueChange={(value) => setValue('unit', value)}
+                value={selectedUnit || ""}
+                onValueChange={(value) => setValue("unit", value)}
                 disabled={isSubmitting}
               >
                 <SelectTrigger>
@@ -387,7 +317,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <p className="text-sm text-red-500">{errors.unit.message}</p>
               )}
             </div>
-            
+
             {showCustomUnit && (
               <div className="space-y-2">
                 <Label htmlFor="customUnit">Custom Unit</Label>
@@ -398,7 +328,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   disabled={isSubmitting}
                 />
                 {errors.customUnit && (
-                  <p className="text-sm text-red-500">{errors.customUnit.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.customUnit.message}
+                  </p>
                 )}
               </div>
             )}
@@ -412,9 +344,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   render={({ field }) => (
                     <NumericInput
                       id="weightInKg"
-                      value={field.value ?? ''}
+                      value={field.value ?? ""}
                       onValueChange={(values) => {
-                        field.onChange(values.floatValue ?? null)
+                        field.onChange(values.floatValue ?? null);
                       }}
                       placeholder="0.520"
                       disabled={isSubmitting}
@@ -426,7 +358,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   )}
                 />
                 {errors.weightInKg && (
-                  <p className="text-sm text-red-500">{errors.weightInKg.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.weightInKg.message}
+                  </p>
                 )}
               </div>
             )}
@@ -571,4 +505,4 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       </div>
     </form>
   );
-}
+};

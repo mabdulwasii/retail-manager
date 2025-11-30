@@ -93,7 +93,7 @@ export const ShoppingCart: React.FC<ShoppingCartProps> = ({
                         {item.product.name}
                       </h4>
                       <p className="text-sm text-muted-foreground truncate">
-                        {formatCurrency(item.product.price)} each
+                        {formatCurrency(item.unitPrice)} each
                       </p>
                       {item.product.taxRate && (
                         <p className="text-xs text-muted-foreground">

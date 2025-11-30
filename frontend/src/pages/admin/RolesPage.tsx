@@ -37,23 +37,25 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 
 export const RolesPage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasAnyRole, user } = useAuth()
+  const { hasAnyPermission, hasPermission, user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [roleToDelete, setRoleToDelete] = useState<{ id: string; name: string } | null>(null)
   
-  const isSystemAdmin = hasAnyRole([UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
-  // TENANT_ADMIN only sees system roles + their tenant's custom roles
+  const isSystemAdmin = hasAnyPermission([Permission.SYSTEM_ADMIN, Permission.TENANT_MANAGE])
+  // Users without system-wide permissions only see system roles + their tenant's custom roles
   const tenantIdForFilter = !isSystemAdmin && user?.tenantId ? user.tenantId : undefined
 
   const { data: roles, isLoading, isError, error } = useRoles(tenantIdForFilter)
   const deleteRoleMutation = useDeleteRole()
 
-  // Only TENANT_ADMIN can access this page
-  const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  // Check if user can manage roles
+  const canManageRoles = hasAnyPermission([Permission.ROLE_LIST, Permission.ROLE_READ])
+  const canCreateRoles = hasPermission(Permission.ROLE_CREATE)
+  const canDeleteRoles = hasPermission(Permission.ROLE_DELETE)
 
   React.useEffect(() => {
     if (!canManageRoles) {
@@ -95,18 +97,22 @@ export const RolesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/admin/permissions">
-            <Button variant="outline">
-              <Key className="mr-2 h-4 w-4" />
-              Permission Matrix
-            </Button>
-          </Link>
-          <Link to="/admin/roles/create">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Role
-            </Button>
-          </Link>
+          {hasPermission(Permission.PERMISSION_LIST) && (
+            <Link to="/admin/permissions">
+              <Button variant="outline">
+                <Key className="mr-2 h-4 w-4" />
+                Permission Matrix
+              </Button>
+            </Link>
+          )}
+          {canCreateRoles && (
+            <Link to="/admin/roles/create">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Role
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -197,7 +203,7 @@ export const RolesPage: React.FC = () => {
                 ? "Try adjusting your search criteria"
                 : "Get started by creating your first role"}
             </p>
-            {!searchQuery && (
+            {!searchQuery && canCreateRoles && (
               <Link to="/admin/roles/create">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
@@ -261,7 +267,7 @@ export const RolesPage: React.FC = () => {
                       View
                     </Button>
                   </Link>
-                  {(isSystemAdmin || !role.isSystem) && (
+                  {(hasPermission(Permission.ROLE_UPDATE) || (canDeleteRoles && !role.isSystem)) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
@@ -272,23 +278,29 @@ export const RolesPage: React.FC = () => {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem asChild>
-                          <Link to={`/admin/roles/${role.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Role
-                          </Link>
-                        </DropdownMenuItem>
+                        {hasPermission(Permission.ROLE_UPDATE) && (
+                          <DropdownMenuItem asChild>
+                            <Link to={`/admin/roles/${role.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Role
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
 
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setRoleToDelete({ id: role.id, name: role.name })
-                          }
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Role
-                        </DropdownMenuItem>
+                        {canDeleteRoles && !role.isSystem && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setRoleToDelete({ id: role.id, name: role.name })
+                              }
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Role
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}

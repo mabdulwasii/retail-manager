@@ -27,7 +27,6 @@ import {
   Package,
 } from 'lucide-react'
 import { Product, ProductStatus } from '@/types/api'
-import { useCurrency } from '@/hooks/useCurrency'
 
 interface ProductListProps {
   products: Product[]
@@ -44,7 +43,6 @@ export const ProductList: React.FC<ProductListProps> = ({
   onToggleStatus,
   isLoading = false,
 }) => {
-  const { formatCurrency } = useCurrency();
   const getStatusBadge = (status: ProductStatus) => {
     const variants = {
       [ProductStatus.ACTIVE]: 'success',
@@ -63,14 +61,6 @@ export const ProductList: React.FC<ProductListProps> = ({
         {labels[status]}
       </Badge>
     )
-  }
-
-  const calculateProfitMargin = (product: Product) => {
-    if (product.costPrice && product.price > product.costPrice) {
-      const margin = ((product.price - product.costPrice) / product.price) * 100
-      return `${margin.toFixed(1)}%`
-    }
-    return 'N/A'
   }
 
   if (isLoading) {
@@ -105,9 +95,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             <TableHead>SKU</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Barcode</TableHead>
-            <TableHead className="text-right">Price</TableHead>
-            <TableHead className="text-right">Cost</TableHead>
-            <TableHead className="text-right">Margin</TableHead>
+            <TableHead className="text-center">Stock</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
@@ -133,14 +121,16 @@ export const ProductList: React.FC<ProductListProps> = ({
                 <Badge variant="outline">{product.categoryName}</Badge>
               </TableCell>
               <TableCell className="font-mono text-sm">{product.barcode}</TableCell>
-              <TableCell className="text-right font-medium">
-                {formatCurrency(product.price)}
-              </TableCell>
-              <TableCell className="text-right text-gray-600">
-                {product.costPrice ? formatCurrency(product.costPrice) : "-"}
-              </TableCell>
-              <TableCell className="text-right text-sm text-green-600">
-                {calculateProfitMargin(product)}
+              <TableCell className="text-center">
+                <div className="text-sm">
+                  {product.availableStock !== undefined ? (
+                    <span className={product.availableStock <= 0 ? "text-red-600 font-medium" : product.hasLowStock ? "text-orange-600 font-medium" : ""}>
+                      {product.availableStock}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </div>
               </TableCell>
               <TableCell>{getStatusBadge(product.status)}</TableCell>
               <TableCell>

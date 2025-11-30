@@ -124,10 +124,6 @@ export interface Product {
   categoryName?: string // Alternative field name from API
   shopId?: string
   shopName?: string
-  price: number
-  costPrice?: number
-  profitMargin?: number
-  profitMarginPercentage?: number
   barcode?: string
   sku: string
   unit?: string
@@ -169,11 +165,8 @@ export interface ProductCreateRequest {
   barcode?: string | undefined
   shopId: string
   categoryId: string
-  price: number
-  costPrice?: number | undefined
   unit?: string | undefined
   weightInGrams?: number | undefined
-  location?: string | undefined
   dimensions?: string | undefined
   supplierName?: string | undefined
   supplierContact?: string | undefined
@@ -187,13 +180,10 @@ export interface ProductUpdateRequest {
   name?: string | undefined
   description?: string | undefined
   categoryId?: string | undefined
-  price?: number | undefined
-  costPrice?: number | undefined
   barcode?: string | undefined
   sku?: string | undefined
   unit?: string | undefined
   weightInGrams?: number | undefined
-  location?: string | undefined
   dimensions?: string | undefined
   supplierName?: string | undefined
   supplierContact?: string | undefined
@@ -205,22 +195,36 @@ export interface ProductUpdateRequest {
 
 export interface Inventory {
   id: string
-  product: Product
-  shop: Shop
-  quantity: number
-  reservedQuantity: number
-  availableQuantity: number
-  reorderLevel: number
-  maxStockLevel: number
-  lastRestocked: string
+  shopId: string
+  shopName?: string
+  productId: string
+  productName?: string
+  productSku?: string
+  product?: Product
+  currentStock: number
+  reservedStock: number
+  availableStock: number
+  minimumStock: number
+  maximumStock?: number
+  reorderPoint: number
+  costPrice: number
+  sellingPrice: number
+  location?: string
+  batchNumber?: string
+  expiryDate?: string
   status: InventoryStatus
+  lastStockUpdate?: string
+  isLowStock?: boolean
+  isExpired?: boolean
+  isExpiringSoon?: boolean
 }
 
 export enum InventoryStatus {
-  IN_STOCK = 'IN_STOCK',
-  LOW_STOCK = 'LOW_STOCK',
-  OUT_OF_STOCK = 'OUT_OF_STOCK',
-  OVERSTOCKED = 'OVERSTOCKED'
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  DISCONTINUED = 'DISCONTINUED',
+  QUARANTINED = 'QUARANTINED',
+  EXPIRED = 'EXPIRED'
 }
 
 // Sales and Receipt Types

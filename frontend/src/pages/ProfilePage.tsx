@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/context/ManualAuthContext";
 import { apiService } from "@/services/api";
 import { UserProfileResponse } from "@/types/user";
+import { UserRole } from "@/types/roles";
 import {
   AlertCircle,
   Building,
@@ -83,17 +84,17 @@ export const ProfilePage: React.FC = () => {
 
   const getRoleBadgeColor = (roleName: string) => {
     switch (roleName?.toUpperCase()) {
-      case "TENANT_ADMIN":
+      case UserRole.TENANT_ADMIN:
         return "bg-purple-100 text-purple-800";
-      case "SHOP_OWNER":
+      case UserRole.SHOP_OWNER: // Backend sends 'OWNER' which maps to SHOP_OWNER enum
         return "bg-indigo-100 text-indigo-800";
-      case "MANAGER":
+      case UserRole.MANAGER:
         return "bg-blue-100 text-blue-800";
-      case "EMPLOYEE":
+      case UserRole.EMPLOYEE:
         return "bg-green-100 text-green-800";
-      case "INVESTOR":
+      case UserRole.INVESTOR:
         return "bg-yellow-100 text-yellow-800";
-      case "CASHIER":
+      case UserRole.CASHIER:
         return "bg-cyan-100 text-cyan-800";
       default:
         return "bg-gray-100 text-gray-800";

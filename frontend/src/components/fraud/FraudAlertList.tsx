@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  useFraudDetection,
+  useFraudAlerts,
+  useAcknowledgeFraudAlert,
+  useResolveFraudAlert,
   FraudAlert,
   AlertStatus,
   AlertSeverity,
@@ -42,23 +44,28 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
   shopId,
   onViewAlert
 }) => {
-  const {
-    getFraudAlerts,
-    acknowledgeFraudAlert,
-    resolveFraudAlert,
-    markAlertAsFalsePositive,
-    isLoading
-  } = useFraudDetection()
-
-  const [alerts, setAlerts] = useState<FraudAlert[]>([])
-  const [filteredAlerts, setFilteredAlerts] = useState<FraudAlert[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<AlertStatus | 'ALL'>('ALL')
   const [severityFilter, setSeverityFilter] = useState<AlertSeverity | 'ALL'>('ALL')
   const [typeFilter, setTypeFilter] = useState<AlertType | 'ALL'>('ALL')
   const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [filteredAlerts, setFilteredAlerts] = useState<FraudAlert[]>([])
+
+  // Use the actual React Query hooks
+  const { data: alertsData, isLoading, refetch } = useFraudAlerts({
+    shopId,
+    status: statusFilter !== 'ALL' ? statusFilter : undefined,
+    severity: severityFilter !== 'ALL' ? severityFilter : undefined,
+    alertType: typeFilter !== 'ALL' ? typeFilter : undefined,
+    page: currentPage,
+    size: 20
+  })
+
+  const acknowledgeMutation = useAcknowledgeFraudAlert()
+  const resolveMutation = useResolveFraudAlert()
+
+  const alerts = alertsData?.content || []
+  const totalPages = alertsData?.totalPages || 0
 
   // Modal states
   const [selectedAlert, setSelectedAlert] = useState<FraudAlert | null>(null)
@@ -66,36 +73,6 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
   const [isFalsePositiveModalOpen, setIsFalsePositiveModalOpen] = useState(false)
   const [resolutionNotes, setResolutionNotes] = useState('')
   const [falsePositiveReason, setFalsePositiveReason] = useState('')
-  const [isProcessing, setIsProcessing] = useState(false)
-
-  const fetchAlerts = useCallback(async () => {
-    try {
-      setIsRefreshing(true)
-      const result = await getFraudAlerts({
-        shopId,
-        status: statusFilter !== 'ALL' ? statusFilter : undefined,
-        severity: severityFilter !== 'ALL' ? severityFilter : undefined,
-        alertType: typeFilter !== 'ALL' ? typeFilter : undefined,
-        page: currentPage,
-        size: 20,
-        sortBy: 'detectionTimestamp',
-        sortDir: 'desc'
-      })
-
-      if (result) {
-        setAlerts(result.content)
-        setTotalPages(result.totalPages)
-      }
-    } catch (error) {
-      console.error('Failed to fetch fraud alerts:', error)
-    } finally {
-      setIsRefreshing(false)
-    }
-  }, [shopId, statusFilter, severityFilter, typeFilter, currentPage, getFraudAlerts])
-
-  useEffect(() => {
-    fetchAlerts()
-  }, [fetchAlerts])
 
   useEffect(() => {
     filterAlerts()
@@ -177,20 +154,7 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
   }
 
   const handleAcknowledge = async (alert: FraudAlert) => {
-    try {
-      setIsProcessing(true)
-      const result = await acknowledgeFraudAlert(alert.id)
-      if (result) {
-        // Update the alert in the list
-        setAlerts(prev =>
-          prev.map(a => a.id === alert.id ? result : a)
-        )
-      }
-    } catch (error) {
-      console.error('Failed to acknowledge alert:', error)
-    } finally {
-      setIsProcessing(false)
-    }
+    acknowledgeMutation.mutate({ alertId: alert.id })
   }
 
   const handleResolve = (alert: FraudAlert) => {
@@ -202,22 +166,16 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
   const confirmResolve = async () => {
     if (!selectedAlert || !resolutionNotes.trim()) return
 
-    try {
-      setIsProcessing(true)
-      const result = await resolveFraudAlert(selectedAlert.id, resolutionNotes)
-      if (result) {
-        setAlerts(prev =>
-          prev.map(a => a.id === selectedAlert.id ? result : a)
-        )
-        setIsResolveModalOpen(false)
-        setSelectedAlert(null)
-        setResolutionNotes('')
+    resolveMutation.mutate(
+      { alertId: selectedAlert.id, notes: resolutionNotes, falsePositive: false },
+      {
+        onSuccess: () => {
+          setIsResolveModalOpen(false)
+          setSelectedAlert(null)
+          setResolutionNotes('')
+        }
       }
-    } catch (error) {
-      console.error('Failed to resolve alert:', error)
-    } finally {
-      setIsProcessing(false)
-    }
+    )
   }
 
   const handleMarkFalsePositive = (alert: FraudAlert) => {
@@ -229,22 +187,16 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
   const confirmFalsePositive = async () => {
     if (!selectedAlert || !falsePositiveReason.trim()) return
 
-    try {
-      setIsProcessing(true)
-      const result = await markAlertAsFalsePositive(selectedAlert.id, falsePositiveReason)
-      if (result) {
-        setAlerts(prev =>
-          prev.map(a => a.id === selectedAlert.id ? result : a)
-        )
-        setIsFalsePositiveModalOpen(false)
-        setSelectedAlert(null)
-        setFalsePositiveReason('')
+    resolveMutation.mutate(
+      { alertId: selectedAlert.id, notes: falsePositiveReason, falsePositive: true },
+      {
+        onSuccess: () => {
+          setIsFalsePositiveModalOpen(false)
+          setSelectedAlert(null)
+          setFalsePositiveReason('')
+        }
       }
-    } catch (error) {
-      console.error('Failed to mark as false positive:', error)
-    } finally {
-      setIsProcessing(false)
-    }
+    )
   }
 
   const canAcknowledge = (alert: FraudAlert) => {
@@ -277,10 +229,10 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
         </div>
         <Button
           variant="outline"
-          onClick={fetchAlerts}
-          disabled={isRefreshing}
+          onClick={() => refetch()}
+          disabled={isLoading}
         >
-          <RefreshCwIcon className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCwIcon className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -446,7 +398,7 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => handleAcknowledge(alert)}
-                        disabled={isProcessing}
+                        disabled={acknowledgeMutation.isPending || resolveMutation.isPending}
                       >
                         <CheckCircleIcon className="h-4 w-4 mr-2" />
                         Acknowledge
@@ -456,7 +408,7 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
                       <Button
                         size="sm"
                         onClick={() => handleResolve(alert)}
-                        disabled={isProcessing}
+                        disabled={acknowledgeMutation.isPending || resolveMutation.isPending}
                       >
                         <CheckCircleIcon className="h-4 w-4 mr-2" />
                         Resolve
@@ -467,7 +419,7 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => handleMarkFalsePositive(alert)}
-                        disabled={isProcessing}
+                        disabled={acknowledgeMutation.isPending || resolveMutation.isPending}
                       >
                         <XCircleIcon className="h-4 w-4 mr-2" />
                         False Positive
@@ -544,15 +496,15 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
             <Button
               variant="outline"
               onClick={() => setIsResolveModalOpen(false)}
-              disabled={isProcessing}
+              disabled={resolveMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={confirmResolve}
-              disabled={isProcessing || !resolutionNotes.trim()}
+              disabled={resolveMutation.isPending || !resolutionNotes.trim()}
             >
-              {isProcessing && <LoadingSpinner size="sm" className="mr-2" />}
+              {resolveMutation.isPending && <LoadingSpinner size="sm" className="mr-2" />}
               Resolve Alert
             </Button>
           </DialogFooter>
@@ -587,15 +539,15 @@ export const FraudAlertList: React.FC<FraudAlertListProps> = ({
             <Button
               variant="outline"
               onClick={() => setIsFalsePositiveModalOpen(false)}
-              disabled={isProcessing}
+              disabled={resolveMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={confirmFalsePositive}
-              disabled={isProcessing || !falsePositiveReason.trim()}
+              disabled={resolveMutation.isPending || !falsePositiveReason.trim()}
             >
-              {isProcessing && <LoadingSpinner size="sm" className="mr-2" />}
+              {resolveMutation.isPending && <LoadingSpinner size="sm" className="mr-2" />}
               Mark False Positive
             </Button>
           </DialogFooter>

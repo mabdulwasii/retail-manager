@@ -22,7 +22,7 @@ import {
 } from '@/hooks/useRoles'
 import { RoleUpdateRequest, Permission } from '@/types/role'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission as permissions } from '@/types/permissions'
 
 const roleSchema = yup.object().shape({
   name: yup
@@ -39,30 +39,38 @@ const roleSchema = yup.object().shape({
 type RoleFormData = yup.InferType<typeof roleSchema>
 
 export const EditRolePage: React.FC = () => {
-  const { roleId } = useParams<{ roleId: string }>()
-  const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const { roleId } = useParams<{ roleId: string }>();
+  const navigate = useNavigate();
+  const { hasPermission, hasAnyPermission } = useAuth();
 
-  const { data: role, isLoading: loadingRole, isError, error } = useRole(roleId)
-  const { data: allPermissions, isLoading: loadingPermissions } = usePermissions()
-  const updateRoleMutation = useUpdateRole()
-  const assignPermissionsMutation = useAssignPermissions()
-  const removePermissionsMutation = useRemovePermissions()
+  const {
+    data: role,
+    isLoading: loadingRole,
+    isError,
+    error,
+  } = useRole(roleId);
+  const { data: allPermissions, isLoading: loadingPermissions } =
+    usePermissions();
+  const updateRoleMutation = useUpdateRole();
+  const assignPermissionsMutation = useAssignPermissions();
+  const removePermissionsMutation = useRemovePermissions();
 
-  const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set())
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
+    new Set()
+  );
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Only TENANT_ADMIN can access
-  const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  // Check if user can update roles
+  const canUpdateRoles = hasPermission(permissions.ROLE_UPDATE);
 
   React.useEffect(() => {
-    if (!canManageRoles) {
-      navigate('/')
+    if (!canUpdateRoles) {
+      navigate("/");
     }
-  }, [canManageRoles, navigate])
+  }, [canUpdateRoles, navigate]);
 
-  if (!canManageRoles) {
-    return null
+  if (!canUpdateRoles) {
+    return null;
   }
 
   const {
@@ -74,103 +82,107 @@ export const EditRolePage: React.FC = () => {
     setValue,
   } = useForm<RoleFormData>({
     resolver: yupResolver(roleSchema),
-    mode: 'onChange', // Validate on change
+    mode: "onChange", // Validate on change
     defaultValues: {
-      name: '',
-      description: '', // Always initialize with empty string, not undefined
+      name: "",
+      description: "", // Always initialize with empty string, not undefined
     },
-  })
+  });
 
   // Watch form values
-  const watchedValues = watch()
+  const watchedValues = watch();
 
   useEffect(() => {
     if (role) {
       // Reset form with loaded data
-      reset({
-        name: role.name,
-        description: role.description || '',
-      }, {
-        keepDefaultValues: false,
-      })
-      
-      // Manually set description to ensure it's tracked
-      setValue('description', role.description || '', { shouldDirty: false })
+      reset(
+        {
+          name: role.name,
+          description: role.description || "",
+        },
+        {
+          keepDefaultValues: false,
+        }
+      );
 
-      setSelectedPermissions(new Set(role.permissions || []))
+      // Manually set description to ensure it's tracked
+      setValue("description", role.description || "", { shouldDirty: false });
+
+      setSelectedPermissions(new Set(role.permissions || []));
     }
-  }, [role, reset, setValue])
+  }, [role, reset, setValue]);
 
   const onSubmit = async (data: RoleFormData) => {
-    if (!roleId || !role) return
+    if (!roleId || !role) return;
 
     try {
       // API only accepts description for update
       const roleData: RoleUpdateRequest = {
         name: data.name,
-        description: data.description || role.description || '',
-      }
+        description: data.description || role.description || "",
+      };
 
-      await updateRoleMutation.mutateAsync({ roleId, data: roleData })
+      await updateRoleMutation.mutateAsync({ roleId, data: roleData });
     } catch (error) {
-      console.error('Failed to update role:', error)
+      console.error("Failed to update role:", error);
     }
-  }
+  };
 
   const handleSavePermissions = async () => {
-    if (!roleId || !role) return
+    if (!roleId || !role) return;
 
     try {
       // API expects ALL selected permission names (replaces entire set)
-      const selectedPermissionNames = Array.from(selectedPermissions)
-      
+      const selectedPermissionNames = Array.from(selectedPermissions);
+
       // Send all selected permissions as permissionIdentifiers
-      await assignPermissionsMutation.mutateAsync({ 
-        roleId, 
-        permissionIds: selectedPermissionNames
-      })
+      await assignPermissionsMutation.mutateAsync({
+        roleId,
+        permissionIds: selectedPermissionNames,
+      });
     } catch (error) {
-      console.error('Failed to update permissions:', error)
+      console.error("Failed to update permissions:", error);
     }
-  }
+  };
 
   const handleTogglePermission = (permissionName: string) => {
-    const newSet = new Set(selectedPermissions)
+    const newSet = new Set(selectedPermissions);
     if (newSet.has(permissionName)) {
-      newSet.delete(permissionName)
+      newSet.delete(permissionName);
     } else {
-      newSet.add(permissionName)
+      newSet.add(permissionName);
     }
-    setSelectedPermissions(newSet)
-  }
+    setSelectedPermissions(newSet);
+  };
 
   const handleCancel = () => {
-    navigate('/admin/roles')
-  }
+    navigate("/admin/roles");
+  };
 
   // Group permissions by category
   const groupedPermissions = React.useMemo(() => {
-    if (!allPermissions) return {}
+    if (!allPermissions) return {};
 
-    const groups: Record<string, Permission[]> = {}
+    const groups: Record<string, Permission[]> = {};
 
     allPermissions.forEach((permission) => {
-      const category = permission.category || permission.name.split('_')[0] || 'OTHER'
+      const category =
+        permission.category || permission.name.split("_")[0] || "OTHER";
       if (!groups[category]) {
-        groups[category] = []
+        groups[category] = [];
       }
-      groups[category].push(permission)
-    })
+      groups[category].push(permission);
+    });
 
-    return groups
-  }, [allPermissions])
+    return groups;
+  }, [allPermissions]);
 
   // Filter permissions by search
   const filteredGroups = React.useMemo(() => {
-    if (!searchQuery) return groupedPermissions
+    if (!searchQuery) return groupedPermissions;
 
-    const query = searchQuery.toLowerCase()
-    const filtered: Record<string, Permission[]> = {}
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<string, Permission[]> = {};
 
     Object.entries(groupedPermissions).forEach(([category, permissions]) => {
       const matchedPermissions = permissions.filter(
@@ -178,43 +190,46 @@ export const EditRolePage: React.FC = () => {
           p.name.toLowerCase().includes(query) ||
           p.description?.toLowerCase().includes(query) ||
           category.toLowerCase().includes(query)
-      )
+      );
       if (matchedPermissions.length > 0) {
-        filtered[category] = matchedPermissions
+        filtered[category] = matchedPermissions;
       }
-    })
+    });
 
-    return filtered
-  }, [groupedPermissions, searchQuery])
+    return filtered;
+  }, [groupedPermissions, searchQuery]);
 
-  const isLoading = loadingRole || loadingPermissions
+  const isLoading = loadingRole || loadingPermissions;
   const hasPermissionChanges =
-    role && (selectedPermissions.size !== role.permissions?.length ||
-    Array.from(selectedPermissions).some((name) => !role.permissions?.includes(name)))
+    role &&
+    (selectedPermissions.size !== role.permissions?.length ||
+      Array.from(selectedPermissions).some(
+        (name) => !role.permissions?.includes(name)
+      ));
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   if (isError || !role) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => navigate('/admin/roles')}>
+        <Button variant="ghost" onClick={() => navigate("/admin/roles")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Roles
         </Button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error?.message || 'Role not found'}
+            {error?.message || "Role not found"}
           </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   return (
@@ -235,7 +250,10 @@ export const EditRolePage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight">Edit Role</h1>
                 {role.isSystem && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-800"
+                  >
                     System Role
                   </Badge>
                 )}
@@ -263,14 +281,16 @@ export const EditRolePage: React.FC = () => {
                 </Label>
                 <Input
                   id="name"
-                  {...register('name')}
+                  {...register("name")}
                   placeholder="SHOP_MANAGER"
                   aria-invalid={!!errors.name}
                   disabled={role.isSystem}
                   className="font-mono"
                 />
                 {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
@@ -284,16 +304,21 @@ export const EditRolePage: React.FC = () => {
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                value={watchedValues.description || ''}
+                value={watchedValues.description || ""}
                 onChange={(e) => {
-                  setValue('description', e.target.value, { shouldDirty: true, shouldValidate: true })
+                  setValue("description", e.target.value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
                 }}
                 placeholder="Manages shop operations and staff"
                 rows={3}
                 aria-invalid={!!errors.description}
               />
               {errors.description && (
-                <p className="text-sm text-destructive">{errors.description.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.description.message}
+                </p>
               )}
             </div>
 
@@ -313,9 +338,11 @@ export const EditRolePage: React.FC = () => {
             <div className="flex justify-end">
               <Button
                 type="submit"
-                disabled={isSubmitting || updateRoleMutation.isPending || !isDirty}
+                disabled={
+                  isSubmitting || updateRoleMutation.isPending || !isDirty
+                }
               >
-                {(isSubmitting || updateRoleMutation.isPending) ? (
+                {isSubmitting || updateRoleMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
@@ -345,9 +372,7 @@ export const EditRolePage: React.FC = () => {
                 Select permissions to assign to this role
               </CardDescription>
             </div>
-            <Badge variant="outline">
-              {selectedPermissions.size} selected
-            </Badge>
+            <Badge variant="outline">{selectedPermissions.size} selected</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -374,7 +399,9 @@ export const EditRolePage: React.FC = () => {
                     >
                       <Checkbox
                         checked={selectedPermissions.has(permission.name)}
-                        onCheckedChange={() => handleTogglePermission(permission.name)}
+                        onCheckedChange={() =>
+                          handleTogglePermission(permission.name)
+                        }
                         className="mt-0.5"
                       />
                       <div className="flex-1 space-y-1">
@@ -404,7 +431,9 @@ export const EditRolePage: React.FC = () => {
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              onClick={() => setSelectedPermissions(new Set(role.permissions || []))}
+              onClick={() =>
+                setSelectedPermissions(new Set(role.permissions || []))
+              }
               disabled={!hasPermissionChanges}
             >
               Reset
@@ -417,7 +446,8 @@ export const EditRolePage: React.FC = () => {
                 removePermissionsMutation.isPending
               }
             >
-              {(assignPermissionsMutation.isPending || removePermissionsMutation.isPending) ? (
+              {assignPermissionsMutation.isPending ||
+              removePermissionsMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
@@ -433,5 +463,5 @@ export const EditRolePage: React.FC = () => {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

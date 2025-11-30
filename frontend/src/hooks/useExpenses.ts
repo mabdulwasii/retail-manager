@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
+import { Permission } from '@/types/permissions'
 import { expenseService } from '@/services/expenseService'
 import { toast } from 'sonner'
 
@@ -70,14 +71,14 @@ export interface ExpenseFilter {
 
 // Query hook for fetching expenses
 export const useExpenses = (shopId?: string, filter?: ExpenseFilter) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission, user } = useAuth()
   const targetShopId = shopId || user?.shopId
 
   return useQuery({
     queryKey: ['expenses', targetShopId, filter],
     queryFn: () => expenseService.getExpenses(targetShopId!, filter),
-    enabled: !!(isAuthenticated && targetShopId && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'ACCOUNTANT'].includes(r.name))),
+    enabled: !!(isAuthenticated && targetShopId && 
+      hasAnyPermission([Permission.EXPENSE_READ, Permission.EXPENSE_LIST, Permission.EXPENSE_SUMMARY])),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -85,13 +86,13 @@ export const useExpenses = (shopId?: string, filter?: ExpenseFilter) => {
 
 // Query hook for fetching expense by ID
 export const useExpenseById = (expenseId?: string) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
 
   return useQuery({
     queryKey: ['expenses', expenseId],
     queryFn: () => expenseService.getExpenseById(expenseId!),
-    enabled: !!(isAuthenticated && expenseId && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'ACCOUNTANT'].includes(r.name))),
+    enabled: !!(isAuthenticated && expenseId && 
+      hasAnyPermission([Permission.EXPENSE_READ, Permission.EXPENSE_LIST])),
     staleTime: 3 * 60 * 1000,
     retry: 1
   })

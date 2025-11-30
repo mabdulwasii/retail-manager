@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Edit, Trash2, Package, DollarSign, Tag, Barcode, Loader2 } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Package, Tag, Barcode, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,12 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useCurrency } from '@/hooks/useCurrency'
 
 export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
-  const { formatCurrency } = useCurrency()
   
   const { data: product, isLoading, error } = useProduct(productId)
   const deleteProductMutation = useDeleteProduct()
@@ -55,13 +53,6 @@ export const ProductDetailPage: React.FC = () => {
     )
   }
 
-  const calculateProfitMargin = () => {
-    if (!product || !product.costPrice) return 'N/A'
-    if (product.price <= product.costPrice) return '0%'
-    
-    const margin = ((product.price - product.costPrice) / product.price) * 100
-    return `${margin.toFixed(1)}%`
-  }
 
   if (isLoading) {
     return (
@@ -142,52 +133,52 @@ export const ProductDetailPage: React.FC = () => {
 
       {/* Product Information Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Price Card */}
+        {/* Total Stock Card */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Selling Price</p>
+                <p className="text-sm font-medium text-gray-600">Total Stock</p>
                 <p className="text-2xl font-bold mt-1">
-                  {formatCurrency(product.price)}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-green-50">
-                <DollarSign className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Cost Price Card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Cost Price</p>
-                <p className="text-2xl font-bold mt-1">
-                  {product.costPrice ? formatCurrency(product.costPrice) : 'N/A'}
+                  {product.totalStock ?? 0}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-blue-50">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+                <Package className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Profit Margin Card */}
+        {/* Available Stock Card */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Profit Margin</p>
+                <p className="text-sm font-medium text-gray-600">Available Stock</p>
                 <p className="text-2xl font-bold mt-1">
-                  {calculateProfitMargin()}
+                  {product.availableStock ?? 0}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-purple-50">
-                <Tag className="h-6 w-6 text-purple-600" />
+              <div className="p-3 rounded-lg bg-green-50">
+                <Package className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Reserved Stock Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Reserved Stock</p>
+                <p className="text-2xl font-bold mt-1">
+                  {product.reservedStock ?? 0}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-orange-50">
+                <Package className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -201,8 +192,8 @@ export const ProductDetailPage: React.FC = () => {
                 <p className="text-sm font-medium text-gray-600">Category</p>
                 <p className="text-lg font-bold mt-1">{product.categoryName}</p>
               </div>
-              <div className="p-3 rounded-lg bg-orange-50">
-                <Package className="h-6 w-6 text-orange-600" />
+              <div className="p-3 rounded-lg bg-purple-50">
+                <Tag className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </CardContent>

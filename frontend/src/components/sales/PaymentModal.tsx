@@ -78,15 +78,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const { formatCurrency, parseCurrency } = useCurrency()
   const [paymentMethod, setPaymentMethod] = useState('CASH')
-  const [amountPaid, setAmountPaid] = useState(cartSummary.total.toString())
   const [discount, setDiscount] = useState('0')
   const [notes, setNotes] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const discountAmount = parseCurrency(discount) || 0
   const finalTotal = Math.max(0, cartSummary.total - discountAmount)
-  const paidAmount = parseCurrency(amountPaid) || 0
-  const changeAmount = Math.max(0, paidAmount - finalTotal)
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
@@ -99,27 +96,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       errors.discount = 'Discount cannot exceed total amount'
     }
 
-    if (paymentMethod === 'CASH') {
-      if (paidAmount < finalTotal) {
-        errors.amountPaid = 'Amount paid must be at least the total amount'
-      }
-    } else {
-      if (paidAmount !== finalTotal) {
-        setAmountPaid(finalTotal.toString())
-      }
-    }
-
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
   }
 
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method)
-
-    // For non-CASH payments, amount paid should equal the final total
-    if (method !== 'CASH') {
-      setAmountPaid(finalTotal.toString())
-    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -131,7 +113,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
     onPaymentComplete({
       method: paymentMethod,
-      amountPaid: paidAmount,
+      amountPaid: finalTotal,
       discount: discountAmount,
       notes: notes.trim()
     })
@@ -142,7 +124,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       onClose()
       // Reset form
       setPaymentMethod('CASH')
-      setAmountPaid(cartSummary.total.toString())
       setDiscount('0')
       setNotes('')
       setValidationErrors({})
@@ -189,13 +170,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <span>Total</span>
               <span className="text-primary">{formatCurrency(finalTotal)}</span>
             </div>
-
-            {paymentMethod === 'CASH' && changeAmount > 0 && (
-              <div className="flex justify-between text-sm bg-blue-500/10 dark:bg-blue-500/20 rounded-lg p-3 mt-2">
-                <span className="text-blue-700 dark:text-blue-300 font-medium">Change Due</span>
-                <span className="text-blue-700 dark:text-blue-300 font-bold">{formatCurrency(changeAmount)}</span>
-              </div>
-            )}
           </div>
 
           {/* Discount */}
@@ -257,29 +231,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               })}
             </RadioGroup>
           </div>
-
-          {/* Amount Paid (for CASH payments) */}
-          {paymentMethod === 'CASH' && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-              <Label htmlFor="amountPaid" className="text-sm font-semibold">Amount Paid (Cash)</Label>
-              <NumericInput
-                id="amountPaid"
-                value={amountPaid}
-                onValueChange={(values) => {
-                  setAmountPaid(values.value || '')
-                }}
-                placeholder={`Minimum: ${finalTotal.toFixed(2)}`}
-                className="h-11 text-lg font-semibold"
-                decimalScale={2}
-                fixedDecimalScale={false}
-                allowNegative={false}
-                autoFocus
-              />
-              {validationErrors.amountPaid && (
-                <p className="text-sm text-destructive font-medium">{validationErrors.amountPaid}</p>
-              )}
-            </div>
-          )}
 
           {/* Notes */}
           <div className="space-y-2">

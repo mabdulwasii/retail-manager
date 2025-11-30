@@ -12,7 +12,7 @@ import { ArrowLeft, Shield, Loader2, CheckCircle2 } from 'lucide-react'
 import { useCreateRole } from '@/hooks/useRoles'
 import { RoleCreateRequest } from '@/types/role'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 
 // Validation schema
 const roleSchema = yup.object().shape({
@@ -31,20 +31,20 @@ type RoleFormData = yup.InferType<typeof roleSchema>
 
 export const CreateRolePage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasAnyRole, user } = useAuth()
+  const { hasPermission, hasAnyPermission, user } = useAuth()
   const createRoleMutation = useCreateRole()
 
-  // Only TENANT_ADMIN can access
-  const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
-  const isSystemAdmin = hasAnyRole([UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  // Check if user can create roles
+  const canCreateRoles = hasPermission(Permission.ROLE_CREATE)
+  const isSystemAdmin = hasAnyPermission([Permission.SYSTEM_ADMIN, Permission.TENANT_MANAGE])
 
   React.useEffect(() => {
-    if (!canManageRoles) {
+    if (!canCreateRoles) {
       navigate('/')
     }
-  }, [canManageRoles, navigate])
+  }, [canCreateRoles, navigate])
 
-  if (!canManageRoles) {
+  if (!canCreateRoles) {
     return null
   }
 

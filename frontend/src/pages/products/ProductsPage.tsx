@@ -23,6 +23,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { ShopSelector } from "@/components/ui/shop-selector";
+import { useShopContext } from "@/context/ShopContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   useDeleteProduct,
@@ -31,12 +33,13 @@ import {
 } from "@/hooks/useProducts";
 import { Product, ProductStatus } from "@/types/api";
 import { Plus, Tag, ShoppingCart } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const permissions = usePermissions();
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext();
 
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -53,13 +56,21 @@ export const ProductsPage: React.FC = () => {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   // Fetch products with filters
-  const { products, totalPages, totalElements, isLoading } = useProducts({
+  const { products, totalPages, totalElements, isLoading, refetch } = useProducts({
     page: currentPage,
     size: 10,
+    shopId: selectedShopId || undefined,
     ...(filters.search && { search: filters.search }),
     ...(filters.categoryId && { categoryId: filters.categoryId }),
     ...(filters.status && { status: filters.status }),
   });
+
+  // Refetch when shop changes
+  useEffect(() => {
+    if (selectedShopId) {
+      refetch();
+    }
+  }, [selectedShopId, refetch]);
 
   const deleteProductMutation = useDeleteProduct();
   const updateStatusMutation = useUpdateProductStatus();
@@ -124,7 +135,14 @@ export const ProductsPage: React.FC = () => {
             Manage your product catalog and inventory
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
           <Button 
             variant="outline"
             onClick={() => navigate("/pos")}

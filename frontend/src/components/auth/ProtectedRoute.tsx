@@ -1,58 +1,84 @@
-import React from 'react'
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/context/ManualAuthContext'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/context/ManualAuthContext";
+import { Permission } from "@/types/permissions";
+import React from "react";
+import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
-  roles?: string[]
-  requireAll?: boolean
+  children: React.ReactNode;
+  permissions?: Permission[];
+  requireAll?: boolean;
+  roles?: string[];
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  roles = [],
+  permissions = [],
   requireAll = false,
+  roles = [],
 }) => {
-  const { isInitialized, isAuthenticated, hasRole, hasAnyRole, user } = useAuth()
+  const {
+    isInitialized,
+    isAuthenticated,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
+    hasAnyRole,
+    user,
+  } = useAuth();
 
-  // Wait for auth to initialize before checking permissions
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
       </div>
-    )
+    );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  // Check access synchronously with loaded user data
+  const arePermissionsLoading =
+    user.roles.length > 0 &&
+    user.roles.every((role) => role.permissions.length === 0);
+  if (arePermissionsLoading && (permissions.length > 0 || roles.length > 0)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   const hasAccess = (): boolean => {
-    // No roles required means accessible to all authenticated users
-    if (roles.length === 0) return true
-
-    if (requireAll) {
-      return roles.every(role => hasRole(role))
-    } else {
-      return hasAnyRole(roles)
+    if (permissions.length > 0) {
+      if (requireAll) {
+        return hasAllPermissions(permissions);
+      } else {
+        return hasAnyPermission(permissions);
+      }
     }
-  }
 
-  // Immediately check access - no delay
+    if (roles.length > 0) {
+      if (requireAll) {
+        return roles.every((role) => hasRole(role));
+      } else {
+        return hasAnyRole(roles);
+      }
+    }
+
+    return true;
+  };
+
   if (!hasAccess()) {
     return (
       <Navigate
         to="/unauthorized"
-        state={{ requiredRoles: roles }}
+        state={{ requiredPermissions: permissions, requiredRoles: roles }}
         replace
       />
-    )
+    );
   }
 
-  // Only render children after all checks pass
-  return <>{children}</>
-}
+  return <>{children}</>;
+};

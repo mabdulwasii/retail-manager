@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { CurrencySelector } from '@/components/ui/currency-selector'
+import { Permission } from '@/types/permissions'
 import {
   LayoutDashboard,
   Store,
@@ -29,7 +30,8 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
-  roles: string[]
+  /** List of permissions required to access this nav item. User needs at least one of these permissions. Empty array means available to all authenticated users. */
+  permissions: Permission[]
 }
 
 const navItems: NavItem[] = [
@@ -37,79 +39,79 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: [], // Available to all authenticated users
+    permissions: [], // Available to all authenticated users
   },
   {
     title: 'Shops',
     href: '/shops',
     icon: Store,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER'],
+    permissions: [Permission.SHOP_LIST, Permission.SHOP_MANAGE],
   },
   {
     title: 'Products',
     href: '/products',
     icon: Package,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE'],
+    permissions: [Permission.PRODUCT_LIST],
   },
   // {
   //   title: 'Categories',
   //   href: '/categories',
   //   icon: Tag,
-  //   roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE'],
+  //   permissions: [Permission.CATEGORY_LIST],
   // },
   {
     title: 'Inventory',
     href: '/inventory',
     icon: Warehouse,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'INVENTORY_MANAGER'],
+    permissions: [Permission.INVENTORY_LIST],
   },
   {
     title: 'Sales',
     href: '/sales',
     icon: ShoppingCart,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'CASHIER', 'SALES_MANAGER'],
+    permissions: [Permission.SALES_CREATE, Permission.SALES_READ, Permission.SALES_LIST],
   },
   {
     title: 'Receipts',
     href: '/receipts',
     icon: Receipt,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'CASHIER'],
+    permissions: [Permission.RECEIPT_LIST],
   },
   {
     title: 'Investments',
     href: '/investments',
     icon: TrendingUp,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'INVESTOR'],
+    permissions: [Permission.INVESTMENT_LIST, Permission.INVESTMENT_VIEW],
   },
   {
     title: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'ACCOUNTANT'],
+    permissions: [Permission.ANALYTICS_VIEW, Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_INVESTMENT_VIEW],
   },
   {
     title: 'Audit Logs',
     href: '/audit',
     icon: FileText,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR'],
+    permissions: [Permission.AUDIT_LOG_VIEW, Permission.AUDIT_LOG_LIST, Permission.AUDIT_LOG_VIEW_SHOP, Permission.AUDIT_LOG_VIEW_TENANT],
   },
   {
     title: 'Users',
     href: '/users',
     icon: Users,
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN', 'SHOP_OWNER', 'MANAGER'],
+    permissions: [Permission.USER_LIST, Permission.USER_MANAGE],
   },
   {
     title: 'Role Management',
     href: '/admin/roles',
     icon: Shield,
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN'],
+    permissions: [Permission.ROLE_LIST, Permission.ROLE_READ],
   },
 ]
 
 export const Sidebar: React.FC = () => {
   const location = useLocation()
-  const { hasAnyRole } = useAuth()
+  const { hasAnyPermission } = useAuth()
   const { close } = useSidebar()
   const { theme, setTheme } = useTheme()
 
@@ -118,8 +120,10 @@ export const Sidebar: React.FC = () => {
   }
 
   const filteredNavItems = navItems.filter(item => {
-    if (item.roles.length === 0) return true
-    return hasAnyRole(item.roles)
+    // If no permissions required, show to all authenticated users
+    if (item.permissions.length === 0) return true
+    // Check if user has at least one of the required permissions
+    return hasAnyPermission(item.permissions)
   })
 
   // Handle navigation on mobile - close sidebar after clicking a link

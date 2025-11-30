@@ -1,142 +1,156 @@
-import React, { useState, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft,
-  Key,
-  Shield,
-  Loader2,
-  AlertCircle,
-  Search,
-  Check,
-  X,
-  Download,
-  Filter,
-} from 'lucide-react'
-import { useRoles, usePermissions } from '@/hooks/useRoles'
-import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
-import { Permission } from '@/types/role'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
+import { useAuth } from "@/context/ManualAuthContext";
+import { usePermissions, useRoles } from "@/hooks/useRoles";
+import { Permission as AuthPermission } from "@/types/permissions";
+import { Permission } from "@/types/role";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  Download,
+  Filter,
+  Key,
+  Loader2,
+  Search,
+  Shield,
+  X,
+} from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export const PermissionsMatrixPage: React.FC = () => {
-  const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const navigate = useNavigate();
+  const { hasPermission: hasPermissions } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const { data: roles, isLoading: loadingRoles } = useRoles()
-  const { data: permissions, isLoading: loadingPermissions } = usePermissions()
+  const { data: roles, isLoading: loadingRoles } = useRoles();
+  const { data: permissions, isLoading: loadingPermissions } = usePermissions();
 
-  // Only TENANT_ADMIN can access
-  const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  const canViewPermissions = hasPermissions(AuthPermission.PERMISSION_LIST);
 
   React.useEffect(() => {
-    if (!canManageRoles) {
-      navigate('/')
+    if (!canViewPermissions) {
+      navigate("/");
     }
-  }, [canManageRoles, navigate])
+  }, [canViewPermissions, navigate]);
 
-  if (!canManageRoles) {
-    return null
+  if (!canViewPermissions) {
+    return null;
   }
 
   // Group permissions by category
   const permissionsByCategory = useMemo(() => {
-    if (!permissions) return {}
+    if (!permissions) return {};
 
-    const groups: Record<string, Permission[]> = {}
+    const groups: Record<string, Permission[]> = {};
     permissions.forEach((permission) => {
-      const category = permission.category || permission.name.split('_')[0] || 'OTHER'
+      const category =
+        permission.category || permission.name.split("_")[0] || "OTHER";
       if (!groups[category]) {
-        groups[category] = []
+        groups[category] = [];
       }
-      groups[category].push(permission)
-    })
+      groups[category].push(permission);
+    });
 
-    return groups
-  }, [permissions])
+    return groups;
+  }, [permissions]);
 
   // Get all categories
   const categories = useMemo(() => {
-    return ['all', ...Object.keys(permissionsByCategory).sort()]
-  }, [permissionsByCategory])
+    return ["all", ...Object.keys(permissionsByCategory).sort()];
+  }, [permissionsByCategory]);
 
   // Filter permissions
   const filteredPermissions = useMemo(() => {
-    let filtered = permissions || []
+    let filtered = permissions || [];
 
     // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = permissionsByCategory[selectedCategory] || []
+    if (selectedCategory !== "all") {
+      filtered = permissionsByCategory[selectedCategory] || [];
     }
 
     // Filter by search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(query) ||
           p.description?.toLowerCase().includes(query)
-      )
+      );
     }
 
-    return filtered
-  }, [permissions, permissionsByCategory, selectedCategory, searchQuery])
+    return filtered;
+  }, [permissions, permissionsByCategory, selectedCategory, searchQuery]);
 
   // Check if role has permission (permissions are strings, not objects)
   const hasPermission = (roleId: string, permissionName: string): boolean => {
-    const role = roles?.find((r) => r.id === roleId)
-    return role?.permissions?.includes(permissionName) || false
-  }
+    const role = roles?.find((r) => r.id === roleId);
+    return role?.permissions?.includes(permissionName) || false;
+  };
 
   // Export to CSV
   const handleExport = () => {
-    if (!roles || !filteredPermissions) return
+    if (!roles || !filteredPermissions) return;
 
-    const headers = ['Permission', ...roles.map((r) => r.name)]
+    const headers = ["Permission", ...roles.map((r) => r.name)];
     const rows = filteredPermissions.map((permission) => [
       permission.name,
-      ...roles.map((role) => (hasPermission(role.id, permission.name) ? 'Yes' : 'No')),
-    ])
+      ...roles.map((role) =>
+        hasPermission(role.id, permission.name) ? "Yes" : "No"
+      ),
+    ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `permissions-matrix-${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  }
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `permissions-matrix-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
 
-  const isLoading = loadingRoles || loadingPermissions
+  const isLoading = loadingRoles || loadingPermissions;
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <Button variant="ghost" className="w-fit" onClick={() => navigate('/admin/roles')}>
+        <Button
+          variant="ghost"
+          className="w-fit"
+          onClick={() => navigate("/admin/roles")}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Roles
         </Button>
@@ -162,7 +176,9 @@ export const PermissionsMatrixPage: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Permissions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Permissions
+            </CardTitle>
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -192,9 +208,12 @@ export const PermissionsMatrixPage: React.FC = () => {
             <Filter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredPermissions.length}</div>
+            <div className="text-2xl font-bold">
+              {filteredPermissions.length}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {selectedCategory !== 'all' ? selectedCategory : 'All'} permissions
+              {selectedCategory !== "all" ? selectedCategory : "All"}{" "}
+              permissions
             </p>
           </CardContent>
         </Card>
@@ -213,14 +232,17 @@ export const PermissionsMatrixPage: React.FC = () => {
                 className="pl-9"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
+                    {category === "all" ? "All Categories" : category}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -234,7 +256,8 @@ export const PermissionsMatrixPage: React.FC = () => {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            No permissions found matching your criteria. Try adjusting your filters.
+            No permissions found matching your criteria. Try adjusting your
+            filters.
           </AlertDescription>
         </Alert>
       ) : (
@@ -279,11 +302,15 @@ export const PermissionsMatrixPage: React.FC = () => {
                   {filteredPermissions.map((permission, idx) => (
                     <tr
                       key={permission.id}
-                      className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
+                      className={
+                        idx % 2 === 0 ? "bg-background" : "bg-muted/20"
+                      }
                     >
                       <td className="p-3 border-r sticky left-0 bg-inherit z-10">
                         <div className="space-y-1">
-                          <p className="font-medium text-sm">{permission.name}</p>
+                          <p className="font-medium text-sm">
+                            {permission.name}
+                          </p>
                           {permission.description && (
                             <p className="text-xs text-muted-foreground">
                               {permission.description}
@@ -341,5 +368,5 @@ export const PermissionsMatrixPage: React.FC = () => {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

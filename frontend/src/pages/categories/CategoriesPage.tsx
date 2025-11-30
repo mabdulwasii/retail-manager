@@ -6,16 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CategoryList, CategoryForm } from '@/components/categories'
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories'
 import { Category } from '@/services/categoryService'
-import { useAuth } from '@/context/ManualAuthContext'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { usePermissions } from '@/hooks/usePermissions'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ShopSelector } from '@/components/ui/shop-selector'
+import { useShopContext } from '@/context/ShopContext'
 import { useActiveShops } from '@/hooks/useShops'
 
 export const CategoriesPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user, hasAnyRole } = useAuth()
   const permissions = usePermissions()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
   
   // Check permissions based on backend permission matrix
   const canCreateCategory = permissions.canCreateCategory()
@@ -23,27 +23,14 @@ export const CategoriesPage: React.FC = () => {
   const canDeleteCategory = permissions.canDeleteCategory() 
   const canViewCategories = permissions.canViewCategories()
   
-  // Check if user can manage multiple shops (Tenant Admin or System Admin)
-  const canManageMultipleShops = hasAnyRole(['TENANT_ADMIN', 'SYSTEM_ADMIN'])
-  
-  // State for shop selection (for multi-shop admins)
-  const [selectedShopId, setSelectedShopId] = useState<string>(user?.shopId || '')
-  
   // Fetch shops for multi-shop admins
   const { data: shops = [] } = useActiveShops()
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  
-  // Update selected shop when user changes
-  useEffect(() => {
-    if (!canManageMultipleShops && user?.shopId) {
-      setSelectedShopId(user.shopId)
-    }
-  }, [user?.shopId, canManageMultipleShops])
 
-  // Fetch categories - ensure refetch on mount
-  const { data: categories = [], isLoading, refetch, error } = useCategories(false)
+  // Fetch categories - ensure refetch on mount, pass selectedShopId
+  const { data: categories = [], isLoading, refetch, error } = useCategories(false, selectedShopId || undefined)
   const deleteMutation = useDeleteCategory()
   
   // Force refetch when page mounts or shop changes
@@ -121,19 +108,12 @@ export const CategoriesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2 items-center">
-          {canManageMultipleShops && shops.length > 0 && (
-            <Select value={selectedShopId} onValueChange={setSelectedShopId}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select shop" />
-              </SelectTrigger>
-              <SelectContent>
-                {shops.map((shop) => (
-                  <SelectItem key={shop.id} value={shop.id}>
-                    {shop.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
           )}
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />

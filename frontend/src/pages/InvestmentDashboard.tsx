@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useInvestment, Investment } from '@/hooks/useInvestment'
-import { UserRole, RoleGroups } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 
 // Investment components
 import { InvestmentSummaryCards } from '@/components/investment/InvestmentSummaryCards'
@@ -33,18 +33,16 @@ export const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({
   shopId,
   viewMode: propViewMode
 }) => {
-  const { user } = useAuth()
+  const { hasAnyPermission } = useAuth()
   const { formatCurrency } = useCurrency()
   const { getInvestmentSummary, isLoading } = useInvestment()
 
-  // Determine view mode based on user role or prop
+  // Determine view mode based on user permissions or prop
   const getViewMode = () => {
     if (propViewMode) return propViewMode
-    if (!user) return 'investor'
-
-    const roles = user.roles || []
-    if (roles.includes(UserRole.TENANT_ADMIN) || roles.includes(UserRole.SHOP_OWNER)) return 'admin'
-    if (roles.includes(UserRole.MANAGER)) return 'shop'
+    
+    if (hasAnyPermission([Permission.TENANT_MANAGE, Permission.SHOP_MANAGE, Permission.INVESTMENT_CREATE])) return 'admin'
+    if (hasAnyPermission([Permission.SHOP_LIST, Permission.INVESTMENT_VIEW])) return 'shop'
     return 'investor'
   }
 

@@ -6,30 +6,33 @@ import { ProductForm, ProductFormData } from '@/components/products/ProductForm'
 import { useCreateProduct } from '@/hooks/useProducts'
 import { useAuth } from '@/context/ManualAuthContext'
 import { toast } from 'sonner'
+import { ShopSelector } from '@/components/ui/shop-selector'
+import { useShopContext } from '@/context/ShopContext'
 
 export const CreateProductPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const createProductMutation = useCreateProduct()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
+  
+  // Use selectedShopId for multi-shop users, fall back to user.shopId for single-shop users
+  const effectiveShopId = canManageMultipleShops ? selectedShopId : user?.shopId
+  const createProductMutation = useCreateProduct(effectiveShopId || undefined)
 
   const handleSubmit = async (data: ProductFormData) => {
-    if (!user?.shopId) {
-      toast.error('Shop ID not found. Please log in again.')
+    if (!effectiveShopId) {
+      toast.error('Shop ID not found. Please select a shop or log in again.')
       return
     }
 
     try {
-      // Handle custom unit - if 'other' is selected, use customUnit
       const finalUnit = data.unit === 'other' ? data.customUnit : data.unit
       
       // Convert weight from kg to grams for API
       const weightInGrams = data.weightInKg ? data.weightInKg * 1000 : undefined
       
-      // Build product data with shopId and proper type handling
       const productData = {
         ...data,
-        shopId: user.shopId, // Add shopId from current user
-        costPrice: data.costPrice ?? undefined,
+        shopId: effectiveShopId,
         weightInGrams: weightInGrams,
         unit: finalUnit || undefined,
         dimensions: data.dimensions || undefined,
@@ -67,11 +70,20 @@ export const CreateProductPage: React.FC = () => {
           Back to Products
         </Button>
         
-        <div>
-          <h1 className="text-3xl font-bold">Create New Product</h1>
-          <p className="text-gray-600 mt-1">
-            Add a new product to your catalog
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Create New Product</h1>
+            <p className="text-gray-600 mt-1">
+              Add a new product to your catalog
+            </p>
+          </div>
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
         </div>
       </div>
 
@@ -80,6 +92,7 @@ export const CreateProductPage: React.FC = () => {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isSubmitting={createProductMutation.isPending}
+        shopId={effectiveShopId as string}
       />
     </div>
   )

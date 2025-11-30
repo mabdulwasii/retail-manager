@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, Search, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useInventory, CreateInventoryRequest } from '@/hooks/useInventory'
@@ -10,12 +11,21 @@ import { useAuth } from '@/context/ManualAuthContext'
 import { useProducts } from '@/hooks/useProducts'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ShopSelector } from '@/components/ui/shop-selector'
+import { useShopContext } from '@/context/ShopContext'
 
 export const CreateInventoryPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
+  
+  // Use selectedShopId for multi-shop users, fall back to user.shopId for single-shop users
+  const effectiveShopId = canManageMultipleShops ? selectedShopId : user?.shopId
+  
   const { createInventoryItem, isLoading, canManageInventory } = useInventory()
-  const { products, isLoading: productsLoading } = useProducts()
+  const { products, isLoading: productsLoading } = useProducts({
+    shopId: effectiveShopId || undefined
+  })
 
   // Check if user has permission to create inventory
   useEffect(() => {
@@ -34,21 +44,11 @@ export const CreateInventoryPage: React.FC = () => {
     minimumStock: '0',
     maximumStock: '',
     reorderPoint: '0',
-    unitCost: '',
+    costPrice: '',
+    sellingPrice: '',
     location: '',
-    batchNumber: '',
     expiryDate: ''
   })
-  
-  // Auto-generate batch number on mount
-  useEffect(() => {
-    if (!formData.batchNumber) {
-      const timestamp = Date.now()
-      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-      const generatedBatch = `BATCH-${timestamp}-${randomNum}`
-      setFormData(prev => ({ ...prev, batchNumber: generatedBatch }))
-    }
-  }, [])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [productSearch, setProductSearch] = useState('')
@@ -121,10 +121,24 @@ export const CreateInventoryPage: React.FC = () => {
       }
     }
 
-    if (formData.unitCost && formData.unitCost.trim() !== '') {
-      const cost = parseFloat(formData.unitCost)
+    if (!formData.costPrice || formData.costPrice.trim() === '') {
+      newErrors.costPrice = 'Cost price is required'
+    } else {
+      const cost = parseFloat(formData.costPrice)
       if (isNaN(cost) || cost < 0) {
-        newErrors.unitCost = 'Unit cost must be a non-negative number'
+        newErrors.costPrice = 'Cost price must be a non-negative number'
+      }
+    }
+
+    if (!formData.sellingPrice || formData.sellingPrice.trim() === '') {
+      newErrors.sellingPrice = 'Selling price is required'
+    } else {
+      const sellingPrice = parseFloat(formData.sellingPrice)
+      const costPrice = parseFloat(formData.costPrice)
+      if (isNaN(sellingPrice) || sellingPrice < 0) {
+        newErrors.sellingPrice = 'Selling price must be a non-negative number'
+      } else if (!isNaN(costPrice) && sellingPrice < costPrice) {
+        newErrors.sellingPrice = 'Selling price should not be less than cost price'
       }
     }
 
@@ -149,8 +163,8 @@ export const CreateInventoryPage: React.FC = () => {
       return
     }
 
-    if (!user?.shopId) {
-      toast.error('Shop ID not found. Please log in again.')
+    if (!effectiveShopId) {
+      toast.error('Shop ID not found. Please select a shop or log in again.')
       return
     }
 
@@ -159,18 +173,16 @@ export const CreateInventoryPage: React.FC = () => {
       currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
-      ...(formData.maximumStock != null && {
+      costPrice: parseFloat(formData.costPrice),
+      sellingPrice: parseFloat(formData.sellingPrice),
+      ...(formData.maximumStock && {
         maximumStock: parseInt(formData.maximumStock, 10),
       }),
-      ...(formData.unitCost != null && {
-        unitCost: parseFloat(formData.unitCost),
-      }),
       ...(formData.location && { location: formData.location }),
-      ...(formData.batchNumber && { batchNumber: formData.batchNumber }),
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
 
-    const result = await createInventoryItem(user.shopId, request)
+    const result = await createInventoryItem(effectiveShopId, request)
     if (result) {
       toast.success('Inventory item created successfully')
       navigate('/inventory')
@@ -187,21 +199,30 @@ export const CreateInventoryPage: React.FC = () => {
       <div>
         <Button
           variant="ghost"
-          onClick={() => navigate('/inventory')}
+          onClick={() => navigate("/inventory")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Inventory
         </Button>
-        
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Package className="h-8 w-8" />
-            Add Inventory Item
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Add a new product to your inventory tracking
-          </p>
+
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Package className="h-8 w-8" />
+              Add Inventory Item
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Add a new product to your inventory tracking
+            </p>
+          </div>
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
         </div>
       </div>
 
@@ -230,19 +251,29 @@ export const CreateInventoryPage: React.FC = () => {
                     className="pl-10"
                   />
                 </div> */}
-                
+
                 <Select
                   //value={formData.productId}
-                  onValueChange={(value) => handleInputChange('productId', value)}
+                  onValueChange={(value) =>
+                    handleInputChange("productId", value)
+                  }
                   disabled={productsLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={productsLoading ? "Loading products..." : "Select a product"} />
+                    <SelectValue
+                      placeholder={
+                        productsLoading
+                          ? "Loading products..."
+                          : "Select a product"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredProducts?.length === 0 ? (
                       <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                        {productSearch ? 'No products found' : 'No products available'}
+                        {productSearch
+                          ? "No products found"
+                          : "No products available"}
                       </div>
                     ) : (
                       filteredProducts?.map((product) => (
@@ -250,7 +281,9 @@ export const CreateInventoryPage: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="font-medium">{product.name}</span>
                             {product.sku && (
-                              <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>
+                              <span className="text-xs text-muted-foreground">
+                                SKU: {product.sku}
+                              </span>
                             )}
                           </div>
                         </SelectItem>
@@ -273,16 +306,20 @@ export const CreateInventoryPage: React.FC = () => {
                     size="sm"
                     className="absolute top-2 right-2 h-6 w-6 p-0"
                     onClick={() => {
-                      handleInputChange('productId', '')
-                      setProductSearch('')
+                      handleInputChange("productId", "");
+                      setProductSearch("");
                     }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                  <p className="text-sm font-medium pr-8">{selectedProduct.name}</p>
+                  <p className="text-sm font-medium pr-8">
+                    {selectedProduct.name}
+                  </p>
                   <div className="text-xs text-muted-foreground mt-1 space-y-1">
                     {selectedProduct.sku && <p>SKU: {selectedProduct.sku}</p>}
-                    {selectedProduct.category && <p>Category: {selectedProduct.category}</p>}
+                    {selectedProduct.category && (
+                      <p>Category: {selectedProduct.category}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -300,7 +337,9 @@ export const CreateInventoryPage: React.FC = () => {
                   min="0"
                   placeholder="0"
                   value={formData.currentStock}
-                  onChange={(e) => handleInputChange('currentStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("currentStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.currentStock && (
@@ -309,16 +348,16 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minimumStock">
-                  Minimum Stock (optional)
-                </Label>
+                <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
                 <Input
                   id="minimumStock"
                   type="number"
                   min="0"
                   placeholder="0"
                   value={formData.minimumStock}
-                  onChange={(e) => handleInputChange('minimumStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("minimumStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.minimumStock && (
@@ -334,7 +373,9 @@ export const CreateInventoryPage: React.FC = () => {
                   min="0"
                   placeholder="Optional"
                   value={formData.maximumStock}
-                  onChange={(e) => handleInputChange('maximumStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("maximumStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.maximumStock && (
@@ -343,16 +384,16 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reorderPoint">
-                  Reorder Point (optional)
-                </Label>
+                <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
                 <Input
                   id="reorderPoint"
                   type="number"
                   min="0"
                   placeholder="0"
                   value={formData.reorderPoint}
-                  onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("reorderPoint", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.reorderPoint && (
@@ -361,71 +402,94 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Cost & Location */}
+            {/* Pricing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-muted-foreground text-sm">₦</span>
-                  <Input
-                    id="unitCost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.unitCost}
-                    onChange={(e) => handleInputChange('unitCost', e.target.value)}
-                    disabled={isLoading}
-                    className="pl-8"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
-                {errors.unitCost && (
-                  <p className="text-sm text-red-500">{errors.unitCost}</p>
+                <Label htmlFor="costPrice">
+                  Cost Price <span className="text-red-500">*</span>
+                </Label>
+                <NumericInput
+                  id="costPrice"
+                  value={formData.costPrice}
+                  onValueChange={(values) => {
+                    handleInputChange("costPrice", values.value || "");
+                  }}
+                  placeholder="0.00"
+                  disabled={isLoading}
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Purchase price per unit
+                </p>
+                {errors.costPrice && (
+                  <p className="text-sm text-red-500">{errors.costPrice}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Storage Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g., Aisle 3, Shelf B"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
+                <Label htmlFor="sellingPrice">
+                  Selling Price <span className="text-red-500">*</span>
+                </Label>
+                <NumericInput
+                  id="sellingPrice"
+                  value={formData.sellingPrice}
+                  onValueChange={(values) => {
+                    handleInputChange("sellingPrice", values.value || "");
+                  }}
+                  placeholder="0.00"
                   disabled={isLoading}
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Retail price per unit
+                </p>
+                {errors.sellingPrice && (
+                  <p className="text-sm text-red-500">{errors.sellingPrice}</p>
+                )}
               </div>
             </div>
 
-            {/* Batch & Expiry */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="batchNumber">Batch Number (auto-generated)</Label>
-                <Input
-                  id="batchNumber"
-                  placeholder="Auto-generated batch number"
-                  value={formData.batchNumber}
-                  onChange={(e) => handleInputChange('batchNumber', e.target.value)}
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground">Auto-generated, but you can modify if needed</p>
-              </div>
+            {/* Location */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Storage Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g., Aisle 3, Shelf B"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground">Must be a future date</p>
-                {errors.expiryDate && (
-                  <p className="text-sm text-red-500">{errors.expiryDate}</p>
-                )}
-              </div>
+            {/* Expiry Date (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                min={
+                  new Date(new Date().setDate(new Date().getDate() + 1))
+                    .toISOString()
+                    .split("T")[0]
+                }
+                value={formData.expiryDate}
+                onChange={(e) =>
+                  handleInputChange("expiryDate", e.target.value)
+                }
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Set if product has an expiration date
+              </p>
+              {errors.expiryDate && (
+                <p className="text-sm text-red-500">{errors.expiryDate}</p>
+              )}
             </div>
 
             {/* Actions */}
@@ -439,12 +503,12 @@ export const CreateInventoryPage: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Inventory Item'}
+                {isLoading ? "Creating..." : "Create Inventory Item"}
               </Button>
             </div>
           </CardContent>
         </Card>
       </form>
     </div>
-  )
+  );
 }

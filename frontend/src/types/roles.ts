@@ -18,7 +18,7 @@ export enum UserRole {
   TENANT_ADMIN = 'TENANT_ADMIN',
   
   // Shop Management Roles
-  SHOP_OWNER = 'SHOP_OWNER',
+  SHOP_OWNER = 'OWNER',
   MANAGER = 'MANAGER',
   
   // Sales & Operations Roles

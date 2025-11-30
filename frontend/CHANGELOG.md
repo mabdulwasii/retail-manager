@@ -5,6 +5,23 @@ All notable changes to the Shop Manager Frontend will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.17] - 2024-11-30
+
+### Added
+- Permission-based route guards for granular access control
+- ShopContext for centralized shop selection state management
+- Real data visualizations to AdminDashboard (Revenue Trend, Inventory Status)
+- PDF receipt generation and download functionality
+
+### Changed
+- Migrated from role-based to permission-based authorization system
+- Replaced UserRole enum with Permission enum across all route guards
+- Standardized dashboard Quick Action buttons (consistent heights, icons, layouts)
+- Enhanced dashboard UI consistency across all user roles
+- Fixed broken navigation routes to point to existing pages
+- Improved sales page transaction handling and data display
+
+
 ## [0.0.16] - 2024-11-28
 
 ### Added

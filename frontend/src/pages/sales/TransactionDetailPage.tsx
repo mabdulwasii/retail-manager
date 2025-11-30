@@ -5,8 +5,26 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useSales } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
+import { useAuth } from '@/context/ManualAuthContext'
+import { useShopContext } from '@/context/ShopContext'
+import { 
+  useReceiptByTransaction, 
+  useGenerateReceipt, 
+  useMarkAsPrinted, 
+  useMarkAsEmailed 
+} from '@/hooks/useReceipts'
+import { usePDFReceipt } from '@/hooks/usePDFReceipt'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -36,11 +54,26 @@ import {
 export const TransactionDetailPage: React.FC = () => {
   const { transactionId } = useParams<{ transactionId: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const { selectedShop } = useShopContext()
   const { formatCurrency } = useCurrency()
-  const { getSaleById, printReceipt, isLoading, error } = useSales()
+  const { getSaleById, isLoading, error } = useSales()
   
   const [transaction, setTransaction] = useState<any>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [emailAddress, setEmailAddress] = useState('')
+  
+  // Receipt hooks
+  const { data: receipt, isLoading: receiptLoading, refetch: refetchReceipt } = useReceiptByTransaction(transactionId)
+  const generateReceiptMutation = useGenerateReceipt()
+  const markPrintedMutation = useMarkAsPrinted()
+  const markEmailedMutation = useMarkAsEmailed()
+  const { 
+    printReceiptByTransactionId, 
+    downloadReceiptByTransactionId,
+    previewReceiptByTransactionId 
+  } = usePDFReceipt()
 
   useEffect(() => {
     if (transactionId) {
@@ -59,12 +92,45 @@ export const TransactionDetailPage: React.FC = () => {
     }
   }
 
-  const handlePrintReceipt = async () => {
+  const handleGenerateReceipt = async () => {
     if (!transactionId) return
     
     setIsProcessing(true)
     try {
-      await printReceipt(transactionId)
+      await generateReceiptMutation.mutateAsync(transactionId)
+      await refetchReceipt()
+      toast.success('Receipt generated successfully')
+    } catch (err) {
+      toast.error('Failed to generate receipt')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handlePrintReceipt = async () => {
+    if (!transactionId) return
+    
+    // Generate receipt if it doesn't exist
+    if (!receipt) {
+      await handleGenerateReceipt()
+      return
+    }
+    
+    setIsProcessing(true)
+    try {
+      await printReceiptByTransactionId(transactionId, {
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
+      })
+      
+      // Mark as printed
+      if (receipt?.id) {
+        await markPrintedMutation.mutateAsync({
+          receiptId: receipt.id,
+          printedBy: user?.username || 'Unknown'
+        })
+      }
       toast.success('Receipt sent to printer')
     } catch (err) {
       toast.error('Failed to print receipt')
@@ -73,9 +139,78 @@ export const TransactionDetailPage: React.FC = () => {
     }
   }
 
+  const handleDownloadReceipt = async () => {
+    if (!transactionId) return
+    
+    // Generate receipt if it doesn't exist
+    if (!receipt) {
+      await handleGenerateReceipt()
+      return
+    }
+    
+    setIsProcessing(true)
+    try {
+      await downloadReceiptByTransactionId(transactionId, {
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
+      })
+      toast.success('Receipt downloaded')
+    } catch (err) {
+      toast.error('Failed to download receipt')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handlePreviewReceipt = async () => {
+    if (!transactionId) return
+    
+    // Generate receipt if it doesn't exist
+    if (!receipt) {
+      await handleGenerateReceipt()
+      return
+    }
+    
+    try {
+      await previewReceiptByTransactionId(transactionId, {
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
+      })
+    } catch (err) {
+      toast.error('Failed to preview receipt')
+    }
+  }
+
   const handleEmailReceipt = () => {
-    // TODO: Implement email receipt
-    toast.info('Email receipt feature coming soon')
+    if (!receipt) {
+      toast.error('Please generate a receipt first')
+      return
+    }
+    setEmailDialogOpen(true)
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailAddress || !receipt) {
+      toast.error('Please enter an email address')
+      return
+    }
+
+    setIsProcessing(true)
+    try {
+      await markEmailedMutation.mutateAsync({
+        receiptId: receipt.id,
+        emailAddress
+      })
+      setEmailDialogOpen(false)
+      setEmailAddress('')
+      toast.success(`Receipt sent to ${emailAddress}`)
+    } catch (err) {
+      toast.error('Failed to send receipt')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const handleRefund = () => {
@@ -163,16 +298,35 @@ export const TransactionDetailPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold">Transaction Details</h1>
             <p className="text-muted-foreground mt-1">
-              Receipt #{transaction.receiptNumber}
+              {receipt ? `Receipt #${receipt.receiptNumber}` : `Transaction #${transaction.transactionNumber}`}
             </p>
+            {!receipt && (
+              <p className="text-xs text-amber-600 mt-1">
+                ⚠️ Receipt not generated yet
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
+          {!receipt && (
+            <Button onClick={handleGenerateReceipt} disabled={isProcessing || generateReceiptMutation.isPending}>
+              <FileText className="w-4 h-4 mr-2" />
+              Generate Receipt
+            </Button>
+          )}
+          <Button variant="outline" onClick={handlePreviewReceipt} disabled={isProcessing}>
+            <FileText className="w-4 h-4 mr-2" />
+            Preview Receipt
+          </Button>
           <Button variant="outline" onClick={handlePrintReceipt} disabled={isProcessing}>
             <Printer className="w-4 h-4 mr-2" />
-            Print Receipt
+            {receipt ? 'Print Receipt' : 'Generate & Print'}
           </Button>
-          <Button variant="outline" onClick={handleEmailReceipt}>
+          <Button variant="outline" onClick={handleDownloadReceipt} disabled={isProcessing}>
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
+          </Button>
+          <Button variant="outline" onClick={handleEmailReceipt} disabled={!receipt}>
             <Mail className="w-4 h-4 mr-2" />
             Email Receipt
           </Button>
@@ -210,7 +364,7 @@ export const TransactionDetailPage: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(transaction.totalAmount)}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {transaction.items?.length || 0} item(s)
+              {transaction.lineItems?.length || 0} item(s)
             </p>
           </CardContent>
         </Card>
@@ -254,7 +408,7 @@ export const TransactionDetailPage: React.FC = () => {
             <CardHeader>
               <CardTitle>Items Purchased</CardTitle>
               <CardDescription>
-                {transaction.items?.length || 0} item(s) in this transaction
+                {transaction.lineItems?.length || 0} item(s) in this transaction
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -264,13 +418,13 @@ export const TransactionDetailPage: React.FC = () => {
                     <TableHead>Product</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
                     <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
+                    {/* <TableHead className="text-right">Subtotal</TableHead> */}
                     <TableHead className="text-right">Tax</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transaction.items?.map((item: any, index: number) => (
+                  {transaction.lineItems?.map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>
                         <div>
@@ -286,14 +440,14 @@ export const TransactionDetailPage: React.FC = () => {
                       <TableCell className="text-right">
                         {formatCurrency(item.product?.price || item.unitPrice || 0)}
                       </TableCell>
+                      {/* <TableCell className="text-right">
+                        {formatCurrency(Number(item.lineTotal))}
+                      </TableCell> */}
                       <TableCell className="text-right">
-                        {formatCurrency(item.subtotal)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.taxAmount)}
+                        {formatCurrency(item.taxAmount || 0)}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(item.total)}
+                        {formatCurrency(item.lineTotal)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -460,7 +614,16 @@ export const TransactionDetailPage: React.FC = () => {
               <Separator />
               <div>
                 <p className="text-sm text-muted-foreground">Receipt Number</p>
-                <p className="font-medium mt-1">{transaction.receiptNumber}</p>
+                {receipt ? (
+                  <div>
+                    <p className="font-medium mt-1">{receipt.receiptNumber}</p>
+                    <Badge variant="outline" className="mt-1">
+                      {receipt.status}
+                    </Badge>
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600 mt-1">Not generated</p>
+                )}
               </div>
               <Separator />
               <div>
@@ -477,6 +640,26 @@ export const TransactionDetailPage: React.FC = () => {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              {!receipt && (
+                <Button 
+                  variant="default" 
+                  className="w-full justify-start"
+                  onClick={handleGenerateReceipt}
+                  disabled={isProcessing || generateReceiptMutation.isPending}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate Receipt
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={handlePreviewReceipt}
+                disabled={isProcessing}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Preview Receipt
+              </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
@@ -484,28 +667,69 @@ export const TransactionDetailPage: React.FC = () => {
                 disabled={isProcessing}
               >
                 <Printer className="w-4 h-4 mr-2" />
-                Print Receipt
+                {receipt ? 'Print Receipt' : 'Generate & Print'}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={handleDownloadReceipt}
+                disabled={isProcessing}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download PDF
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
                 onClick={handleEmailReceipt}
+                disabled={!receipt}
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Email Receipt
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => window.open(`/sales/${transactionId}/receipt`, '_blank')}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Email Receipt</DialogTitle>
+            <DialogDescription>
+              Send receipt {receipt?.receiptNumber} to customer via email
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Email Address</label>
+              <Input
+                type="email"
+                placeholder="customer@example.com"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setEmailDialogOpen(false)
+              setEmailAddress('')
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={!emailAddress || isProcessing || markEmailedMutation.isPending}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
