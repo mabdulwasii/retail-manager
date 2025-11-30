@@ -363,6 +363,16 @@ The **easiest and recommended way** to release is using PR labels. No manual ver
 - `release:both-minor` - New features in both
 - `release:both-major` - Breaking changes in both
 
+**Standalone Distribution**:
+- `release:standalone-patch` - Bug fixes (0.1.0 → 0.1.1)
+- `release:standalone-minor` - New features (0.1.0 → 0.2.0)
+- `release:standalone-major` - Breaking changes (0.1.0 → 1.0.0)
+
+**Note**: Use only ONE release label per PR to avoid workflow conflicts. Standalone releases create:
+- Electron desktop installers (Windows .exe, macOS .dmg, Linux .AppImage)
+- Docker Compose packages (lightweight and full with images)
+- SHA256 checksums for all artifacts
+
 #### Example: Backend Bug Fix
 
 ```bash
@@ -440,6 +450,35 @@ gh pr merge --squash
 #    - Triggers Docker builds for both
 ```
 
+#### Example: Standalone Distribution Release
+
+```bash
+# 1. Create feature branch
+git checkout -b feat/standalone-installer-improvements
+
+# 2. Make changes to standalone distribution
+git commit -m "feat: add auto-configuration for DNS and SSL"
+
+# 3. Push and create PR
+git push origin feat/standalone-installer-improvements
+gh pr create --title "Improve standalone auto-configuration" --body "..."
+
+# 4. Add label to PR
+gh pr edit --add-label "release:standalone-minor"
+
+# 5. Merge PR
+gh pr merge --squash
+
+# ✅ Auto-release workflow runs:
+#    - Bumps standalone/VERSION from 0.1.0 → 0.2.0
+#    - Creates tag v0.2.0
+#    - Triggers build-standalone-release.yml workflow
+#    - Builds Windows .exe, macOS .dmg, Linux .AppImage
+#    - Creates Docker Compose packages (lightweight + full)
+#    - Generates SHA256 checksums
+#    - Creates draft GitHub release with all artifacts
+```
+
 ### Manual Release Script (Alternative)
 
 For ad-hoc releases or when not using PRs:
@@ -474,6 +513,11 @@ Version tracking uses simple text files:
 **frontend/VERSION**:
 ```
 0.0.10
+```
+
+**standalone/VERSION**:
+```
+0.1.0
 ```
 
 These are the **single source of truth** for versions. Never manually edit these files - let the automation handle it.

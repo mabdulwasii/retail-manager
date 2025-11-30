@@ -5,6 +5,19 @@ All notable changes to the Shop Manager Frontend will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.16] - 2024-11-28
+
+### Added
+- Shop selector component with permission-based filtering
+- Improved inventory form with better UX and validation
+- Product form enhancements with react-number-format integration
+- Payment modal improvements for better transaction handling
+- Shopping cart UI/UX updates
+
+### Changed
+- Enhanced form validation across inventory and product management
+- Improved numeric input handling with formatted number fields
+
 ## [1.0.0] - 2024-01-15
 
 ### Added
