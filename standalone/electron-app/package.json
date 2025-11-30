@@ -34,7 +34,7 @@
     "electron-log": "^5.0.0",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.0",
-    "node-pty": "^1.0.0",
+    "node-pty": "^1.1.0-beta35",
     "systeminformation": "^5.21.0",
     "yaml": "^2.3.0"
   },
@@ -113,7 +113,6 @@
           "path": "/Applications"
         }
       ],
-      "background": "build/dmg-background.png",
       "window": {
         "width": 540,
         "height": 400
@@ -124,19 +123,12 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "ia32"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
             "x64"
           ]
         }
       ],
       "icon": "build/icon.ico",
-      "publisherName": "Your Company",
+      "publisherName": "Shop Manager",
       "verifyUpdateCodeSignature": false
     },
     "nsis": {
@@ -157,18 +149,6 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "deb",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "rpm",
           "arch": [
             "x64"
           ]

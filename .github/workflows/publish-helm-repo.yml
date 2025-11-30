@@ -109,6 +109,9 @@ jobs:
           echo "Saved packaged chart to /tmp/helm-repo-backup"
           ls -lh /tmp/helm-repo-backup/
 
+          # Reset modified Chart.yaml since we already packaged it
+          git checkout -- $CHART_PATH/Chart.yaml
+
       # ================================================================
       # Step 9: Checkout gh-pages Branch
       # ================================================================

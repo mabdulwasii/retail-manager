@@ -130,8 +130,9 @@ cp "${STANDALONE_DIR}/README.md" "${TEMP_DIR}/"
 cp "${STANDALONE_DIR}/DISTRIBUTION.md" "${TEMP_DIR}/"
 cp "${PROJECT_ROOT}/LICENSE" "${TEMP_DIR}/" 2>/dev/null || echo "MIT License" > "${TEMP_DIR}/LICENSE"
 
-# Copy directories
-cp -r "${STANDALONE_DIR}/scripts" "${TEMP_DIR}/"
+# Copy directories (excluding dist to avoid recursive copy)
+mkdir -p "${TEMP_DIR}/scripts"
+rsync -a --exclude='dist' "${STANDALONE_DIR}/scripts/" "${TEMP_DIR}/scripts/"
 cp -r "${STANDALONE_DIR}/templates" "${TEMP_DIR}/"
 cp -r "${STANDALONE_DIR}/docs" "${TEMP_DIR}/"
 
