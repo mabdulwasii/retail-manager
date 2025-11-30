@@ -116,31 +116,32 @@ jobs:
           cd standalone/scripts
           ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --include-images --skip-electron
 
-      - name: Upload lightweight package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/scripts/dist/shop-manager-standalone-v${{ needs.create-release.outputs.version }}.zip
-          asset_name: shop-manager-standalone-v${{ needs.create-release.outputs.version }}.zip
-          asset_content_type: application/zip
-
-      - name: Upload full package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/scripts/dist/shop-manager-standalone-v${{ needs.create-release.outputs.version }}-full.zip
-          asset_name: shop-manager-standalone-v${{ needs.create-release.outputs.version }}-full.zip
-          asset_content_type: application/zip
-
-      - name: Upload checksums
+      - name: Upload Docker Compose packages
         run: |
           cd standalone/scripts/dist
-          for file in *.sha256; do
-            gh release upload v${{ needs.create-release.outputs.version }} "$file"
+
+          # Upload all ZIP packages
+          for zip in *.zip; do
+            if [ -f "$zip" ]; then
+              echo "Uploading $zip"
+              gh release upload v${{ needs.create-release.outputs.version }} "$zip" --clobber
+            fi
+          done
+
+          # Upload checksums
+          for checksum in *.sha256 *.md5; do
+            if [ -f "$checksum" ]; then
+              echo "Uploading $checksum"
+              gh release upload v${{ needs.create-release.outputs.version }} "$checksum" --clobber
+            fi
+          done
+
+          # Upload release notes
+          for notes in RELEASE_NOTES_*.md; do
+            if [ -f "$notes" ]; then
+              echo "Uploading $notes"
+              gh release upload v${{ needs.create-release.outputs.version }} "$notes" --clobber
+            fi
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
