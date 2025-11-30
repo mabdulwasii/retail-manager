@@ -156,12 +156,15 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findById(inventoryId)
             .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
 
+        int previousReserved = inventory.getReservedStock();
         inventory.releaseReservedStock(quantity);
         inventory = inventoryRepository.save(inventory);
+        int newReserved = inventory.getReservedStock();
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.RESERVATION_RELEASE,
-            -quantity, inventory.getCurrentStock(), inventory.getCurrentStock(),
-            referenceId, InventoryHistory.ReferenceType.SALE, "Stock reservation released");
+            -quantity, previousReserved, newReserved,
+            referenceId, referenceId != null ? InventoryHistory.ReferenceType.SALE : null,
+            "Stock reservation released");
 
         log.debug("Released {} reserved units for inventory {}", quantity, inventoryId);
     }

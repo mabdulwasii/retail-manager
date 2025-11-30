@@ -21,10 +21,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,10 +92,7 @@ public class InventoryController {
             @Parameter(description = "Minimum stock filter") @RequestParam(required = false) Integer minStock,
             @Parameter(description = "Maximum stock filter") @RequestParam(required = false) Integer maxStock,
             @Parameter(description = "Days threshold for expiring soon") @RequestParam(defaultValue = "30") int expiringDays,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "lastStockUpdate") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
+            @PageableDefault(size = 20, sort = "lastStockUpdate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
         // Build specification based on filters
@@ -129,9 +125,6 @@ public class InventoryController {
         if (minStock != null) {
             spec = spec.and(InventorySpecifications.hasStockAvailable(minStock));
         }
-
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<InventoryResponse> response = inventoryService.getInventory(shopId, spec, pageable);
         return ResponseEntity.ok(response);

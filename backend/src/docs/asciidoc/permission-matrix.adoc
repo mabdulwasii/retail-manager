@@ -127,7 +127,7 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 |List shops within context
 ^|✓
 ^|✓
-^|✓
+^|
 ^|
 ^|
 

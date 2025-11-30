@@ -14,9 +14,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -145,10 +144,7 @@ public class ExpenseController {
             @Parameter(description = "Search query") @RequestParam(required = false) String search,
             @Parameter(description = "Payment method filter") @RequestParam(required = false) String paymentMethod,
             @Parameter(description = "Vendor name filter") @RequestParam(required = false) String vendorName,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "expenseDate") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
+            @PageableDefault(size = 20, sort = "expenseDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
         ExpenseFilterCriteria criteria = ExpenseFilterCriteria.builder()
@@ -163,9 +159,6 @@ public class ExpenseController {
             .paymentMethod(paymentMethod)
             .vendorName(vendorName)
             .build();
-
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<ExpenseResponse> response = expenseService.getExpenses(shopId, criteria, pageable, principal);
         return ResponseEntity.ok(response);

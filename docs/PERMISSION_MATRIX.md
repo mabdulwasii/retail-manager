@@ -81,7 +81,7 @@ Permissions follow the pattern: `{RESOURCE}_{ACTION}`
 |-----------|----------|--------|--------------|--------------|-------|---------|----------|----------|
 | SHOP_CREATE | SHOP | CREATE | ✅ | ✅ 🏢 | ❌ | ❌ | ❌ | ❌ |
 | SHOP_READ | SHOP | READ | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ 🔒 | ✅ 🔒 | ❌ |
-| SHOP_LIST | SHOP | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ✅ 🔒 | ❌ | ❌ |
+| SHOP_LIST | SHOP | LIST | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | SHOP_UPDATE | SHOP | UPDATE | ✅ | ✅ 🏢 | ✅ 🏢 | ❌ | ❌ | ❌ |
 | SHOP_DELETE | SHOP | DELETE | ✅ | ✅ 🏢 | ❌ | ❌ | ❌ | ❌ |
 
