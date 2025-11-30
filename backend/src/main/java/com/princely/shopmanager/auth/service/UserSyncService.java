@@ -138,23 +138,48 @@ public class UserSyncService {
 
     /**
      * Updates basic profile fields (email, username).
+     * Validates email uniqueness before updating to prevent constraint violations.
+     *
+     * @throws UserSyncException if email update would violate uniqueness constraint
      */
     private boolean updateBasicProfile(User user, JwtPrincipal principal) {
         boolean updated = false;
 
-        // Only update email if it's different AND not already taken by another user
+        // Validate and update email
         if (!principal.getEmail().equals(user.getEmail())) {
-            // Check if email is already taken by another user
+            // Check if the new email is already taken by another user
             User existingUserWithEmail = userRepository.findByEmail(principal.getEmail()).orElse(null);
+
             if (existingUserWithEmail != null && !existingUserWithEmail.getId().equals(user.getId())) {
-                log.warn("Cannot update email for user {} from {} to {}: Email already taken by user {}",
-                    user.getUsername(), user.getEmail(), principal.getEmail(), existingUserWithEmail.getUsername());
-            } else {
-                user.setEmail(principal.getEmail());
-                updated = true;
+                // Log detailed technical information for administrators
+                String technicalDetails = String.format(
+                    "User sync failed - duplicate email detected. " +
+                    "Attempting user: '%s' (Keycloak ID: %s, DB ID: %s), " +
+                    "Email from Keycloak: '%s', " +
+                    "Email already registered to: '%s' (DB ID: %s). " +
+                    "Resolution required: (1) Update email in Keycloak to match database, " +
+                    "(2) Remove duplicate user from Keycloak or database, or " +
+                    "(3) Merge the user accounts if they represent the same person.",
+                    user.getUsername(),
+                    principal.getSubject(),
+                    user.getId(),
+                    principal.getEmail(),
+                    existingUserWithEmail.getUsername(),
+                    existingUserWithEmail.getId()
+                );
+                log.error(technicalDetails);
+
+                // Return generic user-friendly message (no internal details)
+                String userMessage = "Unable to complete authentication due to account configuration issues. " +
+                    "Please contact your system administrator for assistance.";
+                throw new UserSyncException(userMessage, null);
             }
+
+            user.setEmail(principal.getEmail());
+            updated = true;
         }
 
+        // Update username
         if (!principal.getUsername().equals(user.getUsername())) {
             user.setUsername(principal.getUsername());
             updated = true;

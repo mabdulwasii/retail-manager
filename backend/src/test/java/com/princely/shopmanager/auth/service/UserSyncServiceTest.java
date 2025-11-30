@@ -352,4 +352,51 @@ class UserSyncServiceTest {
         assertThat(result.getFirstName()).isEqualTo("");
         assertThat(result.getLastName()).isEqualTo("");
     }
+
+    @Test
+    @DisplayName("Should throw exception when updating user email to one already taken by another user")
+    void shouldThrowExceptionWhenEmailAlreadyTaken() {
+        // Given: Existing user with email
+        User existingUser = User.builder()
+            .id("existing-user-id")
+            .username("existinguser")
+            .email("taken@example.com")
+            .keycloakId("keycloak-existing")
+            .tenant(testTenant)
+            .roles(new HashSet<>())
+            .build();
+
+        // Another user trying to update to the same email
+        User userToUpdate = User.builder()
+            .id("user-to-update-id")
+            .username("userToUpdate")
+            .email("old@example.com")
+            .keycloakId("keycloak-to-update")
+            .tenant(testTenant)
+            .roles(new HashSet<>())
+            .build();
+
+        JwtPrincipal principal = JwtPrincipal.builder()
+            .subject("keycloak-to-update")
+            .preferredUsername("userToUpdate")
+            .email("taken@example.com") // Trying to update to email that's already taken
+            .firstName("User")
+            .lastName("ToUpdate")
+            .tenantId("tenant-123")
+            .roles(List.of())
+            .build();
+
+        when(userRepository.findByKeycloakId("keycloak-to-update")).thenReturn(Optional.of(userToUpdate));
+        when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(existingUser));
+
+        // When & Then
+        assertThatThrownBy(() -> userSyncService.syncUserFromKeycloak(principal))
+            .isInstanceOf(UserSyncService.UserSyncException.class)
+            .hasMessageContaining("Unable to complete authentication")
+            .hasMessageContaining("account configuration issues")
+            .hasMessageContaining("contact your system administrator");
+
+        // Verify no save was attempted
+        verify(userRepository, never()).save(any(User.class));
+    }
 }
