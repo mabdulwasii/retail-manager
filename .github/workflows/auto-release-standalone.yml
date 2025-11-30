@@ -126,37 +126,10 @@ jobs:
           echo "✅ Tag $TAG_NAME created and pushed"
 
       # ================================================================
-      # Step 3b: Trigger Standalone Build Workflow
+      # Step 4: Job Summary
       # ================================================================
-      - name: Trigger standalone build
-        if: steps.release-type.outputs.RELEASE_STANDALONE == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
-        run: |
-          echo "Triggering standalone build workflow for version ${{ steps.standalone-release.outputs.NEW_VERSION }}"
-          gh workflow run build-standalone-release.yml \
-            --repo ${{ github.repository }} \
-            --ref ${{ steps.standalone-release.outputs.TAG_NAME }} \
-            --field version="${{ steps.standalone-release.outputs.NEW_VERSION }}"
-
-          echo "✅ Build workflow triggered"
-          echo "🚀 Monitor progress: https://github.com/${{ github.repository }}/actions/workflows/build-standalone-release.yml"
-
-      # ================================================================
-      # Step 4: Wait for Build Workflow to Start
-      # ================================================================
-      - name: Wait for build workflow
-        if: steps.release-type.outputs.RELEASE_STANDALONE == 'true'
-        run: |
-          echo "⏳ Waiting 10 seconds for build workflow to initialize..."
-          sleep 10
-
-          echo "📋 Build workflow 'Build Standalone Release' should now be running"
-          echo "Monitor progress: https://github.com/${{ github.repository }}/actions/workflows/build-standalone-release.yml"
-
-      # ================================================================
-      # Step 5: Job Summary
-      # ================================================================
+      # Note: The tag push above will automatically trigger build-standalone-release.yml
+      # No need for manual workflow_dispatch - this prevents double-triggering
       - name: Release summary
         if: steps.release-type.outputs.RELEASE_STANDALONE == 'true'
         run: |
@@ -170,8 +143,10 @@ jobs:
           echo "- **Tag**: \`${{ steps.standalone-release.outputs.TAG_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Type**: ${{ steps.release-type.outputs.BUMP_TYPE }} release" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### What's Building" >> $GITHUB_STEP_SUMMARY
-          echo "The following packages are being built automatically:" >> $GITHUB_STEP_SUMMARY
+          echo "### Automatic Build Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "The tag push has automatically triggered the \`build-standalone-release.yml\` workflow." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following packages are being built:" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Docker Compose Package (lightweight ~50MB)" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Docker Compose Package (full with images ~2GB)" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Windows Installer (.exe)" >> $GITHUB_STEP_SUMMARY

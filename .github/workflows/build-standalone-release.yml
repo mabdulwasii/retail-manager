@@ -102,7 +102,6 @@ jobs:
 
       - name: Build Docker images
         run: |
-          cd shop-manager
           docker compose build
 
       - name: Create lightweight package
