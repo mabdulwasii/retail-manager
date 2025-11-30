@@ -56,7 +56,7 @@ Before installing Shop Manager, please ensure:
 
 1. Visit the **Shop Manager Releases** page:
    ```
-   https://github.com/yourorg/shop-manager/releases/tag/v0.1.13
+   https://github.com/mabdulwasii/retail-manager/releases
    ```
 
 2. Under **Assets**, click to download:
