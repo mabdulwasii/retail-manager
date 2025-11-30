@@ -52,9 +52,42 @@ Before installing Shop Manager, please ensure:
 
 ### Step 1: Download the Installer
 
-1. Download the **Shop Manager installer** from your system administrator or the official download link
-2. Save the file to your **Downloads** folder or a location you can easily access
-3. Verify the file name: `Shop Manager-Setup-v0.1.13.exe`
+### Option A: Download from GitHub Releases (Recommended)
+
+1. Visit the **Shop Manager Releases** page:
+   ```
+   https://github.com/yourorg/shop-manager/releases/tag/v0.1.13
+   ```
+
+2. Under **Assets**, click to download:
+   - **Shop Manager-Setup-0.1.13.exe** (Windows 64-bit installer)
+
+3. The download will be saved to your **Downloads** folder
+
+4. **Verify the download**:
+   - File name: `Shop Manager-Setup-0.1.13.exe`
+   - File size: ~150-200 MB (approximate)
+
+### Option B: Download from Your Organization
+
+If your organization hosts the installer internally:
+
+1. Contact your **system administrator** for the download link
+2. You may receive:
+   - Direct download link
+   - Internal file server location
+   - Email attachment (for smaller organizations)
+
+3. Save the installer to your **Downloads** folder
+
+### Important Security Note
+
+⚠️ **Only download Shop Manager from trusted sources:**
+- Official GitHub Releases page
+- Your organization's IT department
+- Links provided by your system administrator
+
+**Never** download from third-party websites or untrusted sources.
 
 ### Step 2: Run the Installer
 

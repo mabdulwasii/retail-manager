@@ -34,9 +34,6 @@ class ReceiptServiceTest {
     @Mock
     private ReceiptRepository receiptRepository;
 
-    @Mock
-    private SalesTransactionService salesTransactionService;
-
     @InjectMocks
     private ReceiptService receiptService;
 
@@ -114,10 +111,9 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction.getId());
+        Receipt result = receiptService.generateReceipt(testTransaction);
 
         // Assert
         assertThat(result).isNotNull();
@@ -141,10 +137,9 @@ class ReceiptServiceTest {
     void generateReceipt_WithExistingReceipt_ShouldReturnExisting() {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.of(testReceipt));
-        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction.getId());
+        Receipt result = receiptService.generateReceipt(testTransaction);
 
         // Assert
         assertThat(result).isEqualTo(testReceipt);
@@ -162,10 +157,9 @@ class ReceiptServiceTest {
 
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
-        Receipt result = receiptService.generateReceipt(testTransaction.getId());
+        Receipt result = receiptService.generateReceipt(testTransaction);
 
         // Assert
         assertThat(result).isNotNull();
@@ -185,10 +179,9 @@ class ReceiptServiceTest {
         // Arrange
         when(receiptRepository.findByTransaction(testTransaction)).thenReturn(Optional.empty());
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
-        when(salesTransactionService.getTransactionById(any())).thenReturn(testTransaction);
 
         // Act
-        receiptService.generateReceipt(testTransaction.getId());
+        receiptService.generateReceipt(testTransaction);
 
         // Assert
         ArgumentCaptor<Receipt> receiptCaptor = ArgumentCaptor.forClass(Receipt.class);

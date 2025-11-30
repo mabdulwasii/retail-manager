@@ -1,7 +1,9 @@
 package com.princely.shopmanager.sales.controller;
 
+import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.dto.SalesTransactionCreateRequest;
 import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
+import com.princely.shopmanager.sales.service.ReceiptService;
 import com.princely.shopmanager.sales.service.SalesTransactionService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
 
@@ -47,6 +49,7 @@ public class SalesTransactionController {
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final SalesTransactionService salesTransactionService;
+    private final ReceiptService receiptService;
 
     @Operation(
         summary = "Create a new sales transaction",
@@ -111,6 +114,49 @@ public class SalesTransactionController {
         log.debug("Retrieving sales transaction: {}", id);
         SalesTransactionResponse response = salesTransactionService.getTransaction(id);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Get receipt for a sales transaction",
+        description = "Retrieves the receipt for a sales transaction. Automatically generates receipt if it doesn't exist."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Receipt retrieved successfully",
+            content = @Content(schema = @Schema(implementation = Receipt.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Transaction not found",
+            content = @Content(schema = @Schema(implementation = String.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        )
+    })
+    @GetMapping("/{transactionId}/receipt")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
+    public ResponseEntity<Receipt> getTransactionReceipt(
+        @Parameter(description = "Transaction ID", example = "txn-123e4567-e89b-12d3-a456-426614174000")
+        @PathVariable String transactionId
+    ) {
+        log.debug("Retrieving receipt for transaction: {}", transactionId);
+
+        // Get the transaction
+        SalesTransactionResponse transaction = salesTransactionService.getTransaction(transactionId);
+
+        // Get or generate receipt
+        Receipt receipt = receiptService.getReceipt(transactionId)
+            .orElseGet(() -> {
+                log.info("Receipt not found for transaction {}, generating new receipt", transactionId);
+                // Get the actual entity to generate receipt
+                var txn = salesTransactionService.getTransactionById(transactionId);
+                return receiptService.generateReceipt(txn);
+            });
+
+        return ResponseEntity.ok(receipt);
     }
 
     @Operation(

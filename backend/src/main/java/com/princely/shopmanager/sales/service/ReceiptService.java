@@ -24,14 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 public class ReceiptService {
 
     private final ReceiptRepository receiptRepository;
-    private final SalesTransactionService salesTransactionService;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional
-    public Receipt generateReceipt(String transactionId) {
-        log.debug("Generating receipt for transaction with Id {}", transactionId);
-
-        SalesTransaction transaction = salesTransactionService.getTransactionById(transactionId);
+    public Receipt generateReceipt(SalesTransaction transaction) {
+        log.debug("Generating receipt for transaction {}", transaction.getTransactionNumber());
 
         // Check if receipt already exists
         Optional<Receipt> existingReceipt = receiptRepository.findByTransaction(transaction);
