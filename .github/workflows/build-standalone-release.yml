@@ -182,26 +182,28 @@ jobs:
           echo "Contents of dist directory:"
           dir standalone\electron-app\dist\
 
-      - name: Upload Windows NSIS installer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}.exe
-          asset_name: Shop-Manager-Setup-${{ needs.create-release.outputs.version }}.exe
-          asset_content_type: application/octet-stream
+      - name: Upload Windows artifacts
+        shell: bash
+        run: |
+          cd standalone/electron-app/dist
 
-      - name: Upload Windows blockmap
-        uses: actions/upload-release-asset@v1
+          # Upload all EXE files
+          for exe in *.exe; do
+            if [ -f "$exe" ]; then
+              echo "Uploading $exe"
+              gh release upload v${{ needs.create-release.outputs.version }} "$exe" --clobber
+            fi
+          done
+
+          # Upload blockmap files
+          for blockmap in *.blockmap; do
+            if [ -f "$blockmap" ]; then
+              echo "Uploading $blockmap"
+              gh release upload v${{ needs.create-release.outputs.version }} "$blockmap" --clobber
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}.exe.blockmap
-          asset_name: Shop-Manager-Setup-${{ needs.create-release.outputs.version }}.exe.blockmap
-          asset_content_type: application/octet-stream
-        continue-on-error: true
 
   build-macos:
     name: Build macOS Installer
@@ -240,60 +242,27 @@ jobs:
           echo "Contents of dist directory:"
           ls -lh standalone/electron-app/dist/
 
-      - name: Upload macOS DMG (universal)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-universal.dmg
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-universal.dmg
-          asset_content_type: application/octet-stream
-        continue-on-error: true
+      - name: Upload macOS artifacts
+        run: |
+          cd standalone/electron-app/dist
 
-      - name: Upload macOS DMG (x64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-x64.dmg
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-x64.dmg
-          asset_content_type: application/octet-stream
-        continue-on-error: true
+          # Upload all DMG files
+          for dmg in *.dmg; do
+            if [ -f "$dmg" ]; then
+              echo "Uploading $dmg"
+              gh release upload v${{ needs.create-release.outputs.version }} "$dmg" --clobber
+            fi
+          done
 
-      - name: Upload macOS DMG (arm64)
-        uses: actions/upload-release-asset@v1
+          # Upload all ZIP files
+          for zip in *.zip; do
+            if [ -f "$zip" ]; then
+              echo "Uploading $zip"
+              gh release upload v${{ needs.create-release.outputs.version }} "$zip" --clobber
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-arm64.dmg
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-arm64.dmg
-          asset_content_type: application/octet-stream
-        continue-on-error: true
-
-      - name: Upload macOS ZIP (x64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-mac-x64.zip
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac-x64.zip
-          asset_content_type: application/zip
-        continue-on-error: true
-
-      - name: Upload macOS ZIP (arm64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-mac-arm64.zip
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac-arm64.zip
-          asset_content_type: application/zip
-        continue-on-error: true
 
   build-linux:
     name: Build Linux Packages
@@ -344,38 +313,35 @@ jobs:
           echo "Contents of dist directory:"
           ls -lh standalone/electron-app/dist/
 
-      - name: Upload AppImage
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}.AppImage
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}.AppImage
-          asset_content_type: application/octet-stream
-        continue-on-error: true
+      - name: Upload Linux artifacts
+        run: |
+          cd standalone/electron-app/dist
 
-      - name: Upload Debian package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/shop-manager_${{ needs.create-release.outputs.version }}_amd64.deb
-          asset_name: shop-manager_${{ needs.create-release.outputs.version }}_amd64.deb
-          asset_content_type: application/vnd.debian.binary-package
-        continue-on-error: true
+          # Upload AppImage files
+          for appimage in *.AppImage; do
+            if [ -f "$appimage" ]; then
+              echo "Uploading $appimage"
+              gh release upload v${{ needs.create-release.outputs.version }} "$appimage" --clobber
+            fi
+          done
 
-      - name: Upload RPM package
-        uses: actions/upload-release-asset@v1
+          # Upload DEB packages
+          for deb in *.deb; do
+            if [ -f "$deb" ]; then
+              echo "Uploading $deb"
+              gh release upload v${{ needs.create-release.outputs.version }} "$deb" --clobber
+            fi
+          done
+
+          # Upload RPM packages
+          for rpm in *.rpm; do
+            if [ -f "$rpm" ]; then
+              echo "Uploading $rpm"
+              gh release upload v${{ needs.create-release.outputs.version }} "$rpm" --clobber
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/shop-manager-${{ needs.create-release.outputs.version }}.x86_64.rpm
-          asset_name: shop-manager-${{ needs.create-release.outputs.version }}.x86_64.rpm
-          asset_content_type: application/x-rpm
-        continue-on-error: true
 
   publish-release:
     name: Publish Release
