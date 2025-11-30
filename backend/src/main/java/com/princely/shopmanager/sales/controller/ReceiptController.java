@@ -4,6 +4,9 @@ import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.service.ReceiptService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,16 @@ import lombok.extern.slf4j.Slf4j;
 public class ReceiptController {
 
     private final ReceiptService receiptService;
+
+    @GetMapping
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_LIST)")
+    public ResponseEntity<Page<Receipt>> listReceipts(
+            @RequestParam(required = false) String shopId,
+            @PageableDefault(size = 20, sort = "generatedAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+
+        Page<Receipt> receipts = receiptService.findAllReceipts(shopId, pageable);
+        return ResponseEntity.ok(receipts);
+    }
 
     @PostMapping("/generate/{transactionId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_CREATE)")

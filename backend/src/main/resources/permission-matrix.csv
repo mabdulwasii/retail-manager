@@ -11,7 +11,7 @@ TENANT,TENANT_CONFIG_UPDATE,Update tenant configuration settings,✓,✓,✓,,,,
 TENANT,TENANT_CONFIG_DELETE,Delete tenant configuration settings,✓,✓,,,,,TENANT_CONFIG_DELETE
 SHOP,SHOP_CREATE,Create new shops,✓,✓,✓,,,, SHOP_CREATE
 SHOP,SHOP_READ,View shop details,✓,✓,✓,✓,,,SHOP_READ
-SHOP,SHOP_LIST,List shops within context,✓,✓,✓,✓,,,SHOP_LIST
+SHOP,SHOP_LIST,List shops within context,✓,✓,✓,,,,SHOP_LIST
 SHOP,SHOP_LIST_ALL,List all shops across tenant,✓,✓,✓,,,, SHOP_LIST_ALL
 SHOP,SHOP_UPDATE,Update shop configuration,✓,✓,✓,,,, SHOP_UPDATE
 SHOP,SHOP_DELETE,Delete shops,✓,✓,✓,,,, SHOP_DELETE

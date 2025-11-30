@@ -4,9 +4,13 @@ import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.ReceiptRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Join;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -212,6 +216,18 @@ public class ReceiptService {
     @Transactional(readOnly = true)
     public Optional<Receipt> getReceiptByNumber(String receiptNumber) {
         return receiptRepository.findByReceiptNumber(receiptNumber);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Receipt> findAllReceipts(String shopId, Pageable pageable) {
+        if (shopId != null && !shopId.trim().isEmpty()) {
+            Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
+                Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
+                return criteriaBuilder.equal(transactionJoin.get("shop").get("id"), shopId);
+            };
+            return receiptRepository.findAll(spec, pageable);
+        }
+        return receiptRepository.findAll(pageable);
     }
 
     @Transactional

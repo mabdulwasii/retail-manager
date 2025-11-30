@@ -366,29 +366,19 @@ public class InvestmentRoundService {
     }
 
     /**
-     * Generate unique investment number: INV-{ROUND_NUMBER}-{UUID_SUFFIX}
-     * Uses UUID suffix to ensure uniqueness even under concurrent requests
+     * Generate unique investment number: INV-{ROUND_NUMBER}-{SEQUENCE}
+     * Uses database count to generate sequential numbers per round
      */
     private String generateInvestmentNumber(Shop shop, InvestmentRound round) {
         String prefix = "INV-" + round.getRoundNumber() + "-";
-        String investmentNumber;
-        int maxRetries = 10;
-        int attempt = 0;
 
-        do {
-            // Use UUID for guaranteed uniqueness
-            String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            investmentNumber = prefix + suffix;
-            attempt++;
+        // Get count of existing investments in this round from database
+        long count = investmentRepository.countByInvestmentRoundId(round.getId());
 
-            // Check if it exists (very unlikely with UUID, but checking anyway)
-            if (!investmentRepository.existsByInvestmentNumber(investmentNumber)) {
-                return investmentNumber;
-            }
-        } while (attempt < maxRetries);
+        // Generate sequential suffix (001, 002, 003, etc.)
+        String suffix = String.format("%03d", count + 1);
 
-        // Fallback to timestamp-based if UUID collision (extremely unlikely)
-        return prefix + System.currentTimeMillis();
+        return prefix + suffix;
     }
 
     /**

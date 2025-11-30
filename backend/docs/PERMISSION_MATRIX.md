@@ -159,7 +159,7 @@ All endpoints support optional status filtering: `ACTIVE`, `INACTIVE`, `PENDING`
 | **TENANT_DELETE** | Delete tenants | ✓ | | | | | |
 | **SHOP_CREATE** | Create shops | ✓ | ✓ | ✓ | | | |
 | **SHOP_READ** | View shop details | ✓ | ✓ | ✓ | ✓ | | |
-| **SHOP_LIST** | List shops | ✓ | ✓ | ✓ | ✓ | | |
+| **SHOP_LIST** | List shops | ✓ | ✓ | ✓ | | | |
 | **SHOP_UPDATE** | Update shops | ✓ | ✓ | ✓ | | | |
 | **SHOP_DELETE** | Delete shops | ✓ | ✓ | ✓ | | | |
 

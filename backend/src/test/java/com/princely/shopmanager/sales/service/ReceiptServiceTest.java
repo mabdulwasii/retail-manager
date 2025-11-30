@@ -332,6 +332,6 @@ class ReceiptServiceTest {
         receiptService.regenerateReceipt("txn-1");
 
         // Assert
-        verify(receiptRepository, never()).delete(any());
+        verify(receiptRepository, never()).delete(any(Receipt.class));
     }
 }

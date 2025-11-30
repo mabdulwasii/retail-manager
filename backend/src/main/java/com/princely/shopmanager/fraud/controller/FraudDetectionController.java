@@ -20,9 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,14 +62,8 @@ public class FraudDetectionController {
             @Parameter(description = "Alert status filter") @RequestParam(required = false) FraudAlert.AlertStatus status,
             @Parameter(description = "Alert severity filter") @RequestParam(required = false) FraudAlert.AlertSeverity severity,
             @Parameter(description = "Alert type filter") @RequestParam(required = false) FraudAlert.AlertType alertType,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "detectionTimestamp") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
+            @PageableDefault(size = 20, sort = "detectionTimestamp", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal principal) {
-
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<FraudAlertResponse> alerts = fraudManagementService.getFraudAlerts(
             shopId, status, severity, alertType, pageable);
@@ -167,14 +160,8 @@ public class FraudDetectionController {
             @Parameter(description = "Risk level filter") @RequestParam(required = false) RiskAssessment.RiskLevel riskLevel,
             @Parameter(description = "Assessment status filter") @RequestParam(required = false) RiskAssessment.AssessmentStatus status,
             @Parameter(description = "Assessment type filter") @RequestParam(required = false) RiskAssessment.AssessmentType assessmentType,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "assessmentDate") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir,
+            @PageableDefault(size = 20, sort = "assessmentDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal principal) {
-
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<RiskAssessmentResponse> assessments = fraudManagementService.getRiskAssessments(
             shopId, riskLevel, status, assessmentType, pageable);
@@ -235,14 +222,8 @@ public class FraudDetectionController {
             @Parameter(description = "Shop ID filter") @RequestParam(required = false) String shopId,
             @Parameter(description = "Rule type filter") @RequestParam(required = false) FraudRule.FraudRuleType ruleType,
             @Parameter(description = "Enabled filter") @RequestParam(required = false) Boolean enabled,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "ruleName") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "asc") String sortDir,
+            @PageableDefault(size = 20, sort = "ruleName", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal principal) {
-
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<FraudRule> rules = fraudManagementService.getFraudRules(shopId, ruleType, enabled, pageable);
         return ResponseEntity.ok(rules);
