@@ -18,13 +18,13 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
-    "build:all": "electron-builder -mwl",
+    "build": "electron-builder --publish never",
+    "build:win": "electron-builder --win --publish never",
+    "build:mac": "electron-builder --mac --publish never",
+    "build:linux": "electron-builder --linux --publish never",
+    "build:all": "electron-builder -mwl --publish never",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist": "electron-builder --publish never",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
@@ -48,7 +48,6 @@
     "appId": "com.shopmanager.desktop",
     "productName": "Shop Manager",
     "artifactName": "${productName}-Setup-${version}.${ext}",
-    "publish": "never",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -65,7 +64,7 @@
         "to": "config.yaml"
       },
       {
-        "from": "../docker-compose.yml",
+        "from": "../../docker-compose.yml",
         "to": "docker-compose.yml"
       },
       {
