@@ -100,7 +100,17 @@ jobs:
           ls -lh .helm-repo/
 
       # ================================================================
-      # Step 8: Checkout gh-pages Branch
+      # Step 8: Save Packaged Chart (Before Branch Switch)
+      # ================================================================
+      - name: Save packaged chart
+        run: |
+          # Save the packaged chart to /tmp before switching branches
+          cp -r .helm-repo /tmp/helm-repo-backup
+          echo "Saved packaged chart to /tmp/helm-repo-backup"
+          ls -lh /tmp/helm-repo-backup/
+
+      # ================================================================
+      # Step 9: Checkout gh-pages Branch
       # ================================================================
       - name: Checkout gh-pages branch
         run: |
@@ -118,19 +128,18 @@ jobs:
           fi
 
       # ================================================================
-      # Step 9: Copy Chart Package
+      # Step 10: Copy Chart Package to gh-pages
       # ================================================================
       - name: Copy chart package to gh-pages
         run: |
-          # Copy packaged chart from main branch
-          git checkout main -- .helm-repo/
-          mv .helm-repo/*.tgz .
+          # Restore packaged chart from backup
+          cp /tmp/helm-repo-backup/*.tgz .
 
           # List files
           ls -lh *.tgz
 
       # ================================================================
-      # Step 10: Update Helm Repository Index
+      # Step 11: Update Helm Repository Index
       # ================================================================
       - name: Update Helm repository index
         run: |
@@ -141,7 +150,7 @@ jobs:
           cat index.yaml
 
       # ================================================================
-      # Step 11: Commit and Push to gh-pages
+      # Step 12: Commit and Push to gh-pages
       # ================================================================
       - name: Commit and push to gh-pages
         run: |
@@ -152,11 +161,15 @@ jobs:
           git push origin gh-pages
 
       # ================================================================
-      # Step 12: Create GitHub Release
+      # Step 13: Create GitHub Release
       # ================================================================
-      - name: Checkout main branch
+      - name: Prepare release artifacts
         run: |
-          git checkout main
+          # Copy chart from backup for release
+          mkdir -p .helm-repo
+          cp /tmp/helm-repo-backup/*.tgz .helm-repo/
+          echo "Release artifact ready:"
+          ls -lh .helm-repo/
 
       - name: Create GitHub Release
         if: github.event_name == 'push'
@@ -211,7 +224,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ================================================================
-      # Step 13: Summary
+      # Step 14: Summary
       # ================================================================
       - name: Summary
         run: |
