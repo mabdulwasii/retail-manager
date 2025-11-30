@@ -10,7 +10,14 @@ on:
 jobs:
   auto-release-standalone:
     name: Auto Release Standalone
-    if: github.event.pull_request.merged == true
+    # Only run if PR is merged AND has standalone release labels
+    if: |
+      github.event.pull_request.merged == true &&
+      (
+        contains(github.event.pull_request.labels.*.name, 'release:standalone-patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:standalone-minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:standalone-major')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
