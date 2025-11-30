@@ -11,12 +11,21 @@ import { useAuth } from '@/context/ManualAuthContext'
 import { useProducts } from '@/hooks/useProducts'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ShopSelector } from '@/components/ui/shop-selector'
+import { useShopContext } from '@/context/ShopContext'
 
 export const CreateInventoryPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
+  
+  // Use selectedShopId for multi-shop users, fall back to user.shopId for single-shop users
+  const effectiveShopId = canManageMultipleShops ? selectedShopId : user?.shopId
+  
   const { createInventoryItem, isLoading, canManageInventory } = useInventory()
-  const { products, isLoading: productsLoading } = useProducts()
+  const { products, isLoading: productsLoading } = useProducts({
+    shopId: effectiveShopId || undefined
+  })
 
   // Check if user has permission to create inventory
   useEffect(() => {
@@ -154,8 +163,8 @@ export const CreateInventoryPage: React.FC = () => {
       return
     }
 
-    if (!user?.shopId) {
-      toast.error('Shop ID not found. Please log in again.')
+    if (!effectiveShopId) {
+      toast.error('Shop ID not found. Please select a shop or log in again.')
       return
     }
 
@@ -173,7 +182,7 @@ export const CreateInventoryPage: React.FC = () => {
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
 
-    const result = await createInventoryItem(user.shopId, request)
+    const result = await createInventoryItem(effectiveShopId, request)
     if (result) {
       toast.success('Inventory item created successfully')
       navigate('/inventory')
@@ -190,21 +199,30 @@ export const CreateInventoryPage: React.FC = () => {
       <div>
         <Button
           variant="ghost"
-          onClick={() => navigate('/inventory')}
+          onClick={() => navigate("/inventory")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Inventory
         </Button>
-        
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Package className="h-8 w-8" />
-            Add Inventory Item
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Add a new product to your inventory tracking
-          </p>
+
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Package className="h-8 w-8" />
+              Add Inventory Item
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Add a new product to your inventory tracking
+            </p>
+          </div>
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
         </div>
       </div>
 
@@ -233,19 +251,29 @@ export const CreateInventoryPage: React.FC = () => {
                     className="pl-10"
                   />
                 </div> */}
-                
+
                 <Select
                   //value={formData.productId}
-                  onValueChange={(value) => handleInputChange('productId', value)}
+                  onValueChange={(value) =>
+                    handleInputChange("productId", value)
+                  }
                   disabled={productsLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={productsLoading ? "Loading products..." : "Select a product"} />
+                    <SelectValue
+                      placeholder={
+                        productsLoading
+                          ? "Loading products..."
+                          : "Select a product"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredProducts?.length === 0 ? (
                       <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                        {productSearch ? 'No products found' : 'No products available'}
+                        {productSearch
+                          ? "No products found"
+                          : "No products available"}
                       </div>
                     ) : (
                       filteredProducts?.map((product) => (
@@ -253,7 +281,9 @@ export const CreateInventoryPage: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="font-medium">{product.name}</span>
                             {product.sku && (
-                              <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>
+                              <span className="text-xs text-muted-foreground">
+                                SKU: {product.sku}
+                              </span>
                             )}
                           </div>
                         </SelectItem>
@@ -276,16 +306,20 @@ export const CreateInventoryPage: React.FC = () => {
                     size="sm"
                     className="absolute top-2 right-2 h-6 w-6 p-0"
                     onClick={() => {
-                      handleInputChange('productId', '')
-                      setProductSearch('')
+                      handleInputChange("productId", "");
+                      setProductSearch("");
                     }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                  <p className="text-sm font-medium pr-8">{selectedProduct.name}</p>
+                  <p className="text-sm font-medium pr-8">
+                    {selectedProduct.name}
+                  </p>
                   <div className="text-xs text-muted-foreground mt-1 space-y-1">
                     {selectedProduct.sku && <p>SKU: {selectedProduct.sku}</p>}
-                    {selectedProduct.category && <p>Category: {selectedProduct.category}</p>}
+                    {selectedProduct.category && (
+                      <p>Category: {selectedProduct.category}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -303,7 +337,9 @@ export const CreateInventoryPage: React.FC = () => {
                   min="0"
                   placeholder="0"
                   value={formData.currentStock}
-                  onChange={(e) => handleInputChange('currentStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("currentStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.currentStock && (
@@ -312,16 +348,16 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minimumStock">
-                  Minimum Stock (optional)
-                </Label>
+                <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
                 <Input
                   id="minimumStock"
                   type="number"
                   min="0"
                   placeholder="0"
                   value={formData.minimumStock}
-                  onChange={(e) => handleInputChange('minimumStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("minimumStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.minimumStock && (
@@ -337,7 +373,9 @@ export const CreateInventoryPage: React.FC = () => {
                   min="0"
                   placeholder="Optional"
                   value={formData.maximumStock}
-                  onChange={(e) => handleInputChange('maximumStock', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("maximumStock", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.maximumStock && (
@@ -346,16 +384,16 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reorderPoint">
-                  Reorder Point (optional)
-                </Label>
+                <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
                 <Input
                   id="reorderPoint"
                   type="number"
                   min="0"
                   placeholder="0"
                   value={formData.reorderPoint}
-                  onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("reorderPoint", e.target.value)
+                  }
                   disabled={isLoading}
                 />
                 {errors.reorderPoint && (
@@ -374,7 +412,7 @@ export const CreateInventoryPage: React.FC = () => {
                   id="costPrice"
                   value={formData.costPrice}
                   onValueChange={(values) => {
-                    handleInputChange('costPrice', values.value || '')
+                    handleInputChange("costPrice", values.value || "");
                   }}
                   placeholder="0.00"
                   disabled={isLoading}
@@ -383,7 +421,9 @@ export const CreateInventoryPage: React.FC = () => {
                   fixedDecimalScale={false}
                   allowNegative={false}
                 />
-                <p className="text-xs text-muted-foreground">Purchase price per unit</p>
+                <p className="text-xs text-muted-foreground">
+                  Purchase price per unit
+                </p>
                 {errors.costPrice && (
                   <p className="text-sm text-red-500">{errors.costPrice}</p>
                 )}
@@ -397,7 +437,7 @@ export const CreateInventoryPage: React.FC = () => {
                   id="sellingPrice"
                   value={formData.sellingPrice}
                   onValueChange={(values) => {
-                    handleInputChange('sellingPrice', values.value || '')
+                    handleInputChange("sellingPrice", values.value || "");
                   }}
                   placeholder="0.00"
                   disabled={isLoading}
@@ -406,7 +446,9 @@ export const CreateInventoryPage: React.FC = () => {
                   fixedDecimalScale={false}
                   allowNegative={false}
                 />
-                <p className="text-xs text-muted-foreground">Retail price per unit</p>
+                <p className="text-xs text-muted-foreground">
+                  Retail price per unit
+                </p>
                 {errors.sellingPrice && (
                   <p className="text-sm text-red-500">{errors.sellingPrice}</p>
                 )}
@@ -420,7 +462,7 @@ export const CreateInventoryPage: React.FC = () => {
                 id="location"
                 placeholder="e.g., Aisle 3, Shelf B"
                 value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
+                onChange={(e) => handleInputChange("location", e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -431,12 +473,20 @@ export const CreateInventoryPage: React.FC = () => {
               <Input
                 id="expiryDate"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                min={
+                  new Date(new Date().setDate(new Date().getDate() + 1))
+                    .toISOString()
+                    .split("T")[0]
+                }
                 value={formData.expiryDate}
-                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("expiryDate", e.target.value)
+                }
                 disabled={isLoading}
               />
-              <p className="text-xs text-muted-foreground">Optional: Set if product has an expiration date</p>
+              <p className="text-xs text-muted-foreground">
+                Optional: Set if product has an expiration date
+              </p>
               {errors.expiryDate && (
                 <p className="text-sm text-red-500">{errors.expiryDate}</p>
               )}
@@ -453,12 +503,12 @@ export const CreateInventoryPage: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Inventory Item'}
+                {isLoading ? "Creating..." : "Create Inventory Item"}
               </Button>
             </div>
           </CardContent>
         </Card>
       </form>
     </div>
-  )
+  );
 }

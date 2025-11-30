@@ -121,15 +121,8 @@ export const CashierDashboard: React.FC = () => {
       title: 'New Sale',
       description: 'Process customer purchase',
       icon: ShoppingCart,
-      href: '/sales',
+      href: '/pos',
       color: 'bg-blue-500 hover:bg-blue-600'
-    },
-    {
-      title: 'Scan Product',
-      description: 'Quick barcode scan',
-      icon: Scan,
-      href: '/sales/scan',
-      color: 'bg-green-500 hover:bg-green-600'
     },
     {
       title: 'View Receipts',
@@ -236,7 +229,7 @@ export const CashierDashboard: React.FC = () => {
           <CardDescription>Common cashier tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {quickActions.map((action, index) => {
               const isNewSale = action.title === 'New Sale'
               return (
@@ -244,22 +237,14 @@ export const CashierDashboard: React.FC = () => {
                   key={index}
                   variant={isNewSale ? "default" : "outline"}
                   className={isNewSale 
-                    ? "h-28 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group"
-                    : "h-24 flex-col space-y-2 p-4"
+                    ? "h-20 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                    : "h-20 flex-col hover:bg-primary/5 hover:border-primary/50 transition-all"
                   }
                   asChild
                 >
                   <Link to={action.href}>
-                    {isNewSale && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    )}
-                    <action.icon className={isNewSale ? "h-8 w-8 mb-2 relative z-10" : "h-8 w-8"} />
-                    <div className={isNewSale ? "text-center relative z-10" : "text-center"}>
-                      <div className={isNewSale ? "font-bold text-base" : "font-medium text-sm"}>{action.title}</div>
-                      <div className={isNewSale ? "text-xs opacity-90 mt-1" : "text-xs text-muted-foreground"}>
-                        {action.description}
-                      </div>
-                    </div>
+                    <action.icon className="h-6 w-6 mb-2" />
+                    <span className="font-semibold">{action.title}</span>
                   </Link>
                 </Button>
               )

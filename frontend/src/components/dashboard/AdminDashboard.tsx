@@ -31,11 +31,13 @@ import {
   DollarSign,
   Eye,
   Loader2,
-  Server,
   Settings,
   Shield,
   ShoppingCart,
   Users,
+  TrendingUp,
+  Package,
+  BarChart3,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
@@ -251,7 +253,7 @@ export const AdminDashboard: React.FC = () => {
             message: `${fraudStats?.highRiskCount} high-risk transactions flagged for review`,
             time: "Security Alert",
             action: "Investigate",
-            link: "/fraud-detection?risk=high",
+            link: "/sales",
           },
         ]
       : []),
@@ -262,7 +264,7 @@ export const AdminDashboard: React.FC = () => {
             message: `CRITICAL: ${fraudStats?.criticalRiskCount} critical risk transactions require immediate action`,
             time: "Security Alert",
             action: "Urgent Review",
-            link: "/fraud-detection?risk=critical",
+            link: "/sales",
           },
         ]
       : []),
@@ -289,27 +291,28 @@ export const AdminDashboard: React.FC = () => {
         ]),
   ].slice(0, 5);
 
+  console.log("AdminDashboard - hasError:", hasError);
   // Handle errors
-  if (hasError) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                Error Loading Dashboard
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Unable to load dashboard data. Please check your connection.
-              </p>
-              <Button onClick={() => refetch()}>Try Again</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // if (hasError) {
+  //   return (
+  //     <div className="space-y-6">
+  //       <Card>
+  //         <CardContent className="flex items-center justify-center py-8">
+  //           <div className="text-center">
+  //             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+  //             <h3 className="text-lg font-semibold mb-2">
+  //               Error Loading Dashboard
+  //             </h3>
+  //             <p className="text-muted-foreground mb-4">
+  //               Unable to load dashboard data. Please check your connection.
+  //             </p>
+  //             <Button onClick={() => refetch()}>Try Again</Button>
+  //           </div>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6">
@@ -365,9 +368,9 @@ export const AdminDashboard: React.FC = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/system-settings">
+            <Link to="/admin/permissions">
               <Settings className="mr-2 h-4 w-4" />
-              System Settings
+              Permissions
             </Link>
           </Button>
         </div>
@@ -403,9 +406,9 @@ export const AdminDashboard: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/tenants">
+              <Link to="/shops">
                 <Building className="h-6 w-6 mb-2" />
-                Manage Tenants
+                Manage Shops
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
@@ -415,15 +418,15 @@ export const AdminDashboard: React.FC = () => {
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/security">
+              <Link to="/admin/roles">
                 <Shield className="h-6 w-6 mb-2" />
-                Security Center
+                Role Management
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/system-monitor">
-                <Server className="h-6 w-6 mb-2" />
-                System Monitor
+              <Link to="/analytics">
+                <BarChart3 className="h-6 w-6 mb-2" />
+                Analytics
               </Link>
             </Button>
           </div>
@@ -532,28 +535,98 @@ export const AdminDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* System Performance Charts */}
+      {/* Key Metrics Overview */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>System Performance</CardTitle>
-            <CardDescription>Resource utilization over time</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-600" />
+              Revenue Trend
+            </CardTitle>
+            <CardDescription>Performance this {period}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              Performance charts would be rendered here
+            <div className="space-y-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold">
+                  {formatCurrency(salesSummary?.totalRevenue || 0)}
+                </span>
+                <span className={`text-sm font-medium ${
+                  (revenueAnalytics?.growthRate || 0) >= 0 
+                    ? 'text-green-600' 
+                    : 'text-red-600'
+                }`}>
+                  {(revenueAnalytics?.growthRate || 0) >= 0 ? '↑' : '↓'} 
+                  {Math.abs(revenueAnalytics?.growthRate || 0).toFixed(1)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-muted-foreground">Transactions</p>
+                  <p className="text-lg font-semibold">
+                    {salesSummary?.totalTransactions || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Avg Value</p>
+                  <p className="text-lg font-semibold">
+                    {formatCurrency(salesSummary?.averageTransactionValue || 0)}
+                  </p>
+                </div>
+              </div>
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link to="/analytics">View Detailed Analytics →</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Tenant Growth</CardTitle>
-            <CardDescription>New tenant registrations</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-600" />
+              Inventory Status
+            </CardTitle>
+            <CardDescription>Stock levels across all shops</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              Growth analytics charts would be rendered here
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    {inventorySummary?.totalItems || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Items</p>
+                </div>
+                <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {inventorySummary?.lowStockItems || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Low Stock</p>
+                </div>
+                <div className="text-center p-3 bg-red-50 rounded-lg">
+                  <p className="text-2xl font-bold text-red-600">
+                    {inventorySummary?.expiredItems || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Expired</p>
+                </div>
+              </div>
+              <div className="pt-4 border-t">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Total Value</span>
+                  <span className="text-lg font-semibold">
+                    {formatCurrency(inventorySummary?.totalValue || 0)}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/inventory/low-stock">Low Stock →</Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/inventory/expiring">Expiring →</Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -253,7 +253,11 @@ export const OwnerManagerDashboard: React.FC = () => {
               <p className="text-xs text-muted-foreground">
                 {stat.description}
               </p>
-              <div className="text-xs text-green-600 mt-1">
+              <div className={`text-xs mt-1 font-medium ${
+                stat.title === 'Total Revenue' && revenueAnalytics?.growthRate 
+                  ? (revenueAnalytics.growthRate >= 0 ? 'text-green-600' : 'text-red-600')
+                  : 'text-muted-foreground'
+              }`}>
                 {stat.trend}
               </div>
             </CardContent>
@@ -265,44 +269,42 @@ export const OwnerManagerDashboard: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common business tasks</CardDescription>
+          <CardDescription>Frequently used operations</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {permissions.canCreateSale() && (
               <Button 
-                className="h-28 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group" 
+                className="h-20 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
                 asChild
               >
                 <Link to="/pos">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <ShoppingCart className="h-8 w-8 mb-2 relative z-10" />
-                  <span className="font-bold text-base relative z-10">New Sale</span>
-                  <span className="text-xs opacity-90 mt-1 relative z-10">Start transaction</span>
+                  <ShoppingCart className="h-6 w-6 mb-2" />
+                  <span className="font-semibold">New Sale</span>
                 </Link>
               </Button>
             )}
             {permissions.canCreateProduct() && (
-              <Button variant="outline" className="h-20 flex-col" asChild>
+              <Button variant="outline" className="h-20 flex-col hover:bg-primary/5 hover:border-primary/50 transition-all" asChild>
                 <Link to="/products/create">
                   <Package className="h-6 w-6 mb-2" />
-                  Add Product
+                  <span className="font-semibold">Add Product</span>
                 </Link>
               </Button>
             )}
             {permissions.canViewInvestments() && (
-              <Button variant="outline" className="h-20 flex-col" asChild>
+              <Button variant="outline" className="h-20 flex-col hover:bg-emerald-50 hover:border-emerald-200 transition-all" asChild>
                 <Link to="/investments">
-                  <Coins className="h-6 w-6 mb-2" />
-                  Track Investments
+                  <Coins className="h-6 w-6 mb-2 text-emerald-600" />
+                  <span className="font-semibold">Investments</span>
                 </Link>
               </Button>
             )}
             {permissions.canViewReceipts() && (
-              <Button variant="outline" className="h-20 flex-col" asChild>
+              <Button variant="outline" className="h-20 flex-col hover:bg-blue-50 hover:border-blue-200 transition-all" asChild>
                 <Link to="/receipts">
-                  <Receipt className="h-6 w-6 mb-2" />
-                  View Receipts
+                  <Receipt className="h-6 w-6 mb-2 text-blue-600" />
+                  <span className="font-semibold">Receipts</span>
                 </Link>
               </Button>
             )}
@@ -372,7 +374,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                   ))}
                 </div>
                 <Button variant="outline" className="w-full mt-4" asChild>
-                  <Link to="/shops">View All Shops</Link>
+                  <Link to="/shops">View All Shops →</Link>
                 </Button>
               </>
             )}
@@ -455,7 +457,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 {permissions.canApproveExpenses() && (
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/expenses?status=pending">Review</Link>
+                    <Link to="/receipts">Review</Link>
                   </Button>
                 )}
               </div>
@@ -532,7 +534,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                   </div>
                 </div>
                 <Button size="sm" variant="outline" asChild>
-                  <Link to="/fraud-detection?risk=high">Investigate</Link>
+                  <Link to="/sales">Review Sales</Link>
                 </Button>
               </div>
             )}
@@ -550,7 +552,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                   </div>
                 </div>
                 <Button size="sm" variant="destructive" asChild>
-                  <Link to="/fraud-detection?risk=critical">Review Now</Link>
+                  <Link to="/sales">Review Now</Link>
                 </Button>
               </div>
             )}
@@ -572,34 +574,34 @@ export const OwnerManagerDashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-lg">
-                  <p className="text-xs text-muted-foreground">Total Items</p>
-                  <p className="text-2xl font-bold">{inventorySummary.totalItems}</p>
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <p className="text-2xl font-bold text-blue-700">{inventorySummary.totalItems}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Items</p>
                 </div>
-                <div className="p-3 border rounded-lg">
-                  <p className="text-xs text-muted-foreground">Total Value</p>
-                  <p className="text-2xl font-bold">{formatCurrency(inventorySummary.totalValue || 0)}</p>
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                  <p className="text-2xl font-bold text-green-700">{formatCurrency(inventorySummary.totalValue || 0)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Value</p>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
-                  <span className="text-sm">Low Stock</span>
-                  <span className="text-sm font-semibold text-yellow-700">{inventorySummary.lowStockItems}</span>
+              <div className="pt-3 border-t space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Low Stock</span>
+                  <span className="text-sm font-semibold text-yellow-600">{inventorySummary.lowStockItems}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-red-50 rounded">
-                  <span className="text-sm">Expired</span>
-                  <span className="text-sm font-semibold text-red-700">{inventorySummary.expiredItems}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Expired</span>
+                  <span className="text-sm font-semibold text-red-600">{inventorySummary.expiredItems}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-amber-50 rounded">
-                  <span className="text-sm">Expiring Soon</span>
-                  <span className="text-sm font-semibold text-amber-700">{inventorySummary.expiringSoonItems}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Expiring Soon</span>
+                  <span className="text-sm font-semibold text-amber-600">{inventorySummary.expiringSoonItems}</span>
                 </div>
               </div>
 
               {permissions.canViewInventory() && (
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/inventory">Manage Inventory</Link>
+                  <Link to="/inventory">Manage Inventory →</Link>
                 </Button>
               )}
             </CardContent>
@@ -618,34 +620,34 @@ export const OwnerManagerDashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-lg">
-                  <p className="text-xs text-muted-foreground">Total Expenses</p>
-                  <p className="text-2xl font-bold">{expenseSummary.totalExpenses}</p>
+                <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-100">
+                  <p className="text-2xl font-bold text-purple-700">{expenseSummary.totalExpenses}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Expenses</p>
                 </div>
-                <div className="p-3 border rounded-lg">
-                  <p className="text-xs text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold">{formatCurrency(expenseSummary.totalAmount || 0)}</p>
+                <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+                  <p className="text-2xl font-bold text-orange-700">{formatCurrency(expenseSummary.totalAmount || 0)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Amount</p>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                  <span className="text-sm">Pending Approval</span>
-                  <span className="text-sm font-semibold text-orange-700">{expenseSummary.pendingApproval}</span>
+              <div className="pt-3 border-t space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Pending Approval</span>
+                  <span className="text-sm font-semibold text-orange-600">{expenseSummary.pendingApproval}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                  <span className="text-sm">Approved</span>
-                  <span className="text-sm font-semibold text-green-700">{expenseSummary.approvedExpenses}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Approved</span>
+                  <span className="text-sm font-semibold text-green-600">{expenseSummary.approvedExpenses}</span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                  <span className="text-sm">This Month</span>
-                  <span className="text-sm font-semibold text-blue-700">{formatCurrency(expenseSummary.monthlyTotal || 0)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">This Month</span>
+                  <span className="text-sm font-semibold text-blue-600">{formatCurrency(expenseSummary.monthlyTotal || 0)}</span>
                 </div>
               </div>
 
               {permissions.canViewExpenses() && (
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/expenses">View All Expenses</Link>
+                  <Link to="/receipts">View Receipts →</Link>
                 </Button>
               )}
             </CardContent>
@@ -682,7 +684,7 @@ export const OwnerManagerDashboard: React.FC = () => {
             </div>
             {permissions.canViewInvestments() && (
               <Button variant="outline" className="w-full mt-4" asChild>
-                <Link to="/investments">View Full Portfolio</Link>
+                <Link to="/investments">View Full Portfolio →</Link>
               </Button>
             )}
           </CardContent>
@@ -734,7 +736,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 {permissions.canViewFraudDetection() && (
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/fraud-detection">View Details</Link>
+                    <Link to="/sales">View Sales</Link>
                   </Button>
                 )}
               </div>
@@ -751,7 +753,7 @@ export const OwnerManagerDashboard: React.FC = () => {
                 </div>
                 {permissions.canViewFraudDetection() && (
                   <Button size="sm" variant="destructive" asChild>
-                    <Link to="/fraud-detection">Review Now</Link>
+                    <Link to="/sales">Review Now</Link>
                   </Button>
                 )}
               </div>

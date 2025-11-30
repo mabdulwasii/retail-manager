@@ -62,6 +62,57 @@ export const useReceiptByNumber = (receiptNumber: string | undefined) => {
 };
 
 /**
+ * Hook to fetch receipt by transaction ID
+ */
+export const useReceiptByTransaction = (transactionId: string | undefined) => {
+  const { isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["receipts", "transaction", transactionId],
+    queryFn: () => receiptService.getReceiptByTransaction(transactionId!),
+    enabled: !!(isAuthenticated && transactionId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
+};
+
+/**
+ * Hook to fetch printable receipt content
+ */
+export const usePrintableContent = (receiptId: string | undefined) => {
+  const { isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["receipts", "printable", receiptId],
+    queryFn: () => receiptService.getPrintableContent(receiptId!),
+    enabled: !!(isAuthenticated && receiptId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
+};
+
+/**
+ * Hook to fetch receipt content
+ */
+export const useReceiptContent = (receiptId: string | undefined) => {
+  const { isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["receipts", "content", receiptId],
+    queryFn: () => receiptService.getReceiptContent(receiptId!),
+    enabled: !!(isAuthenticated && receiptId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
+};
+
+/**
  * Mutation to generate receipt
  */
 export const useGenerateReceipt = () => {

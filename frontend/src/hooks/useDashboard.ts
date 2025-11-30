@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 import { shopService } from '@/services/shopService'
 import { analyticsService } from '@/services/analyticsService'
 import { inventoryService } from '@/services/inventoryService'
@@ -73,7 +73,7 @@ export const useAllShops = (page = 0, size = 20) => {
 }
 
 export const useSalesSummary = (shopId?: string, period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasAnyPermission } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
   const { data: shops } = useActiveShops()
@@ -84,7 +84,7 @@ export const useSalesSummary = (shopId?: string, period: TimePeriod = 'month') =
   return useQuery({
     queryKey: ['analytics', 'sales-summary', targetShopId, period],
     queryFn: () => analyticsService.getSalesSummary(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasAnyPermission([Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_VIEW])),
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
@@ -92,7 +92,7 @@ export const useSalesSummary = (shopId?: string, period: TimePeriod = 'month') =
 }
 
 export const useInvestmentROI = (shopId?: string, period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasAnyPermission } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
   const { data: shops } = useActiveShops()
@@ -103,7 +103,7 @@ export const useInvestmentROI = (shopId?: string, period: TimePeriod = 'month') 
   return useQuery({
     queryKey: ['analytics', 'investment-roi', targetShopId, period],
     queryFn: () => analyticsService.getInvestmentROI(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.SHOP_OWNER, UserRole.INVESTOR, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasAnyPermission([Permission.ANALYTICS_INVESTMENT_VIEW, Permission.ANALYTICS_VIEW, Permission.INVESTMENT_LIST])),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
@@ -111,7 +111,7 @@ export const useInvestmentROI = (shopId?: string, period: TimePeriod = 'month') 
 }
 
 export const useRevenueAnalytics = (shopId?: string, period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasAnyPermission } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
   const { data: shops } = useActiveShops()
@@ -122,7 +122,7 @@ export const useRevenueAnalytics = (shopId?: string, period: TimePeriod = 'month
   return useQuery({
     queryKey: ['analytics', 'revenue-analytics', targetShopId, period],
     queryFn: () => analyticsService.getRevenueAnalytics(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasAnyPermission([Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_VIEW])),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
@@ -130,7 +130,7 @@ export const useRevenueAnalytics = (shopId?: string, period: TimePeriod = 'month
 }
 
 export const useFraudStatistics = (shopId?: string, period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasAnyPermission } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
   const { data: shops } = useActiveShops()
@@ -141,7 +141,7 @@ export const useFraudStatistics = (shopId?: string, period: TimePeriod = 'month'
   return useQuery({
     queryKey: ['analytics', 'fraud-statistics', targetShopId, period],
     queryFn: () => analyticsService.getFraudStatistics(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasAnyPermission([Permission.FRAUD_VIEW, Permission.FRAUD_LIST, Permission.FRAUD_DETECTION_VIEW])),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // Keep cached for 10 minutes after becoming inactive
     retry: 1
@@ -149,7 +149,7 @@ export const useFraudStatistics = (shopId?: string, period: TimePeriod = 'month'
 }
 
 export const useInventorySummary = (shopId?: string) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasPermission } = useAuth()
 
   const { data: shops } = useActiveShops()
   const targetShopId = shopId || user?.shopId || (shops && shops.length > 0 ? shops[0].id : null)
@@ -159,7 +159,7 @@ export const useInventorySummary = (shopId?: string) => {
   return useQuery({
     queryKey: ['inventory', 'summary', targetShopId],
     queryFn: () => inventoryService.getInventorySummary(targetShopId!),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasPermission(Permission.INVENTORY_LIST)),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // Keep cached for 10 minutes after becoming inactive
     retry: 1
@@ -167,7 +167,7 @@ export const useInventorySummary = (shopId?: string) => {
 }
 
 export const useExpenseSummary = (shopId?: string, period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasPermission } = useAuth()
   const { startDate, endDate } = getDateRange(period)
 
   const { data: shops } = useActiveShops()
@@ -178,7 +178,7 @@ export const useExpenseSummary = (shopId?: string, period: TimePeriod = 'month')
   return useQuery({
     queryKey: ['expenses', 'summary', targetShopId, period],
     queryFn: () => expenseService.getExpenseSummary(targetShopId!, startDate, endDate),
-    enabled: !!(isAuthenticated && shouldFetch && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.ACCOUNTANT].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shouldFetch && hasPermission(Permission.EXPENSE_SUMMARY)),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // Keep cached for 5 minutes after becoming inactive
     retry: 1
@@ -186,7 +186,7 @@ export const useExpenseSummary = (shopId?: string, period: TimePeriod = 'month')
 }
 
 export const useAlerts = () => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
 
   return useQuery({
     queryKey: ['alerts'],
@@ -209,7 +209,7 @@ export const useAlerts = () => {
         }
       ])
     },
-    enabled: !!(isAuthenticated && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && hasAnyPermission([Permission.ANALYTICS_VIEW, Permission.FRAUD_VIEW, Permission.SHOP_LIST])),
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 1
   })
@@ -217,7 +217,7 @@ export const useAlerts = () => {
 
 // Hook to get performance data for all shops
 export const useAllShopsPerformance = (period: TimePeriod = 'month') => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
   const { data: shops } = useActiveShops()
   const { startDate, endDate } = getDateRange(period)
 
@@ -259,7 +259,7 @@ export const useAllShopsPerformance = (period: TimePeriod = 'month') => {
 
       return Promise.all(performancePromises)
     },
-    enabled: !!(isAuthenticated && shops && shops.length > 0 && user?.roles && user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && shops && shops.length > 0 && hasAnyPermission([Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_VIEW, Permission.SHOP_LIST])),
     staleTime: 3 * 60 * 1000, // 3 minutes
     retry: 1
   })

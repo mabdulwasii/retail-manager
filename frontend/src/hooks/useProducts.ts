@@ -76,11 +76,12 @@ export const useProductCategories = () => {
 
 /**
  * Hook to create a new product
+ * @param targetShopId - Optional shop ID for multi-shop users. Falls back to user's shopId
  */
-export const useCreateProduct = () => {
+export const useCreateProduct = (targetShopId?: string) => {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const shopId = user?.shopId
+  const shopId = targetShopId || user?.shopId
 
   return useMutation({
     mutationFn: (data: ProductCreateRequest) => {

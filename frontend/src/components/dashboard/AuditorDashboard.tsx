@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useAlerts } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,9 +13,6 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  Users,
-  Search,
-  Download,
   RefreshCw
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -42,6 +40,7 @@ interface ComplianceItem {
 
 export const AuditorDashboard: React.FC = () => {
   const { user } = useAuth()
+  const permissions = usePermissions()
   const { data: alerts, isLoading: alertsLoading } = useAlerts()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -163,34 +162,34 @@ export const AuditorDashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'Search Audit Logs',
-      description: 'Find specific activities',
-      icon: Search,
-      href: '/audit/search',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      title: 'View Audit Logs',
+      description: 'Browse audit logs',
+      icon: Eye,
+      href: '/audit',
+      show: permissions.canViewAuditLogs()
     },
     {
-      title: 'Generate Report',
-      description: 'Create audit report',
+      title: 'User Management',
+      description: 'Review user activities',
       icon: FileText,
-      href: '/audit/report',
-      color: 'bg-green-500 hover:bg-green-600'
+      href: '/users',
+      show: permissions.canViewUsers()
     },
     {
-      title: 'Compliance Check',
-      description: 'Review compliance',
+      title: 'Role Management',
+      description: 'Review roles',
       icon: Shield,
-      href: '/compliance',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      href: '/admin/roles',
+      show: permissions.canViewRoles()
     },
     {
-      title: 'Export Data',
-      description: 'Download audit data',
-      icon: Download,
-      href: '/audit/export',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      title: 'Sales Review',
+      description: 'Review transactions',
+      icon: AlertTriangle,
+      href: '/sales',
+      show: permissions.canViewSales()
     }
-  ]
+  ].filter(action => action.show)
 
   const riskAssessments = [
     {
@@ -240,18 +239,22 @@ export const AuditorDashboard: React.FC = () => {
             <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button variant="outline" asChild>
-            <Link to="/audit">
-              <Eye className="mr-2 h-4 w-4" />
-              View Logs
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/audit/report">
-              <FileText className="mr-2 h-4 w-4" />
-              Generate Report
-            </Link>
-          </Button>
+          {permissions.canViewAuditLogs() && (
+            <Button variant="outline" asChild>
+              <Link to="/audit">
+                <Eye className="mr-2 h-4 w-4" />
+                View Logs
+              </Link>
+            </Button>
+          )}
+          {permissions.canViewUsers() && (
+            <Button asChild>
+              <Link to="/users">
+                <FileText className="mr-2 h-4 w-4" />
+                View Users
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -287,17 +290,12 @@ export const AuditorDashboard: React.FC = () => {
               <Button
                 key={index}
                 variant="outline"
-                className="h-24 flex-col space-y-2 p-4"
+                className="h-20 flex-col hover:bg-primary/5 hover:border-primary/50 transition-all"
                 asChild
               >
                 <Link to={action.href}>
-                  <action.icon className="h-8 w-8" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">{action.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {action.description}
-                    </div>
-                  </div>
+                  <action.icon className="h-6 w-6 mb-2" />
+                  <span className="font-semibold">{action.title}</span>
                 </Link>
               </Button>
             ))}
@@ -339,9 +337,11 @@ export const AuditorDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/audit">View All Logs</Link>
-            </Button>
+            {permissions.canViewAuditLogs() && (
+              <Button variant="outline" className="w-full mt-4" asChild>
+                <Link to="/audit">View All Logs</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
 

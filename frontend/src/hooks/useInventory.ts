@@ -28,6 +28,7 @@ export interface InventoryItem {
   productSku?: string
   productBarcode?: string
   currentStock: number
+  unitCost?: number
   reservedStock: number
   availableStock: number
   minimumStock: number

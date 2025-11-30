@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 import { toast } from 'sonner'
 import { api } from '@/services/api'
 
@@ -108,7 +108,8 @@ export const useFraudAlerts = (params?: {
   page?: number
   size?: number
 }) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
+  const { user } = useAuth()
   const targetShopId = params?.shopId || user?.shopId
 
   return useQuery({
@@ -130,14 +131,7 @@ export const useFraudAlerts = (params?: {
     },
     enabled: !!(
       isAuthenticated &&
-      user?.roles.some((r) =>
-        [
-          UserRole.MANAGER,
-          UserRole.SHOP_OWNER,
-          UserRole.TENANT_ADMIN,
-          UserRole.AUDITOR,
-        ].includes(r.name as UserRole)
-      )
+      hasAnyPermission([Permission.FRAUD_VIEW, Permission.FRAUD_LIST, Permission.FRAUD_MANAGE])
     ),
     staleTime: 1 * 60 * 1000,
     retry: 1,
@@ -146,13 +140,13 @@ export const useFraudAlerts = (params?: {
 
 // Query hook for fetching fraud alert by ID
 export const useFraudAlertById = (alertId?: string) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
 
   return useQuery({
     queryKey: ['fraud', 'alerts', alertId],
     queryFn: () => api.get<FraudAlert>(`/fraud/alerts/${alertId}`),
     enabled: !!(isAuthenticated && alertId && 
-    user?.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.AUDITOR].includes(r.name as UserRole))),
+    hasAnyPermission([Permission.FRAUD_VIEW, Permission.FRAUD_LIST, Permission.FRAUD_MANAGE])),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -166,7 +160,7 @@ export const useRiskAssessments = (params?: {
   page?: number
   size?: number
 }) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission, user } = useAuth()
   const targetShopId = params?.shopId || user?.shopId
 
   return useQuery({
@@ -181,7 +175,7 @@ export const useRiskAssessments = (params?: {
 
       return await api.get<PaginatedResponse<RiskAssessment>>(`/fraud/risk-assessments?${searchParams}`)
     },
-    enabled: !!(isAuthenticated && user?.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.AUDITOR].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && hasAnyPermission([Permission.FRAUD_VIEW, Permission.FRAUD_LIST, Permission.FRAUD_MANAGE])),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -189,7 +183,7 @@ export const useRiskAssessments = (params?: {
 
 // Query hook for fetching fraud rules
 export const useFraudRules = (shopId?: string) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasPermission, user } = useAuth()
   const targetShopId = shopId || user?.shopId
 
   return useQuery({
@@ -199,7 +193,7 @@ export const useFraudRules = (shopId?: string) => {
       if (targetShopId) searchParams.append('shopId', targetShopId)
       return await api.get<FraudRule[]>(`/fraud/rules?${searchParams}`)
     },
-    enabled: !!(isAuthenticated && user?.roles.some(r => [UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && hasPermission(Permission.FRAUD_MANAGE)),
     staleTime: 5 * 60 * 1000,
     retry: 1
   })

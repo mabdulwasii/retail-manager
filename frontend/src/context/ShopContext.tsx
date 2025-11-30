@@ -1,11 +1,14 @@
-import { UserRole } from "@/types/roles";
+import { Permission } from "@/types/permissions";
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './ManualAuthContext';
+import { shopService, ShopResponse } from '@/services/shopService';
 
 interface ShopContextType {
   selectedShopId: string | null
+  selectedShop: ShopResponse | null
   setSelectedShopId: (shopId: string) => void
   canManageMultipleShops: boolean
+  isLoadingShop: boolean
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined)
@@ -15,10 +18,9 @@ interface ShopProviderProps {
 }
 
 export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
-  const { user, hasAnyRole, hasPermission } = useAuth()
+  const { user, hasAnyPermission } = useAuth()
   
-  const canManageMultipleShops = hasAnyRole([ UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN])
-  //const canManageMultipleShops =  hasPermission(Permission.SHOP_MANAGE)
+  const canManageMultipleShops = hasAnyPermission([Permission.SHOP_LIST, Permission.SHOP_LIST_ALL])
 
   const [selectedShopId, setSelectedShopIdState] = useState<string | null>(() => {
     const stored = localStorage.getItem('selectedShopId')
@@ -27,6 +29,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     return user?.shopId || null
   })
   
+  const [selectedShop, setSelectedShop] = useState<ShopResponse | null>(null)
+  const [isLoadingShop, setIsLoadingShop] = useState(false)
+  
   useEffect(() => {
     if (user?.shopId) {
       setSelectedShopIdState(user.shopId)
@@ -34,14 +39,45 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   }, [user?.shopId])
   
+  // Fetch shop details when selectedShopId changes
+  useEffect(() => {
+    const fetchShopDetails = async () => {
+      if (!selectedShopId) {
+        setSelectedShop(null)
+        return
+      }
+      
+      setIsLoadingShop(true)
+      try {
+        const shopData = await shopService.getShopById(selectedShopId)
+        setSelectedShop(shopData)
+        // Store in localStorage for quick access
+        localStorage.setItem('selectedShop', JSON.stringify(shopData))
+      } catch (error) {
+        console.error('Failed to fetch shop details:', error)
+        setSelectedShop(null)
+      } finally {
+        setIsLoadingShop(false)
+      }
+    }
+    
+    fetchShopDetails()
+  }, [selectedShopId])
+  
   const setSelectedShopId = (shopId: string) => {
     setSelectedShopIdState(shopId)
     localStorage.setItem('selectedShopId', shopId)
   }
   
   const value = useMemo(
-    () => ({ selectedShopId, setSelectedShopId, canManageMultipleShops }),
-    [selectedShopId, canManageMultipleShops]
+    () => ({ 
+      selectedShopId, 
+      selectedShop, 
+      setSelectedShopId, 
+      canManageMultipleShops,
+      isLoadingShop 
+    }),
+    [selectedShopId, selectedShop, canManageMultipleShops, isLoadingShop]
   )
   
   return (

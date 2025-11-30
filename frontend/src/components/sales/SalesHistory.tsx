@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { SalesTransaction } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
 import { usePDFReceipt } from '@/hooks/usePDFReceipt'
+import { useShopContext } from '@/context/ShopContext'
 import {
   ReceiptIcon,
   PrinterIcon,
@@ -19,6 +20,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
   const navigate = useNavigate()
   const { formatCurrency } = useCurrency()
   const { printReceiptByTransactionId } = usePDFReceipt()
+  const { selectedShop } = useShopContext()
 
   const handleViewTransaction = (transactionId: string) => {
     navigate(`/sales/${transactionId}`)
@@ -27,9 +29,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ transactions }) => {
   const handlePrintReceipt = async (transactionId: string) => {
     try {
       await printReceiptByTransactionId(transactionId, {
-        shopAddress: 'Shop Address Here', // TODO: Get from shop settings
-        shopPhone: 'Shop Phone Here', // TODO: Get from shop settings
-        shopEmail: 'shop@email.com', // TODO: Get from shop settings
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
       })
     } catch (error) {
       // Error already handled in hook

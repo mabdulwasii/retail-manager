@@ -6,48 +6,46 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Shield, Loader2, AlertCircle, Key, Edit, Users } from 'lucide-react'
-import { useRole, usePermissions } from '@/hooks/useRoles'
+import { useRole } from '@/hooks/useRoles'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 
 export const RoleDetailPage: React.FC = () => {
   const { roleId } = useParams<{ roleId: string }>()
   const navigate = useNavigate()
-  const { hasAnyRole } = useAuth()
+  const { hasAnyPermission, hasPermission } = useAuth()
 
   const { data: role, isLoading: loadingRole, isError, error } = useRole(roleId)
-  const { data: allPermissions, isLoading: loadingPermissions } = usePermissions()
 
-  const canManageRoles = hasAnyRole([UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
-  const isSystemAdmin = hasAnyRole([UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN])
+  const canViewRoles = hasAnyPermission([Permission.ROLE_LIST, Permission.ROLE_READ])
+  const canUpdateRoles = hasPermission(Permission.ROLE_UPDATE)
+  const isSystemAdmin = hasAnyPermission([Permission.SYSTEM_ADMIN, Permission.TENANT_MANAGE])
 
   React.useEffect(() => {
-    if (!canManageRoles) {
+    if (!canViewRoles) {
       navigate('/')
     }
-  }, [canManageRoles, navigate])
+  }, [canViewRoles, navigate])
 
-  if (!canManageRoles) {
+  if (!canViewRoles) {
     return null
   }
 
-  // Group permissions by category
+  // Group permissions by category (extracted from permission name prefix)
   const groupedPermissions = React.useMemo(() => {
-    if (!allPermissions) return {}
+    if (!role?.permissions) return {}
     
-    return allPermissions.reduce((acc, permission) => {
-      const category = permission.category || 'Other'
+    return role.permissions.reduce((acc, permissionName) => {
+      const category = permissionName.split('_')[0] || 'OTHER'
       if (!acc[category]) {
         acc[category] = []
       }
-      acc[category].push(permission)
+      acc[category].push(permissionName)
       return acc
-    }, {} as Record<string, typeof allPermissions>)
-  }, [allPermissions])
+    }, {} as Record<string, string[]>)
+  }, [role?.permissions])
 
-  const rolePermissionNames = new Set(role?.permissions || [])
-
-  if (loadingRole || loadingPermissions) {
+  if (loadingRole) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -73,7 +71,7 @@ export const RoleDetailPage: React.FC = () => {
     )
   }
 
-  const canEditThisRole = isSystemAdmin || !role.isSystem
+  const canEditThisRole = canUpdateRoles && (isSystemAdmin || !role.isSystem)
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -194,48 +192,31 @@ export const RoleDetailPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.entries(groupedPermissions).map(([category, permissions]) => {
-                const categoryPermissions = permissions.filter(p => 
-                  rolePermissionNames.has(p.name)
-                )
-                
-                if (categoryPermissions.length === 0) return null
-
-                return (
-                  <div key={category}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                        {category}
-                      </h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {categoryPermissions.length}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {categoryPermissions.map((permission) => (
-                        <div
-                          key={permission.id}
-                          className="flex items-start gap-3 p-3 rounded-lg border bg-card"
-                        >
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="rounded-full bg-green-100 p-1">
-                              <Key className="h-3 w-3 text-green-600" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{permission.name}</p>
-                            {permission.description && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {permission.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {Object.entries(groupedPermissions).map(([category, permissions]) => (
+                <div key={category}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                      {category}
+                    </h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {permissions.length}
+                    </Badge>
                   </div>
-                )
-              })}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {permissions.map((permissionName) => (
+                      <div
+                        key={permissionName}
+                        className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30"
+                      >
+                        <Key className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium break-words">{permissionName}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

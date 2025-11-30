@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 import {
   AlertSeverity,
   RiskLevel
@@ -38,16 +38,14 @@ export const FraudDashboard: React.FC<FraudDashboardProps> = ({
   shopId,
   viewMode: propViewMode
 }) => {
-  const { user } = useAuth()
+  const { hasAnyPermission } = useAuth()
   const isLoading = false // TODO: Implement proper loading state
 
   const getViewMode = () => {
     if (propViewMode) return propViewMode
-    if (!user) return 'admin'
 
-    const roles = user.roles || []
-    if (roles.some(r => r.name === UserRole.TENANT_ADMIN)) return 'admin'
-    if (roles.some(r => r.name === UserRole.SHOP_OWNER || r.name === UserRole.MANAGER)) return 'shop'
+    if (hasAnyPermission([Permission.TENANT_MANAGE, Permission.FRAUD_MANAGE])) return 'admin'
+    if (hasAnyPermission([Permission.SHOP_MANAGE, Permission.FRAUD_VIEW, Permission.FRAUD_LIST])) return 'shop'
     return 'admin'
   }
 

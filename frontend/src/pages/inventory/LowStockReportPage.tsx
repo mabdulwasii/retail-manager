@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -32,13 +32,17 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useInventory } from '@/hooks/useInventory'
 import { useAuth } from '@/context/ManualAuthContext'
+import { useShopContext } from '@/context/ShopContext'
+import { ShopSelector } from '@/components/ui/shop-selector'
 import { useCurrency } from '@/hooks/useCurrency'
 import { downloadCSV, exportToPDF, formatLowStockForExport } from '@/lib/exportHelpers'
 
 export const LowStockReportPage: React.FC = () => {
+  const navigate = useNavigate()
   const { user } = useAuth()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
   const { formatCurrency } = useCurrency()
-  const shopId = user?.shopId || ''
+  const shopId = selectedShopId || user?.shopId || ''
 
   const {
     isLoading,
@@ -127,12 +131,10 @@ export const LowStockReportPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link to="/inventory">
-            <Button variant="ghost">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Inventory
-            </Button>
-          </Link>
+          <Button variant="ghost" onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Low Stock Report</h1>
             <p className="text-muted-foreground mt-1">
@@ -140,7 +142,15 @@ export const LowStockReportPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <DropdownMenu>
+        <div className="flex gap-2">
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
@@ -158,6 +168,7 @@ export const LowStockReportPage: React.FC = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
 
       {/* Exportable Content */}
@@ -243,12 +254,10 @@ export const LowStockReportPage: React.FC = () => {
             <p className="text-muted-foreground text-center mb-4">
               No items are currently below their reorder point
             </p>
-            <Link to="/inventory">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Inventory
-              </Button>
-            </Link>
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
           </CardContent>
         </Card>
       )}

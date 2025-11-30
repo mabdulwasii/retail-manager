@@ -67,6 +67,7 @@ interface ProductFormProps {
   onSubmit: (data: ProductFormData) => void | Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
+  shopId?: string;
 }
 
 // Common product units
@@ -82,7 +83,7 @@ const PRODUCT_UNITS = [
   { value: "ml", label: "Milliliter (ml)" },
   { value: "carton", label: "Carton" },
   { value: "dozen", label: "Dozen" },
-  { value: "other", label: "Other (specify)" },
+  { value: "other", label: "Other" },
 ];
 
 export const ProductForm: React.FC<ProductFormProps> = ({
@@ -90,9 +91,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  shopId,
 }) => {
   const { data: categories = [], isLoading: categoriesLoading } =
-    useCategories();
+    useCategories(false, shopId);
   const { formatCurrency } = useCurrency();
   const [showCustomUnit, setShowCustomUnit] = useState(false);
 

@@ -35,6 +35,8 @@ import {
   ReceiptFilter 
 } from '@/hooks/useReceipts'
 import { useAuth } from '@/context/ManualAuthContext'
+import { useShopContext } from '@/context/ShopContext'
+import { ShopSelector } from '@/components/ui/shop-selector'
 import { useCurrency } from '@/hooks/useCurrency'
 import { usePDFReceipt } from '@/hooks/usePDFReceipt'
 import {
@@ -55,6 +57,7 @@ import { toast } from 'sonner'
 export const ReceiptsPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
   const { formatCurrency } = useCurrency()
 
   // State for filters and UI
@@ -71,7 +74,7 @@ export const ReceiptsPage: React.FC = () => {
     page,
     size: 20,
     sort: 'generatedAt,desc',
-    ...(user?.shopId && { shopId: user.shopId }),
+    ...(selectedShopId && { shopId: selectedShopId }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(dateRange.startDate && { startDate: dateRange.startDate }),
     ...(dateRange.endDate && { endDate: dateRange.endDate }),
@@ -92,6 +95,14 @@ export const ReceiptsPage: React.FC = () => {
   const markEmailedMutation = useMarkAsEmailed()
   const regenerateMutation = useRegenerateReceipt()
 
+  // Reload receipts when shop changes
+  useEffect(() => {
+    if (selectedShopId) {
+      setPage(0)
+      refetch()
+    }
+  }, [selectedShopId])
+
   const handleReset = () => {
     setSearchQuery('')
     setStatusFilter('all')
@@ -102,9 +113,9 @@ export const ReceiptsPage: React.FC = () => {
   const handlePrint = async (receipt: Receipt) => {
     try {
       await printReceiptByTransactionId(receipt.transactionId, {
-        shopAddress: 'Shop Address Here', // TODO: Get from shop settings
-        shopPhone: 'Shop Phone Here', // TODO: Get from shop settings
-        shopEmail: 'shop@email.com', // TODO: Get from shop settings
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
       })
       await markPrintedMutation.mutateAsync({ 
         receiptId: receipt.id, 
@@ -118,9 +129,9 @@ export const ReceiptsPage: React.FC = () => {
   const handleDownload = async (receipt: Receipt) => {
     try {
       await downloadReceiptByTransactionId(receipt.transactionId, {
-        shopAddress: 'Shop Address Here', // TODO: Get from shop settings
-        shopPhone: 'Shop Phone Here', // TODO: Get from shop settings
-        shopEmail: 'shop@email.com', // TODO: Get from shop settings
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
       })
     } catch (error) {
       // Error already handled in hook
@@ -130,9 +141,9 @@ export const ReceiptsPage: React.FC = () => {
   const handlePreview = async (receipt: Receipt) => {
     try {
       await previewReceiptByTransactionId(receipt.transactionId, {
-        shopAddress: 'Shop Address Here', // TODO: Get from shop settings
-        shopPhone: 'Shop Phone Here', // TODO: Get from shop settings
-        shopEmail: 'shop@email.com', // TODO: Get from shop settings
+        shopAddress: selectedShop?.address || '',
+        shopPhone: selectedShop?.phoneNumber || '',
+        shopEmail: selectedShop?.email || '',
       })
     } catch (error) {
       // Error already handled in hook
@@ -170,7 +181,6 @@ export const ReceiptsPage: React.FC = () => {
     navigate(`/sales/${transactionId}`)
   }
 
-  // Extract data from query result
   const receipts = receiptsData?.content || []
   const totalPages = receiptsData?.totalPages || 0
   const totalElements = receiptsData?.totalElements || 0
@@ -198,7 +208,7 @@ export const ReceiptsPage: React.FC = () => {
     })
   }
 
-  // Filter receipts by search query
+  // Client-side search for instant filtering (already paginated from server)
   const filteredReceipts = receipts.filter(receipt => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
@@ -363,10 +373,19 @@ export const ReceiptsPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Receipts</h1>
           <p className="text-gray-600">Manage and track all receipt documents</p>
         </div>
-        <Button onClick={() => refetch()} disabled={isLoading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2 items-center">
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
+          <Button onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Error Alert */}

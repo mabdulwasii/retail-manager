@@ -1,182 +1,156 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/ManualAuthContext'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useInventorySummary, TimePeriod } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import {
   Package,
-  TrendingUp,
-  Clock,
-  CheckCircle,
+  AlertCircle,
   AlertTriangle,
-  Users,
-  Truck
+  XCircle,
+  Clock,
+  TrendingUp,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ShopSelector } from '@/components/ui/shop-selector'
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  priority: 'high' | 'medium' | 'low'
-  status: 'pending' | 'in_progress' | 'completed'
-  estimatedTime: string
-}
-
-interface Activity {
-  id: string
-  type: 'task' | 'inventory' | 'sale'
-  description: string
-  time: string
-  amount?: string
-}
-
-interface Notification {
-  type: 'info' | 'warning' | 'success'
-  message: string
-  time: string
-}
 
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth()
-  
-  const statsLoading = false
-  const activitiesLoading = false
+  const permissions = usePermissions()
+  const [period, setPeriod] = useState<TimePeriod>('today')
+  const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined)
 
-  const taskStats = [
+  // Set selectedShopId once user is loaded
+  useEffect(() => {
+    if (user?.shopId && !selectedShopId) {
+      setSelectedShopId(user.shopId)
+    }
+  }, [user?.shopId, selectedShopId])
+
+  const { data: inventorySummary, isLoading, refetch } = useInventorySummary(selectedShopId)
+
+  // Calculate stats from real inventory data
+  const totalItems = inventorySummary?.totalItems || 0
+  const lowStockItems = inventorySummary?.lowStockItems || 0
+  const expiredItems = inventorySummary?.expiredItems || 0
+  const expiringSoonItems = inventorySummary?.expiringSoonItems || 0
+  const totalAlerts = lowStockItems + expiredItems + expiringSoonItems
+
+  const inventoryStats = [
     {
-      title: 'Tasks Completed',
-      value: '12',
-      description: 'Today',
-      icon: CheckCircle,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Pending Tasks',
-      value: '5',
-      description: 'To complete',
-      icon: Clock,
-      color: 'text-orange-600'
-    },
-    {
-      title: 'Products Handled',
-      value: '147',
-      description: 'This week',
+      title: 'Total Items',
+      value: totalItems.toString(),
+      description: 'In inventory',
       icon: Package,
       color: 'text-blue-600'
     },
     {
-      title: 'Performance',
-      value: '92%',
-      description: 'Efficiency rating',
-      icon: TrendingUp,
-      color: 'text-purple-600'
+      title: 'Low Stock',
+      value: lowStockItems.toString(),
+      description: 'Needs restocking',
+      icon: AlertCircle,
+      color: 'text-orange-600'
+    },
+    {
+      title: 'Expired Items',
+      value: expiredItems.toString(),
+      description: 'Needs removal',
+      icon: XCircle,
+      color: 'text-red-600'
+    },
+    {
+      title: 'Expiring Soon',
+      value: expiringSoonItems.toString(),
+      description: 'Within 30 days',
+      icon: Clock,
+      color: 'text-yellow-600'
     }
   ]
 
-  const activities: Activity[] = [
-    {
-      id: '1',
-      type: 'task',
-      description: 'Completed inventory check for electronics section',
-      time: '30 minutes ago'
-    },
-    {
-      id: '2',
-      type: 'task',
-      description: 'Updated product prices in fashion department',
-      time: '2 hours ago'
-    }
+  // Priority tasks based on real data
+  const priorityTasks = [
+    ...(lowStockItems > 0 ? [{
+      id: 'low-stock',
+      title: 'Restock Low Inventory',
+      description: `${lowStockItems} item(s) running low on stock`,
+      priority: 'high' as const,
+      icon: AlertCircle,
+      link: '/inventory?filter=lowStock',
+      color: 'border-orange-200 bg-orange-50'
+    }] : []),
+    ...(expiredItems > 0 ? [{
+      id: 'expired',
+      title: 'Remove Expired Items',
+      description: `${expiredItems} expired item(s) need attention`,
+      priority: 'high' as const,
+      icon: XCircle,
+      link: '/inventory?filter=expired',
+      color: 'border-red-200 bg-red-50'
+    }] : []),
+    ...(expiringSoonItems > 0 ? [{
+      id: 'expiring',
+      title: 'Monitor Expiring Items',
+      description: `${expiringSoonItems} item(s) expiring in 30 days`,
+      priority: 'medium' as const,
+      icon: Clock,
+      link: '/inventory?filter=expiringSoon',
+      color: 'border-yellow-200 bg-yellow-50'
+    }] : [])
   ]
 
-  const todayTasks: Task[] = [
-    {
-      id: '1',
-      title: 'Restock Electronics Section',
-      description: 'Add new iPhone and Samsung models to display',
-      priority: 'high',
-      status: 'pending',
-      estimatedTime: '45 min'
-    },
-    {
-      id: '2',
-      title: 'Update Price Tags',
-      description: 'Apply new pricing for winter collection',
-      priority: 'medium',
-      status: 'in_progress',
-      estimatedTime: '30 min'
-    },
-    {
-      id: '3',
-      title: 'Inventory Count - Grocery',
-      description: 'Count fresh produce and update system',
-      priority: 'high',
-      status: 'pending',
-      estimatedTime: '60 min'
-    },
-    {
-      id: '4',
-      title: 'Customer Service Training',
-      description: 'Complete monthly customer service module',
-      priority: 'low',
-      status: 'completed',
-      estimatedTime: '20 min'
-    }
-  ]
 
   const quickActions = [
     {
-      title: 'Stock Check',
-      description: 'Verify inventory levels',
+      title: 'View Inventory',
+      description: 'Check all inventory',
       icon: Package,
       href: '/inventory',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      show: permissions.canViewInventory()
     },
     {
-      title: 'Receive Shipment',
-      description: 'Process incoming delivery',
-      icon: Truck,
-      href: '/inventory/shipment',
-      color: 'bg-green-500 hover:bg-green-600'
+      title: 'View Products',
+      description: 'Browse product catalog',
+      icon: Package,
+      href: '/products',
+      show: permissions.canViewProducts()
     },
     {
-      title: 'Assist Customer',
-      description: 'Help with product inquiry',
-      icon: Users,
-      href: '/customers/assist',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      title: 'Low Stock Items',
+      description: 'Items need restocking',
+      icon: AlertCircle,
+      href: '/inventory?filter=lowStock',
+      show: permissions.canViewInventory() && lowStockItems > 0
     },
     {
-      title: 'Report Issue',
-      description: 'Log equipment or inventory issue',
-      icon: AlertTriangle,
-      href: '/reports/issue',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      title: 'Expired Items',
+      description: 'Remove expired stock',
+      icon: XCircle,
+      href: '/inventory?filter=expired',
+      show: permissions.canViewInventory() && expiredItems > 0
     }
-  ]
+  ].filter(action => action.show)
 
-  const notifications: Notification[] = [
-    {
-      type: 'info',
-      message: 'New training module available: "Customer Service Excellence"',
-      time: '2 hours ago'
-    },
-    {
-      type: 'warning',
-      message: 'Low stock alert: Wireless headphones (8 units remaining)',
-      time: '4 hours ago'
-    },
-    {
-      type: 'success',
-      message: 'Task completed: Yesterday\'s inventory count approved',
-      time: '1 day ago'
-    }
-  ]
 
-  if (statsLoading) {
+  if (!selectedShopId || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold mb-2">Loading Dashboard</h3>
+              <p className="text-muted-foreground">
+                {!selectedShopId ? 'Initializing...' : 'Fetching inventory data...'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -184,18 +158,35 @@ export const EmployeeDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {user?.firstName || user?.username}!
-        </h1>
-        <p className="text-muted-foreground">
-          Here's your task overview and productivity metrics.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Inventory Management
+          </h1>
+          <p className="text-muted-foreground">
+            Welcome, {user?.firstName || user?.username}. Monitor and manage stock levels.
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <ShopSelector 
+            value={selectedShopId || ''}
+            onValueChange={setSelectedShopId}
+            className="w-[200px]"
+          />
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {/* Performance Stats */}
+      {/* Inventory Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {taskStats.map((stat, index) => (
+        {inventoryStats.map((stat, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -213,205 +204,120 @@ export const EmployeeDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks and functions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-24 flex-col space-y-2 p-4"
-                asChild
-              >
-                <Link to={action.href}>
-                  <action.icon className="h-8 w-8" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">{action.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {action.description}
-                    </div>
-                  </div>
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Today's Tasks */}
-        <Card className="col-span-2">
+      {/* Priority Alerts */}
+      {totalAlerts > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle>Today's Tasks</CardTitle>
-            <CardDescription>
-              Your assigned tasks for today
-            </CardDescription>
+            <CardTitle className="flex items-center space-x-2 text-orange-800">
+              <AlertTriangle className="h-5 w-5" />
+              <span>Action Required ({totalAlerts} items)</span>
+            </CardTitle>
+            <CardDescription>Inventory items that need your attention</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {todayTasks.map((task) => (
-                <div key={task.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                  <div className={`w-3 h-3 rounded-full mt-2 ${
-                    task.status === 'completed' ? 'bg-green-500' :
-                    task.status === 'in_progress' ? 'bg-blue-500' :
-                    'bg-gray-400'
-                  }`}></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{task.title}</h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {task.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Est. {task.estimatedTime}
-                      </span>
-                      {task.status === 'pending' && (
-                        <Button size="sm" variant="outline">
-                          Start Task
-                        </Button>
-                      )}
-                      {task.status === 'in_progress' && (
-                        <Button size="sm">
-                          Complete
-                        </Button>
-                      )}
-                      {task.status === 'completed' && (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      )}
-                    </div>
+          <CardContent className="space-y-3">
+            {priorityTasks.map((task) => (
+              <div key={task.id} className={`flex items-center justify-between p-3 border rounded-lg ${task.color}`}>
+                <div className="flex items-center space-x-3">
+                  <task.icon className="h-5 w-5" />
+                  <div>
+                    <p className="text-sm font-medium">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">{task.description}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to={task.link}>Review</Link>
+                </Button>
+              </div>
+            ))}
           </CardContent>
         </Card>
+      )}
 
-        {/* Notifications */}
+      {/* Quick Actions */}
+      {quickActions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common inventory tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="h-20 flex-col hover:bg-primary/5 hover:border-primary/50 transition-all"
+                  asChild
+                >
+                  <Link to={action.href}>
+                    <action.icon className="h-6 w-6 mb-2" />
+                    <span className="font-semibold">{action.title}</span>
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Inventory Health Summary */}
+      {inventorySummary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>Inventory Health</span>
+            </CardTitle>
             <CardDescription>
-              Important updates and alerts
+              Overview of your inventory status
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {notifications.map((notification, index) => (
-                <div key={index} className="p-3 rounded-lg border bg-background">
-                  <div className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      notification.type === 'warning' ? 'bg-yellow-500' :
-                      notification.type === 'success' ? 'bg-green-500' :
-                      'bg-blue-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {notification.time}
-                      </p>
-                    </div>
-                  </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                <div className="text-2xl font-bold text-blue-700">
+                  {totalItems > 0 ? ((totalItems - lowStockItems - expiredItems) / totalItems * 100).toFixed(1) : 0}%
                 </div>
-              ))}
+                <div className="text-sm text-blue-600">Healthy Stock</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {totalItems - lowStockItems - expiredItems} items
+                </div>
+              </div>
+              <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+                <div className="text-2xl font-bold text-orange-700">
+                  {totalItems > 0 ? (lowStockItems / totalItems * 100).toFixed(1) : 0}%
+                </div>
+                <div className="text-sm text-orange-600">Low Stock</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {lowStockItems} items
+                </div>
+              </div>
+              <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
+                <div className="text-2xl font-bold text-red-700">
+                  {expiredItems + expiringSoonItems}
+                </div>
+                <div className="text-sm text-red-600">Needs Attention</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {expiredItems} expired, {expiringSoonItems} expiring
+                </div>
+              </div>
             </div>
-            <Button variant="outline" className="w-full mt-4">
-              View All Notifications
-            </Button>
+            
+            {permissions.canViewInventory() && (
+              <div className="mt-4 flex space-x-2">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link to="/inventory">View All Inventory</Link>
+                </Button>
+                {permissions.canViewProducts() && (
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link to="/products">View Products</Link>
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Your recent actions and system updates
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {activitiesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {activities.length > 0 ? (
-                activities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      activity.type === 'inventory' ? 'bg-blue-500' :
-                      activity.type === 'sale' ? 'bg-green-500' :
-                      'bg-gray-500'
-                    }`}></div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {activity.description}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.time}
-                      </p>
-                      {activity.amount && (
-                        <p className="text-sm font-semibold text-blue-600">
-                          {activity.amount}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-4 col-span-2">
-                  No recent activity
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Performance Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly Performance</CardTitle>
-          <CardDescription>
-            Your productivity metrics for this week
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">95%</div>
-              <div className="text-sm text-muted-foreground">Task Completion</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">4.8</div>
-              <div className="text-sm text-muted-foreground">Average Rating</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">42</div>
-              <div className="text-sm text-muted-foreground">Tasks Completed</div>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">38h</div>
-              <div className="text-sm text-muted-foreground">Hours Worked</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      )}
     </div>
   )
 }

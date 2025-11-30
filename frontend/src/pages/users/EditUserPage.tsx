@@ -22,6 +22,7 @@ import { useActiveShops } from '@/hooks/useShops'
 import { useRoles } from '@/hooks/useRoles'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Permission } from '@/types/permissions'
 
 const userUpdateSchema = yup.object().shape({
   username: yup
@@ -54,12 +55,12 @@ type UserUpdateFormValues = yup.InferType<typeof userUpdateSchema>
 export const EditUserPage: React.FC = () => {
   const navigate = useNavigate()
   const { userId } = useParams<{ userId: string }>()
-  const { user, hasAnyRole } = useAuth()
+  const { user, hasPermission } = useAuth()
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   
   // Filter roles by tenant if not SYSTEM_ADMIN
-  const isSystemAdmin = hasAnyRole(['SYSTEM_ADMIN', 'SUPER_ADMIN'])
+  const isSystemAdmin = hasPermission(Permission.SYSTEM_ADMIN)
   const tenantIdForFilter = !isSystemAdmin && user?.tenantId ? user.tenantId : undefined
 
   const updateUser = useUpdateUser()

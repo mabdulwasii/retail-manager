@@ -1,10 +1,10 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/ManualAuthContext";
-import { UserRole } from "@/types/roles";
+import { Permission } from "@/types/permissions";
 
 export function DashboardRedirect() {
-  const { user, isAuthenticated, hasRole, isInitialized, login } = useAuth();
+  const { user, isAuthenticated, hasAnyPermission, isInitialized, login } = useAuth();
 
   if (!isInitialized) {
     return (
@@ -20,24 +20,32 @@ export function DashboardRedirect() {
   }
 
   const getDashboardPath = () => {
-    if (hasRole(UserRole.SYSTEM_ADMIN) || hasRole(UserRole.SUPER_ADMIN)) {
-      return "/dashboard?view=admin";
-    } else if (hasRole(UserRole.TENANT_ADMIN)) {
-      return "/dashboard?view=multi-shop";
-    } else if (hasRole(UserRole.SHOP_OWNER)) {
-      return "/dashboard?view=business";
-    } else if (hasRole(UserRole.MANAGER) || hasRole(UserRole.SALES_MANAGER)) {
-      return "/dashboard?view=operations";
-    } else if (hasRole(UserRole.INVESTOR)) {
-      return "/dashboard?view=investor";
-    } else if (hasRole(UserRole.ACCOUNTANT)) {
-      return "/dashboard?view=financial";
-    } else if (hasRole(UserRole.CASHIER)) {
+    // System/Tenant Admin - Full admin dashboard
+    if (hasAnyPermission([Permission.SYSTEM_ADMIN, Permission.TENANT_MANAGE, Permission.TENANT_LIST])) {
+      return "/dashboard";
+    }
+    
+    if (hasAnyPermission([Permission.SHOP_MANAGE, Permission.SHOP_LIST_ALL])) {
+      return "/dashboard";
+    }
+
+    if (hasAnyPermission([Permission.INVESTMENT_VIEW, Permission.INVESTMENT_LIST])) {
+      return "/dashboard";
+    }
+    
+    if (hasAnyPermission([Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_INVESTMENT_VIEW, Permission.EXPENSE_SUMMARY])) {
+      return "/dashboard";
+    }
+
+    if (hasAnyPermission([Permission.SALES_CREATE, Permission.SALES_LIST])) {
       return "/sales";
-    } else if (hasRole(UserRole.INVENTORY_MANAGER) || hasRole(UserRole.EMPLOYEE)) {
+    }
+    
+    if (hasAnyPermission([Permission.INVENTORY_UPDATE, Permission.INVENTORY_LIST])) {
       return "/inventory";
     }
 
+    // Default dashboard for authenticated users
     return "/dashboard";
   };
 

@@ -172,20 +172,6 @@ export const AccountantDashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'Record Transaction',
-      description: 'Add new income/expense',
-      icon: Calculator,
-      href: '/accounting/transaction',
-      color: 'bg-blue-500 hover:bg-blue-600'
-    },
-    {
-      title: 'Generate Report',
-      description: 'Financial statements',
-      icon: FileText,
-      href: '/reports/financial',
-      color: 'bg-green-500 hover:bg-green-600'
-    },
-    {
       title: 'Review Analytics',
       description: 'Business insights',
       icon: BarChart3,
@@ -193,11 +179,18 @@ export const AccountantDashboard: React.FC = () => {
       color: 'bg-purple-500 hover:bg-purple-600'
     },
     {
-      title: 'Budget Planning',
-      description: 'Manage budgets',
-      icon: PieChart,
-      href: '/budgets',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      title: 'View Receipts',
+      description: 'Financial transactions',
+      icon: FileText,
+      href: '/receipts',
+      color: 'bg-green-500 hover:bg-green-600'
+    },
+    {
+      title: 'Sales Report',
+      description: 'Revenue analysis',
+      icon: Calculator,
+      href: '/sales',
+      color: 'bg-blue-500 hover:bg-blue-600'
     }
   ]
 
@@ -274,9 +267,9 @@ export const AccountantDashboard: React.FC = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/expenses/create">
+            <Link to="/receipts">
               <Calculator className="mr-2 h-4 w-4" />
-              New Expense
+              View Receipts
             </Link>
           </Button>
         </div>
@@ -319,22 +312,17 @@ export const AccountantDashboard: React.FC = () => {
           <CardDescription>Common accounting tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className="h-24 flex-col space-y-2 p-4"
+                className="h-20 flex-col hover:bg-primary/5 hover:border-primary/50 transition-all"
                 asChild
               >
                 <Link to={action.href}>
-                  <action.icon className="h-8 w-8" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">{action.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {action.description}
-                    </div>
-                  </div>
+                  <action.icon className="h-6 w-6 mb-2" />
+                  <span className="font-semibold">{action.title}</span>
                 </Link>
               </Button>
             ))}

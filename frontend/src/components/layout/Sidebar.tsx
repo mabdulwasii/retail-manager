@@ -6,7 +6,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { CurrencySelector } from '@/components/ui/currency-selector'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 import {
   LayoutDashboard,
   Store,
@@ -30,7 +30,8 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
-  roles: UserRole[]
+  /** List of permissions required to access this nav item. User needs at least one of these permissions. Empty array means available to all authenticated users. */
+  permissions: Permission[]
 }
 
 const navItems: NavItem[] = [
@@ -38,79 +39,79 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: [], // Available to all authenticated users
+    permissions: [], // Available to all authenticated users
   },
   {
     title: 'Shops',
     href: '/shops',
     icon: Store,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER],
+    permissions: [Permission.SHOP_LIST, Permission.SHOP_MANAGE],
   },
   {
     title: 'Products',
     href: '/products',
     icon: Package,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE],
+    permissions: [Permission.PRODUCT_LIST],
   },
   // {
   //   title: 'Categories',
   //   href: '/categories',
   //   icon: Tag,
-  //   roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE],
+  //   permissions: [Permission.CATEGORY_LIST],
   // },
   {
     title: 'Inventory',
     href: '/inventory',
     icon: Warehouse,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER],
+    permissions: [Permission.INVENTORY_LIST],
   },
   {
     title: 'Sales',
     href: '/sales',
     icon: ShoppingCart,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER, UserRole.SALES_MANAGER],
+    permissions: [Permission.SALES_CREATE, Permission.SALES_READ, Permission.SALES_LIST],
   },
   {
     title: 'Receipts',
     href: '/receipts',
     icon: Receipt,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER],
+    permissions: [Permission.RECEIPT_LIST],
   },
   {
     title: 'Investments',
     href: '/investments',
     icon: TrendingUp,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.INVESTOR],
+    permissions: [Permission.INVESTMENT_LIST, Permission.INVESTMENT_VIEW],
   },
   {
     title: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.ACCOUNTANT],
+    permissions: [Permission.ANALYTICS_VIEW, Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_INVESTMENT_VIEW],
   },
   {
     title: 'Audit Logs',
     href: '/audit',
     icon: FileText,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.AUDITOR],
+    permissions: [Permission.AUDIT_LOG_VIEW, Permission.AUDIT_LOG_LIST, Permission.AUDIT_LOG_VIEW_SHOP, Permission.AUDIT_LOG_VIEW_TENANT],
   },
   {
     title: 'Users',
     href: '/users',
     icon: Users,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER],
+    permissions: [Permission.USER_LIST, Permission.USER_MANAGE],
   },
   {
     title: 'Role Management',
     href: '/admin/roles',
     icon: Shield,
-    roles: [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
+    permissions: [Permission.ROLE_LIST, Permission.ROLE_READ],
   },
 ]
 
 export const Sidebar: React.FC = () => {
   const location = useLocation()
-  const { hasAnyRole } = useAuth()
+  const { hasAnyPermission } = useAuth()
   const { close } = useSidebar()
   const { theme, setTheme } = useTheme()
 
@@ -119,8 +120,10 @@ export const Sidebar: React.FC = () => {
   }
 
   const filteredNavItems = navItems.filter(item => {
-    if (item.roles.length === 0) return true
-    return hasAnyRole(item.roles)
+    // If no permissions required, show to all authenticated users
+    if (item.permissions.length === 0) return true
+    // Check if user has at least one of the required permissions
+    return hasAnyPermission(item.permissions)
   })
 
   // Handle navigation on mobile - close sidebar after clicking a link

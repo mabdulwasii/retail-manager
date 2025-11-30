@@ -1,17 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
-import { UserRole } from '@/types/roles'
+import { Permission } from '@/types/permissions'
 import { shopService, ShopCreateRequest, ShopUpdateRequest } from '@/services/shopService'
 import { toast } from 'sonner'
 
-
-export const useShops = (page = 0, size = 20) => {
-  const { isAuthenticated, user } = useAuth()
+// Query hook for fetching paginated shops
+export const useShops = (page = 0, size = 10) => {
+  const { isAuthenticated, hasAnyPermission } = useAuth()
 
   return useQuery({
     queryKey: ['shops', 'paginated', page, size],
     queryFn: () => shopService.getShops({ page, size }),
-    enabled: !!(isAuthenticated && user?.roles?.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && hasAnyPermission([Permission.SHOP_LIST, Permission.SHOP_LIST_ALL])),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -21,12 +21,12 @@ export const useShops = (page = 0, size = 20) => {
 
 
 export const useActiveShops = () => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, hasAnyPermission } = useAuth()
 
   return useQuery({
     queryKey: ['shops', 'active'],
     queryFn: () => shopService.getActiveShops(),
-    enabled: !!(isAuthenticated && user?.roles?.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.CASHIER].includes(r.name as UserRole))),
+    enabled: !!(isAuthenticated && hasAnyPermission([Permission.SHOP_LIST, Permission.SHOP_LIST_ALL])),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

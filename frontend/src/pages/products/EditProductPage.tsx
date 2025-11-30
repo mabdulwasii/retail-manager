@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductForm, ProductFormData } from '@/components/products/ProductForm'
 import { useProduct, useUpdateProduct } from '@/hooks/useProducts'
+import { useShopContext } from '@/context/ShopContext'
 
 export const EditProductPage: React.FC = () => {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
+  const { selectedShopId } = useShopContext()
   
   const { data: product, isLoading, error } = useProduct(productId)
   const updateProductMutation = useUpdateProduct()
@@ -26,7 +28,6 @@ export const EditProductPage: React.FC = () => {
       // Transform null/empty to undefined for API compatibility
       const productData = {
         ...data,
-        costPrice: data.costPrice ?? undefined,
         weightInGrams: weightInGrams,
         unit: finalUnit || undefined,
         dimensions: data.dimensions || undefined,
@@ -113,6 +114,7 @@ export const EditProductPage: React.FC = () => {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isSubmitting={updateProductMutation.isPending}
+        shopId={selectedShopId || product.shopId as string}
       />
     </div>
   )

@@ -53,5 +53,10 @@ export const usePermissions = () => {
     
     canManageUsers: () => hasPermission(Permission.USER_MANAGE),
     canViewUsers: () => hasPermission(Permission.USER_LIST),
+    
+    canViewRoles: () => hasPermission(Permission.ROLE_LIST),
+    canManageRoles: () => hasAnyPermission([Permission.ROLE_CREATE, Permission.ROLE_UPDATE, Permission.ROLE_DELETE, Permission.ROLE_ASSIGN]),
+    
+    canViewAuditLogs: () => hasAnyPermission([Permission.AUDIT_LOG_VIEW, Permission.AUDIT_LOG_LIST, Permission.AUDIT_LOG_VIEW_SHOP, Permission.AUDIT_LOG_VIEW_TENANT]),
   }
 }

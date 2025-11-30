@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Loader2, AlertCircle, Save } from 'lucide-react'
@@ -40,7 +41,8 @@ export const InventoryEditPage: React.FC = () => {
   const [minimumStock, setMinimumStock] = useState('')
   const [maximumStock, setMaximumStock] = useState('')
   const [reorderPoint, setReorderPoint] = useState('')
-  const [unitCost, setUnitCost] = useState('')
+  const [costPrice, setCostPrice] = useState('')
+  const [sellingPrice, setSellingPrice] = useState('')
   const [location, setLocation] = useState('')
   const [batchNumber, setBatchNumber] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
@@ -58,7 +60,8 @@ export const InventoryEditPage: React.FC = () => {
       setMinimumStock(currentItem.minimumStock.toString())
       setMaximumStock(currentItem.maximumStock?.toString() || '')
       setReorderPoint(currentItem.reorderPoint.toString())
-      setUnitCost(currentItem.unitCost?.toString() || '')
+      setCostPrice(currentItem.costPrice?.toString() || currentItem.unitCost?.toString() || '')
+      setSellingPrice(currentItem.sellingPrice?.toString() || '')
       setLocation(currentItem.location || '')
       setBatchNumber(currentItem.batchNumber || '')
       setExpiryDate(currentItem.expiryDate ? currentItem.expiryDate.split('T')[0] : '')
@@ -76,7 +79,8 @@ export const InventoryEditPage: React.FC = () => {
     }
 
     if (maximumStock) updates.maximumStock = parseInt(maximumStock)
-    if (unitCost) updates.unitCost = parseFloat(unitCost)
+    if (costPrice) updates.costPrice = parseFloat(costPrice)
+    if (sellingPrice) updates.sellingPrice = parseFloat(sellingPrice)
     if (location) updates.location = location
     if (batchNumber) updates.batchNumber = batchNumber
     if (expiryDate) updates.expiryDate = expiryDate
@@ -170,12 +174,12 @@ export const InventoryEditPage: React.FC = () => {
                   type="number"
                   value={minimumStock}
                   onChange={(e) => setMinimumStock(e.target.value)}
-                  placeholder="Minimum stock level"
+                  placeholder="0"
                   min="0"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Alert threshold for critical low stock
+                  Alert threshold for low stock
                 </p>
               </div>
 
@@ -188,7 +192,7 @@ export const InventoryEditPage: React.FC = () => {
                   type="number"
                   value={reorderPoint}
                   onChange={(e) => setReorderPoint(e.target.value)}
-                  placeholder="Reorder point"
+                  placeholder="0"
                   min="0"
                   required
                 />
@@ -204,39 +208,70 @@ export const InventoryEditPage: React.FC = () => {
                   type="number"
                   value={maximumStock}
                   onChange={(e) => setMaximumStock(e.target.value)}
-                  placeholder="Maximum stock capacity (optional)"
+                  placeholder="Optional"
                   min="0"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maximum storage capacity (optional)
+                  Maximum storage capacity
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Cost & Location */}
+          {/* Pricing */}
           <Card>
             <CardHeader>
-              <CardTitle>Cost & Location</CardTitle>
-              <CardDescription>Pricing and storage information</CardDescription>
+              <CardTitle>Pricing Information</CardTitle>
+              <CardDescription>Cost and selling price details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="unitCost">Unit Cost</Label>
-                <Input
-                  id="unitCost"
-                  type="number"
-                  step="0.01"
-                  value={unitCost}
-                  onChange={(e) => setUnitCost(e.target.value)}
-                  placeholder="Cost per unit"
-                  min="0"
+                <Label htmlFor="costPrice">Cost Price</Label>
+                <NumericInput
+                  id="costPrice"
+                  value={costPrice}
+                  onValueChange={(values) => {
+                    setCostPrice(values.value || '')
+                  }}
+                  placeholder="0.00"
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Purchase or production cost per unit
+                  Purchase price per unit
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="sellingPrice">Selling Price</Label>
+                <NumericInput
+                  id="sellingPrice"
+                  value={sellingPrice}
+                  onValueChange={(values) => {
+                    setSellingPrice(values.value || '')
+                  }}
+                  placeholder="0.00"
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Retail price per unit
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Location */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Storage Location</CardTitle>
+              <CardDescription>Physical storage information</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="location">Storage Location</Label>
                 <Input
@@ -244,7 +279,7 @@ export const InventoryEditPage: React.FC = () => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Shelf A3, Warehouse 2"
+                  placeholder="e.g., Aisle 3, Shelf B"
                 />
                 <p className="text-xs text-muted-foreground">
                   Physical location in your storage area
@@ -280,11 +315,12 @@ export const InventoryEditPage: React.FC = () => {
                   <Input
                     id="expiryDate"
                     type="date"
+                    min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Product expiration or best before date
+                    Optional: Set if product has an expiration date
                   </p>
                 </div>
               </div>

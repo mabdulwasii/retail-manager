@@ -59,6 +59,21 @@ export const receiptService = {
     return api.get<Receipt>(`/receipts/by-number/${receiptNumber}`)
   },
 
+  // Get receipt by transaction ID
+  async getReceiptByTransaction(transactionId: string): Promise<Receipt> {
+    return api.get<Receipt>(`/receipts/transaction/${transactionId}`)
+  },
+
+  // Get printable receipt content
+  async getPrintableContent(receiptId: string): Promise<string> {
+    return api.get<string>(`/receipts/${receiptId}/printable`)
+  },
+
+  // Get receipt content
+  async getReceiptContent(receiptId: string): Promise<string> {
+    return api.get<string>(`/receipts/${receiptId}/content`)
+  },
+
   // Generate receipt for transaction
   async generateReceipt(transactionId: string): Promise<Receipt> {
     return api.post<Receipt>(`/receipts/generate/${transactionId}`)
