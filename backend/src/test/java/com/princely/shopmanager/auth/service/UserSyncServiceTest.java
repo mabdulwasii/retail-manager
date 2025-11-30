@@ -392,8 +392,9 @@ class UserSyncServiceTest {
         // When & Then
         assertThatThrownBy(() -> userSyncService.syncUserFromKeycloak(principal))
             .isInstanceOf(UserSyncService.UserSyncException.class)
-            .hasMessageContaining("Email 'taken@example.com' from Keycloak is already registered to user 'existinguser'")
-            .hasMessageContaining("data inconsistency");
+            .hasMessageContaining("Unable to complete authentication")
+            .hasMessageContaining("account configuration issues")
+            .hasMessageContaining("contact your system administrator");
 
         // Verify no save was attempted
         verify(userRepository, never()).save(any(User.class));

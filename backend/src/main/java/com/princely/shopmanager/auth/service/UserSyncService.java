@@ -151,21 +151,28 @@ public class UserSyncService {
             User existingUserWithEmail = userRepository.findByEmail(principal.getEmail()).orElse(null);
 
             if (existingUserWithEmail != null && !existingUserWithEmail.getId().equals(user.getId())) {
-                String errorMsg = String.format(
-                    "Cannot sync user '%s' (Keycloak ID: %s): Email '%s' from Keycloak is already registered to user '%s' (ID: %s). " +
-                    "This indicates a data inconsistency. Please resolve by either: " +
-                    "(1) Updating the email in Keycloak to match the database, " +
-                    "(2) Removing the duplicate user from either Keycloak or the database, or " +
-                    "(3) Merging the user accounts if they represent the same person.",
+                // Log detailed technical information for administrators
+                String technicalDetails = String.format(
+                    "User sync failed - duplicate email detected. " +
+                    "Attempting user: '%s' (Keycloak ID: %s, DB ID: %s), " +
+                    "Email from Keycloak: '%s', " +
+                    "Email already registered to: '%s' (DB ID: %s). " +
+                    "Resolution required: (1) Update email in Keycloak to match database, " +
+                    "(2) Remove duplicate user from Keycloak or database, or " +
+                    "(3) Merge the user accounts if they represent the same person.",
                     user.getUsername(),
                     principal.getSubject(),
+                    user.getId(),
                     principal.getEmail(),
                     existingUserWithEmail.getUsername(),
                     existingUserWithEmail.getId()
                 );
+                log.error(technicalDetails);
 
-                log.error(errorMsg);
-                throw new UserSyncException(errorMsg, null);
+                // Return generic user-friendly message (no internal details)
+                String userMessage = "Unable to complete authentication due to account configuration issues. " +
+                    "Please contact your system administrator for assistance.";
+                throw new UserSyncException(userMessage, null);
             }
 
             user.setEmail(principal.getEmail());
