@@ -181,4 +181,4 @@ This project is part of a retail management system demonstration.
 
 **🔗 Quick Links**: [Test Credentials](./TESTING-GUIDE.md#-test-user-accounts) | [Local Development](./LOCAL_DEVELOPMENT.md) | [Architecture](./CLAUDE.md)
 
-Deploying next version installer v0.1.18
+Deploying next version installer v0.1.14
