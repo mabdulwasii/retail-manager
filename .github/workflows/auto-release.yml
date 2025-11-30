@@ -10,7 +10,20 @@ on:
 jobs:
   auto-release:
     name: Auto Release Backend/Frontend
-    if: github.event.pull_request.merged == true
+    # Only run if PR is merged AND has backend/frontend release labels
+    if: |
+      github.event.pull_request.merged == true &&
+      (
+        contains(github.event.pull_request.labels.*.name, 'release:backend-patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:backend-minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:backend-major') ||
+        contains(github.event.pull_request.labels.*.name, 'release:frontend-patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:frontend-minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:frontend-major') ||
+        contains(github.event.pull_request.labels.*.name, 'release:both-patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:both-minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:both-major')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
