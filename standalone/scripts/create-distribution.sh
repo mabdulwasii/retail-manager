@@ -27,6 +27,7 @@ VERSION=""
 INCLUDE_IMAGES=false
 PLATFORM="all"  # all, windows, macos, linux
 OUTPUT_DIR="dist"
+SCRIPT_START_DIR="$(pwd)"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -75,6 +76,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 STANDALONE_DIR="${PROJECT_ROOT}/standalone"
+
+# Make OUTPUT_DIR absolute
+if [[ ! "$OUTPUT_DIR" = /* ]]; then
+  OUTPUT_DIR="${SCRIPT_DIR}/${OUTPUT_DIR}"
+fi
 
 # Helper functions
 print_header() {
