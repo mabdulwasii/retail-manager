@@ -142,9 +142,17 @@ public class UserSyncService {
     private boolean updateBasicProfile(User user, JwtPrincipal principal) {
         boolean updated = false;
 
+        // Only update email if it's different AND not already taken by another user
         if (!principal.getEmail().equals(user.getEmail())) {
-            user.setEmail(principal.getEmail());
-            updated = true;
+            // Check if email is already taken by another user
+            User existingUserWithEmail = userRepository.findByEmail(principal.getEmail()).orElse(null);
+            if (existingUserWithEmail != null && !existingUserWithEmail.getId().equals(user.getId())) {
+                log.warn("Cannot update email for user {} from {} to {}: Email already taken by user {}",
+                    user.getUsername(), user.getEmail(), principal.getEmail(), existingUserWithEmail.getUsername());
+            } else {
+                user.setEmail(principal.getEmail());
+                updated = true;
+            }
         }
 
         if (!principal.getUsername().equals(user.getUsername())) {

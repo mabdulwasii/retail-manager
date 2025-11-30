@@ -65,10 +65,11 @@ public class KeycloakUserService {
         // Set user attributes for tenant information
         // Note: phoneNumber is NOT set as Keycloak attribute (not configured in Keycloak)
         // It's only stored in the database via UserService
+        // IMPORTANT: Use snake_case (tenant_id, shop_id) to match JWT claim names
         Map<String, List<String>> attributes = new HashMap<>();
-        attributes.put("tenantId", List.of(request.tenantId()));
+        attributes.put("tenant_id", List.of(request.tenantId()));
         if (request.shopId() != null) {
-            attributes.put("shopId", List.of(request.shopId()));
+            attributes.put("shop_id", List.of(request.shopId()));
         }
 
         user.setAttributes(attributes);
@@ -261,16 +262,17 @@ public class KeycloakUserService {
 
             // Update attributes
             // Note: phoneNumber is NOT set as Keycloak attribute (not configured in Keycloak)
+            // IMPORTANT: Use snake_case (tenant_id, shop_id) to match JWT claim names
             Map<String, List<String>> attributes = user.getAttributes();
             if (attributes == null) {
                 attributes = new HashMap<>();
             }
 
             if (tenantId != null) {
-                attributes.put("tenantId", List.of(tenantId));
+                attributes.put("tenant_id", List.of(tenantId));
             }
             if (shopId != null) {
-                attributes.put("shopId", List.of(shopId));
+                attributes.put("shop_id", List.of(shopId));
             }
 
             user.setAttributes(attributes);
