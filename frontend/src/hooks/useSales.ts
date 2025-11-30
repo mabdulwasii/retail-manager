@@ -19,27 +19,47 @@ import { Product } from '@/types/api'
 
 export interface CartItem {
   product: Product
+  inventoryId?: string  // ID of the inventory record being sold
   quantity: number
+  unitPrice: number  // Selling price from inventory
   subtotal: number
   taxAmount: number
   total: number
 }
 
+export interface SalesLineItem {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  unitPrice: number
+  discount: number
+  lineTotal: number
+}
+
 export interface SalesTransaction {
   id: string
+  transactionNumber: string
   transactionDate: string
+  shopId: string
+  shopName?: string
+  cashierId: string
+  cashierName?: string
   customerId?: string
   customerName?: string
-  items: CartItem[]
+  customerPhone?: string
+  customerEmail?: string
+  lineItems: SalesLineItem[]
   subtotal: number
   taxAmount: number
   discountAmount: number
   totalAmount: number
   paymentMethod: string
   status: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED'
-  receiptNumber: string
-  cashierId: string
-  shopId: string
+  notes?: string
+  requiresReview?: boolean
+  voided?: boolean
+  receiptNumber?: string  // Keep for backward compatibility
 }
 
 export interface CreateSaleRequest {
@@ -147,7 +167,7 @@ export const useSales = () => {
   }, [user?.shopId])
 
   // Cart management
-  const addToCart = useCallback((product: Product, quantity: number = 1) => {
+  const addToCart = useCallback((product: Product, quantity: number = 1, inventoryId?: string, sellingPrice?: number) => {
     if (quantity <= 0) return
     if (quantity > product.availableStock) {
       setError(`Only ${product.availableStock} items available in stock`)
@@ -164,26 +184,31 @@ export const useSales = () => {
           return prevCart
         }
 
+        const price = existingItem.unitPrice
         return prevCart.map(item =>
           item.product.id === product.id
             ? {
                 ...item,
                 quantity: newQuantity,
-                subtotal: product.price * newQuantity,
-                taxAmount: (product.price * newQuantity) * (product?.taxRate || 0) / 100,
-                total: (product.price * newQuantity) * (1 + (product?.taxRate || 0) / 100)
+                subtotal: price * newQuantity,
+                taxAmount: (price * newQuantity) * (product?.taxRate || 0) / 100,
+                total: (price * newQuantity) * (1 + (product?.taxRate || 0) / 100)
               }
             : item
         )
       }
 
-      const subtotal = product.price * quantity
+      // Use provided selling price from inventory, or default to 0
+      const price = sellingPrice || 0
+      const subtotal = price * quantity
       const taxAmount = subtotal * (product?.taxRate || 0) / 100
       const total = subtotal + taxAmount
 
       return [...prevCart, {
         product,
+        inventoryId,
         quantity,
+        unitPrice: price,
         subtotal,
         taxAmount,
         total
@@ -211,7 +236,8 @@ export const useSales = () => {
             return item
           }
 
-          const subtotal = item.product.price * quantity
+          const price = item.unitPrice
+          const subtotal = price * quantity
           const taxAmount = subtotal * (item.product.taxRate || 0) / 100
           const total = subtotal + taxAmount
 

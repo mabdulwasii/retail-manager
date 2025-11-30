@@ -48,8 +48,8 @@ export const usePermissions = () => {
     canViewExpenses: () => hasPermission(Permission.EXPENSE_LIST),
     canApproveExpenses: () => hasPermission(Permission.EXPENSE_APPROVE),
     
-    canViewAnalytics: () => hasPermission(Permission.ANALYTICS_VIEW),
-    canViewFraudDetection: () => hasPermission(Permission.FRAUD_DETECTION_VIEW),
+    canViewAnalytics: () => hasAnyPermission([Permission.ANALYTICS_SALES_VIEW, Permission.ANALYTICS_INVESTMENT_VIEW, Permission.ANALYTICS_VIEW]),
+    canViewFraudDetection: () => hasAnyPermission([Permission.FRAUD_VIEW, Permission.FRAUD_LIST, Permission.FRAUD_DETECTION_VIEW]),
     
     canManageUsers: () => hasPermission(Permission.USER_MANAGE),
     canViewUsers: () => hasPermission(Permission.USER_LIST),

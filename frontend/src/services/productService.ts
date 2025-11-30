@@ -12,6 +12,7 @@ export interface ProductListParams {
   shopId?: string | undefined
   minPrice?: number | undefined
   maxPrice?: number | undefined
+  includeInventory?: boolean
 }
 
 export interface ProductListResponse {

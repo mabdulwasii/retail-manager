@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useActiveShops } from '@/hooks/useDashboard'
 import { Building2, Loader2 } from 'lucide-react'
@@ -19,6 +19,13 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
   showAllOption = false
 }) => {
   const { data: shops, isLoading } = useActiveShops()
+
+  // Automatically set shop if there's only one and no value is set
+  useEffect(() => {
+    if (shops && shops.length === 1 && !value) {
+      onValueChange(shops[0].id)
+    }
+  }, [shops, value, onValueChange])
 
   // Determine current value - empty string for undefined/null to avoid uncontrolled component warnings
   const currentValue = value || ''

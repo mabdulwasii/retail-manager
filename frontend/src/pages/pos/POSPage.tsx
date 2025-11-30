@@ -12,6 +12,7 @@ import { Product } from '@/types/api'
 import { useAuth } from '@/context/ManualAuthContext'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { usePDFReceipt } from '@/hooks/usePDFReceipt'
 import {
   ShoppingCartIcon,
   AlertCircle,
@@ -36,12 +37,14 @@ export const POSPage: React.FC = () => {
     removeFromCart,
     clearCart,
     processSale,
-    printReceipt,
     findProductByBarcode,
     isLoading,
     error,
     clearError
   } = useSales()
+
+  // PDF Receipt hook
+  const { printReceiptByTransactionId } = usePDFReceipt()
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [lastSaleId, setLastSaleId] = useState<string | null>(null)
@@ -91,18 +94,28 @@ export const POSPage: React.FC = () => {
   }, [isBarcodeMode])
 
   const handleBarcodeScanned = async (barcode: string) => {
-    const product = await findProductByBarcode(barcode)
-    if (product) {
-      handleProductSelect(product)
-      toast.success(`${product.name} added to cart`)
-    } else {
-      toast.error(`No product found with barcode: ${barcode}`)
-    }
+    // Note: Barcode lookup doesn't include inventory pricing from backend
+    // Users should use the search box to find and add items with correct pricing
+    toast.error(`Barcode scanning temporarily disabled. Please use search box to find "${barcode}"`)
     setBarcodeInput('')
+    
+    // TODO: Update when backend returns inventory pricing in barcode search
+    // const product = await findProductByBarcode(barcode)
+    // if (product) {
+    //   handleProductSelect(product, inventoryId, sellingPrice)
+    //   toast.success(`${product.name} added to cart`)
+    // } else {
+    //   toast.error(`No product found with barcode: ${barcode}`)
+    // }
   }
 
-  const handleProductSelect = (product: Product) => {
-    addToCart(product, 1)
+  const handleProductSelect = (product: Product, inventoryId: string, sellingPrice: number) => {
+    if (!sellingPrice) {
+      toast.error('Product price not available. Please ensure inventory is set up.')
+      return
+    }
+    
+    addToCart(product, 1, inventoryId, sellingPrice)
   }
 
   const handleCheckout = () => {
@@ -118,7 +131,7 @@ export const POSPage: React.FC = () => {
       lineItems: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: item.product.price,
+        unitPrice: item.unitPrice,  // Use inventory-based selling price
         discount: 0
       })),
       paymentMethod: paymentData.method,
@@ -140,12 +153,16 @@ export const POSPage: React.FC = () => {
       setLastSaleId(sale.id)
       setIsPaymentModalOpen(false)
       
-      toast.success(`Sale completed! Receipt #${sale.receiptNumber}`)
+      toast.success(`Sale completed! Receipt #${sale.receiptNumber || sale.transactionNumber}`)
 
       // Ask if they want to print receipt
       const shouldPrint = window.confirm('Print receipt?')
       if (shouldPrint) {
-        await printReceipt(sale.id)
+        await printReceiptByTransactionId(sale.id, {
+          shopAddress: 'Shop Address Here', // TODO: Get from shop settings
+          shopPhone: 'Shop Phone Here', // TODO: Get from shop settings
+          shopEmail: 'shop@email.com', // TODO: Get from shop settings
+        })
       }
     } else {
       toast.error(error || 'Failed to process sale')
@@ -233,7 +250,11 @@ export const POSPage: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => lastSaleId && printReceipt(lastSaleId)}
+              onClick={() => lastSaleId && printReceiptByTransactionId(lastSaleId, {
+                shopAddress: 'Shop Address Here',
+                shopPhone: 'Shop Phone Here',
+                shopEmail: 'shop@email.com',
+              })}
               className="hover:bg-green-500/20"
             >
               <Printer className="h-4 w-4 mr-2" />

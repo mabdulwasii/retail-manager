@@ -9,9 +9,11 @@ import { ShoppingCart } from '@/components/sales/ShoppingCart'
 import { PaymentModal } from '@/components/sales/PaymentModal'
 import { SalesHistory } from '@/components/sales/SalesHistory'
 import { useSales } from '@/hooks/useSales'
+import { Product } from '@/types/api'
 import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
 export const SalesPage: React.FC = () => {
   const navigate = useNavigate()
@@ -56,11 +58,18 @@ export const SalesPage: React.FC = () => {
     e.preventDefault()
     if (!barcodeInput.trim()) return
 
-    const product = await findProductByBarcode(barcodeInput.trim())
-    if (product) {
-      addToCart(product, 1)
-      setBarcodeInput('')
+    // Barcode scanning temporarily disabled - use search box
+    toast.error(`Barcode scanning temporarily disabled. Please use search box to find "${barcodeInput.trim()}"`)
+    setBarcodeInput('')
+  }
+
+  const handleProductSelect = (product: Product, inventoryId: string, sellingPrice: number) => {
+    if (!sellingPrice) {
+      toast.error('Product price not available. Please ensure inventory is set up.')
+      return
     }
+    
+    addToCart(product, 1, inventoryId, sellingPrice)
   }
 
   const handleCheckout = () => {
@@ -73,7 +82,7 @@ export const SalesPage: React.FC = () => {
       lineItems: cart.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: item.product.price,
+        unitPrice: item.unitPrice,  // Use inventory-based selling price
         discount: 0
       })),
       paymentMethod: paymentData.method,
@@ -87,13 +96,10 @@ export const SalesPage: React.FC = () => {
       paymentReference: paymentData.paymentReference
     }
 
-    console.log('saleData', saleData);
-    
-
     const sale = await processSale(saleData)
     if (sale) {
       setIsPaymentModalOpen(false)
-      // Show success message or redirect
+      toast.success(`Sale completed! Receipt #${sale.receiptNumber || sale.transactionNumber}`)
     }
   }
 
@@ -190,7 +196,10 @@ export const SalesPage: React.FC = () => {
             </Card>
 
             {/* Product Search */}
-            <ProductSearch onProductSelect={(product) => addToCart(product, 1)} />
+            <ProductSearch 
+              onProductSelect={handleProductSelect}
+              shopId={user?.shopId}
+            />
           </div>
 
           {/* Right Column - Shopping Cart */}

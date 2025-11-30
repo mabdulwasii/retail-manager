@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/ManualAuthContext";
+import { ShopSelector } from "@/components/ui/shop-selector";
+import { useShopContext } from "@/context/ShopContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { PagedSalesResponse, SalesFilter, useSales } from "@/hooks/useSales";
 import {
@@ -45,7 +46,7 @@ import { useNavigate } from "react-router-dom";
 
 export const SalesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext();
   const { formatCurrency } = useCurrency();
   const { sales, fetchSales, isLoading, error } = useSales();
   const permissions = usePermissions();
@@ -70,13 +71,13 @@ export const SalesPage: React.FC = () => {
     totalElements: 0,
   });
 
-  // Fetch sales on mount only once
+  // Fetch sales on mount and when shop changes
   useEffect(() => {
-    if (user?.shopId) {
+    if (selectedShopId) {
       loadSales();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.shopId]);
+  }, [selectedShopId]);
 
   const loadSales = async (page: number = 0) => {
     const filter: SalesFilter = {
@@ -85,7 +86,7 @@ export const SalesPage: React.FC = () => {
       sort: 'transactionDate,desc',
     };
 
-    if (user?.shopId) filter.shopId = user.shopId;
+    if (selectedShopId) filter.shopId = selectedShopId;
     if (statusFilter !== "all") filter.status = statusFilter;
     if (paymentMethodFilter !== "all")
       filter.paymentMethod = paymentMethodFilter;
@@ -131,10 +132,10 @@ export const SalesPage: React.FC = () => {
     if (format === 'csv') {
       // Format sales data for CSV
       const formattedData = sales.map(sale => ({
-        'Receipt #': sale.receiptNumber,
+        'Receipt #': sale.receiptNumber || sale.transactionNumber,
         'Date': new Date(sale.transactionDate).toLocaleDateString(),
         'Customer': sale.customerName || 'Walk-in',
-        'Items': sale.items?.length || 0,
+        'Items': sale.lineItems?.length || 0,
         'Subtotal': sale.subtotal,
         'Tax': sale.taxAmount,
         'Discount': sale.discountAmount,
@@ -224,7 +225,14 @@ export const SalesPage: React.FC = () => {
             View and manage all sales transactions
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
           <Button
             onClick={() => navigate('/pos')}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"

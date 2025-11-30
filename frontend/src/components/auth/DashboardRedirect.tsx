@@ -1,6 +1,7 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/ManualAuthContext";
+import { UserRole } from "@/types/roles";
 
 export function DashboardRedirect() {
   const { user, isAuthenticated, hasRole, isInitialized, login } = useAuth();
@@ -19,21 +20,21 @@ export function DashboardRedirect() {
   }
 
   const getDashboardPath = () => {
-    if (hasRole("SYSTEM_ADMIN") || hasRole("SUPER_ADMIN")) {
+    if (hasRole(UserRole.SYSTEM_ADMIN) || hasRole(UserRole.SUPER_ADMIN)) {
       return "/dashboard?view=admin";
-    } else if (hasRole("TENANT_ADMIN")) {
+    } else if (hasRole(UserRole.TENANT_ADMIN)) {
       return "/dashboard?view=multi-shop";
-    } else if (hasRole("SHOP_OWNER")) {
+    } else if (hasRole(UserRole.SHOP_OWNER)) {
       return "/dashboard?view=business";
-    } else if (hasRole("MANAGER") || hasRole("SALES_MANAGER")) {
+    } else if (hasRole(UserRole.MANAGER) || hasRole(UserRole.SALES_MANAGER)) {
       return "/dashboard?view=operations";
-    } else if (hasRole("INVESTOR")) {
+    } else if (hasRole(UserRole.INVESTOR)) {
       return "/dashboard?view=investor";
-    } else if (hasRole("ACCOUNTANT")) {
+    } else if (hasRole(UserRole.ACCOUNTANT)) {
       return "/dashboard?view=financial";
-    } else if (hasRole("CASHIER")) {
+    } else if (hasRole(UserRole.CASHIER)) {
       return "/sales";
-    } else if (hasRole("INVENTORY_MANAGER") || hasRole("EMPLOYEE")) {
+    } else if (hasRole(UserRole.INVENTORY_MANAGER) || hasRole(UserRole.EMPLOYEE)) {
       return "/inventory";
     }
 

@@ -33,7 +33,8 @@ export interface InventoryItem {
   minimumStock: number
   maximumStock?: number
   reorderPoint: number
-  unitCost?: number
+  costPrice: number
+  sellingPrice: number
   location?: string
   batchNumber?: string
   expiryDate?: string
@@ -66,7 +67,8 @@ export interface CreateInventoryRequest {
   minimumStock: number
   maximumStock?: number | undefined
   reorderPoint: number
-  unitCost?: number | undefined
+  costPrice: number
+  sellingPrice: number
   location?: string | undefined
   batchNumber?: string | undefined
   expiryDate?: string | undefined

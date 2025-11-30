@@ -12,6 +12,7 @@ import {
   RefreshCwIcon,
   DownloadIcon
 } from 'lucide-react'
+import { UserRole } from '@/types/roles'
 
 export const AnalyticsPage: React.FC = () => {
   const { user } = useAuth()
@@ -90,7 +91,7 @@ export const AnalyticsPage: React.FC = () => {
 
   // Check user permissions for analytics access
   const hasAnalyticsAccess = user?.roles?.some(role =>
-    ['MANAGER', 'SHOP_OWNER', 'TENANT_ADMIN', 'INVESTOR'].includes(role)
+    [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.INVESTOR].includes(role.name as UserRole)
   )
 
   if (!hasAnalyticsAccess) {

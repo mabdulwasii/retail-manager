@@ -270,10 +270,15 @@ export const OwnerManagerDashboard: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {permissions.canCreateSale() && (
-              <Button variant="outline" className="h-20 flex-col" asChild>
+              <Button 
+                className="h-28 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group" 
+                asChild
+              >
                 <Link to="/pos">
-                  <ShoppingCart className="h-6 w-6 mb-2" />
-                  New Sale
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <ShoppingCart className="h-8 w-8 mb-2 relative z-10" />
+                  <span className="font-bold text-base relative z-10">New Sale</span>
+                  <span className="text-xs opacity-90 mt-1 relative z-10">Start transaction</span>
                 </Link>
               </Button>
             )}

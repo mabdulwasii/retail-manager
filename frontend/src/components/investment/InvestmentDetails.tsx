@@ -255,7 +255,7 @@ export const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                     <div className="pl-6 space-y-1">
                       {investment.products.slice(0, 3).map((product) => (
                         <p key={product.id} className="text-sm">
-                          {product.name} - {formatCurrency(product.price)}
+                          {product.name} {product.sku && `(${product.sku})`}
                         </p>
                       ))}
                       {investment.products.length > 3 && (

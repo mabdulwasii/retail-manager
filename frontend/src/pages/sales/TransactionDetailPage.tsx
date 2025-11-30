@@ -163,7 +163,7 @@ export const TransactionDetailPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold">Transaction Details</h1>
             <p className="text-muted-foreground mt-1">
-              Receipt #{transaction.receiptNumber}
+              Receipt #{transaction.receiptNumber || transaction.transactionNumber}
             </p>
           </div>
         </div>
@@ -210,7 +210,7 @@ export const TransactionDetailPage: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(transaction.totalAmount)}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {transaction.items?.length || 0} item(s)
+              {transaction.lineItems?.length || 0} item(s)
             </p>
           </CardContent>
         </Card>
@@ -254,7 +254,7 @@ export const TransactionDetailPage: React.FC = () => {
             <CardHeader>
               <CardTitle>Items Purchased</CardTitle>
               <CardDescription>
-                {transaction.items?.length || 0} item(s) in this transaction
+                {transaction.lineItems?.length || 0} item(s) in this transaction
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -270,7 +270,7 @@ export const TransactionDetailPage: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transaction.items?.map((item: any, index: number) => (
+                  {transaction.lineItems?.map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>
                         <div>
@@ -460,7 +460,7 @@ export const TransactionDetailPage: React.FC = () => {
               <Separator />
               <div>
                 <p className="text-sm text-muted-foreground">Receipt Number</p>
-                <p className="font-medium mt-1">{transaction.receiptNumber}</p>
+                <p className="font-medium mt-1">{transaction.receiptNumber || transaction.transactionNumber}</p>
               </div>
               <Separator />
               <div>

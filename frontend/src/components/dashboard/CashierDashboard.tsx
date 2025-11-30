@@ -237,24 +237,33 @@ export const CashierDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-24 flex-col space-y-2 p-4"
-                asChild
-              >
-                <Link to={action.href}>
-                  <action.icon className="h-8 w-8" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">{action.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {action.description}
+            {quickActions.map((action, index) => {
+              const isNewSale = action.title === 'New Sale'
+              return (
+                <Button
+                  key={index}
+                  variant={isNewSale ? "default" : "outline"}
+                  className={isNewSale 
+                    ? "h-28 flex-col bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group"
+                    : "h-24 flex-col space-y-2 p-4"
+                  }
+                  asChild
+                >
+                  <Link to={action.href}>
+                    {isNewSale && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    )}
+                    <action.icon className={isNewSale ? "h-8 w-8 mb-2 relative z-10" : "h-8 w-8"} />
+                    <div className={isNewSale ? "text-center relative z-10" : "text-center"}>
+                      <div className={isNewSale ? "font-bold text-base" : "font-medium text-sm"}>{action.title}</div>
+                      <div className={isNewSale ? "text-xs opacity-90 mt-1" : "text-xs text-muted-foreground"}>
+                        {action.description}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </Button>
-            ))}
+                  </Link>
+                </Button>
+              )
+            })}
           </div>
         </CardContent>
       </Card>

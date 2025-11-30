@@ -2,6 +2,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/context/ManualAuthContext";
+import { UserRole } from "@/types/roles";
 import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { AuditPage } from "@/pages/audit/AuditPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
@@ -92,7 +93,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <ShopsPage />
             </ProtectedRoute>
           </Layout>
@@ -102,7 +103,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER]}>
               <CreateShopPage />
             </ProtectedRoute>
           </Layout>
@@ -112,7 +113,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <ShopDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -122,7 +123,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId/edit"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <EditShopPage />
             </ProtectedRoute>
           </Layout>
@@ -132,7 +133,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops/:shopId/settings"
         element={
           <Layout>
-            <ProtectedRoute roles={["SYSTEM_ADMIN", "TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.SYSTEM_ADMIN, UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <ShopSettingsPage />
             </ProtectedRoute>
           </Layout>
@@ -144,7 +145,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/products"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE]}>
               <ProductsPage />
             </ProtectedRoute>
           </Layout>
@@ -154,7 +155,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/products/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <CreateProductPage />
             </ProtectedRoute>
           </Layout>
@@ -164,7 +165,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/products/:productId"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER]}>
               <ProductDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -174,7 +175,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/products/:productId/edit"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <EditProductPage />
             </ProtectedRoute>
           </Layout>
@@ -186,7 +187,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/categories"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE]}>
               <CategoriesPage />
             </ProtectedRoute>
           </Layout>
@@ -198,7 +199,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER]}
             >
               <InventoryPage />
             </ProtectedRoute>
@@ -210,7 +211,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.INVENTORY_MANAGER]}
             >
               <CreateInventoryPage />
             </ProtectedRoute>
@@ -222,7 +223,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER]}
             >
               <LowStockReportPage />
             </ProtectedRoute>
@@ -234,7 +235,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER]}
             >
               <ExpiringItemsPage />
             </ProtectedRoute>
@@ -246,7 +247,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.INVENTORY_MANAGER]}
             >
               <InventoryEditPage />
             </ProtectedRoute>
@@ -258,7 +259,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "INVENTORY_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER]}
             >
               <InventoryDetailPage />
             </ProtectedRoute>
@@ -271,7 +272,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/pos"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "CASHIER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER]}>
               <POSPage />
             </ProtectedRoute>
           </Layout>
@@ -282,7 +283,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "CASHIER", "SALES_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER, UserRole.SALES_MANAGER]}
             >
               <SalesPage />
             </ProtectedRoute>
@@ -294,7 +295,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "CASHIER", "SALES_MANAGER"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER, UserRole.SALES_MANAGER]}
             >
               <TransactionDetailPage />
             </ProtectedRoute>
@@ -305,7 +306,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/receipts"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "EMPLOYEE", "CASHIER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER]}>
               <ReceiptsPage />
             </ProtectedRoute>
           </Layout>
@@ -317,7 +318,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "MANAGER", "TENANT_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.INVESTOR, UserRole.MANAGER, UserRole.TENANT_ADMIN]}>
               <InvestmentsPage />
             </ProtectedRoute>
           </Layout>
@@ -327,7 +328,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "TENANT_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.INVESTOR, UserRole.TENANT_ADMIN]}>
               <CreateInvestmentPage />
             </ProtectedRoute>
           </Layout>
@@ -337,7 +338,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/distributions"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN", "INVESTOR"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.TENANT_ADMIN, UserRole.INVESTOR]}>
               <DistributionListPage />
             </ProtectedRoute>
           </Layout>
@@ -347,7 +348,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/rounds"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.TENANT_ADMIN]}>
               <InvestmentRoundsPage />
             </ProtectedRoute>
           </Layout>
@@ -357,7 +358,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/rounds/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "TENANT_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN]}>
               <CreateInvestmentRoundPage />
             </ProtectedRoute>
           </Layout>
@@ -367,7 +368,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/rounds/:id"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "MANAGER", "TENANT_ADMIN", "INVESTOR"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.TENANT_ADMIN, UserRole.INVESTOR]}>
               <InvestmentRoundDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -377,7 +378,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/investments/:id"
         element={
           <Layout>
-            <ProtectedRoute roles={["SHOP_OWNER", "INVESTOR", "MANAGER", "TENANT_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.SHOP_OWNER, UserRole.INVESTOR, UserRole.MANAGER, UserRole.TENANT_ADMIN]}>
               <InvestmentDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -390,7 +391,7 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProtectedRoute
-              roles={["TENANT_ADMIN", "SHOP_OWNER", "MANAGER", "ACCOUNTANT"]}
+              roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.ACCOUNTANT]}
             >
               <AnalyticsPage />
             </ProtectedRoute>
@@ -403,7 +404,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/audit"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SHOP_OWNER", "SYSTEM_ADMIN", "AUDITOR"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.AUDITOR]}>
               <AuditPage />
             </ProtectedRoute>
           </Layout>
@@ -415,7 +416,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/admin/roles"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <RolesPage />
             </ProtectedRoute>
           </Layout>
@@ -425,7 +426,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/admin/roles/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <CreateRolePage />
             </ProtectedRoute>
           </Layout>
@@ -435,7 +436,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/admin/roles/:roleId/edit"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <EditRolePage />
             </ProtectedRoute>
           </Layout>
@@ -445,7 +446,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/admin/roles/:roleId"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <RoleDetailPage />
             </ProtectedRoute>
           </Layout>
@@ -455,7 +456,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/admin/permissions"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <PermissionsMatrixPage />
             </ProtectedRoute>
           </Layout>
@@ -467,7 +468,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/users"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN", "SHOP_OWNER", "MANAGER"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER]}>
               <UsersPage />
             </ProtectedRoute>
           </Layout>
@@ -477,7 +478,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/users/create"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <CreateUserPage />
             </ProtectedRoute>
           </Layout>
@@ -487,7 +488,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/users/edit/:userId"
         element={
           <Layout>
-            <ProtectedRoute roles={["TENANT_ADMIN", "SYSTEM_ADMIN", "SUPER_ADMIN"]}>
+            <ProtectedRoute roles={[UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN]}>
               <EditUserPage />
             </ProtectedRoute>
           </Layout>

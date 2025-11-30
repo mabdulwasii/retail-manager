@@ -427,12 +427,12 @@ export const InventoryDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground">Retail Price</Label>
-                <p className="font-medium">{formatCurrency(currentItem?.product?.price)}</p>
+                <p className="font-medium">{formatCurrency(currentItem?.sellingPrice)}</p>
               </div>
-              {currentItem?.unitCost && (
+              {currentItem?.sellingPrice && (
                 <div>
                   <Label className="text-muted-foreground">Unit Cost</Label>
-                  <p className="font-medium">{formatCurrency(currentItem?.unitCost)}</p>
+                  <p className="font-medium">{formatCurrency(currentItem?.costPrice)}</p>
                 </div>
               )}
             </div>
@@ -724,7 +724,7 @@ export const InventoryDetailPage: React.FC = () => {
               onClick={handleReserveStock}
               disabled={
                 !reserveQuantity ||
-                parseInt(reserveQuantity) > currentItem?.availableStock
+                 Number.parseInt(reserveQuantity) > currentItem?.availableStock
               }
             >
               Reserve Stock
@@ -777,7 +777,7 @@ export const InventoryDetailPage: React.FC = () => {
               onClick={handleReleaseStock}
               disabled={
                 !releaseQuantity ||
-                parseInt(releaseQuantity) > currentItem?.reservedStock
+                Number.parseInt(releaseQuantity) > currentItem?.reservedStock
               }
             >
               Release Stock

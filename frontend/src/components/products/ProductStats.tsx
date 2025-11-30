@@ -13,8 +13,7 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
   products,
   isLoading = false,
 }) => {
-  
-  const { formatCurrency } = useCurrency();
+
 
   const stats = React.useMemo(() => {
     if (!products || products.length === 0) {
@@ -66,13 +65,13 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
-    {
-      title: 'Average Price',
-      value: formatCurrency(stats.averagePrice),
-      icon: TrendingUp,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-    },
+    // {
+    //   title: 'Average Price',
+    //   value: formatCurrency(stats.averagePrice),
+    //   icon: TrendingUp,
+    //   color: 'text-purple-600',
+    //   bgColor: 'bg-purple-50',
+    // },
   ]
 
   if (isLoading) {

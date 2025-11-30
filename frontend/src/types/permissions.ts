@@ -21,6 +21,7 @@ export enum Permission {
   SHOP_LIST = 'SHOP_LIST',
   SHOP_UPDATE = 'SHOP_UPDATE',
   SHOP_DELETE = 'SHOP_DELETE',
+  SHOP_MANAGE = 'SHOP_MANAGE',
   
   // Product Permissions
   PRODUCT_CREATE = 'PRODUCT_CREATE',
@@ -64,8 +65,19 @@ export enum Permission {
   EXPENSE_APPROVE = 'EXPENSE_APPROVE',
   
   // Analytics Permissions
-  ANALYTICS_VIEW = 'ANALYTICS_VIEW',
-  FRAUD_DETECTION_VIEW = 'FRAUD_DETECTION_VIEW',
+  ANALYTICS_VIEW = 'ANALYTICS_VIEW', // Legacy - kept for backward compatibility
+  ANALYTICS_SALES_VIEW = 'ANALYTICS_SALES_VIEW',
+  ANALYTICS_INVESTMENT_VIEW = 'ANALYTICS_INVESTMENT_VIEW',
+  ANALYTICS_MANAGE = 'ANALYTICS_MANAGE',
+  
+  // Fraud Detection Permissions
+  FRAUD_DETECTION_VIEW = 'FRAUD_DETECTION_VIEW', // Legacy - kept for backward compatibility
+  FRAUD_VIEW = 'FRAUD_VIEW',
+  FRAUD_LIST = 'FRAUD_LIST',
+  FRAUD_INVESTIGATE = 'FRAUD_INVESTIGATE',
+  FRAUD_RESOLVE = 'FRAUD_RESOLVE',
+  FRAUD_DETECT = 'FRAUD_DETECT',
+  FRAUD_MANAGE = 'FRAUD_MANAGE',
   
   // User Management Permissions
   USER_MANAGE = 'USER_MANAGE',
@@ -157,7 +169,16 @@ export const getPermissionDisplayName = (permission: string): string => {
     [Permission.EXPENSE_DELETE]: 'Delete Expense',
     [Permission.EXPENSE_APPROVE]: 'Approve Expense',
     [Permission.ANALYTICS_VIEW]: 'View Analytics',
+    [Permission.ANALYTICS_SALES_VIEW]: 'View Sales Analytics',
+    [Permission.ANALYTICS_INVESTMENT_VIEW]: 'View Investment Analytics',
+    [Permission.ANALYTICS_MANAGE]: 'Manage Analytics',
     [Permission.FRAUD_DETECTION_VIEW]: 'View Fraud Detection',
+    [Permission.FRAUD_VIEW]: 'View Fraud Alerts',
+    [Permission.FRAUD_LIST]: 'List Fraud Alerts',
+    [Permission.FRAUD_INVESTIGATE]: 'Investigate Fraud',
+    [Permission.FRAUD_RESOLVE]: 'Resolve Fraud Alerts',
+    [Permission.FRAUD_DETECT]: 'Detect Fraud',
+    [Permission.FRAUD_MANAGE]: 'Manage Fraud Detection',
     [Permission.USER_MANAGE]: 'Manage Users',
     [Permission.USER_LIST]: 'View Users',
     [Permission.USER_CREATE]: 'Create User',

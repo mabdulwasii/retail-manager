@@ -1,21 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { categoryService, CategoryCreateRequest, CategoryUpdateRequest } from '@/services/categoryService'
-import { toast } from 'sonner'
 import { useAuth } from '@/context/ManualAuthContext'
+import { CategoryCreateRequest, categoryService, CategoryUpdateRequest } from '@/services/categoryService'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 /**
  * Hook to fetch categories for a shop
  * @param tree - Whether to fetch hierarchical tree structure
+ * @param shopIdParam - Optional shop ID (from ShopContext), prioritized over user.shopId
  */
-export const useCategories = (tree: boolean = false) => {
+export const useCategories = (tree: boolean = false, shopIdParam?: string) => {
   const { user } = useAuth()
-  const shopId = user?.shopId
+  const shopId = shopIdParam || user?.shopId
 
   return useQuery({
     queryKey: ['categories', shopId, tree],
     queryFn: () => categoryService.getCategories(shopId!, tree),
     enabled: !!shopId,
     staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false, 
+    // refetchOnMount: false removed - allow initial fetch if no data exists
   })
 }
 
@@ -28,21 +32,26 @@ export const useCategory = (categoryId: string | undefined) => {
     queryFn: () => categoryService.getCategory(categoryId!),
     enabled: !!categoryId,
     staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 }
 
 /**
  * Hook to fetch category names only (for dropdowns)
+ * @param shopIdParam - Optional shop ID (from ShopContext), prioritized over user.shopId
  */
-export const useCategoryNames = () => {
+export const useCategoryNames = (shopIdParam?: string) => {
   const { user } = useAuth()
-  const shopId = user?.shopId
+  const shopId = shopIdParam || user?.shopId
 
   return useQuery({
     queryKey: ['categoryNames', shopId],
     queryFn: () => categoryService.getCategoryNames(shopId!),
     enabled: !!shopId,
     staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 }
 

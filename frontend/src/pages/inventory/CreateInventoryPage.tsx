@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, Search, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useInventory, CreateInventoryRequest } from '@/hooks/useInventory'
@@ -34,21 +35,11 @@ export const CreateInventoryPage: React.FC = () => {
     minimumStock: '0',
     maximumStock: '',
     reorderPoint: '0',
-    unitCost: '',
+    costPrice: '',
+    sellingPrice: '',
     location: '',
-    batchNumber: '',
     expiryDate: ''
   })
-  
-  // Auto-generate batch number on mount
-  useEffect(() => {
-    if (!formData.batchNumber) {
-      const timestamp = Date.now()
-      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-      const generatedBatch = `BATCH-${timestamp}-${randomNum}`
-      setFormData(prev => ({ ...prev, batchNumber: generatedBatch }))
-    }
-  }, [])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [productSearch, setProductSearch] = useState('')
@@ -121,10 +112,24 @@ export const CreateInventoryPage: React.FC = () => {
       }
     }
 
-    if (formData.unitCost && formData.unitCost.trim() !== '') {
-      const cost = parseFloat(formData.unitCost)
+    if (!formData.costPrice || formData.costPrice.trim() === '') {
+      newErrors.costPrice = 'Cost price is required'
+    } else {
+      const cost = parseFloat(formData.costPrice)
       if (isNaN(cost) || cost < 0) {
-        newErrors.unitCost = 'Unit cost must be a non-negative number'
+        newErrors.costPrice = 'Cost price must be a non-negative number'
+      }
+    }
+
+    if (!formData.sellingPrice || formData.sellingPrice.trim() === '') {
+      newErrors.sellingPrice = 'Selling price is required'
+    } else {
+      const sellingPrice = parseFloat(formData.sellingPrice)
+      const costPrice = parseFloat(formData.costPrice)
+      if (isNaN(sellingPrice) || sellingPrice < 0) {
+        newErrors.sellingPrice = 'Selling price must be a non-negative number'
+      } else if (!isNaN(costPrice) && sellingPrice < costPrice) {
+        newErrors.sellingPrice = 'Selling price should not be less than cost price'
       }
     }
 
@@ -159,14 +164,12 @@ export const CreateInventoryPage: React.FC = () => {
       currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
-      ...(formData.maximumStock != null && {
+      costPrice: parseFloat(formData.costPrice),
+      sellingPrice: parseFloat(formData.sellingPrice),
+      ...(formData.maximumStock && {
         maximumStock: parseInt(formData.maximumStock, 10),
       }),
-      ...(formData.unitCost != null && {
-        unitCost: parseFloat(formData.unitCost),
-      }),
       ...(formData.location && { location: formData.location }),
-      ...(formData.batchNumber && { batchNumber: formData.batchNumber }),
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
 
@@ -361,71 +364,82 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Cost & Location */}
+            {/* Pricing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-muted-foreground text-sm">₦</span>
-                  <Input
-                    id="unitCost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.unitCost}
-                    onChange={(e) => handleInputChange('unitCost', e.target.value)}
-                    disabled={isLoading}
-                    className="pl-8"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
-                {errors.unitCost && (
-                  <p className="text-sm text-red-500">{errors.unitCost}</p>
+                <Label htmlFor="costPrice">
+                  Cost Price <span className="text-red-500">*</span>
+                </Label>
+                <NumericInput
+                  id="costPrice"
+                  value={formData.costPrice}
+                  onValueChange={(values) => {
+                    handleInputChange('costPrice', values.value || '')
+                  }}
+                  placeholder="0.00"
+                  disabled={isLoading}
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
+                />
+                <p className="text-xs text-muted-foreground">Purchase price per unit</p>
+                {errors.costPrice && (
+                  <p className="text-sm text-red-500">{errors.costPrice}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Storage Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g., Aisle 3, Shelf B"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
+                <Label htmlFor="sellingPrice">
+                  Selling Price <span className="text-red-500">*</span>
+                </Label>
+                <NumericInput
+                  id="sellingPrice"
+                  value={formData.sellingPrice}
+                  onValueChange={(values) => {
+                    handleInputChange('sellingPrice', values.value || '')
+                  }}
+                  placeholder="0.00"
                   disabled={isLoading}
+                  prefix="₦ "
+                  decimalScale={2}
+                  fixedDecimalScale={false}
+                  allowNegative={false}
                 />
+                <p className="text-xs text-muted-foreground">Retail price per unit</p>
+                {errors.sellingPrice && (
+                  <p className="text-sm text-red-500">{errors.sellingPrice}</p>
+                )}
               </div>
             </div>
 
-            {/* Batch & Expiry */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="batchNumber">Batch Number (auto-generated)</Label>
-                <Input
-                  id="batchNumber"
-                  placeholder="Auto-generated batch number"
-                  value={formData.batchNumber}
-                  onChange={(e) => handleInputChange('batchNumber', e.target.value)}
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground">Auto-generated, but you can modify if needed</p>
-              </div>
+            {/* Location */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Storage Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g., Aisle 3, Shelf B"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-muted-foreground">Must be a future date</p>
-                {errors.expiryDate && (
-                  <p className="text-sm text-red-500">{errors.expiryDate}</p>
-                )}
-              </div>
+            {/* Expiry Date (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                value={formData.expiryDate}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">Optional: Set if product has an expiration date</p>
+              {errors.expiryDate && (
+                <p className="text-sm text-red-500">{errors.expiryDate}</p>
+              )}
             </div>
 
             {/* Actions */}

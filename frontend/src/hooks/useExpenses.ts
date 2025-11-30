@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
+import { UserRole } from '@/types/roles'
 import { expenseService } from '@/services/expenseService'
 import { toast } from 'sonner'
 
@@ -77,7 +78,7 @@ export const useExpenses = (shopId?: string, filter?: ExpenseFilter) => {
     queryKey: ['expenses', targetShopId, filter],
     queryFn: () => expenseService.getExpenses(targetShopId!, filter),
     enabled: !!(isAuthenticated && targetShopId && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'ACCOUNTANT'].includes(r.name))),
+      user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.ACCOUNTANT].includes(r.name as UserRole))),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -91,7 +92,7 @@ export const useExpenseById = (expenseId?: string) => {
     queryKey: ['expenses', expenseId],
     queryFn: () => expenseService.getExpenseById(expenseId!),
     enabled: !!(isAuthenticated && expenseId && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'ACCOUNTANT'].includes(r.name))),
+      user.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.ACCOUNTANT].includes(r.name as UserRole))),
     staleTime: 3 * 60 * 1000,
     retry: 1
   })

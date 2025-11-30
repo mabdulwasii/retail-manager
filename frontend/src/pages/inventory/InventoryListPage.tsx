@@ -57,14 +57,15 @@ import {
   FileDown,
 } from 'lucide-react'
 import { useInventory, InventoryItem, InventoryStatus } from '@/hooks/useInventory'
-import { useAuth } from '@/context/ManualAuthContext'
+import { ShopSelector } from '@/components/ui/shop-selector'
+import { useShopContext } from '@/context/ShopContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { downloadCSV, exportToPDF, formatInventoryForExport } from '@/lib/exportHelpers'
 
 export const InventoryListPage: React.FC = () => {
-  const { user } = useAuth()
+  const { selectedShopId, setSelectedShopId, canManageMultipleShops } = useShopContext()
   const { formatCurrency } = useCurrency()
-  const shopId = user?.shopId || ''
+  const shopId = selectedShopId || ''
 
   const {
     inventory,
@@ -285,7 +286,14 @@ export const InventoryListPage: React.FC = () => {
             Manage stock levels, reservations, and inventory tracking
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {canManageMultipleShops && selectedShopId && (
+            <ShopSelector
+              value={selectedShopId}
+              onValueChange={setSelectedShopId}
+              className="w-[200px]"
+            />
+          )}
           {canManageInventory && (
             <Link to="/inventory/create">
               <Button>

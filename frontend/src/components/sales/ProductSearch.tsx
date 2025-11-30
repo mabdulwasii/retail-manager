@@ -4,64 +4,77 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useCurrency } from '@/hooks/useCurrency'
-import { useProductSearch, useProducts } from '@/hooks/useProducts'
-import { useSales, } from '@/hooks/useSales'
-import { Product, ProductStatus } from '@/types/api'
+import { useInventory, InventoryItem } from '@/hooks/useInventory'
+import { Product } from '@/types/api'
 import { debounce } from 'lodash'
 import { PackageIcon, PlusIcon, SearchIcon } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 interface ProductSearchProps {
-  onProductSelect: (product: Product) => void
+  onProductSelect: (product: Product, inventoryId: string, sellingPrice: number) => void
   shopId?: string // Optional shop ID to search products in
 }
 
 export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, shopId }) => {
-  const { searchProducts, isLoading } = useSales()
-    const [search, setSearch] = useState("");
-    const [searchQuery, setSearchQuery] = useState("");
-
-    // Fetch all products when not searching
-    const { products: allProducts = [], isLoading: loadingAll } = useProducts({ 
-      page: 0, 
-      size: 50,
-      status: 'ACTIVE'
-    })
-    
-    // Search products when query exists
-    const { data: searchResults = [], isLoading: loadingSearch } = useProductSearch(search, shopId);
-    
-    // Use search results if searching, otherwise show all products
-    const productsData = search ? searchResults : allProducts
-    const currentLoading = search ? loadingSearch : loadingAll
+  const { fetchInventory } = useInventory()
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   
   const { formatCurrency } = useCurrency()
 
-  const [hasSearched, setHasSearched] = useState(false)
+  // Fetch inventory items
+  const loadInventory = useCallback(async (query?: string) => {
+    if (!shopId) return
+    
+    setIsLoading(true)
+    const items = await fetchInventory(shopId, {
+      status: 'ACTIVE',
+      searchQuery: query || undefined
+    })
+    // Filter only items with available stock
+    setInventoryItems(items.filter(item => item.availableStock > 0))
+    setIsLoading(false)
+  }, [shopId, fetchInventory])
 
+  // Debounced search
   const debouncedSearch = useCallback(
-    debounce(async (query: string) => {
-      if (query.trim().length >= 2) {
-        setHasSearched(true);
-        setSearch(query);
-      } else {
-        setHasSearched(false)
-      }
+    debounce((query: string) => {
+      loadInventory(query)
     }, 300),
-    [searchProducts]
+    [loadInventory]
   )
 
   useEffect(() => {
-    debouncedSearch(searchQuery)
+    // Load initial inventory on mount
+    loadInventory()
+  }, [loadInventory])
+
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      debouncedSearch(searchQuery)
+    } else if (searchQuery.trim().length === 0) {
+      loadInventory()
+    }
     return () => {
       debouncedSearch.cancel()
     }
-  }, [searchQuery, debouncedSearch])
+  }, [searchQuery, debouncedSearch, loadInventory])
 
-  const handleProductSelect = (product: Product) => {
-    onProductSelect(product)
+  const handleInventorySelect = (item: InventoryItem) => {
+    // Convert inventory item to product format for backward compatibility
+    const product: Product = {
+      id: item.productId,
+      name: item.productName || '',
+      sku: item.productSku || '',
+      categoryId: '',
+      status: 'ACTIVE' as any,
+      availableStock: item.availableStock,
+      createdAt: '',
+      updatedAt: ''
+    }
+    onProductSelect(product, item.id, item.sellingPrice)
     setSearchQuery('')
-    setHasSearched(false)
   }
 
   const getStockBadge = (stock: number) => {
@@ -96,52 +109,49 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, s
         </div>
 
         {/* Loading State */}
-        {currentLoading && (
+        {isLoading && (
           <div className="flex items-center justify-center py-8">
             <LoadingSpinner size="md" />
-            <span className="ml-2 text-muted-foreground">{search ? 'Searching' : 'Loading'} products...</span>
+            <span className="ml-2 text-muted-foreground">Loading inventory...</span>
           </div>
         )}
 
-        {/* Product List */}
-        {!currentLoading && (
+        {/* Inventory List */}
+        {!isLoading && (
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {productsData.length === 0 ? (
+            {inventoryItems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <PackageIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground/40" />
-                <p>No products found</p>
+                <p>No items in stock</p>
                 <p className="text-sm">Try a different search term</p>
               </div>
             ) : (
-              productsData.map((product) => (
+              inventoryItems.map((item) => (
                 <div
-                  key={product.id}
+                  key={item.id}
                   className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-medium text-foreground truncate">
-                          {product.name}
+                          {item.productName}
                         </h3>
-                        {getStockBadge(product.availableStock || 0)}
-                        {product.status !== ProductStatus.ACTIVE && (
+                        {getStockBadge(item.availableStock)}
+                        {item.status !== 'ACTIVE' && (
                           <Badge variant="outline" className="text-red-600 dark:text-red-400 border-red-600 dark:border-red-400">
-                            Inactive
+                            {item.status}
                           </Badge>
                         )}
                       </div>
 
-                      {product.description && (
-                        <p className="text-sm text-muted-foreground mt-1 truncate">
-                          {product.description}
-                        </p>
-                      )}
-
                       <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
-                        <span>Category: {product.category}</span>
-                        {product.barcode && (
-                          <span>Barcode: {product.barcode}</span>
+                        <span>SKU: {item.productSku}</span>
+                        {item.location && (
+                          <span>Location: {item.location}</span>
+                        )}
+                        {item.batchNumber && (
+                          <span>Batch: {item.batchNumber}</span>
                         )}
                       </div>
                     </div>
@@ -149,16 +159,16 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, s
                     <div className="flex items-center space-x-3 ml-4">
                       <div className="text-right">
                         <div className="text-lg font-semibold text-foreground">
-                          {formatCurrency(product.price)}
+                          {formatCurrency(item.sellingPrice)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Stock: {product.availableStock || 0}
+                          Stock: {item.availableStock}
                         </div>
                       </div>
 
                       <Button
-                        onClick={() => onProductSelect(product)}
-                        disabled={!product.availableStock || product.availableStock <= 0}
+                        onClick={() => handleInventorySelect(item)}
+                        disabled={item.availableStock <= 0}
                         size="sm"
                         className="shadow-sm"
                       >
@@ -174,9 +184,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, s
         )}
 
         {/* Showing Info */}
-        {!currentLoading && productsData.length > 0 && (
+        {!isLoading && inventoryItems.length > 0 && (
           <div className="text-xs text-muted-foreground text-center py-2 border-t">
-            {search ? `Found ${productsData.length} result(s)` : `Showing ${productsData.length} available products`}
+            {searchQuery ? `Found ${inventoryItems.length} result(s)` : `Showing ${inventoryItems.length} items in stock`}
           </div>
         )}
       </CardContent>

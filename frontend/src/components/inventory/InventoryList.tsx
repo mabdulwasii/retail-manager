@@ -202,22 +202,31 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                   </div>
                 </div>
 
-                {item.unitCost && (
-                  <div>
-                    <span className="text-gray-600">Unit Cost:</span>
-                    <div className="font-medium">
-                      {formatCurrency(item.unitCost)}
-                    </div>
+                <div>
+                  <span className="text-gray-600">Cost Price:</span>
+                  <div className="font-medium text-blue-600">
+                    {formatCurrency(item.costPrice)}
                   </div>
-                )}
+                </div>
 
                 <div>
-                  <span className="text-gray-600">Category:</span>
-                  <div className="font-medium truncate">
-                    {item.product.category}
+                  <span className="text-gray-600">Selling Price:</span>
+                  <div className="font-medium text-green-600">
+                    {formatCurrency(item.sellingPrice)}
                   </div>
                 </div>
               </div>
+
+              {/* Profit Margin */}
+              {!compact && (
+                <div className="mt-2 text-sm">
+                  <span className="text-gray-600">Profit Margin: </span>
+                  <span className="font-semibold text-purple-600">
+                    {formatCurrency(item.sellingPrice - item.costPrice)}
+                    {' '}({((item.sellingPrice - item.costPrice) / item.sellingPrice * 100).toFixed(1)}%)
+                  </span>
+                </div>
+              )}
 
               {/* Additional Details */}
               {!compact && (

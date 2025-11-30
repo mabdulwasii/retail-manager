@@ -9,7 +9,7 @@ import { useAuth } from '@/context/ManualAuthContext'
  */
 export const useProducts = (params: ProductListParams = {}) => {
   const { user } = useAuth()
-  const shopId = user?.shopId || params.shopId
+  const shopId = params.shopId || user?.shopId
 
   const {
     data: productsData,
@@ -21,6 +21,8 @@ export const useProducts = (params: ProductListParams = {}) => {
     queryFn: () => productService.getProducts(shopId!, params),
     enabled: !!shopId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, 
   })
 
   return {
@@ -46,6 +48,8 @@ export const useProduct = (productId: string | undefined) => {
     queryFn: () => productService.getProduct(productId!),
     enabled: !!productId,
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, 
   })
 }
 

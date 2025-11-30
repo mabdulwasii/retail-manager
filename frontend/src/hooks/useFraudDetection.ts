@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/ManualAuthContext'
+import { UserRole } from '@/types/roles'
 import { toast } from 'sonner'
 import { api } from '@/services/api'
 
@@ -111,23 +112,36 @@ export const useFraudAlerts = (params?: {
   const targetShopId = params?.shopId || user?.shopId
 
   return useQuery({
-    queryKey: ['fraud', 'alerts', targetShopId, params],
+    queryKey: ["fraud", "alerts", targetShopId, params],
     queryFn: async () => {
-      const searchParams = new URLSearchParams()
-      if (targetShopId) searchParams.append('shopId', targetShopId)
-      if (params?.status) searchParams.append('status', params.status)
-      if (params?.severity) searchParams.append('severity', params.severity)
-      if (params?.alertType) searchParams.append('alertType', params.alertType)
-      if (params?.page !== undefined) searchParams.append('page', params.page.toString())
-      if (params?.size !== undefined) searchParams.append('size', params.size.toString())
+      const searchParams = new URLSearchParams();
+      if (targetShopId) searchParams.append("shopId", targetShopId);
+      if (params?.status) searchParams.append("status", params.status);
+      if (params?.severity) searchParams.append("severity", params.severity);
+      if (params?.alertType) searchParams.append("alertType", params.alertType);
+      if (params?.page !== undefined)
+        searchParams.append("page", params.page.toString());
+      if (params?.size !== undefined)
+        searchParams.append("size", params.size.toString());
 
-      return await api.get<PaginatedResponse<FraudAlert>>(`/fraud/alerts?${searchParams}`)
+      return await api.get<PaginatedResponse<FraudAlert>>(
+        `/fraud/alerts?${searchParams}`
+      );
     },
-    enabled: !!(isAuthenticated && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
-    staleTime: 1 * 60 * 1000, // 1 minute - fraud data should be fresh
-    retry: 1
-  })
+    enabled: !!(
+      isAuthenticated &&
+      user?.roles.some((r) =>
+        [
+          UserRole.MANAGER,
+          UserRole.SHOP_OWNER,
+          UserRole.TENANT_ADMIN,
+          UserRole.AUDITOR,
+        ].includes(r.name as UserRole)
+      )
+    ),
+    staleTime: 1 * 60 * 1000,
+    retry: 1,
+  });
 }
 
 // Query hook for fetching fraud alert by ID
@@ -137,8 +151,8 @@ export const useFraudAlertById = (alertId?: string) => {
   return useQuery({
     queryKey: ['fraud', 'alerts', alertId],
     queryFn: () => api.get<FraudAlert>(`/fraud/alerts/${alertId}`),
-    enabled: !!(isAuthenticated && alertId && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
+    enabled: !!(isAuthenticated && alertId && 
+    user?.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.AUDITOR].includes(r.name as UserRole))),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -167,8 +181,7 @@ export const useRiskAssessments = (params?: {
 
       return await api.get<PaginatedResponse<RiskAssessment>>(`/fraud/risk-assessments?${searchParams}`)
     },
-    enabled: !!(isAuthenticated && user?.roles && 
-      user.roles.some(r => ['MANAGER', 'OWNER', 'TENANT_ADMIN', 'AUDITOR'].includes(r.name))),
+    enabled: !!(isAuthenticated && user?.roles.some(r => [UserRole.MANAGER, UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN, UserRole.AUDITOR].includes(r.name as UserRole))),
     staleTime: 2 * 60 * 1000,
     retry: 1
   })
@@ -186,8 +199,7 @@ export const useFraudRules = (shopId?: string) => {
       if (targetShopId) searchParams.append('shopId', targetShopId)
       return await api.get<FraudRule[]>(`/fraud/rules?${searchParams}`)
     },
-    enabled: !!(isAuthenticated && user?.roles && 
-      user.roles.some(r => ['OWNER', 'TENANT_ADMIN'].includes(r.name))),
+    enabled: !!(isAuthenticated && user?.roles.some(r => [UserRole.SHOP_OWNER, UserRole.TENANT_ADMIN].includes(r.name as UserRole))),
     staleTime: 5 * 60 * 1000,
     retry: 1
   })

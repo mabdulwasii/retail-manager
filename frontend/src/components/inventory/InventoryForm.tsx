@@ -50,7 +50,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
     minimumStock: '0',
     maximumStock: '',
     reorderPoint: '0',
-    unitCost: '',
+    costPrice: '',
+    sellingPrice: '',
     location: '',
     batchNumber: '',
     expiryDate: ''
@@ -79,7 +80,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
         minimumStock: '0',
         maximumStock: '',
         reorderPoint: '0',
-        unitCost: '',
+        costPrice: '',
+        sellingPrice: '',
         location: '',
         batchNumber: '',
         expiryDate: ''
@@ -205,10 +207,23 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       }
     }
 
-    if (formData.unitCost && formData.unitCost.trim() !== '') {
-      const cost = parseFloat(formData.unitCost)
+    if (!formData.costPrice || formData.costPrice.trim() === '') {
+      errors.costPrice = 'Cost price is required'
+    } else {
+      const cost = parseFloat(formData.costPrice)
       if (isNaN(cost) || cost < 0) {
-        errors.unitCost = 'Unit cost must be a non-negative number'
+        errors.costPrice = 'Cost price must be a non-negative number'
+      }
+    }
+
+    if (!formData.sellingPrice || formData.sellingPrice.trim() === '') {
+      errors.sellingPrice = 'Selling price is required'
+    } else {
+      const price = parseFloat(formData.sellingPrice)
+      if (isNaN(price) || price < 0) {
+        errors.sellingPrice = 'Selling price must be a non-negative number'
+      } else if (formData.costPrice && parseFloat(formData.costPrice) > price) {
+        errors.sellingPrice = 'Selling price should be greater than or equal to cost price'
       }
     }
 
@@ -238,7 +253,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       maximumStock: formData.maximumStock ? parseInt(formData.maximumStock, 10) : undefined,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
-      unitCost: formData.unitCost ? parseFloat(formData.unitCost) : undefined,
+      costPrice: parseFloat(formData.costPrice),
+      sellingPrice: parseFloat(formData.sellingPrice),
       location: formData.location || undefined,
       batchNumber: formData.batchNumber || undefined,
       expiryDate: formData.expiryDate || undefined
@@ -297,7 +313,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                     <div className="flex space-x-4 text-xs text-blue-600 mt-1">
                       <span>SKU: {selectedProduct.sku}</span>
                       <span>Category: {selectedProduct.category}</span>
-                      <span>Price: {formatCurrency(selectedProduct.price)}</span>
+                      <span>Stock: {selectedProduct.availableStock || 0} available</span>
                     </div>
                   </div>
                   <Button
@@ -332,7 +348,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                     <div className="flex space-x-4 text-xs text-gray-500 mt-1">
                       <span>SKU: {product.sku}</span>
                       <span>Category: {product.category}</span>
-                      <span>Price: {formatCurrency(product.price)}</span>
+                      <span>Stock: {product.availableStock || 0} available</span>
                     </div>
                   </button>
                 ))}
@@ -423,28 +439,52 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
           </div>
 
-          {/* Additional Information */}
+          {/* Pricing Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="unitCost">Unit Cost (Purchase Price)</Label>
+              <Label htmlFor="costPrice">Cost Price (Purchase Price) *</Label>
               <NumericInput
-                id="unitCost"
-                value={formData.unitCost}
+                id="costPrice"
+                value={formData.costPrice}
                 onValueChange={(values) => {
-                  handleInputChange('unitCost', values.value || '')
+                  handleInputChange('costPrice', values.value || '')
                 }}
                 placeholder="0.00"
-                className={validationErrors.unitCost ? 'border-red-500' : ''}
+                className={validationErrors.costPrice ? 'border-red-500' : ''}
                 decimalScale={2}
                 fixedDecimalScale={true}
                 allowNegative={false}
               />
               <p className="text-xs text-muted-foreground">Cost at which this batch was purchased</p>
-              {validationErrors.unitCost && (
-                <p className="text-sm text-red-600">{validationErrors.unitCost}</p>
+              {validationErrors.costPrice && (
+                <p className="text-sm text-red-600">{validationErrors.costPrice}</p>
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="sellingPrice">Selling Price *</Label>
+              <NumericInput
+                id="sellingPrice"
+                value={formData.sellingPrice}
+                onValueChange={(values) => {
+                  handleInputChange('sellingPrice', values.value || '')
+                }}
+                placeholder="0.00"
+                className={validationErrors.sellingPrice ? 'border-red-500' : ''}
+                decimalScale={2}
+                fixedDecimalScale={true}
+                allowNegative={false}
+              />
+              <p className="text-xs text-muted-foreground">Price at which this batch will be sold</p>
+              {validationErrors.sellingPrice && (
+                <p className="text-sm text-red-600">{validationErrors.sellingPrice}</p>
+              )}
+            </div>
+
+          </div>
+
+          {/* Additional Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <div className="relative">

@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { CurrencySelector } from '@/components/ui/currency-selector'
+import { UserRole } from '@/types/roles'
 import {
   LayoutDashboard,
   Store,
@@ -29,7 +30,7 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
-  roles: string[]
+  roles: UserRole[]
 }
 
 const navItems: NavItem[] = [
@@ -43,67 +44,67 @@ const navItems: NavItem[] = [
     title: 'Shops',
     href: '/shops',
     icon: Store,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER],
   },
   {
     title: 'Products',
     href: '/products',
     icon: Package,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE],
   },
   // {
   //   title: 'Categories',
   //   href: '/categories',
   //   icon: Tag,
-  //   roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE'],
+  //   roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE],
   // },
   {
     title: 'Inventory',
     href: '/inventory',
     icon: Warehouse,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'INVENTORY_MANAGER'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.INVENTORY_MANAGER],
   },
   {
     title: 'Sales',
     href: '/sales',
     icon: ShoppingCart,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'CASHIER', 'SALES_MANAGER'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER, UserRole.SALES_MANAGER],
   },
   {
     title: 'Receipts',
     href: '/receipts',
     icon: Receipt,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'EMPLOYEE', 'CASHIER'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.EMPLOYEE, UserRole.CASHIER],
   },
   {
     title: 'Investments',
     href: '/investments',
     icon: TrendingUp,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'INVESTOR'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.INVESTOR],
   },
   {
     title: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'MANAGER', 'ACCOUNTANT'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER, UserRole.ACCOUNTANT],
   },
   {
     title: 'Audit Logs',
     href: '/audit',
     icon: FileText,
-    roles: ['TENANT_ADMIN', 'SHOP_OWNER', 'SYSTEM_ADMIN', 'AUDITOR'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SHOP_OWNER, UserRole.SYSTEM_ADMIN, UserRole.AUDITOR],
   },
   {
     title: 'Users',
     href: '/users',
     icon: Users,
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN', 'SHOP_OWNER', 'MANAGER'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN, UserRole.SHOP_OWNER, UserRole.MANAGER],
   },
   {
     title: 'Role Management',
     href: '/admin/roles',
     icon: Shield,
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'SUPER_ADMIN'],
+    roles: [UserRole.TENANT_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.SUPER_ADMIN],
   },
 ]
 
