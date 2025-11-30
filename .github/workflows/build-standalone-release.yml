@@ -230,24 +230,63 @@ jobs:
           cd standalone/electron-app
           npm run build:mac
 
-      - name: Upload macOS DMG
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}.dmg
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}.dmg
-          asset_content_type: application/octet-stream
+      - name: List build artifacts
+        run: |
+          echo "Contents of dist directory:"
+          ls -lh standalone/electron-app/dist/
 
-      - name: Upload macOS ZIP (auto-update)
+      - name: Upload macOS DMG (universal)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}-mac.zip
-          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac.zip
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-universal.dmg
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-universal.dmg
+          asset_content_type: application/octet-stream
+        continue-on-error: true
+
+      - name: Upload macOS DMG (x64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-x64.dmg
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-x64.dmg
+          asset_content_type: application/octet-stream
+        continue-on-error: true
+
+      - name: Upload macOS DMG (arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-arm64.dmg
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-arm64.dmg
+          asset_content_type: application/octet-stream
+        continue-on-error: true
+
+      - name: Upload macOS ZIP (x64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-mac-x64.zip
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac-x64.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - name: Upload macOS ZIP (arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}-mac-arm64.zip
+          asset_name: Shop-Manager-${{ needs.create-release.outputs.version }}-mac-arm64.zip
           asset_content_type: application/zip
         continue-on-error: true
 
