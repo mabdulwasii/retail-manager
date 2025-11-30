@@ -46,14 +46,6 @@ public class ReceiptController {
         return ResponseEntity.ok(receipts);
     }
 
-    @PostMapping("/generate/{transactionId}")
-    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_CREATE)")
-    public ResponseEntity<Receipt> generateReceipt(@PathVariable String transactionId) {
-
-        Receipt receipt = receiptService.generateReceipt(transactionId);
-        return ResponseEntity.ok(receipt);
-    }
-
     @GetMapping("/{receiptId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).RECEIPT_READ)")
     public ResponseEntity<Receipt> getReceipt(@PathVariable String receiptId) {

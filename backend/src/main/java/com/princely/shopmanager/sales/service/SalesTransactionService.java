@@ -51,6 +51,7 @@ public class SalesTransactionService {
     private final TenantSecurityValidator tenantSecurityValidator;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReceiptService receiptService;
 
     @Transactional
     public SalesTransactionResponse createTransaction(SalesTransactionCreateRequest request) {
@@ -151,6 +152,15 @@ public class SalesTransactionService {
         // Audit the creation
         auditService.logEntityCreation("SalesTransaction", transaction.getId(),
             "Sales transaction created: " + transactionNumber + " - Total: " + transaction.getTotalAmount());
+
+        // Automatically generate receipt for the transaction
+        try {
+            receiptService.generateReceipt(transaction);
+            log.info("Receipt automatically generated for transaction: {}", transactionNumber);
+        } catch (Exception e) {
+            log.error("Failed to auto-generate receipt for transaction: {}", transactionNumber, e);
+            // Don't fail the transaction creation if receipt generation fails
+        }
 
         log.info("Successfully created sales transaction: {} with inventory deduction", transactionNumber);
         return SalesTransactionResponse.fromEntity(transaction);
