@@ -220,13 +220,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: standalone/electron-app/package-lock.json
 
       - name: Install dependencies
         run: |
           cd standalone/electron-app
-          npm ci
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Update version
         run: |
@@ -237,6 +236,8 @@ jobs:
         run: |
           cd standalone/electron-app
           npm run build:mac
+        env:
+          DEBUG: electron-builder,electron-builder:*
 
       - name: List build artifacts
         run: |
