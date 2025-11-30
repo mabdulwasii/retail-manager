@@ -48,6 +48,7 @@
     "appId": "com.shopmanager.desktop",
     "productName": "Shop Manager",
     "artifactName": "${productName}-Setup-${version}.${ext}",
+    "publish": "never",
     "directories": {
       "output": "dist",
       "buildResources": "build"
