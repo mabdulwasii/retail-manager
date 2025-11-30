@@ -177,6 +177,11 @@ jobs:
           cd standalone/electron-app
           npm run build:win
 
+      - name: List build artifacts
+        run: |
+          echo "Contents of dist directory:"
+          dir standalone\electron-app\dist\
+
       - name: Upload Windows NSIS installer
         uses: actions/upload-release-asset@v1
         env:
@@ -187,16 +192,16 @@ jobs:
           asset_name: Shop-Manager-Setup-${{ needs.create-release.outputs.version }}.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload Windows portable
+      - name: Upload Windows blockmap
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./standalone/electron-app/dist/Shop Manager-${{ needs.create-release.outputs.version }}.exe
-          asset_name: Shop-Manager-Portable-${{ needs.create-release.outputs.version }}.exe
+          asset_path: ./standalone/electron-app/dist/Shop Manager-Setup-${{ needs.create-release.outputs.version }}.exe.blockmap
+          asset_name: Shop-Manager-Setup-${{ needs.create-release.outputs.version }}.exe.blockmap
           asset_content_type: application/octet-stream
-        continue-on-error: true  # Portable build might not exist
+        continue-on-error: true
 
   build-macos:
     name: Build macOS Installer
