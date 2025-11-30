@@ -25,9 +25,10 @@ NC='\033[0m'
 # Default configuration
 VERSION=""
 INCLUDE_IMAGES=false
-PLATFORM="all"  # all, windows, macos, linux
+PLATFORM="all"  # all, windows, macos, linux, none
 OUTPUT_DIR="dist"
 SCRIPT_START_DIR="$(pwd)"
+SKIP_ELECTRON=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -38,6 +39,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --include-images)
             INCLUDE_IMAGES=true
+            shift
+            ;;
+        --skip-electron)
+            SKIP_ELECTRON=true
             shift
             ;;
         --platform)
@@ -54,7 +59,8 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --version VERSION      Package version (required)"
             echo "  --include-images       Include Docker images for offline install"
-            echo "  --platform PLATFORM    Target platform: all, windows, macos, linux"
+            echo "  --skip-electron        Skip Electron desktop app builds"
+            echo "  --platform PLATFORM    Target platform: all, windows, macos, linux, none"
             echo "  --output DIR           Output directory (default: dist)"
             echo "  --help                 Show this help message"
             exit 0
@@ -245,7 +251,7 @@ print_success "MD5: $(cat ${ZIP_NAME}.md5 | cut -d' ' -f1)"
 # 5. Build Electron Apps (if Node.js available)
 # ============================================================================
 
-if command -v node &> /dev/null && [ -f "${STANDALONE_DIR}/electron-app/package.json" ]; then
+if [ "$SKIP_ELECTRON" = false ] && command -v node &> /dev/null && [ -f "${STANDALONE_DIR}/electron-app/package.json" ]; then
     print_header "Building Electron Desktop Apps"
 
     cd "${STANDALONE_DIR}/electron-app"

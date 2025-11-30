@@ -107,12 +107,12 @@ jobs:
       - name: Create lightweight package
         run: |
           cd standalone/scripts
-          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }}
+          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --skip-electron
 
       - name: Create full package (with images)
         run: |
           cd standalone/scripts
-          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --include-images
+          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --include-images --skip-electron
 
       - name: Upload lightweight package
         uses: actions/upload-release-asset@v1
