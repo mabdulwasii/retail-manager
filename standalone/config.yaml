@@ -14,15 +14,45 @@
 # ============================================================================
 global:
   # Application name - used in URLs and service names
+  # Example: "myshop" generates myshop.local, api.myshop.local, auth.myshop.local
   # Default: shop-manager
   appName: "shop-manager"
 
   # Your business domain (used for SSL certificates and URLs)
-  # Examples: myshop.local, retail.mycompany.com
+  # Examples:
+  #   - "localhost" - Standard localhost with ports (http://localhost:3001)
+  #   - "shop.local" - Custom domain with auto-generated subdomains (https://shop-manager.shop.local)
+  #   - "myshop.local" - App-specific domain (https://myshop.local, https://api.myshop.local)
+  # Recommendation: Use .local suffix for automatic mDNS discovery on LAN
   domain: "localhost"
 
   # Environment: development, staging, or production
   environment: "production"
+
+  # Auto-Configuration Options
+  # ============================================================================
+  # These options automate URL generation, DNS, and certificate setup
+  autoConfig:
+    # Auto-generate URLs from appName and domain
+    # When enabled:
+    #   - localhost: Uses ports (http://localhost:3001, http://localhost:8081)
+    #   - Custom domain: Uses subdomains (https://app.domain, https://api.app.domain)
+    enabled: true
+
+    # Auto-install SSL certificates to system trust store
+    # Generates CA and domain certificates, installs to OS keychain/cert store
+    # Requires administrator/sudo privileges
+    autoInstallCertificates: true
+
+    # Auto-configure DNS entries in /etc/hosts (or Windows hosts file)
+    # Creates entries for frontend, API, and auth subdomains
+    # Requires administrator/sudo privileges
+    autoConfigureDns: true
+
+    # Use mDNS for .local domains (macOS/Linux with Avahi)
+    # Enables automatic discovery on local network
+    # Only works with .local domain suffix
+    useMdns: true
 
 # Branding & Customization
 # ============================================================================

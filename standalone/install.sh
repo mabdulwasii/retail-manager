@@ -224,6 +224,46 @@ if [ "$SKIP_CONFIG_GENERATION" = false ]; then
         print_error "Configuration generation failed"
         exit 1
     fi
+
+    # Check if auto-configuration is enabled
+    AUTO_CONFIG=$(grep -A 1 "autoConfig:" "$CONFIG_FILE" | grep "enabled:" | awk '{print $2}')
+    AUTO_DNS=$(grep "autoConfigureDns:" "$CONFIG_FILE" | awk '{print $2}')
+    AUTO_CERTS=$(grep "autoInstallCertificates:" "$CONFIG_FILE" | awk '{print $2}')
+
+    # Extract app name and domain from config
+    APP_NAME=$(grep "appName:" "$CONFIG_FILE" | head -1 | awk '{print $2}' | tr -d '"')
+    DOMAIN=$(grep "domain:" "$CONFIG_FILE" | head -1 | awk '{print $2}' | tr -d '"')
+    COMPANY=$(grep "companyName:" "$CONFIG_FILE" | awk '{print $2}' | tr -d '"')
+
+    # Auto-configure DNS if enabled and not using localhost
+    if [[ "$AUTO_DNS" == "true" ]] && [[ "$DOMAIN" != "localhost" ]]; then
+        print_info "Auto-configuring DNS..."
+        echo ""
+        print_warning "DNS configuration requires administrator privileges"
+        echo ""
+
+        if sudo scripts/configure-dns.sh --app-name "$APP_NAME" --domain "$DOMAIN"; then
+            print_success "DNS configured automatically"
+        else
+            print_warning "DNS configuration failed or was skipped"
+            print_info "You can configure manually later: sudo scripts/configure-dns.sh --app-name $APP_NAME --domain $DOMAIN"
+        fi
+    fi
+
+    # Auto-install certificates if enabled and not using localhost
+    if [[ "$AUTO_CERTS" == "true" ]] && [[ "$DOMAIN" != "localhost" ]]; then
+        print_info "Auto-generating and installing SSL certificates..."
+        echo ""
+        print_warning "Certificate installation requires administrator privileges"
+        echo ""
+
+        if sudo scripts/install-certs.sh --app-name "$APP_NAME" --domain "$DOMAIN" --org "$COMPANY"; then
+            print_success "SSL certificates installed automatically"
+        else
+            print_warning "Certificate installation failed or was skipped"
+            print_info "You can install manually later: sudo scripts/install-certs.sh --app-name $APP_NAME --domain $DOMAIN"
+        fi
+    fi
 else
     print_header "Step 2/7: Configuration (Skipped)"
     print_info "Using existing configuration files"

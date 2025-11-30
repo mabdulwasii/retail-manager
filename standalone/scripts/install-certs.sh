@@ -23,6 +23,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Default configuration
+APP_NAME=""
 DOMAIN="localhost"
 ORGANIZATION="Shop Manager"
 COUNTRY="US"
@@ -37,6 +38,10 @@ CERTS_DIR="${SCRIPT_DIR}/../certs"
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --app-name)
+            APP_NAME="$2"
+            shift 2
+            ;;
         --domain)
             DOMAIN="$2"
             shift 2
@@ -69,6 +74,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
+            echo "  --app-name NAME       Application name (e.g., myshop)"
             echo "  --domain DOMAIN       Domain name (default: localhost)"
             echo "  --org ORGANIZATION    Organization name (default: Shop Manager)"
             echo "  --country CODE        Country code (default: US)"
@@ -77,6 +83,10 @@ while [[ $# -gt 0 ]]; do
             echo "  --days DAYS           Certificate validity in days (default: 365)"
             echo "  --skip-install        Generate only, don't install to system"
             echo "  --help                Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0 --app-name myshop --domain shop.local"
+            echo "  $0 --domain myshop.local --org \"My Company\""
             exit 0
             ;;
         *)
@@ -163,6 +173,30 @@ DNS.4 = *.localhost
 IP.1 = 127.0.0.1
 IP.2 = ::1
 EOF
+
+# Add app-specific subdomains if app-name is provided
+if [ -n "$APP_NAME" ]; then
+    # Build full domain names
+    if [[ "$APP_NAME" == *"$DOMAIN"* ]] || [[ "$DOMAIN" == *"$APP_NAME"* ]]; then
+        # App name already in domain (e.g., myshop.local)
+        FULL_DOMAIN="$DOMAIN"
+    else
+        # Build full domain with app name (e.g., myshop.shop.local)
+        FULL_DOMAIN="${APP_NAME}.${DOMAIN}"
+    fi
+
+    print_info "Adding app-specific subdomains for: $APP_NAME"
+
+    # Add subdomains to alt_names
+    cat >> "${CERTS_DIR}/csr.conf" <<EOF_SUBDOMAINS
+DNS.5 = ${FULL_DOMAIN}
+DNS.6 = *.${FULL_DOMAIN}
+DNS.7 = api.${FULL_DOMAIN}
+DNS.8 = auth.${FULL_DOMAIN}
+EOF_SUBDOMAINS
+
+    print_success "Subdomains added: $FULL_DOMAIN, api.$FULL_DOMAIN, auth.$FULL_DOMAIN"
+fi
 
 # Generate certificate
 print_info "Generating self-signed certificate..."

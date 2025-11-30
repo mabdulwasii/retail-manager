@@ -125,15 +125,62 @@ class ConfigGenerator:
 
         print(f"✅ .env file generated: {env_file_path}")
 
+    def _generate_urls(self, app_name: str, domain: str) -> Dict[str, str]:
+        """Generate URLs based on appName and domain"""
+        # Determine if using custom domain or localhost
+        if domain == "localhost":
+            # localhost configuration - use ports
+            return {
+                'frontend': 'http://localhost:3001',
+                'backend': 'http://localhost:8081',
+                'keycloak': 'http://localhost:8080',
+                'api': 'http://localhost:8081/api',
+            }
+        else:
+            # Custom domain configuration - use subdomains with HTTPS
+            protocol = 'https'  # Always use HTTPS for custom domains
+
+            # Check if appName is already part of domain
+            if app_name in domain:
+                # Domain already includes app name (e.g., myshop.local)
+                frontend_domain = domain
+                api_domain = f"api.{domain}"
+                auth_domain = f"auth.{domain}"
+            else:
+                # Build full domain with app name
+                frontend_domain = f"{app_name}.{domain}"
+                api_domain = f"api.{app_name}.{domain}"
+                auth_domain = f"auth.{app_name}.{domain}"
+
+            return {
+                'frontend': f"{protocol}://{frontend_domain}",
+                'backend': f"{protocol}://{api_domain}",
+                'keycloak': f"{protocol}://{auth_domain}",
+                'api': f"{protocol}://{api_domain}/api",
+            }
+
     def _build_env_vars(self) -> Dict[str, Dict[str, str]]:
         """Build environment variables dictionary from config"""
         env_vars = {}
 
+        # Generate URLs from appName and domain
+        app_name = self.config['global']['appName']
+        domain = self.config['global']['domain']
+        urls = self._generate_urls(app_name, domain)
+
         # Global settings
         env_vars['Global'] = {
-            'APP_NAME': self.config['global']['appName'],
-            'DOMAIN': self.config['global']['domain'],
+            'APP_NAME': app_name,
+            'DOMAIN': domain,
             'ENVIRONMENT': self.config['global']['environment'],
+        }
+
+        # Auto-generated URLs
+        env_vars['URLs'] = {
+            'FRONTEND_URL': urls['frontend'],
+            'BACKEND_URL': urls['backend'],
+            'KEYCLOAK_URL': urls['keycloak'],
+            'API_BASE_URL': urls['api'],
         }
 
         # Branding
