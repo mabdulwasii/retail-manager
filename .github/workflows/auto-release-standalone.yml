@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for version tracking
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
 
       # ================================================================
       # Step 2: Detect Release Type from Labels
@@ -124,19 +124,35 @@ jobs:
 
           echo "✅ Version bumped to $NEW_VERSION"
           echo "✅ Tag $TAG_NAME created and pushed"
-          echo "🚀 Build workflow will trigger automatically"
 
       # ================================================================
-      # Step 4: Wait for Build Workflow to Trigger
+      # Step 3b: Trigger Standalone Build Workflow
+      # ================================================================
+      - name: Trigger standalone build
+        if: steps.release-type.outputs.RELEASE_STANDALONE == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW_TRIGGER }}
+        run: |
+          echo "Triggering standalone build workflow for version ${{ steps.standalone-release.outputs.NEW_VERSION }}"
+          gh workflow run build-standalone-release.yml \
+            --repo ${{ github.repository }} \
+            --ref ${{ steps.standalone-release.outputs.TAG_NAME }} \
+            --field version="${{ steps.standalone-release.outputs.NEW_VERSION }}"
+
+          echo "✅ Build workflow triggered"
+          echo "🚀 Monitor progress: https://github.com/${{ github.repository }}/actions/workflows/build-standalone-release.yml"
+
+      # ================================================================
+      # Step 4: Wait for Build Workflow to Start
       # ================================================================
       - name: Wait for build workflow
         if: steps.release-type.outputs.RELEASE_STANDALONE == 'true'
         run: |
-          echo "⏳ Waiting 10 seconds for build workflow to start..."
+          echo "⏳ Waiting 10 seconds for build workflow to initialize..."
           sleep 10
 
           echo "📋 Build workflow 'Build Standalone Release' should now be running"
-          echo "Monitor progress: https://github.com/${{ github.repository }}/actions"
+          echo "Monitor progress: https://github.com/${{ github.repository }}/actions/workflows/build-standalone-release.yml"
 
       # ================================================================
       # Step 5: Job Summary
