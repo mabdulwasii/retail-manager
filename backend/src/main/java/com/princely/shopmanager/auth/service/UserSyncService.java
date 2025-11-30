@@ -138,23 +138,41 @@ public class UserSyncService {
 
     /**
      * Updates basic profile fields (email, username).
+     * Validates email uniqueness before updating to prevent constraint violations.
+     *
+     * @throws UserSyncException if email update would violate uniqueness constraint
      */
     private boolean updateBasicProfile(User user, JwtPrincipal principal) {
         boolean updated = false;
 
-        // Only update email if it's different AND not already taken by another user
+        // Validate and update email
         if (!principal.getEmail().equals(user.getEmail())) {
-            // Check if email is already taken by another user
+            // Check if the new email is already taken by another user
             User existingUserWithEmail = userRepository.findByEmail(principal.getEmail()).orElse(null);
+
             if (existingUserWithEmail != null && !existingUserWithEmail.getId().equals(user.getId())) {
-                log.warn("Cannot update email for user {} from {} to {}: Email already taken by user {}",
-                    user.getUsername(), user.getEmail(), principal.getEmail(), existingUserWithEmail.getUsername());
-            } else {
-                user.setEmail(principal.getEmail());
-                updated = true;
+                String errorMsg = String.format(
+                    "Cannot sync user '%s' (Keycloak ID: %s): Email '%s' from Keycloak is already registered to user '%s' (ID: %s). " +
+                    "This indicates a data inconsistency. Please resolve by either: " +
+                    "(1) Updating the email in Keycloak to match the database, " +
+                    "(2) Removing the duplicate user from either Keycloak or the database, or " +
+                    "(3) Merging the user accounts if they represent the same person.",
+                    user.getUsername(),
+                    principal.getSubject(),
+                    principal.getEmail(),
+                    existingUserWithEmail.getUsername(),
+                    existingUserWithEmail.getId()
+                );
+
+                log.error(errorMsg);
+                throw new UserSyncException(errorMsg, null);
             }
+
+            user.setEmail(principal.getEmail());
+            updated = true;
         }
 
+        // Update username
         if (!principal.getUsername().equals(user.getUsername())) {
             user.setUsername(principal.getUsername());
             updated = true;
