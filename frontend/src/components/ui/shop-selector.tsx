@@ -2,7 +2,6 @@ import React from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useActiveShops } from '@/hooks/useDashboard'
 import { Building2, Loader2 } from 'lucide-react'
-import { useAuth } from '@/context/ManualAuthContext'
 
 interface ShopSelectorProps {
   value?: string
@@ -19,7 +18,6 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
   placeholder = "Select shop",
   showAllOption = false
 }) => {
-  const { user } = useAuth()
   const { data: shops, isLoading } = useActiveShops()
 
   // Determine current value - empty string for undefined/null to avoid uncontrolled component warnings
