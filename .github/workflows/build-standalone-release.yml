@@ -268,7 +268,7 @@ jobs:
 
   build-linux:
     name: Build Linux Packages
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: create-release
     permissions:
       contents: write
