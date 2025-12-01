@@ -24,6 +24,8 @@ Welcome to Shop Manager! This guide will help you install and configure the Shop
 - **Storage**: 500 MB free disk space
 - **Internet**: Broadband connection
 
+**Note**: No external dependencies required! Shop Manager is a standalone application with everything bundled.
+
 ### Recommended Requirements
 
 - **Operating System**: Windows 11 (64-bit)
@@ -237,6 +239,30 @@ If you're running Shop Manager entirely on your local computer:
 **Solution**:
 1. Make sure you're running the installer **as administrator**
 2. Right-click → "Run as administrator"
+
+#### Problem: "Error invoking remote method 'generate-config'" during setup
+
+**This error occurred in versions prior to v0.1.14 and has been fixed.**
+
+**Cause**:
+- Older versions (v0.1.13 and earlier) required Python to be installed
+- Windows typically doesn't have Python installed by default
+
+**Solution for v0.1.14+**:
+- ✅ This error is **fixed** in v0.1.14 and later versions
+- Download the latest version from the releases page
+- No Python installation required
+
+**Temporary Workaround for v0.1.13**:
+If you must use v0.1.13:
+1. Install Python 3.8 or later from python.org
+2. Install required packages:
+   ```
+   pip install pyyaml jinja2
+   ```
+3. Restart Shop Manager installer
+
+**Recommended**: Download v0.1.14+ which has this issue resolved.
 
 ---
 

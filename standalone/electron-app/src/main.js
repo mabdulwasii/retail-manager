@@ -535,25 +535,24 @@ function setupIPCHandlers() {
 
   // Generate configuration
   ipcMain.handle('generate-config', async () => {
-    return new Promise((resolve, reject) => {
-      const scriptPath = path.join(resourcesPath, 'scripts/generate-config.py');
+    try {
+      log.info('Generating configuration...');
 
-      const process = spawn('python3', [scriptPath, '--config', configPath]);
+      const generateConfig = require(path.join(resourcesPath, 'scripts/generate-config.js'));
+      const result = await generateConfig(configPath);
 
-      let output = '';
-
-      process.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      process.on('close', (code) => {
-        if (code === 0) {
-          resolve({ success: true, output });
-        } else {
-          reject({ success: false, error: output });
-        }
-      });
-    });
+      log.info('Configuration generated successfully');
+      return {
+        success: true,
+        output: `Configuration generated successfully!\nOutput directory: ${result.outputDir}`
+      };
+    } catch (error) {
+      log.error('Configuration generation failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to generate configuration files'
+      };
+    }
   });
 
   // Create backup
