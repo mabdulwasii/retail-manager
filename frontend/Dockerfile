@@ -6,13 +6,16 @@ WORKDIR /app
 # NOTE: We use runtime configuration (window.RUNTIME_CONFIG) from ConfigMap
 # No build-time environment variables needed - all config is loaded at runtime
 
-# Copy package files
-COPY package.json ./
+# Copy package files first for better layer caching
+# This allows Docker to cache the dependency layer separately from source code
+COPY package.json package-lock.json* ./
 
-# Install dependencies using npm
+# Install dependencies
+# Use npm install since project has incomplete Yarn 4 setup
+# Layer is cached unless package files change
 RUN npm install
 
-# Copy source code
+# Copy source code (this layer is cached unless source changes)
 COPY . .
 
 # Copy environment file for Kubernetes (contains empty values - runtime config takes precedence)
