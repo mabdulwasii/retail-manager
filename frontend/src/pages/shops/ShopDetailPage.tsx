@@ -259,10 +259,10 @@ export const ShopDetailPage: React.FC = () => {
         <Button
           variant="ghost"
           className="w-fit"
-          onClick={() => navigate("/shops")}
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Shops
+          Back
         </Button>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

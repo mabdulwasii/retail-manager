@@ -5,6 +5,15 @@ All notable changes to the Shop Manager Frontend will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.18] - 2024-12-02
+
+### Added
+
+### Changed
+- Sidebar navigation now automatically directs shop managers to their specific shop (`/shops/:shopId`) instead of the list page
+- Shop list page (`/shops`) now requires SHOP_LIST or SHOP_LIST_ALL permissions
+- Category creation now properly uses user-selected shop ID from form instead of always defaulting to profile shop ID
+
 ## [0.0.17] - 2024-11-30
 
 ### Added
@@ -12,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ShopContext for centralized shop selection state management
 - Real data visualizations to AdminDashboard (Revenue Trend, Inventory Status)
 - PDF receipt generation and download functionality
+
+
 
 ### Changed
 - Migrated from role-based to permission-based authorization system

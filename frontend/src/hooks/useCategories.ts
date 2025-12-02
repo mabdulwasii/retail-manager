@@ -60,14 +60,11 @@ export const useCategoryNames = (shopIdParam?: string) => {
  */
 export const useCreateCategory = () => {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-  const shopId = user?.shopId
 
   return useMutation({
-    mutationFn: (data: Omit<CategoryCreateRequest, 'shopId'>) => {
-      if (!shopId) throw new Error('Shop ID not found')
-      // Add shopId to the request data
-      return categoryService.createCategory(shopId, { ...data, shopId })
+    mutationFn: (data: CategoryCreateRequest) => {
+      if (!data.shopId) throw new Error('Shop ID is required')
+      return categoryService.createCategory(data.shopId, data)
     },
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
