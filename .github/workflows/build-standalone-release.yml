@@ -61,7 +61,17 @@ jobs:
 
             ## 🚀 Quick Start
 
-            See [Installation Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
+            ### Installation Guides
+            - **Windows**: [Windows Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/WINDOWS_INSTALLATION_GUIDE.md)
+            - **macOS**: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md)
+            - **Linux/Docker Compose**: [Standalone Distribution Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
+
+            ### ⚠️ macOS Users
+            If you see **"Shop Manager.app is damaged"** error:
+            1. Right-click on Shop Manager.app → Open
+            2. Or run: `xattr -cr /Applications/Shop\ Manager.app`
+
+            See [macOS guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md#fixing-damaged-app-error) for details.
 
             ## ✨ What's New
 

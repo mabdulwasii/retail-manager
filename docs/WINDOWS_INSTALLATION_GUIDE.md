@@ -365,6 +365,12 @@ If automatic updates are disabled:
 - **System Administrator**: Contact your organization's IT department
 - **Phone**: (Available during business hours)
 
+### Installation Guides
+
+- **Windows**: [Windows Installation Guide](WINDOWS_INSTALLATION_GUIDE.md) (this document)
+- **macOS**: [macOS Installation Guide](MACOS_INSTALLATION_GUIDE.md)
+- **Linux/Docker**: [Standalone Distribution Guide](../standalone/README.md)
+
 ### Additional Resources
 
 - **User Manual**: [Download PDF](https://docs.shopmanager.com/user-manual.pdf)
