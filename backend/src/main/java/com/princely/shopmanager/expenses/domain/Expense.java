@@ -1,6 +1,7 @@
 package com.princely.shopmanager.expenses.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -34,7 +35,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = true)
-public class Expense extends BaseEntity {
+public class Expense extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -191,5 +192,16 @@ public class Expense extends BaseEntity {
         if (expenseDate != null && expenseDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Expense date cannot be in the future");
         }
+    }
+
+    /**
+     * Returns the shop ID this expense belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID
+     */
+    @Override
+    public String getShopId() {
+        return shopId;
     }
 }

@@ -3,6 +3,7 @@ package com.princely.shopmanager.inventory.domain;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +22,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString(exclude = {"shop", "product"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "product"})
-public class Inventory extends BaseEntity {
+public class Inventory extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -139,5 +140,16 @@ public class Inventory extends BaseEntity {
     public void removeStock(int quantity) {
         this.currentStock = Math.max(0, this.currentStock - quantity);
         this.lastStockUpdate = LocalDateTime.now();
+    }
+
+    /**
+     * Returns the shop ID this inventory belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if shop is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
     }
 }

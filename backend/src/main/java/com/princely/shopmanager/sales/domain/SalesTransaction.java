@@ -3,6 +3,7 @@ package com.princely.shopmanager.sales.domain;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +25,7 @@ import java.util.List;
 @Builder
 @ToString(exclude = {"shop", "cashier", "lineItems"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "cashier", "lineItems"})
-public class SalesTransaction extends BaseEntity {
+public class SalesTransaction extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -155,5 +156,16 @@ public class SalesTransaction extends BaseEntity {
         this.totalAmount = this.subtotal
             .add(this.taxAmount)
             .subtract(this.discountAmount);
+    }
+
+    /**
+     * Returns the shop ID this sales transaction belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if shop is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
     }
 }
