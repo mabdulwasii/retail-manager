@@ -503,6 +503,40 @@ python3 scripts/generate-config.py --validate-only
 # Edit config.yaml: tls.enabled: false
 ```
 
+#### macOS "Damaged App" Error
+
+**Symptoms:**
+```
+"Shop Manager.app" is damaged and can't be opened. You should move it to the Trash.
+```
+
+**Cause:**
+This is a macOS Gatekeeper security feature that blocks unsigned applications. The app is NOT actually damaged.
+
+**Solution:**
+
+**Option 1 (Easiest):**
+1. Right-click (or Control-click) on Shop Manager.app in Applications
+2. Select "Open" from the menu
+3. Click "Open" in the security dialog
+4. The app will now launch and be permanently allowed
+
+**Option 2 (Terminal):**
+```bash
+# Remove quarantine attribute
+xattr -cr /Applications/Shop\ Manager.app
+
+# Then double-click to launch
+```
+
+**Option 3 (System Settings - macOS 13+):**
+1. Try to open Shop Manager.app (it will be blocked)
+2. Go to System Settings → Privacy & Security
+3. Scroll to Security section
+4. Click "Open Anyway" next to the Shop Manager message
+
+**See full guide**: [macOS Installation Guide](../docs/MACOS_INSTALLATION_GUIDE.md)
+
 #### Can't Login
 
 **Symptoms:**

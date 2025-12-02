@@ -47,7 +47,7 @@
   "build": {
     "appId": "com.shopmanager.desktop",
     "productName": "Shop Manager",
-    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -80,6 +80,13 @@
       "category": "public.app-category.business",
       "target": [
         {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
           "target": "zip",
           "arch": [
             "x64",
@@ -91,7 +98,8 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "${productName}-${version}-macOS-${arch}.${ext}"
     },
     "dmg": {
       "contents": [
@@ -109,7 +117,8 @@
       "window": {
         "width": 540,
         "height": 400
-      }
+      },
+      "artifactName": "${productName}-${version}-macOS-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -122,7 +131,8 @@
       ],
       "icon": "build/icon.ico",
       "publisherName": "Shop Manager",
-      "verifyUpdateCodeSignature": false
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup-${version}-Windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -136,7 +146,8 @@
       "installerHeader": "build/installer-header.bmp",
       "installerSidebar": "build/installer-sidebar.bmp",
       "license": "LICENSE.txt",
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "artifactName": "${productName}-Setup-${version}-Windows-${arch}.${ext}"
     },
     "linux": {
       "target": [
@@ -145,15 +156,35 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icons",
       "category": "Office",
       "synopsis": "Retail Management Platform",
-      "description": "Complete retail management solution with inventory, sales, and analytics"
+      "description": "Complete retail management solution with inventory, sales, and analytics",
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}"
     },
     "appImage": {
-      "license": "LICENSE.txt"
+      "license": "LICENSE.txt",
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}"
+    },
+    "rpm": {
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}"
     }
   }
 }

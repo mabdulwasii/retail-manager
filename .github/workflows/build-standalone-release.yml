@@ -51,9 +51,20 @@ jobs:
             Choose the package that best fits your needs:
 
             ### For Non-Technical Users (Recommended)
-            - **Windows**: `Shop-Manager-Setup-${{ steps.get_version.outputs.version }}.exe`
-            - **macOS**: `Shop-Manager-${{ steps.get_version.outputs.version }}.dmg`
-            - **Linux**: `Shop-Manager-${{ steps.get_version.outputs.version }}.AppImage`
+
+            **Windows (64-bit)**:
+            - `Shop Manager-Setup-${{ steps.get_version.outputs.version }}-Windows-x64.exe` - Windows 10/11 installer
+
+            **macOS (Intel & Apple Silicon)**:
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.dmg` - macOS Intel installer
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.dmg` - macOS Apple Silicon (M1/M2/M3) installer
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.zip` - macOS Intel portable
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.zip` - macOS Apple Silicon portable
+
+            **Linux (64-bit)**:
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.AppImage` - Universal Linux (recommended)
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.deb` - Debian/Ubuntu package
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.rpm` - Fedora/RHEL/CentOS package
 
             ### For Technical Users / Developers
             - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
@@ -61,7 +72,17 @@ jobs:
 
             ## 🚀 Quick Start
 
-            See [Installation Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
+            ### Installation Guides
+            - **Windows**: [Windows Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/WINDOWS_INSTALLATION_GUIDE.md)
+            - **macOS**: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md)
+            - **Linux/Docker Compose**: [Standalone Distribution Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
+
+            ### ⚠️ macOS Users
+            If you see **"Shop Manager.app is damaged"** error:
+            1. Right-click on Shop Manager.app → Open
+            2. Or run: `xattr -cr /Applications/Shop\ Manager.app`
+
+            See [macOS guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md#fixing-damaged-app-error) for details.
 
             ## ✨ What's New
 
@@ -288,26 +309,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libfuse2 \
+            libgbm1 \
+            libasound2 \
             file \
             rpm \
-            libarchive-tools
+            libarchive-tools \
+            build-essential
 
       - name: Install dependencies
         run: |
           cd standalone/electron-app
           npm ci
 
-      - name: Update app-builder to latest version
+      - name: Fix app-builder binary permissions
         run: |
-          cd standalone/electron-app
-          npm install app-builder-bin@latest --save-dev
+          # Find and fix all app-builder binaries (handles both direct and nested locations)
+          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec chmod +x {} \;
 
-      - name: Fix app-builder permissions and check
-        run: |
-          chmod +x standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
-          echo "Checking app-builder binary:"
-          file standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
-          ldd standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
+          # Verify the binary
+          echo "Checking for app-builder binaries:"
+          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec echo {} \; -exec file {} \;
 
       - name: Update version
         run: |
