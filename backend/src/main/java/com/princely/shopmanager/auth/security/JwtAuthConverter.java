@@ -43,22 +43,51 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             .toList();
         principal.setRoles(roleNames);
 
-        // Lookup user by Keycloak ID and set database User ID
-        enrichPrincipalWithUserId(principal);
+        // Lookup user by Keycloak ID and enrich with database user data
+        enrichPrincipalWithUserData(principal);
 
         return new CustomJwtAuthenticationToken(jwt, authorities, principal);
     }
 
     /**
-     * Enriches the JwtPrincipal with the database User ID.
-     * Looks up the user by Keycloak ID and sets the internal database user ID.
+     * Enriches the JwtPrincipal with database user data.
+     * Looks up the user by Keycloak ID and sets:
+     * - Database user ID (always)
+     * - Tenant ID (fallback if not in JWT token)
+     * - Shop ID (fallback if not in JWT token)
+     *
+     * This provides a safety net when Keycloak custom attributes aren't configured properly.
      */
-    private void enrichPrincipalWithUserId(JwtPrincipal principal) {
+    private void enrichPrincipalWithUserData(JwtPrincipal principal) {
         try {
             userRepository.findByKeycloakId(principal.getSubject())
-                .ifPresent(user -> principal.setUserId(user.getId()));
+                .ifPresentOrElse(
+                    user -> {
+                        // Always set database user ID
+                        principal.setUserId(user.getId());
+
+                        // Fallback: If Keycloak didn't provide tenantId, get from database
+                        if ((principal.getTenantId() == null || principal.getTenantId().trim().isEmpty())
+                            && user.getTenant() != null) {
+                            principal.setTenantId(user.getTenant().getId());
+                            log.debug("Enriched tenantId from database for user: {} (Keycloak didn't provide it)",
+                                user.getKeycloakId());
+                        }
+
+                        // Fallback: If Keycloak didn't provide shopId, get from database
+                        if ((principal.getShopId() == null || principal.getShopId().trim().isEmpty())
+                            && user.getShop() != null) {
+                            principal.setShopId(user.getShop().getId());
+                            log.debug("Enriched shopId from database for user: {} (Keycloak didn't provide it)",
+                                user.getKeycloakId());
+                        }
+                    },
+                    () -> log.warn("User not found in database for Keycloak ID: {}. User data will not be enriched.",
+                        principal.getSubject())
+                );
         } catch (Exception e) {
-            log.warn("Failed to lookup user by Keycloak ID: {}. UserId will not be set.",
+            log.error("Failed to enrich principal with user data for Keycloak ID: {}. " +
+                "User ID, tenant ID, and shop ID may not be set correctly.",
                 principal.getSubject(), e);
         }
     }

@@ -5,6 +5,7 @@ import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString(exclude = {"shop", "salesTransaction", "product", "processedBy"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "salesTransaction", "product", "processedBy"})
-public class ProductReturn extends BaseEntity {
+public class ProductReturn extends BaseEntity implements ShopAware {
 
     public static final int DECIMAL_PRECISION = 10;
     public static final int DECIMAL_SCALE = 2;
@@ -196,5 +197,16 @@ public class ProductReturn extends BaseEntity {
             case DAMAGED -> baseRefund.multiply(BigDecimal.valueOf(0.5));
             case EXPIRED -> baseRefund.multiply(BigDecimal.valueOf(0.3));
         };
+    }
+
+    /**
+     * Returns the shop ID this product return belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if shop is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
     }
 }

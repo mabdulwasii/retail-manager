@@ -1,6 +1,7 @@
 package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,7 +17,7 @@ import java.util.Set;
 @Builder
 @ToString(exclude = {"products", "parent", "children", "shop"})
 @EqualsAndHashCode(callSuper = true, exclude = {"products", "parent", "children", "shop"})
-public class Category extends BaseEntity {
+public class Category extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -54,4 +55,15 @@ public class Category extends BaseEntity {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    /**
+     * Returns the shop ID this category belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if shop is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
+    }
 }

@@ -1,6 +1,7 @@
 package com.princely.shopmanager.sales.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString(exclude = "transaction")
 @EqualsAndHashCode(callSuper = true, exclude = "transaction")
-public class Receipt extends BaseEntity {
+public class Receipt extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -107,5 +108,16 @@ public class Receipt extends BaseEntity {
     public void incrementPrintCount() {
         this.printedCount++;
         this.lastPrintedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Returns the shop ID this receipt belongs to (via its sales transaction).
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if transaction is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return transaction != null ? transaction.getShopId() : null;
     }
 }

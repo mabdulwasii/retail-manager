@@ -19,6 +19,7 @@ import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;
 import com.princely.shopmanager.shared.exception.ErrorCode;
 import com.princely.shopmanager.shared.exception.ShopNotFoundException;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.shared.service.ShopAwareService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,23 +40,32 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing expenses and expenditures
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class ExpenseService {
+public class ExpenseService extends ShopAwareService {
 
     private final ExpenseRepository expenseRepository;
     private final ExpenseCategoryRepository categoryRepository;
     private final AuditService auditService;
-    private final ShopAccessValidator shopAccessValidator;
-    private final com.princely.shopmanager.core.repository.ShopRepository shopRepository;
+
+    public ExpenseService(
+            ShopAccessValidator shopAccessValidator,
+            com.princely.shopmanager.core.repository.ShopRepository shopRepository,
+            ExpenseRepository expenseRepository,
+            ExpenseCategoryRepository categoryRepository,
+            AuditService auditService
+    ) {
+        super(shopAccessValidator, shopRepository);
+        this.expenseRepository = expenseRepository;
+        this.categoryRepository = categoryRepository;
+        this.auditService = auditService;
+    }
 
     /**
      * Create a new expense
@@ -375,18 +385,7 @@ public class ExpenseService {
         return expense;
     }
 
-    private void validateShopAccess(String shopId, JwtPrincipal principal) {
-        // Step 1: Check if shop exists
-        boolean shopExists = shopRepository.existsById(shopId);
-        if (!shopExists) {
-            throw new ShopNotFoundException("The shop with id " + shopId + " was not found");
-        }
-
-        // Step 2: Check permissions using ShopAccessValidator
-        if (shopAccessValidator.hasNoAccessToShop(shopId, principal)) {
-            throw new AccessDeniedException("You don't have permission to access shop with id " + shopId);
-        }
-    }
+    // Note: validateShopAccess() is inherited from ShopAwareService parent class
 
     private Set<String> cleanTags(Set<String> tags) {
         return tags.stream()
