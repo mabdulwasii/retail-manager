@@ -17,10 +17,14 @@ import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.dto.SalesTransactionCreateRequest;
 import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
-import com.princely.shopmanager.shared.security.TenantSecurityValidator;
+import com.princely.shopmanager.shared.security.ShopAccessValidator;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.shared.service.ShopAwareService;
+import com.princely.shopmanager.auth.principal.JwtPrincipal;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,34 +37,69 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class SalesTransactionService {
+public class SalesTransactionService extends ShopAwareService {
 
     private final SalesTransactionRepository salesTransactionRepository;
-    private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
     private final ProductService productService;
-    private final TenantSecurityValidator tenantSecurityValidator;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final ReceiptService receiptService;
 
+    public SalesTransactionService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            SalesTransactionRepository salesTransactionRepository,
+            ProductRepository productRepository,
+            UserRepository userRepository,
+            InventoryRepository inventoryRepository,
+            InventoryService inventoryService,
+            ProductService productService,
+            AuditService auditService,
+            ApplicationEventPublisher eventPublisher,
+            ReceiptService receiptService
+    ) {
+        super(shopAccessValidator, shopRepository);
+        this.salesTransactionRepository = salesTransactionRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.inventoryRepository = inventoryRepository;
+        this.inventoryService = inventoryService;
+        this.productService = productService;
+        this.auditService = auditService;
+        this.eventPublisher = eventPublisher;
+        this.receiptService = receiptService;
+    }
+
+    /**
+     * Helper method to find a sales transaction and validate shop access.
+     */
+    private SalesTransaction findTransactionForUser(String transactionId, JwtPrincipal principal) {
+        SalesTransaction transaction = salesTransactionRepository.findById(transactionId)
+            .orElseThrow(() -> new EntityNotFoundException("Sales transaction not found: " + transactionId));
+
+        if (shopAccessValidator.hasNoAccessToShop(transaction.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this sales transaction");
+        }
+
+        return transaction;
+    }
+
     @Transactional
-    public SalesTransactionResponse createTransaction(SalesTransactionCreateRequest request) {
+    public SalesTransactionResponse createTransaction(SalesTransactionCreateRequest request, JwtPrincipal principal) {
         log.info("Creating sales transaction for shop: {}", request.getShopId());
 
-        // Get shop and validate tenant access
+        // Validate shop access
+        validateShopAccess(request.getShopId(), principal);
         Shop shop = shopRepository.findById(request.getShopId())
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
-        tenantSecurityValidator.validateShopAccess(shop);
 
         // Get current user as cashier
         String currentUserId = TenantContext.getCurrentUserId();
@@ -82,7 +121,7 @@ public class SalesTransactionService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + lineItemRequest.getProductId()));
 
             // Check if sufficient stock available
-            if (!productService.hasAvailableStock(product.getId(), lineItemRequest.getQuantity())) {
+            if (!productService.hasAvailableStock(product.getId(), lineItemRequest.getQuantity(), principal)) {
                 throw new IllegalStateException("Insufficient stock for product: " + product.getName() +
                     ". Required: " + lineItemRequest.getQuantity());
             }
@@ -231,38 +270,27 @@ public class SalesTransactionService {
     }
 
     @Transactional(readOnly = true)
-    public SalesTransactionResponse getTransaction(String id) {
-        SalesTransaction transaction = salesTransactionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
-
-        tenantSecurityValidator.validateShopAccess(transaction.getShop());
-
+    public SalesTransactionResponse getTransaction(String id, JwtPrincipal principal) {
+        SalesTransaction transaction = findTransactionForUser(id, principal);
         return SalesTransactionResponse.fromEntity(transaction);
     }
 
     @Transactional(readOnly = true)
-    public SalesTransaction getTransactionById(String id) {
-        return salesTransactionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
+    public SalesTransaction getTransactionById(String id, JwtPrincipal principal) {
+        return findTransactionForUser(id, principal);
     }
 
     @Transactional(readOnly = true)
-    public Page<SalesTransactionResponse> getTransactions(String shopId, Pageable pageable) {
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
-
+    public Page<SalesTransactionResponse> getTransactions(String shopId, Pageable pageable, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         Page<SalesTransaction> transactions = salesTransactionRepository.findAll(pageable);
         return transactions.map(SalesTransactionResponse::fromEntity);
     }
 
     @Transactional(readOnly = true)
     public List<SalesTransactionResponse> getTransactionsByDateRange(
-            String shopId, LocalDateTime startDate, LocalDateTime endDate) {
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
-
+            String shopId, LocalDateTime startDate, LocalDateTime endDate, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         List<SalesTransaction> transactions = salesTransactionRepository
             .findByShopAndDateRange(shopId, startDate, endDate);
 
@@ -272,11 +300,8 @@ public class SalesTransactionService {
     }
 
     @Transactional
-    public void voidTransaction(String id, String reason) {
-        SalesTransaction transaction = salesTransactionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
-
-        tenantSecurityValidator.validateShopAccess(transaction.getShop());
+    public void voidTransaction(String id, String reason, JwtPrincipal principal) {
+        SalesTransaction transaction = findTransactionForUser(id, principal);
 
         if (transaction.isVoided()) {
             throw new IllegalStateException("Transaction is already voided");

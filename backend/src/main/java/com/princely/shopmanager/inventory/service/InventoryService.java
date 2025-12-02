@@ -1,6 +1,7 @@
 package com.princely.shopmanager.inventory.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.repository.ProductRepository;
@@ -16,13 +17,15 @@ import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.inventory.specification.InventorySpecifications;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.InventoryLowStockEvent;
 import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.shared.service.ShopAwareService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,19 +43,48 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class InventoryService {
+public class InventoryService extends ShopAwareService {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository historyRepository;
-    private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public InventoryResponse createInventory(String shopId, InventoryCreateRequest request) {
+    public InventoryService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            InventoryRepository inventoryRepository,
+            InventoryHistoryRepository historyRepository,
+            ProductRepository productRepository,
+            AuditService auditService,
+            ApplicationEventPublisher eventPublisher) {
+        super(shopAccessValidator, shopRepository);
+        this.inventoryRepository = inventoryRepository;
+        this.historyRepository = historyRepository;
+        this.productRepository = productRepository;
+        this.auditService = auditService;
+        this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Finds inventory by ID with shop access validation.
+     */
+    private Inventory findInventoryForUser(String inventoryId, JwtPrincipal principal) {
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+            .orElseThrow(() -> new EntityNotFoundException("Inventory not found: " + inventoryId));
+
+        if (shopAccessValidator.hasNoAccessToShop(inventory.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this inventory");
+        }
+
+        return inventory;
+    }
+
+    public InventoryResponse createInventory(String shopId, InventoryCreateRequest request, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new EntityNotFoundException("Shop not found"));
 
@@ -93,21 +125,20 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<InventoryResponse> getInventory(String shopId, Specification<Inventory> spec, Pageable pageable) {
+    public Page<InventoryResponse> getInventory(String shopId, Specification<Inventory> spec, Pageable pageable, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return inventoryRepository.findAll(spec, pageable)
             .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
-    public InventoryResponse getInventoryById(String id) {
-        Inventory inventory = inventoryRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public InventoryResponse getInventoryById(String id, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(id, principal);
         return mapToResponse(inventory);
     }
 
-    public InventoryResponse adjustStock(String inventoryId, InventoryAdjustmentRequest request) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public InventoryResponse adjustStock(String inventoryId, InventoryAdjustmentRequest request, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         int previousStock = inventory.getCurrentStock();
         int newStock = request.getNewStock();
@@ -126,19 +157,18 @@ public class InventoryService {
         return mapToResponse(inventory);
     }
 
-    public void reserveStock(String inventoryId, int quantity, String referenceId, InventoryHistory.ReferenceType referenceType) {
+    public void reserveStock(String inventoryId, int quantity, String referenceId, InventoryHistory.ReferenceType referenceType, JwtPrincipal principal) {
         reserveStock(StockReservationRequest.builder()
             .inventoryId(inventoryId)
             .quantity(quantity)
             .referenceId(referenceId)
             .referenceType(referenceType)
             .reason("Stock reserved")
-            .build());
+            .build(), principal);
     }
 
-    public void reserveStock(StockReservationRequest request) {
-        Inventory inventory = inventoryRepository.findById(request.getInventoryId())
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public void reserveStock(StockReservationRequest request, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(request.getInventoryId(), principal);
 
         int previousReserved = inventory.getReservedStock();
         inventory.reserveStock(request.getQuantity());
@@ -152,9 +182,8 @@ public class InventoryService {
         log.debug("Reserved {} units for inventory {}", request.getQuantity(), request.getInventoryId());
     }
 
-    public void releaseReservedStock(String inventoryId, int quantity, String referenceId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public void releaseReservedStock(String inventoryId, int quantity, String referenceId, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         int previousReserved = inventory.getReservedStock();
         inventory.releaseReservedStock(quantity);
@@ -169,9 +198,8 @@ public class InventoryService {
         log.debug("Released {} reserved units for inventory {}", quantity, inventoryId);
     }
 
-    public void sellStock(String inventoryId, int quantity, String saleId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public void sellStock(String inventoryId, int quantity, String saleId, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         if (!inventory.canSell(quantity)) {
             throw new IllegalStateException("Cannot sell " + quantity + " units. Available: " + inventory.getAvailableStock());
@@ -190,9 +218,8 @@ public class InventoryService {
             String.format("Sold %d units, remaining stock: %d", quantity, inventory.getCurrentStock()));
     }
 
-    public void returnStock(String inventoryId, int quantity, String returnId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public void returnStock(String inventoryId, int quantity, String returnId, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         int previousStock = inventory.getCurrentStock();
         inventory.addStock(quantity);
@@ -207,7 +234,8 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryResponse> getLowStockItems(String shopId) {
+    public List<InventoryResponse> getLowStockItems(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return inventoryRepository.findLowStockItems(shopId)
             .stream()
             .map(this::mapToResponse)
@@ -215,7 +243,8 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryResponse> getExpiringItems(String shopId, int daysThreshold) {
+    public List<InventoryResponse> getExpiringItems(String shopId, int daysThreshold, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusDays(daysThreshold);
         return inventoryRepository.findExpiringItems(shopId, startDate, endDate)
@@ -225,18 +254,20 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public BigDecimal getTotalInventoryValue(String shopId) {
+    public BigDecimal getTotalInventoryValue(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return inventoryRepository.calculateTotalInventoryValue(shopId);
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryHistory> getInventoryHistory(String inventoryId) {
+    public List<InventoryHistory> getInventoryHistory(String inventoryId, JwtPrincipal principal) {
+        // Validate access to the inventory first
+        findInventoryForUser(inventoryId, principal);
         return historyRepository.findByInventoryIdOrderByCreatedAtDesc(inventoryId);
     }
 
-    public InventoryResponse updateInventoryStatus(String inventoryId, Inventory.InventoryStatus status) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public InventoryResponse updateInventoryStatus(String inventoryId, Inventory.InventoryStatus status, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         Inventory.InventoryStatus previousStatus = inventory.getStatus();
         inventory.setStatus(status);
@@ -258,9 +289,8 @@ public class InventoryService {
         return mapToResponse(inventory);
     }
 
-    public InventoryResponse updateInventory(String inventoryId, InventoryUpdateRequest request) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public InventoryResponse updateInventory(String inventoryId, InventoryUpdateRequest request, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         // Track changes for audit
         StringBuilder changes = new StringBuilder();
@@ -331,9 +361,8 @@ public class InventoryService {
         return mapToResponse(inventory);
     }
 
-    public void deleteInventory(String inventoryId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
+    public void deleteInventory(String inventoryId, JwtPrincipal principal) {
+        Inventory inventory = findInventoryForUser(inventoryId, principal);
 
         // Validate: Cannot delete inventory with active stock
         if (inventory.getCurrentStock() > 0) {
@@ -467,7 +496,8 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryResponse> findLowStockItems(String shopId) {
+    public List<InventoryResponse> findLowStockItems(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return findInventoryBySpecification(
             InventorySpecifications.forShop(shopId)
                 .and(InventorySpecifications.hasLowStock())
@@ -475,7 +505,8 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryResponse> findExpiringItems(String shopId, int daysThreshold) {
+    public List<InventoryResponse> findExpiringItems(String shopId, int daysThreshold, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return findInventoryBySpecification(
             InventorySpecifications.forShop(shopId)
                 .and(InventorySpecifications.expiresWithinDays(daysThreshold))
@@ -503,7 +534,8 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public InventorySummaryDto getInventorySummary(String shopId) {
+    public InventorySummaryDto getInventorySummary(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         List<Inventory> allInventory = inventoryRepository.findAll(
             InventorySpecifications.forShop(shopId)
         );

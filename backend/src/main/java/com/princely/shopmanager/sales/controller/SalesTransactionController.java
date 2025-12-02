@@ -6,6 +6,7 @@ import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.sales.service.ReceiptService;
 import com.princely.shopmanager.sales.service.SalesTransactionService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
+import com.princely.shopmanager.auth.principal.JwtPrincipal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +27,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -78,10 +80,11 @@ public class SalesTransactionController {
     @PostMapping
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_CREATE)")
     public ResponseEntity<SalesTransactionResponse> createTransaction(
-        @Valid @RequestBody SalesTransactionCreateRequest request
+        @Valid @RequestBody SalesTransactionCreateRequest request,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.info("Creating sales transaction for shop: {}", request.getShopId());
-        SalesTransactionResponse response = salesTransactionService.createTransaction(request);
+        SalesTransactionResponse response = salesTransactionService.createTransaction(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -109,10 +112,11 @@ public class SalesTransactionController {
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
     public ResponseEntity<SalesTransactionResponse> getTransaction(
         @Parameter(description = "Transaction ID", example = "txn-123e4567-e89b-12d3-a456-426614174000")
-        @PathVariable String id
+        @PathVariable String id,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.debug("Retrieving sales transaction: {}", id);
-        SalesTransactionResponse response = salesTransactionService.getTransaction(id);
+        SalesTransactionResponse response = salesTransactionService.getTransaction(id, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -140,19 +144,20 @@ public class SalesTransactionController {
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).SALES_READ)")
     public ResponseEntity<Receipt> getTransactionReceipt(
         @Parameter(description = "Transaction ID", example = "txn-123e4567-e89b-12d3-a456-426614174000")
-        @PathVariable String transactionId
+        @PathVariable String transactionId,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.debug("Retrieving receipt for transaction: {}", transactionId);
 
         // Get the transaction
-        SalesTransactionResponse transaction = salesTransactionService.getTransaction(transactionId);
+        SalesTransactionResponse transaction = salesTransactionService.getTransaction(transactionId, principal);
 
         // Get or generate receipt
         Receipt receipt = receiptService.getReceipt(transactionId)
             .orElseGet(() -> {
                 log.info("Receipt not found for transaction {}, generating new receipt", transactionId);
                 // Get the actual entity to generate receipt
-                var txn = salesTransactionService.getTransactionById(transactionId);
+                var txn = salesTransactionService.getTransactionById(transactionId, principal);
                 return receiptService.generateReceipt(txn);
             });
 
@@ -178,10 +183,11 @@ public class SalesTransactionController {
     public ResponseEntity<Page<SalesTransactionResponse>> getTransactions(
         @Parameter(description = "Shop ID", required = true)
         @RequestParam String shopId,
-        @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable
+        @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.debug("Retrieving sales transactions for shop: {}", shopId);
-        Page<SalesTransactionResponse> response = salesTransactionService.getTransactions(shopId, pageable);
+        Page<SalesTransactionResponse> response = salesTransactionService.getTransactions(shopId, pageable, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -207,10 +213,11 @@ public class SalesTransactionController {
         @Parameter(description = "Start date (ISO format)", example = "2025-01-01T00:00:00")
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
         @Parameter(description = "End date (ISO format)", example = "2025-12-31T23:59:59")
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.debug("Retrieving transactions for shop {} between {} and {}", shopId, startDate, endDate);
-        List<SalesTransactionResponse> response = salesTransactionService.getTransactionsByDateRange(shopId, startDate, endDate);
+        List<SalesTransactionResponse> response = salesTransactionService.getTransactionsByDateRange(shopId, startDate, endDate, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -242,10 +249,11 @@ public class SalesTransactionController {
         @Parameter(description = "Transaction ID")
         @PathVariable String id,
         @Parameter(description = "Reason for voiding the transaction")
-        @RequestParam String reason
+        @RequestParam String reason,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.info("Voiding transaction: {} with reason: {}", id, reason);
-        salesTransactionService.voidTransaction(id, reason);
+        salesTransactionService.voidTransaction(id, reason, principal);
         return ResponseEntity.noContent().build();
     }
 }

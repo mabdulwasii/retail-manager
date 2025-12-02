@@ -68,7 +68,7 @@ public class InventoryController {
         log.info("Creating inventory item for shop: {}, product: {}, user: {}",
                 shopId, request.getProductId(), principal.getUsername());
 
-        InventoryResponse response = inventoryService.createInventory(shopId, request);
+        InventoryResponse response = inventoryService.createInventory(shopId, request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -126,7 +126,7 @@ public class InventoryController {
             spec = spec.and(InventorySpecifications.hasStockAvailable(minStock));
         }
 
-        Page<InventoryResponse> response = inventoryService.getInventory(shopId, spec, pageable);
+        Page<InventoryResponse> response = inventoryService.getInventory(shopId, spec, pageable, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -143,7 +143,7 @@ public class InventoryController {
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        InventoryResponse response = inventoryService.getInventoryById(inventoryId);
+        InventoryResponse response = inventoryService.getInventoryById(inventoryId, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -165,7 +165,7 @@ public class InventoryController {
         log.info("Adjusting stock for inventory: {}, new stock: {}, reason: {}, user: {}",
                 inventoryId, request.getNewStock(), request.getReason(), principal.getUsername());
 
-        InventoryResponse response = inventoryService.adjustStock(inventoryId, request);
+        InventoryResponse response = inventoryService.adjustStock(inventoryId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -188,7 +188,7 @@ public class InventoryController {
                 inventoryId, request.getNewStock(), request.getReason(), principal.getUsername());
 
         // Reuse the same adjustment logic
-        InventoryResponse response = inventoryService.adjustStock(inventoryId, request);
+        InventoryResponse response = inventoryService.adjustStock(inventoryId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -211,7 +211,7 @@ public class InventoryController {
                 inventoryId, request.getQuantity(), principal.getUsername());
 
         request.setInventoryId(inventoryId);
-        inventoryService.reserveStock(request);
+        inventoryService.reserveStock(request, principal);
         return ResponseEntity.ok().build();
     }
 
@@ -234,7 +234,7 @@ public class InventoryController {
         log.info("Releasing reserved stock for inventory: {}, quantity: {}, user: {}",
                 inventoryId, quantity, principal.getUsername());
 
-        inventoryService.releaseReservedStock(inventoryId, quantity, referenceId);
+        inventoryService.releaseReservedStock(inventoryId, quantity, referenceId, principal);
         return ResponseEntity.ok().build();
     }
 
@@ -256,7 +256,7 @@ public class InventoryController {
         log.info("Updating inventory status: {}, new status: {}, user: {}",
                 inventoryId, status, principal.getUsername());
 
-        InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status);
+        InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -279,7 +279,7 @@ public class InventoryController {
                 inventoryId, status, principal.getUsername());
 
         // Reuse the same update logic
-        InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status);
+        InventoryResponse response = inventoryService.updateInventoryStatus(inventoryId, status, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -300,7 +300,7 @@ public class InventoryController {
 
         log.info("Updating inventory metadata: {}, user: {}", inventoryId, principal.getUsername());
 
-        InventoryResponse response = inventoryService.updateInventory(inventoryId, request);
+        InventoryResponse response = inventoryService.updateInventory(inventoryId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -322,7 +322,7 @@ public class InventoryController {
         log.info("Patching inventory metadata: {}, user: {}", inventoryId, principal.getUsername());
 
         // Reuse the same update logic - current implementation already does partial updates
-        InventoryResponse response = inventoryService.updateInventory(inventoryId, request);
+        InventoryResponse response = inventoryService.updateInventory(inventoryId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -342,7 +342,7 @@ public class InventoryController {
 
         log.info("Deleting inventory: {}, user: {}", inventoryId, principal.getUsername());
 
-        inventoryService.deleteInventory(inventoryId);
+        inventoryService.deleteInventory(inventoryId, principal);
         return ResponseEntity.noContent().build();
     }
 
@@ -359,7 +359,7 @@ public class InventoryController {
             @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        List<InventoryHistory> history = inventoryService.getInventoryHistory(inventoryId);
+        List<InventoryHistory> history = inventoryService.getInventoryHistory(inventoryId, principal);
         return ResponseEntity.ok(history);
     }
 
@@ -375,7 +375,7 @@ public class InventoryController {
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        List<InventoryResponse> response = inventoryService.getLowStockItems(shopId);
+        List<InventoryResponse> response = inventoryService.getLowStockItems(shopId, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -392,7 +392,7 @@ public class InventoryController {
             @Parameter(description = "Days threshold for expiry warning") @RequestParam(defaultValue = "30") int daysThreshold,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        List<InventoryResponse> response = inventoryService.getExpiringItems(shopId, daysThreshold);
+        List<InventoryResponse> response = inventoryService.getExpiringItems(shopId, daysThreshold, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -408,7 +408,7 @@ public class InventoryController {
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        BigDecimal totalValue = inventoryService.getTotalInventoryValue(shopId);
+        BigDecimal totalValue = inventoryService.getTotalInventoryValue(shopId, principal);
         return ResponseEntity.ok(totalValue);
     }
 
@@ -428,7 +428,7 @@ public class InventoryController {
         log.info("Triggering demand forecast for product: {}, forecast days: {}, user: {}",
                 productId, forecastDays, principal.getUsername());
 
-        inventoryService.forecastDemand(productId, forecastDays);
+        inventoryService.forecastDemand(productId, forecastDays, principal);
         return ResponseEntity.ok().build();
     }
 
@@ -444,7 +444,7 @@ public class InventoryController {
             @Parameter(description = "Shop ID") @PathVariable String shopId,
             @AuthenticationPrincipal JwtPrincipal principal) {
 
-        InventorySummaryDto response = inventoryService.getInventorySummary(shopId);
+        InventorySummaryDto response = inventoryService.getInventorySummary(shopId, principal);
         return ResponseEntity.ok(response);
     }
 }
