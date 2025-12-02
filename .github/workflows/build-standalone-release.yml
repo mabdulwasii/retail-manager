@@ -288,26 +288,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libfuse2 \
+            libgbm1 \
+            libasound2 \
             file \
             rpm \
-            libarchive-tools
+            libarchive-tools \
+            build-essential
 
       - name: Install dependencies
         run: |
           cd standalone/electron-app
           npm ci
 
-      - name: Update app-builder to latest version
+      - name: Fix app-builder binary permissions
         run: |
-          cd standalone/electron-app
-          npm install app-builder-bin@latest --save-dev
+          # Find and fix all app-builder binaries (handles both direct and nested locations)
+          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec chmod +x {} \;
 
-      - name: Fix app-builder permissions and check
-        run: |
-          chmod +x standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
-          echo "Checking app-builder binary:"
-          file standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
-          ldd standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder || true
+          # Verify the binary
+          echo "Checking for app-builder binaries:"
+          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec echo {} \; -exec file {} \;
 
       - name: Update version
         run: |
