@@ -51,9 +51,20 @@ jobs:
             Choose the package that best fits your needs:
 
             ### For Non-Technical Users (Recommended)
-            - **Windows**: `Shop-Manager-Setup-${{ steps.get_version.outputs.version }}.exe`
-            - **macOS**: `Shop-Manager-${{ steps.get_version.outputs.version }}.dmg`
-            - **Linux**: `Shop-Manager-${{ steps.get_version.outputs.version }}.AppImage`
+
+            **Windows (64-bit)**:
+            - `Shop Manager-Setup-${{ steps.get_version.outputs.version }}-Windows-x64.exe` - Windows 10/11 installer
+
+            **macOS (Intel & Apple Silicon)**:
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.dmg` - macOS Intel installer
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.dmg` - macOS Apple Silicon (M1/M2/M3) installer
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.zip` - macOS Intel portable
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.zip` - macOS Apple Silicon portable
+
+            **Linux (64-bit)**:
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.AppImage` - Universal Linux (recommended)
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.deb` - Debian/Ubuntu package
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.rpm` - Fedora/RHEL/CentOS package
 
             ### For Technical Users / Developers
             - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
