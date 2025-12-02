@@ -7,19 +7,15 @@ WORKDIR /app
 # Copy pom.xml first for dependency caching
 COPY pom.xml .
 
-# Copy source code and docs
+# Copy source code (docs will be copied from CI/CD artifact)
 COPY src ./src
 
 # Build the application (skip tests - they run in CI/CD pipeline)
-# First generate AsciiDoc documentation
-RUN mvn asciidoctor:process-asciidoc -B && \
-    mkdir -p src/main/resources/static/docs && \
-    cp -r target/generated-docs/* src/main/resources/static/docs/ 2>/dev/null || true && \
-    ls -lh target/generated-docs/ 2>/dev/null || echo "No docs generated yet"
-
-# Then build the JAR with the docs included
+# Documentation is pre-generated in CI/CD and placed in src/main/resources/static/docs/
 RUN mvn clean package -DskipTests -B && \
-    ls -lh target/*.jar
+    ls -lh target/*.jar && \
+    echo "Checking if docs were included:" && \
+    ls -lh target/classes/static/docs/ 2>/dev/null || echo "No docs found (will be added by CI/CD)"
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine

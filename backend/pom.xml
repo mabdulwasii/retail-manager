@@ -35,12 +35,20 @@
         <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
         <sonar.jacoco.reportPath>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPath>
         <sonar.jacoco.itReportPath>${project.build.directory}/jacoco-it.exec</sonar.jacoco.itReportPath>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/site/jacoco/jacoco.xml,
+            ${project.build.directory}/site/jacoco-it/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.language>java</sonar.language>
         <!-- Default to localhost port 9090 to avoid conflict with MinIO (9000 & 9001) -->
         <sonar.host.url>${env.SONAR_HOST_URL:-http://localhost:9090}</sonar.host.url>
         <!-- Credentials must be provided via environment variables or command line -->
         <sonar.login>${env.SONAR_LOGIN}</sonar.login>
         <sonar.password>${env.SONAR_PASSWORD}</sonar.password>
+        <!-- Project identification for SonarCloud -->
+        <sonar.organization>${env.SONAR_ORGANIZATION}</sonar.organization>
+        <sonar.projectKey>shop-manager-backend</sonar.projectKey>
+        <sonar.projectName>Shop Manager Backend</sonar.projectName>
         <sonar.exclusions>
             **/config/**/*,
             **/dto/**/*,
