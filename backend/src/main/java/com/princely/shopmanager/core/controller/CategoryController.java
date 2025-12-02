@@ -59,7 +59,7 @@ public class CategoryController {
         // Ensure shopId from path matches request
         request.setShopId(shopId);
 
-        CategoryResponse response = categoryService.createCategory(request);
+        CategoryResponse response = categoryService.createCategory(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -79,7 +79,7 @@ public class CategoryController {
         log.debug("Fetching categories for shop: {}, tree: {}, user: {}",
                 shopId, tree, principal.getUsername());
 
-        List<CategoryResponse> categories = categoryService.getCategoriesByShop(shopId, tree);
+        List<CategoryResponse> categories = categoryService.getCategoriesByShop(shopId, tree, principal);
         return ResponseEntity.ok(categories);
     }
 
@@ -98,7 +98,7 @@ public class CategoryController {
 
         log.debug("Fetching category by ID: {}, user: {}", id, principal.getUsername());
 
-        CategoryResponse category = categoryService.getCategoryById(id);
+        CategoryResponse category = categoryService.getCategoryById(id, principal);
         return ResponseEntity.ok(category);
     }
 
@@ -119,7 +119,7 @@ public class CategoryController {
 
         log.info("Updating category: {}, user: {}", id, principal.getUsername());
 
-        CategoryResponse response = categoryService.updateCategory(id, request);
+        CategoryResponse response = categoryService.updateCategory(id, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -141,7 +141,7 @@ public class CategoryController {
         log.info("Patching category: {}, user: {}", id, principal.getUsername());
 
         // Reuse the same update logic - current implementation already does partial updates
-        CategoryResponse response = categoryService.updateCategory(id, request);
+        CategoryResponse response = categoryService.updateCategory(id, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -161,7 +161,7 @@ public class CategoryController {
 
         log.info("Deleting category: {}, user: {}", id, principal.getUsername());
 
-        categoryService.deleteCategory(id);
+        categoryService.deleteCategory(id, principal);
         return ResponseEntity.noContent().build();
     }
 }

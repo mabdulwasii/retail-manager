@@ -11,9 +11,11 @@ import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
-import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
+import com.princely.shopmanager.shared.service.ShopAwareService;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -29,8 +31,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * Service class for managing product catalog operations.
@@ -43,23 +45,57 @@ import lombok.extern.slf4j.Slf4j;
  * - SKU and barcode uniqueness checks
  * - Category assignment
  * - Inventory aggregation and summary
- * - Multi-tenant context handling
+ * - Shop-level access control (OWNER/TENANT_ADMIN: all shops, others: assigned shop only)
  * - Audit logging
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @CacheConfig(cacheNames = "products")
 @Transactional
-public class ProductService {
+public class ProductService extends ShopAwareService {
 
     private final ProductRepository productRepository;
-    private final ShopRepository shopRepository;
     private final CategoryRepository categoryRepository;
     private final InventoryRepository inventoryRepository;
-    private final TenantSecurityValidator tenantSecurityValidator;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+
+    public ProductService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            ProductRepository productRepository,
+            CategoryRepository categoryRepository,
+            InventoryRepository inventoryRepository,
+            AuditService auditService,
+            ApplicationEventPublisher eventPublisher) {
+        super(shopAccessValidator, shopRepository);
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.inventoryRepository = inventoryRepository;
+        this.auditService = auditService;
+        this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Finds a product by ID with shop access validation.
+     * Only returns product if user has access to its shop.
+     *
+     * @param productId Product ID
+     * @param principal JWT principal with user context
+     * @return Product entity
+     * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
+     */
+    private Product findProductForUser(String productId, JwtPrincipal principal) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+
+        if (shopAccessValidator.hasNoAccessToShop(product.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this product");
+        }
+
+        return product;
+    }
 
     /**
      * Creates a new product in the catalog.
@@ -67,16 +103,20 @@ public class ProductService {
      * SKU is auto-generated on the backend.
      *
      * @param request Product creation request with validation
+     * @param principal JWT principal with user context
      * @return Created product response
      * @throws IllegalArgumentException if barcode already exists or shop not found
+     * @throws AccessDeniedException if user has no access to the shop
      */
-    public ProductResponse createProduct(ProductCreateRequest request) {
-        log.info("Creating new product: {}", request.getName());
+    public ProductResponse createProduct(ProductCreateRequest request, JwtPrincipal principal) {
+        log.info("Creating new product: {} for shop: {}, user: {}",
+                request.getName(), request.getShopId(), principal.getUsername());
 
-        // Get shop and validate tenant access
+        // Validate shop exists and user has access
+        validateShopAccess(request.getShopId(), principal);
+
         Shop shop = shopRepository.findById(request.getShopId())
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
-        tenantSecurityValidator.validateShopAccess(shop);
 
         // Check barcode uniqueness if provided
         if (request.getBarcode() != null && !request.getBarcode().isBlank()) {
@@ -139,19 +179,17 @@ public class ProductService {
      *
      * @param productId Product ID to update
      * @param request Update request with optional fields
+     * @param principal JWT principal with user context
      * @return Updated product response
      * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
      * @throws IllegalArgumentException if SKU/barcode uniqueness violated
      */
     @CacheEvict(cacheNames = "products", allEntries = true)
-    public ProductResponse updateProduct(String productId, ProductUpdateRequest request) {
-        log.info("Updating product: {}", productId);
+    public ProductResponse updateProduct(String productId, ProductUpdateRequest request, JwtPrincipal principal) {
+        log.info("Updating product: {}, user: {}", productId, principal.getUsername());
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
-
-        // Verify tenant access
-        tenantSecurityValidator.validateShopAccess(product.getShop());
+        Product product = findProductForUser(productId, principal);
 
         // Track changes for audit
         StringBuilder changes = new StringBuilder();
@@ -238,33 +276,36 @@ public class ProductService {
      *
      * @param productId Product ID
      * @param includeInventory Whether to include inventory aggregation
+     * @param principal JWT principal with user context
      * @return Product response with optional inventory data
+     * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
      */
     @Transactional(readOnly = true)
     @Cacheable(key = "#productId + '_' + #includeInventory")
-    public ProductResponse getProductById(String productId, boolean includeInventory) {
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
-
-        tenantSecurityValidator.validateShopAccess(product.getShop());
+    public ProductResponse getProductById(String productId, boolean includeInventory, JwtPrincipal principal) {
+        Product product = findProductForUser(productId, principal);
         return mapToResponse(product, includeInventory);
     }
 
     /**
      * Gets all products for a shop with optional filtering.
+     * Applies shop-level access control based on user role.
      *
      * @param shopId Shop ID
      * @param spec Specification for filtering
      * @param pageable Pagination parameters
      * @param includeInventory Whether to include inventory aggregation
+     * @param principal JWT principal with user context
      * @return Page of products
+     * @throws EntityNotFoundException if shop not found
+     * @throws AccessDeniedException if user has no access to the shop
      */
     @Transactional(readOnly = true)
     public Page<ProductResponse> getProducts(String shopId, Specification<Product> spec,
-                                              Pageable pageable, boolean includeInventory) {
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
+                                              Pageable pageable, boolean includeInventory, JwtPrincipal principal) {
+        // Validate shop access
+        validateShopAccess(shopId, principal);
 
         return productRepository.findAll(spec, pageable)
             .map(product -> mapToResponse(product, includeInventory));
@@ -275,15 +316,15 @@ public class ProductService {
      * Does not delete inventory records.
      *
      * @param productId Product ID to delete
+     * @param principal JWT principal with user context
+     * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
      */
     @CacheEvict(cacheNames = "products", allEntries = true)
-    public void deleteProduct(String productId) {
-        log.info("Soft deleting product: {}", productId);
+    public void deleteProduct(String productId, JwtPrincipal principal) {
+        log.info("Soft deleting product: {}, user: {}", productId, principal.getUsername());
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
-
-        tenantSecurityValidator.validateShopAccess(product.getShop());
+        Product product = findProductForUser(productId, principal);
 
         product.setStatus(Product.ProductStatus.DISCONTINUED);
         productRepository.save(product);
@@ -299,14 +340,16 @@ public class ProductService {
      * Aggregates stock across all inventory records (batches/locations).
      *
      * @param productId Product ID
+     * @param principal JWT principal with user context (optional for internal use)
      * @return Inventory summary with total, available, and reserved stock
+     * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
      */
     @Transactional(readOnly = true)
-    public InventorySummary getInventorySummary(String productId) {
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
-
-        tenantSecurityValidator.validateShopAccess(product.getShop());
+    public InventorySummary getInventorySummary(String productId, JwtPrincipal principal) {
+        Product product = principal != null ? findProductForUser(productId, principal)
+                : productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
 
         List<Inventory> inventories = inventoryRepository.findByProductId(productId);
 
@@ -344,11 +387,14 @@ public class ProductService {
      *
      * @param productId Product ID
      * @param quantity Required quantity
+     * @param principal JWT principal with user context
      * @return true if sufficient stock available
+     * @throws EntityNotFoundException if product not found
+     * @throws AccessDeniedException if user has no access to product's shop
      */
     @Transactional(readOnly = true)
-    public boolean hasAvailableStock(String productId, int quantity) {
-        InventorySummary summary = getInventorySummary(productId);
+    public boolean hasAvailableStock(String productId, int quantity, JwtPrincipal principal) {
+        InventorySummary summary = getInventorySummary(productId, principal);
         return summary.getAvailableStock() >= quantity;
     }
 
@@ -359,17 +405,18 @@ public class ProductService {
      * @param barcode Product barcode
      * @param shopId Shop ID
      * @param includeInventory Include inventory summary
+     * @param principal JWT principal with user context
      * @return Product response
-     * @throws EntityNotFoundException if product not found
+     * @throws EntityNotFoundException if product or shop not found
+     * @throws AccessDeniedException if user has no access to the shop
      */
     @Transactional(readOnly = true)
-    public ProductResponse searchByBarcode(String barcode, String shopId, boolean includeInventory) {
-        log.debug("Searching for product with barcode: {} in shop: {}", barcode, shopId);
+    public ProductResponse searchByBarcode(String barcode, String shopId, boolean includeInventory, JwtPrincipal principal) {
+        log.debug("Searching for product with barcode: {} in shop: {}, user: {}",
+                barcode, shopId, principal.getUsername());
 
         // Validate shop access
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
+        validateShopAccess(shopId, principal);
 
         // Find product by barcode
         Product product = productRepository.findByBarcodeAndShopId(barcode, shopId)
@@ -382,13 +429,14 @@ public class ProductService {
      * Gets products with low stock (any inventory below minimum).
      *
      * @param shopId Shop ID
+     * @param principal JWT principal with user context
      * @return List of products with low stock
+     * @throws EntityNotFoundException if shop not found
+     * @throws AccessDeniedException if user has no access to the shop
      */
     @Transactional(readOnly = true)
-    public List<ProductResponse> getProductsWithLowStock(String shopId) {
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
+    public List<ProductResponse> getProductsWithLowStock(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
 
         List<Inventory> lowStockInventories = inventoryRepository.findLowStockItems(shopId);
         List<String> productIds = lowStockInventories.stream()
@@ -405,10 +453,14 @@ public class ProductService {
      * Gets products with no inventory (zero total stock).
      *
      * @param shopId Shop ID
+     * @param principal JWT principal with user context
      * @return List of products with no stock
+     * @throws EntityNotFoundException if shop not found
+     * @throws AccessDeniedException if user has no access to the shop
      */
     @Transactional(readOnly = true)
-    public List<ProductResponse> getProductsWithNoStock(String shopId) {
+    public List<ProductResponse> getProductsWithNoStock(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         List<Product> allProducts = productRepository.findByShopId(shopId);
 
         return allProducts.stream()
@@ -461,7 +513,7 @@ public class ProductService {
 
         // Include inventory summary if requested
         if (includeInventory) {
-            InventorySummary summary = getInventorySummary(product.getId());
+            InventorySummary summary = getInventorySummary(product.getId(), null);
             builder.totalStock(summary.getTotalStock())
                    .availableStock(summary.getAvailableStock())
                    .reservedStock(summary.getReservedStock())

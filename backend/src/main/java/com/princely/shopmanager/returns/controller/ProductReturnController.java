@@ -4,6 +4,7 @@ import com.princely.shopmanager.returns.dto.ProductReturnCreateRequest;
 import com.princely.shopmanager.returns.dto.ProductReturnResponse;
 import com.princely.shopmanager.returns.service.ProductReturnService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,6 +22,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -100,10 +102,11 @@ public class ProductReturnController {
     public ResponseEntity<ProductReturnResponse> createReturn(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
-        @Valid @RequestBody ProductReturnCreateRequest request
+        @Valid @RequestBody ProductReturnCreateRequest request,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.info("Creating product return for shop: {}, quantity: {}", shopId, request.getQuantityReturned());
-        ProductReturnResponse response = productReturnService.createReturn(request);
+        ProductReturnResponse response = productReturnService.createReturn(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -150,10 +153,11 @@ public class ProductReturnController {
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
         @Parameter(description = "Return ID", example = "return-123e4567-e89b-12d3-a456-426614174000")
-        @PathVariable String returnId
+        @PathVariable String returnId,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
         log.info("Processing product return: {} for shop: {}", returnId, shopId);
-        ProductReturnResponse response = productReturnService.processReturn(returnId);
+        ProductReturnResponse response = productReturnService.processReturn(returnId, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -194,11 +198,12 @@ public class ProductReturnController {
     public ResponseEntity<Page<ProductReturnResponse>> getReturns(
         @Parameter(description = "Shop ID", example = "shop-123e4567-e89b-12d3-a456-426614174000")
         @PathVariable String shopId,
-        @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable
+        @PageableDefault(size = DEFAULT_PAGE_SIZE) Pageable pageable,
+        @AuthenticationPrincipal JwtPrincipal principal
     ) {
-        log.debug("Retrieving product returns for shop: {}, page: {}, size: {}", 
+        log.debug("Retrieving product returns for shop: {}, page: {}, size: {}",
                  shopId, pageable.getPageNumber(), pageable.getPageSize());
-        Page<ProductReturnResponse> returns = productReturnService.getReturns(shopId, pageable);
+        Page<ProductReturnResponse> returns = productReturnService.getReturns(shopId, pageable, principal);
         return ResponseEntity.ok(returns);
     }
 }

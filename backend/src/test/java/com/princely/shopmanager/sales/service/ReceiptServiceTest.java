@@ -1,24 +1,30 @@
 package com.princely.shopmanager.sales.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.sales.domain.LineItem;
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.ReceiptRepository;
+import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +40,15 @@ class ReceiptServiceTest {
     @Mock
     private ReceiptRepository receiptRepository;
 
-    @InjectMocks
+    @Mock
+    private ShopAccessValidator shopAccessValidator;
+
+    @Mock
+    private ShopRepository shopRepository;
+
+    @Mock
+    private SalesTransactionRepository transactionRepository;
+
     private ReceiptService receiptService;
 
     private SalesTransaction testTransaction;
@@ -45,9 +59,20 @@ class ReceiptServiceTest {
     private Product testProduct2;
     private LineItem testLineItem1;
     private LineItem testLineItem2;
+    private JwtPrincipal testPrincipal;
 
     @BeforeEach
     void setUp() {
+        receiptService = new ReceiptService(shopAccessValidator, shopRepository, receiptRepository, transactionRepository);
+
+        testPrincipal = JwtPrincipal.builder()
+            .subject("test-user")
+            .preferredUsername("testuser")
+            .roles(List.of("MANAGER"))
+            .tenantId("tenant-1")
+            .shopId("shop-1")
+            .build();
+
         testShop = new Shop();
         testShop.setId("shop-1");
         testShop.setName("Test Shop");
@@ -196,10 +221,12 @@ class ReceiptServiceTest {
     @Test
     void getReceipt_WithValidTransactionId_ShouldReturnReceipt() {
         // Arrange
+        when(transactionRepository.findById("txn-1")).thenReturn(Optional.of(testTransaction));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(receiptRepository.findByTransactionId("txn-1")).thenReturn(Optional.of(testReceipt));
 
         // Act
-        Optional<Receipt> result = receiptService.getReceipt("txn-1");
+        Optional<Receipt> result = receiptService.getReceipt("txn-1", testPrincipal);
 
         // Assert
         assertThat(result).isPresent();
@@ -209,13 +236,12 @@ class ReceiptServiceTest {
     @Test
     void getReceipt_WithInvalidTransactionId_ShouldReturnEmpty() {
         // Arrange
-        when(receiptRepository.findByTransactionId("invalid-id")).thenReturn(Optional.empty());
+        when(transactionRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
-        // Act
-        Optional<Receipt> result = receiptService.getReceipt("invalid-id");
-
-        // Assert
-        assertThat(result).isEmpty();
+        // Act & Assert
+        assertThatThrownBy(() -> receiptService.getReceipt("invalid-id", testPrincipal))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessageContaining("Transaction not found: invalid-id");
     }
 
     @Test
@@ -223,9 +249,10 @@ class ReceiptServiceTest {
         // Arrange
         String receiptNumber = "RCP-TXN001-20240115103000";
         when(receiptRepository.findByReceiptNumber(receiptNumber)).thenReturn(Optional.of(testReceipt));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        Optional<Receipt> result = receiptService.getReceiptByNumber(receiptNumber);
+        Optional<Receipt> result = receiptService.getReceiptByNumber(receiptNumber, testPrincipal);
 
         // Assert
         assertThat(result).isPresent();
@@ -238,7 +265,7 @@ class ReceiptServiceTest {
         when(receiptRepository.findByReceiptNumber("invalid-number")).thenReturn(Optional.empty());
 
         // Act
-        Optional<Receipt> result = receiptService.getReceiptByNumber("invalid-number");
+        Optional<Receipt> result = receiptService.getReceiptByNumber("invalid-number", testPrincipal);
 
         // Assert
         assertThat(result).isEmpty();
@@ -248,10 +275,11 @@ class ReceiptServiceTest {
     void markAsPrinted_WithValidReceipt_ShouldUpdateStatus() {
         // Arrange
         when(receiptRepository.findById("receipt-1")).thenReturn(Optional.of(testReceipt));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
 
         // Act
-        Receipt result = receiptService.markAsPrinted("receipt-1", "printer-operator");
+        Receipt result = receiptService.markAsPrinted("receipt-1", "printer-operator", testPrincipal);
 
         // Assert
         assertThat(result.getStatus()).isEqualTo(Receipt.ReceiptStatus.PRINTED);
@@ -267,8 +295,8 @@ class ReceiptServiceTest {
         when(receiptRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> receiptService.markAsPrinted("invalid-id", "operator"))
-            .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> receiptService.markAsPrinted("invalid-id", "operator", testPrincipal))
+            .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Receipt not found: invalid-id");
 
         verify(receiptRepository, never()).save(any());
@@ -278,10 +306,11 @@ class ReceiptServiceTest {
     void markAsEmailed_WithValidReceipt_ShouldUpdateStatus() {
         // Arrange
         when(receiptRepository.findById("receipt-1")).thenReturn(Optional.of(testReceipt));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(receiptRepository.save(any(Receipt.class))).thenReturn(testReceipt);
 
         // Act
-        Receipt result = receiptService.markAsEmailed("receipt-1", "customer@test.com");
+        Receipt result = receiptService.markAsEmailed("receipt-1", "customer@test.com", testPrincipal);
 
         // Assert
         assertThat(result.getStatus()).isEqualTo(Receipt.ReceiptStatus.EMAILED);
@@ -297,8 +326,8 @@ class ReceiptServiceTest {
         when(receiptRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> receiptService.markAsEmailed("invalid-id", "customer@test.com"))
-            .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> receiptService.markAsEmailed("invalid-id", "customer@test.com", testPrincipal))
+            .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Receipt not found: invalid-id");
 
         verify(receiptRepository, never()).save(any());
@@ -307,10 +336,12 @@ class ReceiptServiceTest {
     @Test
     void regenerateReceipt_WithExistingReceipt_ShouldDeleteExisting() {
         // Arrange
+        when(transactionRepository.findById("txn-1")).thenReturn(Optional.of(testTransaction));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(receiptRepository.findByTransactionId("txn-1")).thenReturn(Optional.of(testReceipt));
 
         // Act
-        receiptService.regenerateReceipt("txn-1");
+        receiptService.regenerateReceipt("txn-1", testPrincipal);
 
         // Assert
         verify(receiptRepository).delete(testReceipt);
@@ -319,10 +350,12 @@ class ReceiptServiceTest {
     @Test
     void regenerateReceipt_WithoutExistingReceipt_ShouldNotDelete() {
         // Arrange
+        when(transactionRepository.findById("txn-1")).thenReturn(Optional.of(testTransaction));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(receiptRepository.findByTransactionId("txn-1")).thenReturn(Optional.empty());
 
         // Act
-        receiptService.regenerateReceipt("txn-1");
+        receiptService.regenerateReceipt("txn-1", testPrincipal);
 
         // Assert
         verify(receiptRepository, never()).delete(any(Receipt.class));

@@ -53,6 +53,7 @@ Use any of these pre-configured accounts:
 | **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)** | 🐳 Docker Compose, Kubernetes, and local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
 | **[docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)** | 📦 Product & Inventory management (Two-Tier Model, FEFO) |
+| **[docs/SHOP_ACCESS_CONTROL.md](./docs/SHOP_ACCESS_CONTROL.md)** | 🔒 Shop-level access control implementation guide |
 | **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
 
 ## 🏗️ Architecture
@@ -98,7 +99,8 @@ Use any of these pre-configured accounts:
 ### Technical Features
 - **Event-Driven**: Spring Modulith with domain events
 - **Multi-Database**: Flyway migrations with versioning
-- **API Security**: JWT-based authentication
+- **API Security**: JWT-based authentication with shop-level access control
+- **Shop-Level Authorization**: Role-based filtering (SYSTEM_ADMIN, TENANT_ADMIN, MANAGER, etc.)
 - **Comprehensive Testing**: 90%+ code coverage target
 - **Production Ready**: Kubernetes Helm charts included
 

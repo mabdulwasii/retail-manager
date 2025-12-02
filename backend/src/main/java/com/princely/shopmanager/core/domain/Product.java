@@ -1,6 +1,7 @@
 package com.princely.shopmanager.core.domain;
 
 import com.princely.shopmanager.shared.domain.BaseEntity;
+import com.princely.shopmanager.shared.domain.ShopAware;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -40,7 +41,7 @@ import lombok.ToString;
 @Builder
 @ToString(exclude = {"shop", "category"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "category"})
-public class Product extends BaseEntity {
+public class Product extends BaseEntity implements ShopAware {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -102,5 +103,16 @@ public class Product extends BaseEntity {
         ACTIVE,
         INACTIVE,
         DISCONTINUED
+    }
+
+    /**
+     * Returns the shop ID this product belongs to.
+     * Required by {@link ShopAware} interface for shop-level access control.
+     *
+     * @return shop ID, or null if shop is not loaded
+     */
+    @Override
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
     }
 }

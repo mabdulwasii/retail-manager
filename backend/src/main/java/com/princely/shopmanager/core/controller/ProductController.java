@@ -75,7 +75,7 @@ public class ProductController {
         // Ensure shopId from path matches request
         request.setShopId(shopId);
 
-        ProductResponse response = productService.createProduct(request);
+        ProductResponse response = productService.createProduct(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -95,7 +95,8 @@ public class ProductController {
             @Parameter(description = "Minimum price filter") @RequestParam(required = false) BigDecimal minPrice,
             @Parameter(description = "Maximum price filter") @RequestParam(required = false) BigDecimal maxPrice,
             @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
-            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
         // Build specification based on filters
         Specification<Product> spec = (root, query, cb) ->
@@ -132,7 +133,7 @@ public class ProductController {
                 cb.lessThanOrEqualTo(root.get("price"), maxPrice));
         }
 
-        Page<ProductResponse> response = productService.getProducts(shopId, spec, pageable, includeInventory);
+        Page<ProductResponse> response = productService.getProducts(shopId, spec, pageable, includeInventory, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -147,9 +148,10 @@ public class ProductController {
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_READ)")
     public ResponseEntity<ProductResponse> getProductById(
             @Parameter(description = "Product ID") @PathVariable String productId,
-            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory) {
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        ProductResponse response = productService.getProductById(productId, includeInventory);
+        ProductResponse response = productService.getProductById(productId, includeInventory, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -165,10 +167,11 @@ public class ProductController {
     public ResponseEntity<ProductResponse> searchByBarcode(
             @Parameter(description = "Product barcode", required = true) @RequestParam String barcode,
             @Parameter(description = "Shop ID", required = true) @RequestParam String shopId,
-            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory) {
+            @Parameter(description = "Include inventory summary") @RequestParam(defaultValue = "true") boolean includeInventory,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
         log.debug("Searching product by barcode: {} in shop: {}", barcode, shopId);
-        ProductResponse response = productService.searchByBarcode(barcode, shopId, includeInventory);
+        ProductResponse response = productService.searchByBarcode(barcode, shopId, includeInventory, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -189,7 +192,7 @@ public class ProductController {
 
         log.info("Updating product: {}, user: {}", productId, principal.getUsername());
 
-        ProductResponse response = productService.updateProduct(productId, request);
+        ProductResponse response = productService.updateProduct(productId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -211,7 +214,7 @@ public class ProductController {
         log.info("Patching product: {}, user: {}", productId, principal.getUsername());
 
         // Reuse the same update logic - current implementation already does partial updates
-        ProductResponse response = productService.updateProduct(productId, request);
+        ProductResponse response = productService.updateProduct(productId, request, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -230,7 +233,7 @@ public class ProductController {
 
         log.info("Deleting product: {}, user: {}", productId, principal.getUsername());
 
-        productService.deleteProduct(productId);
+        productService.deleteProduct(productId, principal);
         return ResponseEntity.noContent().build();
     }
 
@@ -244,9 +247,10 @@ public class ProductController {
     @GetMapping("/products/{productId}/inventory-summary")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
     public ResponseEntity<ProductService.InventorySummary> getInventorySummary(
-            @Parameter(description = "Product ID") @PathVariable String productId) {
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        ProductService.InventorySummary summary = productService.getInventorySummary(productId);
+        ProductService.InventorySummary summary = productService.getInventorySummary(productId, principal);
         return ResponseEntity.ok(summary);
     }
 
@@ -259,9 +263,10 @@ public class ProductController {
     @GetMapping("/shops/{shopId}/products/low-stock")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithLowStock(
-            @Parameter(description = "Shop ID") @PathVariable String shopId) {
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        var response = productService.getProductsWithLowStock(shopId);
+        var response = productService.getProductsWithLowStock(shopId, principal);
         return ResponseEntity.ok(response);
     }
 
@@ -274,9 +279,10 @@ public class ProductController {
     @GetMapping("/shops/{shopId}/products/out-of-stock")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_LIST)")
     public ResponseEntity<?> getProductsWithNoStock(
-            @Parameter(description = "Shop ID") @PathVariable String shopId) {
+            @Parameter(description = "Shop ID") @PathVariable String shopId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        var response = productService.getProductsWithNoStock(shopId);
+        var response = productService.getProductsWithNoStock(shopId, principal);
         return ResponseEntity.ok(response);
     }
 }

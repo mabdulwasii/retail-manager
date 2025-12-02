@@ -1,5 +1,6 @@
 package com.princely.shopmanager;
 
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -93,6 +94,7 @@ class ArchitectureTest {
              .that().resideInAPackage("..service..")
              .and().areNotInterfaces()
              .and().areTopLevelClasses()
+             .and().doNotHaveModifier(JavaModifier.ABSTRACT)
              .should().beAnnotatedWith(org.springframework.stereotype.Service.class);
 
      @ArchTest
