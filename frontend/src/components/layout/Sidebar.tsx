@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useSidebar } from '@/context/SidebarContext'
@@ -45,7 +45,7 @@ const navItems: NavItem[] = [
     title: 'Shops',
     href: '/shops',
     icon: Store,
-    permissions: [Permission.SHOP_LIST, Permission.SHOP_MANAGE],
+    permissions: [Permission.SHOP_LIST, Permission.SHOP_LIST_ALL, Permission.SHOP_MANAGE],
   },
   {
     title: 'Products',
@@ -111,7 +111,7 @@ const navItems: NavItem[] = [
 
 export const Sidebar: React.FC = () => {
   const location = useLocation()
-  const { hasAnyPermission } = useAuth()
+  const { hasAnyPermission, hasPermission, user } = useAuth()
   const { close } = useSidebar()
   const { theme, setTheme } = useTheme()
 
@@ -119,12 +119,30 @@ export const Sidebar: React.FC = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
-  const filteredNavItems = navItems.filter(item => {
-    // If no permissions required, show to all authenticated users
-    if (item.permissions.length === 0) return true
-    // Check if user has at least one of the required permissions
-    return hasAnyPermission(item.permissions)
-  })
+  const filteredNavItems = useMemo(() => {
+    return navItems.filter(item => {
+      // If no permissions required, show to all authenticated users
+      if (item.permissions.length === 0) return true
+      // Check if user has at least one of the required permissions
+      return hasAnyPermission(item.permissions)
+    }).map(item => {
+      // Special handling for Shops nav item
+      if (item.title === 'Shops') {
+        const canListShops = hasAnyPermission([Permission.SHOP_LIST, Permission.SHOP_LIST_ALL])
+        const hasOnlyManagePermission = hasPermission(Permission.SHOP_MANAGE) && !canListShops
+        
+        // If user only has SHOP_MANAGE (not SHOP_LIST/SHOP_LIST_ALL), link directly to their shop
+        if (hasOnlyManagePermission && user?.shopId) {
+          return {
+            ...item,
+            title: 'Shop',
+            href: `/shops/${user.shopId}`
+          }
+        }
+      }
+      return item
+    })
+  }, [hasAnyPermission, hasPermission, user?.shopId])
 
   // Handle navigation on mobile - close sidebar after clicking a link
   const handleNavigation = () => {

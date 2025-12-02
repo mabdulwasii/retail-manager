@@ -90,8 +90,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         });
       }
     }
-    //category, open, reset, selectedShopId, user?.shopId
-  }, [category]);
+  }, [open, category, reset, selectedShopId, user?.shopId]);
 
   console.log('category', category);
   

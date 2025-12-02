@@ -93,7 +93,7 @@ export const AuthenticatedApp: React.FC = () => {
         path="/shops"
         element={
           <Layout>
-            <ProtectedRoute permissions={[Permission.SHOP_LIST, Permission.SHOP_READ]}>
+            <ProtectedRoute permissions={[Permission.SHOP_LIST, Permission.SHOP_LIST_ALL]}>
               <ShopsPage />
             </ProtectedRoute>
           </Layout>
