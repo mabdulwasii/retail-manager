@@ -183,19 +183,56 @@ jobs:
             - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
             - **Docker Compose (Offline)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}-full.zip`
 
+            ---
+
+            ## ⚠️ **IMPORTANT: macOS Users - Read This First!**
+
+            If you downloaded a **macOS version** (.dmg or .zip), you **will** see this error when trying to open the app:
+
+            > **"Shop Manager.app is damaged and can't be opened. You should move it to the Trash"**
+
+            ### 🔍 This is NOT actually damaged!
+
+            This is a **macOS Gatekeeper security feature** that blocks unsigned applications. Shop Manager is safe but not code-signed by Apple (requires $99/year Apple Developer Program).
+
+            ### ✅ Quick Fix (Choose One Method):
+
+            **Method 1: Terminal Command (Fastest - Recommended)**
+
+            After installing Shop Manager to Applications, open Terminal and run:
+
+            ```bash
+            xattr -cr /Applications/Shop\ Manager.app
+            ```
+
+            Then open Shop Manager normally from Applications or Launchpad.
+
+            **Method 2: Right-Click Open (No Terminal Needed)**
+
+            1. Open **Finder** → **Applications**
+            2. **Right-click** (or Control-click) on **Shop Manager.app**
+            3. Select **"Open"** from the menu
+            4. Click **"Open"** in the security dialog
+            5. App will launch and be permanently allowed
+
+            **Method 3: System Settings (macOS 13+)**
+
+            1. Try to open Shop Manager (it will be blocked)
+            2. Go to **System Settings** → **Privacy & Security**
+            3. Scroll to Security section
+            4. Click **"Open Anyway"** next to the Shop Manager message
+            5. Confirm by clicking **"Open"**
+
+            📖 **Need Help?** See our detailed guide with screenshots: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md#fixing-damaged-app-error)
+
+            ---
+
             ## 🚀 Quick Start
 
             ### Installation Guides
             - **Windows**: [Windows Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/WINDOWS_INSTALLATION_GUIDE.md)
             - **macOS**: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md)
             - **Linux/Docker Compose**: [Standalone Distribution Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
-
-            ### ⚠️ macOS Users
-            If you see **"Shop Manager.app is damaged"** error:
-            1. Right-click on Shop Manager.app → Open
-            2. Or run: `xattr -cr /Applications/Shop\ Manager.app`
-
-            See [macOS guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md#fixing-damaged-app-error) for details.
 
             ## ✨ What's New
 
