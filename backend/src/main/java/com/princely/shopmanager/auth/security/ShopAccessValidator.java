@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
  * Access Rules:
  * - SYSTEM_ADMIN: Access to all shops across all tenants
  * - TENANT_ADMIN: Access to all shops within their tenant
- * - Regular users: Access only to their assigned shop (User.shopId)
+ * - OWNER: Access to all shops within their tenant
+ * - Regular users (MANAGER, EMPLOYEE, etc.): Access only to their assigned shop (User.shopId)
  *
  * NOTE: Multi-shop support limitation
  * Currently, users can only be assigned to ONE shop (User.shop is ManyToOne).
@@ -57,10 +58,12 @@ public class ShopAccessValidator {
             return true;
         }
 
-        // TENANT_ADMIN and SYSTEM_ADMIN have access to all shops within their tenant
+        // TENANT_ADMIN, OWNER, and SYSTEM_ADMIN have access to all shops within their tenant
         // Skip shop-specific validation for these roles
-        if (principal.hasRole(SecurityRoles.TENANT_ADMIN) || principal.hasRole(SecurityRoles.SYSTEM_ADMIN)) {
-            log.debug("User with TENANT_ADMIN or SYSTEM_ADMIN role has access to shop {}", shopId);
+        if (principal.hasRole(SecurityRoles.TENANT_ADMIN) ||
+            principal.hasRole(SecurityRoles.SYSTEM_ADMIN) ||
+            principal.hasRole(SecurityRoles.OWNER)) {
+            log.debug("User with TENANT_ADMIN, OWNER, or SYSTEM_ADMIN role has access to shop {}", shopId);
             return false;
         }
 
@@ -104,13 +107,27 @@ public class ShopAccessValidator {
     }
 
     /**
-     * Checks if the user has tenant-wide administrative privileges.
+     * Checks if the user has tenant-wide access privileges.
+     * Users with tenant-wide access can access all shops within their tenant.
      *
      * @param principal The JWT principal containing user information
-     * @return true if user is TENANT_ADMIN or SYSTEM_ADMIN
+     * @return true if user is TENANT_ADMIN, OWNER, or SYSTEM_ADMIN
      */
-    public boolean isTenantAdmin(JwtPrincipal principal) {
+    public boolean hasTenantWideAccess(JwtPrincipal principal) {
         return principal.hasRole(SecurityRoles.TENANT_ADMIN) ||
-               principal.hasRole(SecurityRoles.SYSTEM_ADMIN);
+               principal.hasRole(SecurityRoles.SYSTEM_ADMIN) ||
+               principal.hasRole(SecurityRoles.OWNER);
+    }
+
+    /**
+     * Checks if the user has tenant-wide administrative privileges.
+     *
+     * @deprecated Use {@link #hasTenantWideAccess(JwtPrincipal)} instead
+     * @param principal The JWT principal containing user information
+     * @return true if user is TENANT_ADMIN, OWNER, or SYSTEM_ADMIN
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
+    public boolean isTenantAdmin(JwtPrincipal principal) {
+        return hasTenantWideAccess(principal);
     }
 }
