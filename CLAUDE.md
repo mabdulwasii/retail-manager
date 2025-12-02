@@ -11,6 +11,7 @@ AI Assistant Instructions for Shop Manager Project
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Local development setup
 - [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Deployment procedures
 - [TESTING-GUIDE.md](./TESTING-GUIDE.md) - Testing strategy
+- [docs/SHOP_ACCESS_CONTROL.md](./docs/SHOP_ACCESS_CONTROL.md) - Shop-level access control guide
 - [helm-chart/shop-manager/README.md](./helm-chart/shop-manager/README.md) - Kubernetes deployment
 
 **Key Commands**:
@@ -112,9 +113,13 @@ Shop Manager is a multi-tenant retail management platform:
 
 ## Architecture Patterns
 
-### Multi-Tenancy
+### Multi-Tenancy & Access Control
 - **Tenant-Shop Hierarchy**: Tenant (organization) owns multiple shops
 - **Data Isolation**: Complete tenant-level isolation via TenantContext
+- **Shop-Level Access Control**: Role-based filtering at shop level (see [SHOP_ACCESS_CONTROL.md](./docs/SHOP_ACCESS_CONTROL.md))
+  - SYSTEM_ADMIN: Access to all shops across all tenants
+  - TENANT_ADMIN/OWNER/INVESTOR: Access to all shops within their tenant
+  - MANAGER/EMPLOYEE: Access only to their assigned shop
 - **Feature Flags**: Hierarchical (global → tenant → shop)
 - **RBAC/ABAC**: Role-based and attribute-based authorization
 
@@ -169,6 +174,34 @@ Sales use **First Expiry, First Out (FEFO)** to minimize waste:
 - ✅ Product recall traceability
 
 **Documentation:** See [docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)
+
+---
+
+## Shop-Level Access Control Implementation
+
+**CRITICAL**: All new services and endpoints MUST implement shop-level access control.
+
+### Required Patterns
+
+1. **Service Layer**:
+   - Extend `ShopAwareService` for standardized shop validation
+   - Add `JwtPrincipal principal` parameter to all service methods
+   - Use `validateShopAccess(shopId, principal)` before operations
+   - Create helper methods like `findEntityForUser(id, principal)` for reusable validation
+
+2. **Controller Layer**:
+   - Add `@AuthenticationPrincipal JwtPrincipal principal` to all endpoints
+   - Pass principal to service methods
+
+3. **Domain Layer**:
+   - Implement `ShopAware` interface for entities belonging to a shop
+   - Provide `getShopId()` method
+
+4. **Repository Layer**:
+   - Use scope-based filtering for list operations (SYSTEM_WIDE, TENANT_WIDE, SHOP_SPECIFIC)
+   - Apply tenant/shop filters at database level
+
+**Complete implementation guide**: [docs/SHOP_ACCESS_CONTROL.md](./docs/SHOP_ACCESS_CONTROL.md)
 
 ---
 
@@ -271,6 +304,7 @@ See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for complete instructions.
 
 **Production-Ready Features**:
 - ✅ Multi-tenant architecture with complete data isolation
+- ✅ Shop-level access control with role-based filtering (295 tests passing)
 - ✅ Spring Boot 3.3 + Spring Modulith
 - ✅ Keycloak SSO with custom enhanced theme
 - ✅ Comprehensive testing (90%+ coverage target)

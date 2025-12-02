@@ -6,7 +6,7 @@ import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.sales.service.ReceiptService;
 import com.princely.shopmanager.sales.service.SalesTransactionService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
-import com.princely.shopmanager.auth.principal.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -153,7 +153,7 @@ public class SalesTransactionController {
         SalesTransactionResponse transaction = salesTransactionService.getTransaction(transactionId, principal);
 
         // Get or generate receipt
-        Receipt receipt = receiptService.getReceipt(transactionId)
+        Receipt receipt = receiptService.getReceipt(transactionId, principal)
             .orElseGet(() -> {
                 log.info("Receipt not found for transaction {}, generating new receipt", transactionId);
                 // Get the actual entity to generate receipt

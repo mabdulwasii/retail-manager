@@ -1,30 +1,61 @@
 package com.princely.shopmanager.sales.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.sales.domain.Receipt;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.ReceiptRepository;
+import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.service.ShopAwareService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Join;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class ReceiptService {
+public class ReceiptService extends ShopAwareService {
 
     private final ReceiptRepository receiptRepository;
+    private final SalesTransactionRepository transactionRepository;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public ReceiptService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            ReceiptRepository receiptRepository,
+            SalesTransactionRepository transactionRepository
+    ) {
+        super(shopAccessValidator, shopRepository);
+        this.receiptRepository = receiptRepository;
+        this.transactionRepository = transactionRepository;
+    }
+
+    /**
+     * Helper method to find a receipt and validate shop access.
+     */
+    private Receipt findReceiptForUser(String receiptId, JwtPrincipal principal) {
+        Receipt receipt = receiptRepository.findById(receiptId)
+            .orElseThrow(() -> new EntityNotFoundException("Receipt not found: " + receiptId));
+
+        if (shopAccessValidator.hasNoAccessToShop(receipt.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this receipt");
+        }
+
+        return receipt;
+    }
 
     @Transactional
     public Receipt generateReceipt(SalesTransaction transaction) {
@@ -206,31 +237,74 @@ public class ReceiptService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Receipt> getReceipt(String transactionId) {
+    public Optional<Receipt> getReceipt(String transactionId, JwtPrincipal principal) {
+        // Validate transaction access first
+        SalesTransaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + transactionId));
+
+        if (shopAccessValidator.hasNoAccessToShop(transaction.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this transaction");
+        }
+
         return receiptRepository.findByTransactionId(transactionId);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Receipt> getReceiptByNumber(String receiptNumber) {
-        return receiptRepository.findByReceiptNumber(receiptNumber);
+    public Optional<Receipt> getReceiptByNumber(String receiptNumber, JwtPrincipal principal) {
+        Optional<Receipt> receipt = receiptRepository.findByReceiptNumber(receiptNumber);
+
+        if (receipt.isPresent()) {
+            if (shopAccessValidator.hasNoAccessToShop(receipt.get().getShopId(), principal)) {
+                throw new AccessDeniedException("You don't have permission to access this receipt");
+            }
+        }
+
+        return receipt;
     }
 
     @Transactional(readOnly = true)
-    public Page<Receipt> findAllReceipts(String shopId, Pageable pageable) {
+    public Page<Receipt> findAllReceipts(String shopId, Pageable pageable, JwtPrincipal principal) {
+        // Apply scope-based filtering based on user's role
+        FilterScope filterScope = getFilterScope(principal);
+
+        // If shopId is provided in the request, validate access and use it
         if (shopId != null && !shopId.trim().isEmpty()) {
+            validateShopAccess(shopId, principal);
             Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
                 Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
                 return criteriaBuilder.equal(transactionJoin.get("shop").get("id"), shopId);
             };
             return receiptRepository.findAll(spec, pageable);
         }
-        return receiptRepository.findAll(pageable);
+
+        // Otherwise, apply filtering based on user's role
+        if (filterScope.isSystemWide()) {
+            // SYSTEM_ADMIN: Return all receipts
+            log.debug("SYSTEM_ADMIN: Returning all receipts");
+            return receiptRepository.findAll(pageable);
+        } else if (filterScope.isTenantWide()) {
+            // TENANT_ADMIN/OWNER/INVESTOR: Filter by tenantId
+            log.debug("Tenant-wide access: Filtering receipts by tenantId: {}", filterScope.getTenantId());
+            Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
+                Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
+                Join<SalesTransaction, com.princely.shopmanager.core.domain.Shop> shopJoin = transactionJoin.join("shop");
+                return criteriaBuilder.equal(shopJoin.get("tenant").get("id"), filterScope.getTenantId());
+            };
+            return receiptRepository.findAll(spec, pageable);
+        } else {
+            // MANAGER/EMPLOYEE/etc.: Filter by shopId
+            log.debug("Shop-scoped access: Filtering receipts by shopId: {}", filterScope.getShopId());
+            Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
+                Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
+                return criteriaBuilder.equal(transactionJoin.get("shop").get("id"), filterScope.getShopId());
+            };
+            return receiptRepository.findAll(spec, pageable);
+        }
     }
 
     @Transactional
-    public Receipt markAsPrinted(String receiptId, String printedBy) {
-        Receipt receipt = receiptRepository.findById(receiptId)
-            .orElseThrow(() -> new IllegalArgumentException("Receipt not found: " + receiptId));
+    public Receipt markAsPrinted(String receiptId, String printedBy, JwtPrincipal principal) {
+        Receipt receipt = findReceiptForUser(receiptId, principal);
 
         receipt.setStatus(Receipt.ReceiptStatus.PRINTED);
         receipt.setPrintedAt(LocalDateTime.now());
@@ -240,9 +314,8 @@ public class ReceiptService {
     }
 
     @Transactional
-    public Receipt markAsEmailed(String receiptId, String emailAddress) {
-        Receipt receipt = receiptRepository.findById(receiptId)
-            .orElseThrow(() -> new IllegalArgumentException("Receipt not found: " + receiptId));
+    public Receipt markAsEmailed(String receiptId, String emailAddress, JwtPrincipal principal) {
+        Receipt receipt = findReceiptForUser(receiptId, principal);
 
         receipt.setStatus(Receipt.ReceiptStatus.EMAILED);
         receipt.setEmailedAt(LocalDateTime.now());
@@ -252,7 +325,15 @@ public class ReceiptService {
     }
 
     @Transactional
-    public void regenerateReceipt(String transactionId) {
+    public void regenerateReceipt(String transactionId, JwtPrincipal principal) {
+        // Validate transaction access first
+        SalesTransaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + transactionId));
+
+        if (shopAccessValidator.hasNoAccessToShop(transaction.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this transaction");
+        }
+
         Optional<Receipt> existingReceipt = receiptRepository.findByTransactionId(transactionId);
         if (existingReceipt.isPresent()) {
             receiptRepository.delete(existingReceipt.get());

@@ -7,17 +7,20 @@ import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
 import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.dto.SalesSummaryDto;
 import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.fraud.domain.RiskAssessment;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
 import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,10 +28,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AnalyticsService Edge Cases Tests")
@@ -52,16 +57,48 @@ class AnalyticsServiceEdgeCasesTest {
     @Mock
     private ObjectMapper objectMapper;
 
-    @InjectMocks
+    @Mock
+    private ShopAccessValidator shopAccessValidator;
+
+    @Mock
+    private ShopRepository shopRepository;
+
     private AnalyticsService analyticsService;
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private JwtPrincipal testPrincipal;
+    private Shop testShop;
 
     @BeforeEach
     void setUp() {
         startDate = LocalDateTime.of(2024, 1, 1, 0, 0);
         endDate = LocalDateTime.of(2024, 1, 31, 23, 59);
+
+        testShop = new Shop();
+        testShop.setId("shop-123");
+        testShop.setName("Test Shop");
+
+        testPrincipal = JwtPrincipal.builder()
+            .subject("test-user")
+            .preferredUsername("testuser")
+            .roles(List.of("MANAGER"))
+            .tenantId("tenant-1")
+            .shopId("shop-123")
+            .build();
+
+        // Mock shop repository for shop existence check (lenient to avoid unnecessary stubbing errors)
+        lenient().when(shopRepository.existsById("shop-123")).thenReturn(true);
+
+        analyticsService = new AnalyticsService(
+            shopAccessValidator,
+            shopRepository,
+            salesTransactionRepository,
+            investmentRepository,
+            distributionRepository,
+            analyticsCacheRepository,
+            objectMapper
+        );
     }
 
     @Test
@@ -74,9 +111,10 @@ class AnalyticsServiceEdgeCasesTest {
             .thenReturn(Optional.of(BigDecimal.ZERO));
         when(salesTransactionRepository.countTransactionsByShopAndPeriod(anyString(), any(), any()))
             .thenReturn(0L);
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -95,9 +133,10 @@ class AnalyticsServiceEdgeCasesTest {
             .thenReturn(Optional.empty());
         when(salesTransactionRepository.countTransactionsByShopAndPeriod(anyString(), any(), any()))
             .thenReturn(10L);
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -116,9 +155,10 @@ class AnalyticsServiceEdgeCasesTest {
             .thenReturn(Optional.of(BigDecimal.ZERO));
         when(distributionRepository.findByShopAndStatus(anyString(), eq(InvestorDistribution.DistributionStatus.PAID)))
             .thenReturn(Collections.emptyList());
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        InvestmentRoiDto result = analyticsService.getInvestmentROI("shop-123", startDate, endDate);
+        InvestmentRoiDto result = analyticsService.getInvestmentROI("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -133,9 +173,10 @@ class AnalyticsServiceEdgeCasesTest {
         // Given
         when(analyticsCacheRepository.findByShopIdAndTypeAndKey(anyString(), any(), anyString()))
             .thenReturn(Optional.empty());
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        FraudStatisticsDto result = analyticsService.getFraudStatistics("shop-123", startDate, endDate);
+        FraudStatisticsDto result = analyticsService.getFraudStatistics("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -167,9 +208,10 @@ class AnalyticsServiceEdgeCasesTest {
             .thenReturn(Optional.of(BigDecimal.ZERO));
         when(salesTransactionRepository.countTransactionsByShopAndPeriod(eq("shop-123"), eq(prevPeriodStart), eq(prevPeriodEnd)))
             .thenReturn(0L);
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        RevenueAnalyticsDto result = analyticsService.getRevenueAnalytics("shop-123", startDate, endDate);
+        RevenueAnalyticsDto result = analyticsService.getRevenueAnalytics("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -198,8 +240,11 @@ class AnalyticsServiceEdgeCasesTest {
     @Test
     @DisplayName("Should handle cache clear for shop")
     void shouldHandleCacheClearForShop() {
+        // Given
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
+
         // When
-        analyticsService.clearCacheForShop("shop-123");
+        analyticsService.clearCacheForShop("shop-123", testPrincipal);
 
         // Then
         verify(analyticsCacheRepository).deleteByShopId("shop-123");
@@ -222,9 +267,10 @@ class AnalyticsServiceEdgeCasesTest {
             .thenReturn(Optional.of(new BigDecimal("100.00")));
         when(salesTransactionRepository.countTransactionsByShopAndPeriod(anyString(), any(), any()))
             .thenReturn(1L);
+        when(shopAccessValidator.hasNoAccessToShop("shop-123", testPrincipal)).thenReturn(false);
 
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary("shop-123", startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);

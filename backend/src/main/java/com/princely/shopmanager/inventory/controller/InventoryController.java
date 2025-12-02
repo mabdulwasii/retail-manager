@@ -428,7 +428,7 @@ public class InventoryController {
         log.info("Triggering demand forecast for product: {}, forecast days: {}, user: {}",
                 productId, forecastDays, principal.getUsername());
 
-        inventoryService.forecastDemand(productId, forecastDays, principal);
+        inventoryService.forecastDemand(productId, forecastDays);
         return ResponseEntity.ok().build();
     }
 

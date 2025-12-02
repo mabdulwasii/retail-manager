@@ -9,10 +9,12 @@ import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.core.repository.CategoryRepository;
 import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
-import com.princely.shopmanager.shared.security.TenantSecurityValidator;
+import com.princely.shopmanager.shared.exception.ShopNotFoundException;
 import com.princely.shopmanager.shared.service.AuditService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +67,7 @@ class ProductServiceTest {
     private InventoryRepository inventoryRepository;
 
     @Mock
-    private TenantSecurityValidator tenantSecurityValidator;
+    private ShopAccessValidator shopAccessValidator;
 
     @Mock
     private AuditService auditService;
@@ -73,11 +75,11 @@ class ProductServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
     private ProductService productService;
 
     private Shop testShop;
     private Category testCategory;
+    private JwtPrincipal testPrincipal;
     private Product testProduct;
     private ProductCreateRequest createRequest;
 
@@ -106,11 +108,30 @@ class ProductServiceTest {
             .shopId("shop-1")
             .categoryId("category-1")
             .build();
+
+        testPrincipal = JwtPrincipal.builder()
+            .subject("test-user")
+            .preferredUsername("testuser")
+            .roles(List.of("MANAGER"))
+            .tenantId("tenant-1")
+            .shopId("shop-1")
+            .build();
+
+        productService = new ProductService(
+            shopAccessValidator,
+            shopRepository,
+            productRepository,
+            categoryRepository,
+            inventoryRepository,
+            auditService,
+            eventPublisher
+        );
     }
 
     @Test
     void createProduct_WithValidData_ShouldCreateProduct() {
         // Arrange
+        when(shopRepository.existsById("shop-1")).thenReturn(true);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(categoryRepository.findById("category-1")).thenReturn(Optional.of(testCategory));
         // Mock auto-generated SKU check (any SKU format should return false for uniqueness)
@@ -149,8 +170,10 @@ class ProductServiceTest {
             Optional.ofNullable(savedProductHolder[0]));
         when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
 
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
+
         // Act
-        ProductResponse response = productService.createProduct(createRequest);
+        ProductResponse response = productService.createProduct(createRequest, testPrincipal);
 
         // Assert
         assertThat(response).isNotNull();
@@ -161,7 +184,6 @@ class ProductServiceTest {
         assertThat(response.getTotalStock()).isZero();
         assertThat(response.getAvailableStock()).isZero();
 
-        verify(tenantSecurityValidator, atLeastOnce()).validateShopAccess(testShop);
         verify(productRepository).save(any(Product.class));
         verify(auditService).logEntityCreation(eq("Product"), anyString(), anyString());
         verify(eventPublisher).publishEvent(any(ProductCreatedEvent.class));
@@ -173,14 +195,16 @@ class ProductServiceTest {
     @Test
     void createProduct_WithDuplicateBarcode_ShouldThrowException() {
         // Arrange
+        when(shopRepository.existsById("shop-1")).thenReturn(true);
         lenient().when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         lenient().when(categoryRepository.findById("category-1")).thenReturn(Optional.of(testCategory));
         // Mock auto-generated SKU check
         lenient().when(productRepository.existsBySkuAndShopId(anyString(), eq("shop-1"))).thenReturn(false);
         when(productRepository.existsByBarcodeAndShopId("5449000000996", "shop-1")).thenReturn(true);
 
         // Act & Assert
-        assertThatThrownBy(() -> productService.createProduct(createRequest))
+        assertThatThrownBy(() -> productService.createProduct(createRequest, testPrincipal))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("barcode")
             .hasMessageContaining("already exists");
@@ -191,24 +215,26 @@ class ProductServiceTest {
     @Test
     void createProduct_WithInvalidShop_ShouldThrowException() {
         // Arrange
-        when(shopRepository.findById("shop-1")).thenReturn(Optional.empty());
+        when(shopRepository.existsById("shop-1")).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> productService.createProduct(createRequest))
-            .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> productService.createProduct(createRequest, testPrincipal))
+            .isInstanceOf(ShopNotFoundException.class)
             .hasMessageContaining("Shop not found");
     }
 
     @Test
     void createProduct_WithInvalidCategory_ShouldThrowException() {
         // Arrange
+        when(shopRepository.existsById("shop-1")).thenReturn(true);
         lenient().when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         // Mock auto-generated SKU check
         lenient().when(productRepository.existsBySkuAndShopId(anyString(), eq("shop-1"))).thenReturn(false);
         when(categoryRepository.findById("category-1")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> productService.createProduct(createRequest))
+        assertThatThrownBy(() -> productService.createProduct(createRequest, testPrincipal))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Category not found");
     }
@@ -225,11 +251,10 @@ class ProductServiceTest {
         when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
 
         // Act
-        ProductResponse response = productService.updateProduct("product-1", updateRequest);
+        ProductResponse response = productService.updateProduct("product-1", updateRequest, testPrincipal);
 
         // Assert
         assertThat(response).isNotNull();
-        verify(tenantSecurityValidator, atLeastOnce()).validateShopAccess(testShop);
         verify(productRepository).save(any(Product.class));
         verify(auditService).logEntityModification(eq("Product"), eq("product-1"), anyString());
     }
@@ -241,7 +266,7 @@ class ProductServiceTest {
         when(productRepository.findById("non-existent")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> productService.updateProduct("non-existent", updateRequest))
+        assertThatThrownBy(() -> productService.updateProduct("non-existent", updateRequest, testPrincipal))
             .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Product not found");
     }
@@ -257,7 +282,7 @@ class ProductServiceTest {
             .thenReturn(Arrays.asList(inventory1, inventory2));
 
         // Act
-        ProductResponse response = productService.getProductById("product-1", true);
+        ProductResponse response = productService.getProductById("product-1", true, testPrincipal);
 
         // Assert
         assertThat(response).isNotNull();
@@ -273,7 +298,7 @@ class ProductServiceTest {
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
 
         // Act
-        ProductResponse response = productService.getProductById("product-1", false);
+        ProductResponse response = productService.getProductById("product-1", false, testPrincipal);
 
         // Assert
         assertThat(response).isNotNull();
@@ -286,22 +311,25 @@ class ProductServiceTest {
     void getProducts_WithFilters_ShouldReturnFilteredProducts() {
         // Arrange
         Page<Product> productPage = new PageImpl<>(Collections.singletonList(testProduct));
-        when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        lenient().when(shopRepository.existsById("shop-1")).thenReturn(true);
+        lenient().when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(productRepository.findAll(any(Specification.class), any(Pageable.class)))
             .thenReturn(productPage);
+
+        lenient().when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
         Page<ProductResponse> response = productService.getProducts(
             "shop-1",
             (root, query, cb) -> cb.equal(root.get("shop").get("id"), "shop-1"),
             Pageable.unpaged(),
-            false  // Don't include inventory to avoid extra mocking
+            false,  // Don't include inventory to avoid extra mocking
+            testPrincipal
         );
 
         // Assert
         assertThat(response).isNotNull();
         assertThat(response.getContent()).hasSize(1);
-        verify(tenantSecurityValidator).validateShopAccess(testShop);
     }
 
     @Test
@@ -311,7 +339,7 @@ class ProductServiceTest {
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
 
         // Act
-        productService.deleteProduct("product-1");
+        productService.deleteProduct("product-1", testPrincipal);
 
         // Assert
         ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
@@ -332,7 +360,7 @@ class ProductServiceTest {
             .thenReturn(Arrays.asList(inventory1, inventory2, inventory3));
 
         // Act
-        ProductService.InventorySummary summary = productService.getInventorySummary("product-1");
+        ProductService.InventorySummary summary = productService.getInventorySummary("product-1", testPrincipal);
 
         // Assert
         assertThat(summary).isNotNull();
@@ -354,7 +382,7 @@ class ProductServiceTest {
             .thenReturn(Collections.singletonList(lowStockInventory));
 
         // Act
-        ProductService.InventorySummary summary = productService.getInventorySummary("product-1");
+        ProductService.InventorySummary summary = productService.getInventorySummary("product-1", testPrincipal);
 
         // Assert
         assertThat(summary.getHasLowStock()).isTrue();
@@ -371,7 +399,7 @@ class ProductServiceTest {
             .thenReturn(Collections.singletonList(expiredInventory));
 
         // Act
-        ProductService.InventorySummary summary = productService.getInventorySummary("product-1");
+        ProductService.InventorySummary summary = productService.getInventorySummary("product-1", testPrincipal);
 
         // Assert
         assertThat(summary.getHasExpiredBatches()).isTrue();
@@ -386,7 +414,7 @@ class ProductServiceTest {
             .thenReturn(Collections.singletonList(inventory));
 
         // Act
-        boolean hasStock = productService.hasAvailableStock("product-1", 50);
+        boolean hasStock = productService.hasAvailableStock("product-1", 50, testPrincipal);
 
         // Assert
         assertThat(hasStock).isTrue(); // Available: 100 - 10 = 90 >= 50
@@ -401,7 +429,7 @@ class ProductServiceTest {
             .thenReturn(Collections.singletonList(inventory));
 
         // Act
-        boolean hasStock = productService.hasAvailableStock("product-1", 50);
+        boolean hasStock = productService.hasAvailableStock("product-1", 50, testPrincipal);
 
         // Assert
         assertThat(hasStock).isFalse(); // Available: 100 - 90 = 10 < 50
@@ -414,7 +442,9 @@ class ProductServiceTest {
         lowStockInventory.setMinimumStock(10);
         lowStockInventory.setProduct(testProduct);
 
-        when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        lenient().when(shopRepository.existsById("shop-1")).thenReturn(true);
+        lenient().when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        lenient().when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(inventoryRepository.findLowStockItems("shop-1"))
             .thenReturn(Collections.singletonList(lowStockInventory));
         when(productRepository.findAllById(anyList()))
@@ -424,7 +454,7 @@ class ProductServiceTest {
             .thenReturn(Collections.singletonList(lowStockInventory));
 
         // Act
-        List<ProductResponse> response = productService.getProductsWithLowStock("shop-1");
+        List<ProductResponse> response = productService.getProductsWithLowStock("shop-1", testPrincipal);
 
         // Assert
         assertThat(response).hasSize(1);
@@ -434,6 +464,9 @@ class ProductServiceTest {
     @Test
     void getProductsWithNoStock_ShouldReturnOutOfStockProducts() {
         // Arrange
+        lenient().when(shopRepository.existsById("shop-1")).thenReturn(true);
+        lenient().when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        lenient().when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(productRepository.findByShopId("shop-1"))
             .thenReturn(Collections.singletonList(testProduct));
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
@@ -441,7 +474,7 @@ class ProductServiceTest {
             .thenReturn(Collections.emptyList()); // No inventory = no stock
 
         // Act
-        List<ProductResponse> response = productService.getProductsWithNoStock("shop-1");
+        List<ProductResponse> response = productService.getProductsWithNoStock("shop-1", testPrincipal);
 
         // Assert
         assertThat(response).hasSize(1);
@@ -451,7 +484,9 @@ class ProductServiceTest {
     @Test
     void createProduct_ShouldPublishProductCreatedEvent() {
         // Arrange
+        when(shopRepository.existsById("shop-1")).thenReturn(true);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(categoryRepository.findById("category-1")).thenReturn(Optional.of(testCategory));
         when(productRepository.existsBySkuAndShopId(anyString(), anyString())).thenReturn(false);
 
@@ -467,7 +502,7 @@ class ProductServiceTest {
         when(inventoryRepository.findByProductId(anyString())).thenReturn(Collections.emptyList());
 
         // Act
-        productService.createProduct(createRequest);
+        productService.createProduct(createRequest, testPrincipal);
 
         // Assert
         ArgumentCaptor<ProductCreatedEvent> eventCaptor = ArgumentCaptor.forClass(ProductCreatedEvent.class);

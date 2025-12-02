@@ -1,5 +1,6 @@
 package com.princely.shopmanager.shared.service;
 
+import com.princely.shopmanager.auth.constants.SecurityRoles;
 import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
@@ -165,5 +166,104 @@ public abstract class ShopAwareService {
      */
     protected boolean hasAccessToShop(String shopId, JwtPrincipal principal) {
         return shopAccessValidator.hasAccess(shopId, principal);
+    }
+
+    /**
+     * Determines the appropriate filtering scope for list/findAll operations.
+     *
+     * <p>This method returns the filtering criteria based on the user's role:
+     * <ul>
+     *   <li>SYSTEM_ADMIN: Returns FilterScope with no filtering (system-wide access)</li>
+     *   <li>TENANT_ADMIN/OWNER/INVESTOR: Returns FilterScope with tenantId (tenant-wide access)</li>
+     *   <li>Other roles (MANAGER, EMPLOYEE, etc.): Returns FilterScope with shopId (shop-scoped access)</li>
+     * </ul>
+     *
+     * @param principal The JWT principal containing user information
+     * @return FilterScope object indicating the appropriate filtering level
+     */
+    protected FilterScope getFilterScope(JwtPrincipal principal) {
+        log.debug("Determining filter scope for user: {}, roles: {}",
+                principal.getUsername(), principal.getRoles());
+
+        // SYSTEM_ADMIN has system-wide access - no filtering
+        if (principal.hasRole(SecurityRoles.SYSTEM_ADMIN)) {
+            log.debug("User {} is SYSTEM_ADMIN - no filtering applied", principal.getUsername());
+            return FilterScope.systemWide();
+        }
+
+        // TENANT_ADMIN, OWNER, INVESTOR have tenant-wide access
+        if (shopAccessValidator.hasTenantWideAccess(principal) ||
+            principal.hasRole(SecurityRoles.INVESTOR)) {
+            String tenantId = principal.getTenantId();
+            log.debug("User {} has tenant-wide access - filtering by tenantId: {}",
+                    principal.getUsername(), tenantId);
+            return FilterScope.byTenant(tenantId);
+        }
+
+        // All other roles are shop-scoped
+        String shopId = principal.getShopId();
+        log.debug("User {} is shop-scoped - filtering by shopId: {}",
+                principal.getUsername(), shopId);
+        return FilterScope.byShop(shopId);
+    }
+
+    /**
+     * Represents the filtering scope for list/findAll operations.
+     *
+     * <p>This class encapsulates the filtering level (system-wide, tenant-wide, or shop-specific)
+     * and the corresponding filter values.
+     */
+    public static class FilterScope {
+        private final FilterLevel level;
+        private final String tenantId;
+        private final String shopId;
+
+        private FilterScope(FilterLevel level, String tenantId, String shopId) {
+            this.level = level;
+            this.tenantId = tenantId;
+            this.shopId = shopId;
+        }
+
+        public static FilterScope systemWide() {
+            return new FilterScope(FilterLevel.SYSTEM_WIDE, null, null);
+        }
+
+        public static FilterScope byTenant(String tenantId) {
+            return new FilterScope(FilterLevel.TENANT_WIDE, tenantId, null);
+        }
+
+        public static FilterScope byShop(String shopId) {
+            return new FilterScope(FilterLevel.SHOP_SPECIFIC, null, shopId);
+        }
+
+        public boolean isSystemWide() {
+            return level == FilterLevel.SYSTEM_WIDE;
+        }
+
+        public boolean isTenantWide() {
+            return level == FilterLevel.TENANT_WIDE;
+        }
+
+        public boolean isShopSpecific() {
+            return level == FilterLevel.SHOP_SPECIFIC;
+        }
+
+        public String getTenantId() {
+            return tenantId;
+        }
+
+        public String getShopId() {
+            return shopId;
+        }
+
+        public FilterLevel getLevel() {
+            return level;
+        }
+
+        public enum FilterLevel {
+            SYSTEM_WIDE,    // SYSTEM_ADMIN - no filtering
+            TENANT_WIDE,    // TENANT_ADMIN, OWNER, INVESTOR - filter by tenantId
+            SHOP_SPECIFIC   // MANAGER, EMPLOYEE, etc. - filter by shopId
+        }
     }
 }

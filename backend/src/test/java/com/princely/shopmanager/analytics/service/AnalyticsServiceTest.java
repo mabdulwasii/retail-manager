@@ -5,17 +5,20 @@ import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
 import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
 import com.princely.shopmanager.analytics.dto.SalesSummaryDto;
 import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.fraud.domain.RiskAssessment;
 import com.princely.shopmanager.investment.domain.InvestorDistribution;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
 import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,6 +29,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,18 +53,50 @@ class AnalyticsServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
-    @InjectMocks
+    @Mock
+    private ShopAccessValidator shopAccessValidator;
+
+    @Mock
+    private ShopRepository shopRepository;
+
     private AnalyticsService analyticsService;
 
     private String testShopId;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private JwtPrincipal testPrincipal;
+    private Shop testShop;
 
     @BeforeEach
     void setUp() {
         testShopId = "shop-1";
         startDate = LocalDateTime.now().minusDays(30);
         endDate = LocalDateTime.now();
+
+        testShop = new Shop();
+        testShop.setId(testShopId);
+        testShop.setName("Test Shop");
+
+        testPrincipal = JwtPrincipal.builder()
+            .subject("test-user")
+            .preferredUsername("testuser")
+            .roles(List.of("MANAGER"))
+            .tenantId("tenant-1")
+            .shopId(testShopId)
+            .build();
+
+        // Mock shop repository for shop existence check (lenient to avoid unnecessary stubbing errors)
+        lenient().when(shopRepository.existsById(testShopId)).thenReturn(true);
+
+        analyticsService = new AnalyticsService(
+            shopAccessValidator,
+            shopRepository,
+            salesTransactionRepository,
+            investmentRepository,
+            distributionRepository,
+            analyticsCacheRepository,
+            objectMapper
+        );
     }
 
     @Test
@@ -85,8 +121,10 @@ class AnalyticsServiceTest {
         when(analyticsCacheRepository.save(any(AnalyticsCache.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
+        when(shopAccessValidator.hasNoAccessToShop(testShopId, testPrincipal)).thenReturn(false);
+
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -125,8 +163,10 @@ class AnalyticsServiceTest {
         when(objectMapper.readValue(anyString(), eq(SalesSummaryDto.class)))
             .thenReturn(cachedData);
 
+        when(shopAccessValidator.hasNoAccessToShop(testShopId, testPrincipal)).thenReturn(false);
+
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -168,8 +208,10 @@ class AnalyticsServiceTest {
         when(analyticsCacheRepository.save(any(AnalyticsCache.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
+        when(shopAccessValidator.hasNoAccessToShop(testShopId, testPrincipal)).thenReturn(false);
+
         // When
-        InvestmentRoiDto result = analyticsService.getInvestmentROI(testShopId, startDate, endDate);
+        InvestmentRoiDto result = analyticsService.getInvestmentROI(testShopId, startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -199,8 +241,10 @@ class AnalyticsServiceTest {
         when(analyticsCacheRepository.save(any(AnalyticsCache.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
+        when(shopAccessValidator.hasNoAccessToShop(testShopId, testPrincipal)).thenReturn(false);
+
         // When
-        FraudStatisticsDto result = analyticsService.getFraudStatistics(testShopId, startDate, endDate);
+        FraudStatisticsDto result = analyticsService.getFraudStatistics(testShopId, startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);
@@ -229,8 +273,10 @@ class AnalyticsServiceTest {
         // Given
         String shopId = "shop-1";
 
+        when(shopAccessValidator.hasNoAccessToShop(shopId, testPrincipal)).thenReturn(false);
+
         // When
-        analyticsService.clearCacheForShop(shopId);
+        analyticsService.clearCacheForShop(shopId, testPrincipal);
 
         // Then
         verify(analyticsCacheRepository).deleteByShopId(shopId);
@@ -255,8 +301,10 @@ class AnalyticsServiceTest {
         when(analyticsCacheRepository.save(any(AnalyticsCache.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
+        when(shopAccessValidator.hasNoAccessToShop(testShopId, testPrincipal)).thenReturn(false);
+
         // When
-        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate);
+        SalesSummaryDto result = analyticsService.getSalesSummary(testShopId, startDate, endDate, testPrincipal);
 
         // Then
         assertNotNull(result);

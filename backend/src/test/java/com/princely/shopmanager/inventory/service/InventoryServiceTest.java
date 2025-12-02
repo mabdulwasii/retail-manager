@@ -1,5 +1,6 @@
 package com.princely.shopmanager.inventory.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.repository.ProductRepository;
@@ -13,6 +14,7 @@ import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.AuditService;
 import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.auth.context.TenantContext;
@@ -22,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
@@ -62,13 +64,16 @@ class InventoryServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
+    @Mock
+    private ShopAccessValidator shopAccessValidator;
+
     private InventoryService inventoryService;
 
     private Shop testShop;
     private Product testProduct;
     private Inventory testInventory;
     private InventoryCreateRequest createRequest;
+    private JwtPrincipal testPrincipal;
 
     @BeforeEach
     void setUp() {
@@ -104,6 +109,26 @@ class InventoryServiceTest {
             .expiryDate(LocalDate.now().plusMonths(6))
             .build();
 
+        testPrincipal = JwtPrincipal.builder()
+            .subject("test-user")
+            .preferredUsername("testuser")
+            .roles(List.of("MANAGER"))
+            .tenantId("tenant-1")
+            .shopId("shop-1")
+            .build();
+
+        // Mock shop repository for shop existence check (lenient to avoid unnecessary stubbing errors)
+        lenient().when(shopRepository.existsById("shop-1")).thenReturn(true);
+
+        inventoryService = new InventoryService(
+            shopAccessValidator,
+            shopRepository,
+            inventoryRepository,
+            historyRepository,
+            productRepository,
+            auditService,
+            eventPublisher
+        );
     }
 
     @Test
@@ -112,12 +137,13 @@ class InventoryServiceTest {
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act
-            InventoryResponse result = inventoryService.createInventory("shop-1", createRequest);
+            InventoryResponse result = inventoryService.createInventory("shop-1", createRequest, testPrincipal);
 
             // Assert
             assertThat(result).isNotNull();
@@ -134,12 +160,13 @@ class InventoryServiceTest {
     void createInventory_WithMissingShop_ShouldThrowException() {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.empty());
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act & Assert
-            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest))
+            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest, testPrincipal))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Shop not found");
 
@@ -152,12 +179,13 @@ class InventoryServiceTest {
         // Arrange
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
         when(productRepository.findById("product-1")).thenReturn(Optional.empty());
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         try (var mockedTenantContext = mockStatic(TenantContext.class)) {
             mockedTenantContext.when(TenantContext::getCurrentTenant).thenReturn("shop-1");
 
             // Act & Assert
-            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest))
+            assertThatThrownBy(() -> inventoryService.createInventory("shop-1", createRequest, testPrincipal))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Product not found");
 
@@ -171,9 +199,10 @@ class InventoryServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Inventory> mockPage = new PageImpl<>(List.of(testInventory));
         when(inventoryRepository.findAll(isNull(Specification.class), eq(pageable))).thenReturn(mockPage);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        Page<InventoryResponse> result = inventoryService.getInventory("shop-1", null, pageable);
+        Page<InventoryResponse> result = inventoryService.getInventory("shop-1", null, pageable, testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -185,9 +214,10 @@ class InventoryServiceTest {
     void getInventoryById_WithValidId_ShouldReturnInventory() {
         // Arrange
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        InventoryResponse result = inventoryService.getInventoryById("inventory-1");
+        InventoryResponse result = inventoryService.getInventoryById("inventory-1", testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -201,7 +231,7 @@ class InventoryServiceTest {
         when(inventoryRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.getInventoryById("invalid-id"))
+        assertThatThrownBy(() -> inventoryService.getInventoryById("invalid-id", testPrincipal))
             .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Inventory not found");
     }
@@ -216,9 +246,10 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        InventoryResponse result = inventoryService.adjustStock("inventory-1", adjustmentRequest);
+        InventoryResponse result = inventoryService.adjustStock("inventory-1", adjustmentRequest, testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -241,9 +272,10 @@ class InventoryServiceTest {
         // Arrange
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.reserveStock("inventory-1", 20, "order-123", InventoryHistory.ReferenceType.SALE);
+        inventoryService.reserveStock("inventory-1", 20, "order-123", InventoryHistory.ReferenceType.SALE, testPrincipal);
 
         // Assert
         ArgumentCaptor<InventoryHistory> historyCaptor = ArgumentCaptor.forClass(InventoryHistory.class);
@@ -269,9 +301,10 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.reserveStock(request);
+        inventoryService.reserveStock(request, testPrincipal);
 
         // Assert
         ArgumentCaptor<InventoryHistory> historyCaptor = ArgumentCaptor.forClass(InventoryHistory.class);
@@ -288,9 +321,10 @@ class InventoryServiceTest {
         // Arrange
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.releaseReservedStock("inventory-1", 15, "order-789");
+        inventoryService.releaseReservedStock("inventory-1", 15, "order-789", testPrincipal);
 
         // Assert
         ArgumentCaptor<InventoryHistory> historyCaptor = ArgumentCaptor.forClass(InventoryHistory.class);
@@ -308,9 +342,10 @@ class InventoryServiceTest {
         testInventory.setReservedStock(25);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.sellStock("inventory-1", 20, "sale-123");
+        inventoryService.sellStock("inventory-1", 20, "sale-123", testPrincipal);
 
         // Assert
         ArgumentCaptor<InventoryHistory> historyCaptor = ArgumentCaptor.forClass(InventoryHistory.class);
@@ -330,9 +365,10 @@ class InventoryServiceTest {
         testInventory.setCurrentStock(10);
         testInventory.setReservedStock(5);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.sellStock("inventory-1", 20, "sale-123"))
+        assertThatThrownBy(() -> inventoryService.sellStock("inventory-1", 20, "sale-123", testPrincipal))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Cannot sell");
 
@@ -344,9 +380,10 @@ class InventoryServiceTest {
         // Arrange
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.returnStock("inventory-1", 10, "return-123");
+        inventoryService.returnStock("inventory-1", 10, "return-123", testPrincipal);
 
         // Assert
         ArgumentCaptor<InventoryHistory> historyCaptor = ArgumentCaptor.forClass(InventoryHistory.class);
@@ -365,9 +402,10 @@ class InventoryServiceTest {
         // Arrange
         List<Inventory> lowStockItems = Arrays.asList(testInventory);
         when(inventoryRepository.findLowStockItems("shop-1")).thenReturn(lowStockItems);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        List<InventoryResponse> result = inventoryService.getLowStockItems("shop-1");
+        List<InventoryResponse> result = inventoryService.getLowStockItems("shop-1", testPrincipal);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -380,9 +418,10 @@ class InventoryServiceTest {
         List<Inventory> expiringItems = Arrays.asList(testInventory);
         when(inventoryRepository.findExpiringItems(eq("shop-1"), any(LocalDate.class), any(LocalDate.class)))
             .thenReturn(expiringItems);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        List<InventoryResponse> result = inventoryService.getExpiringItems("shop-1", 30);
+        List<InventoryResponse> result = inventoryService.getExpiringItems("shop-1", 30, testPrincipal);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -394,9 +433,10 @@ class InventoryServiceTest {
         // Arrange
         BigDecimal expectedValue = BigDecimal.valueOf(1500.00);
         when(inventoryRepository.calculateTotalInventoryValue("shop-1")).thenReturn(expectedValue);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        BigDecimal result = inventoryService.getTotalInventoryValue("shop-1");
+        BigDecimal result = inventoryService.getTotalInventoryValue("shop-1", testPrincipal);
 
         // Assert
         assertThat(result).isEqualByComparingTo(expectedValue);
@@ -407,9 +447,11 @@ class InventoryServiceTest {
         // Arrange
         List<InventoryHistory> historyList = Arrays.asList(new InventoryHistory(), new InventoryHistory());
         when(historyRepository.findByInventoryIdOrderByCreatedAtDesc("inventory-1")).thenReturn(historyList);
+        when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        List<InventoryHistory> result = inventoryService.getInventoryHistory("inventory-1");
+        List<InventoryHistory> result = inventoryService.getInventoryHistory("inventory-1", testPrincipal);
 
         // Assert
         assertThat(result).hasSize(2);
@@ -421,9 +463,10 @@ class InventoryServiceTest {
         testInventory.setStatus(Inventory.InventoryStatus.ACTIVE);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        InventoryResponse result = inventoryService.updateInventoryStatus("inventory-1", Inventory.InventoryStatus.DISCONTINUED);
+        InventoryResponse result = inventoryService.updateInventoryStatus("inventory-1", Inventory.InventoryStatus.DISCONTINUED, testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -446,9 +489,10 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest);
+        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest, testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -467,9 +511,10 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest);
+        InventoryResponse result = inventoryService.updateInventory("inventory-1", updateRequest, testPrincipal);
 
         // Assert
         assertThat(result).isNotNull();
@@ -487,7 +532,7 @@ class InventoryServiceTest {
         when(inventoryRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.updateInventory("invalid-id", updateRequest))
+        assertThatThrownBy(() -> inventoryService.updateInventory("invalid-id", updateRequest, testPrincipal))
             .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Inventory not found");
 
@@ -500,9 +545,10 @@ class InventoryServiceTest {
         testInventory.setCurrentStock(0);
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act
-        inventoryService.deleteInventory("inventory-1");
+        inventoryService.deleteInventory("inventory-1", testPrincipal);
 
         // Assert
         verify(inventoryRepository).delete(testInventory);
@@ -515,9 +561,10 @@ class InventoryServiceTest {
         testInventory.setCurrentStock(50);
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1"))
+        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1", testPrincipal))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Cannot delete inventory with active stock");
 
@@ -530,9 +577,10 @@ class InventoryServiceTest {
         testInventory.setCurrentStock(0);
         testInventory.setReservedStock(10);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1"))
+        assertThatThrownBy(() -> inventoryService.deleteInventory("inventory-1", testPrincipal))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Cannot delete inventory with reserved stock");
 
@@ -545,7 +593,7 @@ class InventoryServiceTest {
         when(inventoryRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> inventoryService.deleteInventory("invalid-id"))
+        assertThatThrownBy(() -> inventoryService.deleteInventory("invalid-id", testPrincipal))
             .isInstanceOf(EntityNotFoundException.class)
             .hasMessageContaining("Inventory not found");
 

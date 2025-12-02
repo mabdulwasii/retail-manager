@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.dto.CategoryCreateRequest;
@@ -8,8 +9,11 @@ import com.princely.shopmanager.core.dto.CategoryUpdateRequest;
 import com.princely.shopmanager.core.repository.CategoryRepository;
 import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
-import lombok.RequiredArgsConstructor;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.service.ShopAwareService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,23 +26,50 @@ import java.util.stream.Collectors;
  * Categories are shop-scoped and support hierarchical structures.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class CategoryService {
+public class CategoryService extends ShopAwareService {
 
     private final CategoryRepository categoryRepository;
-    private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
+
+    public CategoryService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            CategoryRepository categoryRepository,
+            ProductRepository productRepository
+    ) {
+        super(shopAccessValidator, shopRepository);
+        this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
+    }
+
+    /**
+     * Helper method to find a category and validate shop access.
+     */
+    private Category findCategoryForUser(String categoryId, JwtPrincipal principal) {
+        Category category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new EntityNotFoundException("Category not found: " + categoryId));
+
+        if (shopAccessValidator.hasNoAccessToShop(category.getShopId(), principal)) {
+            throw new AccessDeniedException("You don't have permission to access this category");
+        }
+
+        return category;
+    }
 
     /**
      * Create a new category.
      *
      * @param request Category creation request
+     * @param principal JWT principal for access control
      * @return Created category response
      */
     @Transactional
-    public CategoryResponse createCategory(CategoryCreateRequest request) {
+    public CategoryResponse createCategory(CategoryCreateRequest request, JwtPrincipal principal) {
         log.info("Creating category: {} for shop: {}", request.getName(), request.getShopId());
+
+        // Validate shop access
+        validateShopAccess(request.getShopId(), principal);
 
         // Validate shop exists
         Shop shop = shopRepository.findById(request.getShopId())
@@ -87,14 +118,14 @@ public class CategoryService {
      * Get category by ID.
      *
      * @param categoryId Category ID
+     * @param principal JWT principal for access control
      * @return Category response
      */
     @Transactional(readOnly = true)
-    public CategoryResponse getCategoryById(String categoryId) {
+    public CategoryResponse getCategoryById(String categoryId, JwtPrincipal principal) {
         log.debug("Fetching category by ID: {}", categoryId);
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
+        Category category = findCategoryForUser(categoryId, principal);
 
         return mapToResponse(category);
     }
@@ -104,11 +135,15 @@ public class CategoryService {
      *
      * @param shopId Shop ID
      * @param includeTree Whether to include hierarchical tree structure
+     * @param principal JWT principal for access control
      * @return List of categories
      */
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getCategoriesByShop(String shopId, boolean includeTree) {
+    public List<CategoryResponse> getCategoriesByShop(String shopId, boolean includeTree, JwtPrincipal principal) {
         log.debug("Fetching categories for shop: {}, includeTree: {}", shopId, includeTree);
+
+        // Validate shop access
+        validateShopAccess(shopId, principal);
 
         // Validate shop exists
         if (!shopRepository.existsById(shopId)) {
@@ -133,14 +168,14 @@ public class CategoryService {
      *
      * @param categoryId Category ID
      * @param request Update request
+     * @param principal JWT principal for access control
      * @return Updated category response
      */
     @Transactional
-    public CategoryResponse updateCategory(String categoryId, CategoryUpdateRequest request) {
+    public CategoryResponse updateCategory(String categoryId, CategoryUpdateRequest request, JwtPrincipal principal) {
         log.info("Updating category: {}", categoryId);
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
+        Category category = findCategoryForUser(categoryId, principal);
 
         // Update fields if provided
         if (request.getName() != null) {
@@ -202,13 +237,13 @@ public class CategoryService {
      * Delete a category.
      *
      * @param categoryId Category ID
+     * @param principal JWT principal for access control
      */
     @Transactional
-    public void deleteCategory(String categoryId) {
+    public void deleteCategory(String categoryId, JwtPrincipal principal) {
         log.info("Deleting category: {}", categoryId);
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
+        Category category = findCategoryForUser(categoryId, principal);
 
         // Check if category has products
         long productCount = productRepository.countByCategory_Id(categoryId);

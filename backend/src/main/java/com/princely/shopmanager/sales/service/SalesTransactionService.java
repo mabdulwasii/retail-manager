@@ -17,10 +17,10 @@ import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.dto.SalesTransactionCreateRequest;
 import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
-import com.princely.shopmanager.shared.security.ShopAccessValidator;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.AuditService;
 import com.princely.shopmanager.shared.service.ShopAwareService;
-import com.princely.shopmanager.auth.principal.JwtPrincipal;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
@@ -176,7 +176,7 @@ public class SalesTransactionService extends ShopAwareService {
         for (InventoryAllocation allocation : allocations) {
             for (Inventory inventory : allocation.inventories) {
                 int quantityToDeduct = Math.min(allocation.remainingQuantity, inventory.getAvailableStock());
-                inventoryService.sellStock(inventory.getId(), quantityToDeduct, transaction.getId());
+                inventoryService.sellStock(inventory.getId(), quantityToDeduct, transaction.getId(), principal);
                 allocation.remainingQuantity -= quantityToDeduct;
 
                 log.debug("Deducted {} units from inventory {} for product {}",

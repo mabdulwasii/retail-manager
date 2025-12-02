@@ -6,11 +6,13 @@ import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
 import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.service.AnalyticsService;
 import com.princely.shopmanager.shared.constants.PermissionConstants;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -33,9 +35,10 @@ public class AnalyticsController {
     public ResponseEntity<SalesSummaryDto> getSalesSummary(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        SalesSummaryDto summary = analyticsService.getSalesSummary(shopId, startDate, endDate);
+        SalesSummaryDto summary = analyticsService.getSalesSummary(shopId, startDate, endDate, principal);
         return ResponseEntity.ok(summary);
     }
 
@@ -44,9 +47,10 @@ public class AnalyticsController {
     public ResponseEntity<InvestmentRoiDto> getInvestmentROI(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        InvestmentRoiDto roi = analyticsService.getInvestmentROI(shopId, startDate, endDate);
+        InvestmentRoiDto roi = analyticsService.getInvestmentROI(shopId, startDate, endDate, principal);
         return ResponseEntity.ok(roi);
     }
 
@@ -55,9 +59,10 @@ public class AnalyticsController {
     public ResponseEntity<FraudStatisticsDto> getFraudStatistics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        FraudStatisticsDto stats = analyticsService.getFraudStatistics(shopId, startDate, endDate);
+        FraudStatisticsDto stats = analyticsService.getFraudStatistics(shopId, startDate, endDate, principal);
         return ResponseEntity.ok(stats);
     }
 
@@ -66,16 +71,19 @@ public class AnalyticsController {
     public ResponseEntity<RevenueAnalyticsDto> getRevenueAnalytics(
             @RequestParam String shopId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @AuthenticationPrincipal JwtPrincipal principal) {
 
-        RevenueAnalyticsDto analytics = analyticsService.getRevenueAnalytics(shopId, startDate, endDate);
+        RevenueAnalyticsDto analytics = analyticsService.getRevenueAnalytics(shopId, startDate, endDate, principal);
         return ResponseEntity.ok(analytics);
     }
 
     @PostMapping("/clear-cache/{shopId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).ANALYTICS_MANAGE)")
-    public ResponseEntity<Void> clearCacheForShop(@PathVariable String shopId) {
-        analyticsService.clearCacheForShop(shopId);
+    public ResponseEntity<Void> clearCacheForShop(
+            @PathVariable String shopId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+        analyticsService.clearCacheForShop(shopId, principal);
         return ResponseEntity.ok().build();
     }
 }

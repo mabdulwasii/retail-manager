@@ -6,13 +6,16 @@ import com.princely.shopmanager.analytics.dto.InvestmentRoiDto;
 import com.princely.shopmanager.analytics.dto.FraudStatisticsDto;
 import com.princely.shopmanager.analytics.dto.RevenueAnalyticsDto;
 import com.princely.shopmanager.analytics.repository.AnalyticsCacheRepository;
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Shop;
+import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.investment.repository.InvestmentRepository;
 import com.princely.shopmanager.investment.repository.InvestorDistributionRepository;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
+import com.princely.shopmanager.shared.service.ShopAwareService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -21,14 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(name = "app.features.analytics.enabled", havingValue = "true")
-public class AnalyticsService {
+public class AnalyticsService extends ShopAwareService {
 
     private final SalesTransactionRepository salesTransactionRepository;
     private final InvestmentRepository investmentRepository;
@@ -36,8 +37,26 @@ public class AnalyticsService {
     private final AnalyticsCacheRepository analyticsCacheRepository;
     private final ObjectMapper objectMapper;
 
+    public AnalyticsService(
+            ShopAccessValidator shopAccessValidator,
+            ShopRepository shopRepository,
+            SalesTransactionRepository salesTransactionRepository,
+            InvestmentRepository investmentRepository,
+            InvestorDistributionRepository distributionRepository,
+            AnalyticsCacheRepository analyticsCacheRepository,
+            ObjectMapper objectMapper
+    ) {
+        super(shopAccessValidator, shopRepository);
+        this.salesTransactionRepository = salesTransactionRepository;
+        this.investmentRepository = investmentRepository;
+        this.distributionRepository = distributionRepository;
+        this.analyticsCacheRepository = analyticsCacheRepository;
+        this.objectMapper = objectMapper;
+    }
+
     @Transactional(readOnly = true)
-    public SalesSummaryDto getSalesSummary(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
+    public SalesSummaryDto getSalesSummary(String shopId, LocalDateTime startDate, LocalDateTime endDate, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         return calculateSalesSummaryInternal(shopId, startDate, endDate);
     }
 
@@ -82,7 +101,8 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public InvestmentRoiDto getInvestmentROI(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
+    public InvestmentRoiDto getInvestmentROI(String shopId, LocalDateTime startDate, LocalDateTime endDate, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         String cacheKey = AnalyticsCache.generateCacheKey("investment_roi", shopId, startDate, endDate);
 
         Optional<AnalyticsCache> cached = getCachedAnalytics(shopId, AnalyticsCache.AnalyticsType.INVESTMENT_ROI, cacheKey);
@@ -127,7 +147,8 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public FraudStatisticsDto getFraudStatistics(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
+    public FraudStatisticsDto getFraudStatistics(String shopId, LocalDateTime startDate, LocalDateTime endDate, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         String cacheKey = AnalyticsCache.generateCacheKey("fraud_stats", shopId, startDate, endDate);
 
         Optional<AnalyticsCache> cached = getCachedAnalytics(shopId, AnalyticsCache.AnalyticsType.FRAUD_STATISTICS, cacheKey);
@@ -169,7 +190,8 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public RevenueAnalyticsDto getRevenueAnalytics(String shopId, LocalDateTime startDate, LocalDateTime endDate) {
+    public RevenueAnalyticsDto getRevenueAnalytics(String shopId, LocalDateTime startDate, LocalDateTime endDate, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         // Calculate periods first
         long periodDays = startDate.until(endDate, java.time.temporal.ChronoUnit.DAYS);
         LocalDateTime prevPeriodStart = startDate.minusDays(periodDays);
@@ -239,7 +261,8 @@ public class AnalyticsService {
     }
 
     @Transactional
-    public void clearCacheForShop(String shopId) {
+    public void clearCacheForShop(String shopId, JwtPrincipal principal) {
+        validateShopAccess(shopId, principal);
         analyticsCacheRepository.deleteByShopId(shopId);
         log.info("Cleared all analytics cache for shop {}", shopId);
     }
