@@ -48,29 +48,95 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
--- 4. ROLES (System roles for testing)
+-- 4. SYSTEM ROLES FOR TESTING
 -- ========================================
--- NOTE: Roles are created by Flyway migrations and are visible to tests.
--- We don't need to insert them here.
+-- Note: Use test-specific role names to avoid conflicts with Flyway-created roles
+INSERT INTO roles (id, name, description, is_system, tenant_id, created_at, updated_at, version) VALUES
+    ('test-system-admin-role', 'TEST_SYSTEM_ADMIN', 'Test System Administrator', true, null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-owner-role', 'TEST_OWNER', 'Test Shop Owner', true, null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-manager-role', 'TEST_MANAGER', 'Test Shop Manager', true, null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-employee-role', 'TEST_EMPLOYEE', 'Test Shop Employee', true, null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-investor-role', 'TEST_INVESTOR', 'Test Investor', true, null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
 -- 4.5. PERMISSIONS AND ROLE-PERMISSION ASSIGNMENTS
 -- ========================================
--- NOTE: Permissions and role-permission mappings are handled by Flyway migrations.
--- Flyway migrations run BEFORE test transactions, so their data (permissions and role_permissions)
--- IS visible to tests. We only need to insert test users, shops, and tenants here.
+-- Assign all permissions from Flyway migrations to test roles
+-- TEST_SYSTEM_ADMIN gets all permissions (same as SYSTEM_ADMIN)
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-system-admin-role', p.id
+FROM permissions p
+ON CONFLICT DO NOTHING;
+
+-- OWNER gets owner permissions (same as migration V12)
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-owner-role', p.id
+FROM permissions p
+WHERE p.name IN (
+    'TENANT_READ', 'TENANT_LIST', 'TENANT_UPDATE',
+    'SHOP_CREATE', 'SHOP_READ', 'SHOP_LIST', 'SHOP_UPDATE',
+    'USER_CREATE', 'USER_READ', 'USER_LIST', 'USER_UPDATE', 'USER_DELETE',
+    'ROLE_READ', 'ROLE_LIST',
+    'PERMISSION_READ', 'PERMISSION_LIST',
+    'PRODUCT_CREATE', 'PRODUCT_READ', 'PRODUCT_LIST', 'PRODUCT_UPDATE', 'PRODUCT_DELETE',
+    'SALES_CREATE', 'SALES_READ', 'SALES_LIST',
+    'INVENTORY_CREATE', 'INVENTORY_READ', 'INVENTORY_LIST', 'INVENTORY_UPDATE', 'INVENTORY_DELETE',
+    'CATEGORY_CREATE', 'CATEGORY_READ', 'CATEGORY_LIST', 'CATEGORY_UPDATE', 'CATEGORY_DELETE',
+    'EXPENSE_CREATE', 'EXPENSE_READ', 'EXPENSE_LIST', 'EXPENSE_UPDATE', 'EXPENSE_DELETE', 'EXPENSE_APPROVE',
+    'INVESTMENT_CREATE', 'INVESTMENT_READ', 'INVESTMENT_LIST',
+    'ANALYTICS_READ', 'ANALYTICS_LIST',
+    'AUDIT_READ', 'AUDIT_LIST'
+)
+ON CONFLICT DO NOTHING;
+
+-- MANAGER gets manager permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-manager-role', p.id
+FROM permissions p
+WHERE p.name IN (
+    'SHOP_READ', 'SHOP_LIST',
+    'USER_CREATE', 'USER_READ', 'USER_LIST', 'USER_UPDATE',
+    'PRODUCT_CREATE', 'PRODUCT_READ', 'PRODUCT_LIST', 'PRODUCT_UPDATE',
+    'SALES_CREATE', 'SALES_READ', 'SALES_LIST',
+    'INVENTORY_CREATE', 'INVENTORY_READ', 'INVENTORY_LIST', 'INVENTORY_UPDATE',
+    'CATEGORY_CREATE', 'CATEGORY_READ', 'CATEGORY_LIST', 'CATEGORY_UPDATE',
+    'EXPENSE_CREATE', 'EXPENSE_READ', 'EXPENSE_LIST',
+    'ANALYTICS_READ', 'ANALYTICS_LIST'
+)
+ON CONFLICT DO NOTHING;
+
+-- EMPLOYEE gets employee permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-employee-role', p.id
+FROM permissions p
+WHERE p.name IN (
+    'PRODUCT_READ', 'PRODUCT_LIST',
+    'SALES_CREATE', 'SALES_READ', 'SALES_LIST',
+    'INVENTORY_READ', 'INVENTORY_LIST'
+)
+ON CONFLICT DO NOTHING;
+
+-- INVESTOR gets investor permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-investor-role', p.id
+FROM permissions p
+WHERE p.name IN (
+    'INVESTMENT_READ', 'INVESTMENT_LIST',
+    'ANALYTICS_READ'
+)
+ON CONFLICT DO NOTHING;
 
 -- ========================================
 -- 5. USER-ROLE ASSIGNMENTS
 -- ========================================
-INSERT INTO user_roles (user_id, role_id)
-SELECT u.id, r.id
-FROM users u, roles r
-WHERE (u.id = '750e8400-e29b-41d4-a716-446655440001' AND r.name = 'SYSTEM_ADMIN')
-   OR (u.id = '750e8400-e29b-41d4-a716-446655440002' AND r.name = 'OWNER')
-   OR (u.id = '750e8400-e29b-41d4-a716-446655440003' AND r.name = 'MANAGER')
-   OR (u.id = '750e8400-e29b-41d4-a716-446655440004' AND r.name = 'EMPLOYEE')
-   OR (u.id = '750e8400-e29b-41d4-a716-446655440005' AND r.name = 'INVESTOR')
+-- Assign system roles to test users using test role IDs
+INSERT INTO user_roles (user_id, role_id) VALUES
+    ('750e8400-e29b-41d4-a716-446655440001', 'test-system-admin-role'),  -- admin@testretail.com -> SYSTEM_ADMIN
+    ('750e8400-e29b-41d4-a716-446655440002', 'test-owner-role'),          -- owner@testretail.com -> OWNER
+    ('750e8400-e29b-41d4-a716-446655440003', 'test-manager-role'),        -- manager@testretail.com -> MANAGER
+    ('750e8400-e29b-41d4-a716-446655440004', 'test-employee-role'),       -- employee@testretail.com -> EMPLOYEE
+    ('750e8400-e29b-41d4-a716-446655440005', 'test-investor-role')        -- investor@testretail.com -> INVESTOR
 ON CONFLICT DO NOTHING;
 
 -- ========================================
