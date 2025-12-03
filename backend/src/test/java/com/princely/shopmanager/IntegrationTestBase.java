@@ -188,7 +188,34 @@ public abstract class IntegrationTestBase {
      * Override in subclasses to provide specific test data.
      */
     protected void setupTestData() {
-        // Override in subclasses for specific test data setup
+        // Create default test shop for integration tests
+        if (shopRepository != null) {
+            try {
+                // Check if test shop already exists
+                if (!shopRepository.existsById("test-shop")) {
+                    Shop testShop = Shop.builder()
+                        .id("test-shop")
+                        .name("Test Shop")
+                        .tenant(createTenant("test-tenant"))
+                        .description("Default test shop for integration testing")
+                        .address("123 Test Street")
+                        .city("Test City")
+                        .state("Test State")
+                        .country("Test Country")
+                        .postalCode("12345")
+                        .phoneNumber("+15551234567")
+                        .email("test@example.com")
+                        .taxId("TAX-TEST")
+                        .status(Shop.ShopStatus.ACTIVE)
+                        .openingDate(LocalDateTime.now())
+                        .build();
+                    shopRepository.save(testShop);
+                }
+            } catch (Exception e) {
+                // Log but don't fail if shop already exists or other issues
+                System.err.println("Warning: Could not create default test shop: " + e.getMessage());
+            }
+        }
     }
 
     /**
@@ -235,9 +262,27 @@ public abstract class IntegrationTestBase {
      * @return Authentication headers with mock token
      */
     protected org.springframework.http.HttpHeaders createAuthHeaders(String username, String... roles) {
+        // Default: use test tenant and shop for backward compatibility
+        return createAuthHeadersWithContext(username, "test-tenant", "test-shop", roles);
+    }
+
+    /**
+     * Helper method to create authentication headers with tenant and shop context.
+     *
+     * @param username Username for authentication
+     * @param tenantId Tenant identifier
+     * @param shopId Shop identifier
+     * @param roles User roles
+     * @return Authentication headers with mock token including tenant and shop
+     */
+    protected org.springframework.http.HttpHeaders createAuthHeadersWithContext(String username, String tenantId, String shopId, String... roles) {
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.set("Authorization", "Bearer " + createTestToken(username, roles));
+        headers.set("Authorization", "Bearer " + createMockTokenWithTenantAndShop(username, tenantId, shopId, List.of(roles)));
         headers.set("X-Test-User", username);
+        headers.set("X-Test-Tenant", tenantId);
+        if (shopId != null) {
+            headers.set("X-Test-Shop", shopId);
+        }
         if (roles.length > 0) {
             headers.set("X-Test-Roles", String.join(",", roles));
         }
@@ -294,17 +339,45 @@ public abstract class IntegrationTestBase {
      * @return Mock token string
      */
     protected String createMockTokenWithTenant(String subject, String tenantId, List<String> roles) {
-        // Create a simple JSON-like structure for the token payload with tenant
-        String payload = String.format(
-            "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"tenant_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
-            subject,
-            roles.toString(),
-            subject,
-            subject,
-            tenantId,
-            System.currentTimeMillis() / 1000,
-            (System.currentTimeMillis() / 1000) + 3600 // 1 hour expiry
-        );
+        return createMockTokenWithTenantAndShop(subject, tenantId, null, roles);
+    }
+
+    /**
+     * Creates a mock token with tenant and shop context.
+     *
+     * @param subject Token subject (username)
+     * @param tenantId Tenant identifier
+     * @param shopId Shop identifier (optional)
+     * @param roles List of user roles
+     * @return Mock token string
+     */
+    protected String createMockTokenWithTenantAndShop(String subject, String tenantId, String shopId, List<String> roles) {
+        // Create a simple JSON-like structure for the token payload with tenant and shop
+        String payload;
+        if (shopId != null) {
+            payload = String.format(
+                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"tenant_id\":\"%s\",\"shop_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
+                subject,
+                roles.toString(),
+                subject,
+                subject,
+                tenantId,
+                shopId,
+                System.currentTimeMillis() / 1000,
+                (System.currentTimeMillis() / 1000) + 3600 // 1 hour expiry
+            );
+        } else {
+            payload = String.format(
+                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"tenant_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
+                subject,
+                roles.toString(),
+                subject,
+                subject,
+                tenantId,
+                System.currentTimeMillis() / 1000,
+                (System.currentTimeMillis() / 1000) + 3600 // 1 hour expiry
+            );
+        }
 
         // Encode as Base64 for a simple mock token format
         String encodedPayload = Base64.getEncoder().encodeToString(payload.getBytes());
