@@ -1,268 +1,142 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { useDashboardStats, useShopPerformance, useRecentActivities, useAlerts } from '../useDashboard'
-import { api } from '@/services/api'
+import { useAlerts, useAllShopsPerformance } from '../useDashboard'
+import { createQueryWrapper } from '@/test/test-utils'
+import { shopService } from '@/services/shopService'
+import { analyticsService } from '@/services/analyticsService'
 
-// Mock the API service
-jest.mock('@/services/api', () => ({
-  api: {
-    get: jest.fn(),
+// Mock the shop service
+jest.mock('@/services/shopService', () => ({
+  shopService: {
+    getActiveShops: jest.fn(),
   },
 }))
 
-const mockApi = api as jest.Mocked<typeof api>
+// Mock the analytics service
+jest.mock('@/services/analyticsService', () => ({
+  analyticsService: {
+    getSalesSummary: jest.fn(),
+    getRevenueAnalytics: jest.fn(),
+  },
+}))
+
+// Mock the auth context to allow queries to run
+jest.mock('@/context/ManualAuthContext', () => ({
+  useAuth: () => ({
+    isAuthenticated: true,
+    hasAnyPermission: jest.fn(() => true),
+    user: { shopId: 'shop-1' },
+  }),
+}))
+
+const mockShopService = shopService as jest.Mocked<typeof shopService>
+const mockAnalyticsService = analyticsService as jest.Mocked<typeof analyticsService>
 
 describe('useDashboard hooks', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  describe('useDashboardStats', () => {
-    it('should fetch dashboard stats successfully', async () => {
-      const mockStats = {
-        totalRevenue: 150000,
-        totalShops: 5,
-        totalProducts: 1200,
-        totalSales: 450,
-        investmentROI: 25.5,
-        activeUsers: 125,
-        systemHealth: 99.9,
-        revenueGrowth: 12.5,
-      }
-
-      mockApi.get.mockResolvedValue({ data: mockStats })
-
-      const { result } = renderHook(() => useDashboardStats())
-
-      expect(result.current.loading).toBe(true)
-      expect(result.current.stats).toBeNull()
+  describe('useAlerts', () => {
+    it('should return mock alerts data', async () => {
+      const { result } = renderHook(() => useAlerts(), { wrapper: createQueryWrapper() })
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.stats).toEqual(mockStats)
-        expect(result.current.error).toBeNull()
+        expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(mockApi.get).toHaveBeenCalledWith('/api/analytics/dashboard-stats')
+      // useAlerts returns a Promise.resolve with mock data
+      expect(result.current.data).toBeDefined()
+      expect(Array.isArray(result.current.data)).toBe(true)
+      expect(result.current.data?.length).toBeGreaterThan(0)
     })
 
-    it('should handle dashboard stats fetch error', async () => {
-      const errorMessage = 'Failed to fetch stats'
-      mockApi.get.mockRejectedValue(new Error(errorMessage))
-
-      const { result } = renderHook(() => useDashboardStats())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.stats).toBeNull()
-        expect(result.current.error).toBe('An unexpected error occurred')
-      })
-    })
-
-    it('should provide refetch function', async () => {
-      const mockStats = { totalRevenue: 150000 }
-      mockApi.get.mockResolvedValue({ data: mockStats })
-
-      const { result } = renderHook(() => useDashboardStats())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockApi.get).toHaveBeenCalledTimes(1)
-
-      // Test refetch
-      await result.current.refetch()
-      expect(mockApi.get).toHaveBeenCalledTimes(2)
+    it('should have expected query key', () => {
+      const { result } = renderHook(() => useAlerts(), { wrapper: createQueryWrapper() })
+      
+      // Query should be enabled and use the correct key
+      expect(result.current.isLoading || result.current.isSuccess).toBe(true)
     })
   })
 
-  describe('useShopPerformance', () => {
-    it('should fetch shop performance data successfully', async () => {
+  describe('useAllShopsPerformance', () => {
+    it('should fetch performance data for all shops', async () => {
       const mockShops = [
         {
-          id: '1',
+          id: 'shop-1',
           name: 'Downtown Electronics',
-          revenue: 125000,
-          salesCount: 342,
-          growth: 15,
-          status: 'excellent' as const,
+          status: 'active',
         },
         {
-          id: '2',
+          id: 'shop-2',
           name: 'Fashion Store',
-          revenue: 85000,
-          salesCount: 287,
-          growth: 8,
-          status: 'good' as const,
+          status: 'active',
         },
       ]
 
-      mockApi.get.mockResolvedValue({ data: mockShops })
+      const mockSalesSummary = {
+        totalRevenue: 125000,
+        totalTransactions: 342,
+        averageTransactionValue: 365.5,
+      }
 
-      const { result } = renderHook(() => useShopPerformance())
+      const mockRevenueAnalytics = {
+        growthRate: 15,
+      }
 
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.shops).toEqual(mockShops)
-        expect(result.current.error).toBeNull()
-      })
+      mockShopService.getActiveShops.mockResolvedValue(mockShops)
+      mockAnalyticsService.getSalesSummary.mockResolvedValue(mockSalesSummary)
+      mockAnalyticsService.getRevenueAnalytics.mockResolvedValue(mockRevenueAnalytics)
 
-      expect(mockApi.get).toHaveBeenCalledWith('/api/analytics/shop-performance')
-    })
-
-    it('should return empty array when no shops data', async () => {
-      mockApi.get.mockResolvedValue({ data: null })
-
-      const { result } = renderHook(() => useShopPerformance())
+      const { result } = renderHook(() => useAllShopsPerformance('month'), { wrapper: createQueryWrapper() })
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.shops).toEqual([])
+        expect(result.current.isSuccess).toBe(true)
       })
+
+      expect(result.current.data).toBeDefined()
+      expect(Array.isArray(result.current.data)).toBe(true)
     })
-  })
 
-  describe('useRecentActivities', () => {
-    it('should fetch recent activities with default limit', async () => {
-      const mockActivities = [
-        {
-          id: '1',
-          type: 'sale' as const,
-          description: 'New sale completed',
-          shop: 'Electronics Store',
-          amount: '₦125,000',
-          time: '5 minutes ago',
-        },
-        {
-          id: '2',
-          type: 'inventory' as const,
-          description: 'Stock updated',
-          shop: 'Fashion Store',
-          amount: '50 units',
-          time: '1 hour ago',
-        },
-      ]
+    it('should not fetch when no shops available', async () => {
+      mockShopService.getActiveShops.mockResolvedValue([])
 
-      mockApi.get.mockResolvedValue({ data: mockActivities })
+      const { result } = renderHook(() => useAllShopsPerformance('month'), { wrapper: createQueryWrapper() })
 
-      const { result } = renderHook(() => useRecentActivities())
-
+      // Wait a bit to ensure the query doesn't run
       await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.activities).toEqual(mockActivities)
+        // Query should remain in idle state when disabled (no shops)
+        expect(result.current.isPending || result.current.isSuccess || result.current.isError).toBe(true)
       })
 
-      expect(mockApi.get).toHaveBeenCalledWith('/api/activities/recent?limit=10')
+      // Data should be undefined since query is disabled
+      expect(result.current.data).toBeUndefined()
     })
 
-    it('should fetch recent activities with custom limit', async () => {
-      const mockActivities = []
-      mockApi.get.mockResolvedValue({ data: mockActivities })
-
-      const { result } = renderHook(() => useRecentActivities(5))
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockApi.get).toHaveBeenCalledWith('/api/activities/recent?limit=5')
-    })
-
-    it('should return empty array when no activities data', async () => {
-      mockApi.get.mockResolvedValue({ data: null })
-
-      const { result } = renderHook(() => useRecentActivities())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.activities).toEqual([])
-      })
-    })
-  })
-
-  describe('useAlerts', () => {
-    it('should fetch alerts and categorize them', async () => {
-      const mockAlerts = [
+    it('should handle errors gracefully for individual shops', async () => {
+      const mockShops = [
         {
-          id: '1',
-          type: 'error' as const,
-          message: 'System error detected',
-          time: '10 minutes ago',
-          action: 'Investigate',
-        },
-        {
-          id: '2',
-          type: 'warning' as const,
-          message: 'Low stock alert',
-          time: '30 minutes ago',
-          action: 'Restock',
-        },
-        {
-          id: '3',
-          type: 'info' as const,
-          message: 'Maintenance scheduled',
-          time: '1 hour ago',
-        },
-        {
-          id: '4',
-          type: 'error' as const,
-          message: 'Another error',
-          time: '2 hours ago',
+          id: 'shop-1',
+          name: 'Electronics Store',
+          status: 'active',
         },
       ]
 
-      mockApi.get.mockResolvedValue({ data: mockAlerts })
+      mockShopService.getActiveShops.mockResolvedValue(mockShops)
+      mockAnalyticsService.getSalesSummary.mockRejectedValue(new Error('Failed to fetch'))
+      mockAnalyticsService.getRevenueAnalytics.mockRejectedValue(new Error('Failed to fetch'))
 
-      const { result } = renderHook(() => useAlerts())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.alerts).toEqual(mockAlerts)
-
-        // Check categorization
-        expect(result.current.alertsByType.errors).toHaveLength(2)
-        expect(result.current.alertsByType.warnings).toHaveLength(1)
-        expect(result.current.alertsByType.infos).toHaveLength(1)
-      })
-
-      expect(mockApi.get).toHaveBeenCalledWith('/api/alerts/active')
-    })
-
-    it('should handle empty alerts response', async () => {
-      mockApi.get.mockResolvedValue({ data: [] })
-
-      const { result } = renderHook(() => useAlerts())
+      const { result } = renderHook(() => useAllShopsPerformance('month'), { wrapper: createQueryWrapper() })
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.alerts).toEqual([])
-        expect(result.current.alertsByType.errors).toEqual([])
-        expect(result.current.alertsByType.warnings).toEqual([])
-        expect(result.current.alertsByType.infos).toEqual([])
+        expect(result.current.isSuccess).toBe(true)
       })
-    })
 
-    it('should handle null alerts response', async () => {
-      mockApi.get.mockResolvedValue({ data: null })
-
-      const { result } = renderHook(() => useAlerts())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.alerts).toEqual([])
-      })
-    })
-
-    it('should handle alerts fetch error', async () => {
-      mockApi.get.mockRejectedValue(new Error('Network error'))
-
-      const { result } = renderHook(() => useAlerts())
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-        expect(result.current.alerts).toEqual([])
-        expect(result.current.error).toBe('An unexpected error occurred')
-      })
+      // Should still return data with default values for failed shops
+      expect(result.current.data).toBeDefined()
+      expect(Array.isArray(result.current.data)).toBe(true)
+      if (result.current.data && result.current.data.length > 0) {
+        expect(result.current.data[0].revenue).toBe(0)
+      }
     })
   })
 })

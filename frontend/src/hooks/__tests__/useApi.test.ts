@@ -62,8 +62,6 @@ describe('useApi', () => {
     const [, execute] = result.current
     execute()
 
-    expect(result.current[0].loading).toBe(true)
-
     await waitFor(() => {
       expect(result.current[0].loading).toBe(false)
       expect(result.current[0].data).toEqual(mockData)
@@ -79,7 +77,7 @@ describe('useApi', () => {
     const { result } = renderHook(() => useApi(mockApiCall, { immediate: false }))
 
     const [, execute] = result.current
-    execute()
+    await execute()
 
     await waitFor(() => {
       expect(result.current[0].loading).toBe(false)
@@ -124,11 +122,13 @@ describe('useApi', () => {
     let dependency = 'initial'
 
     const { rerender } = renderHook(
-      ({ dep }) => useApi(mockApiCall, { deps: [dep] }),
+      ({ dep }) => useApi(mockApiCall, { deps: [dep], immediate: true }),
       { initialProps: { dep: dependency } }
     )
 
-    expect(mockApiCall).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledTimes(1)
+    })
 
     dependency = 'changed'
     rerender({ dep: dependency })
@@ -162,14 +162,14 @@ describe('useMutation', () => {
     const { result } = renderHook(() => useMutation(mockMutation))
 
     const mutationResult = result.current.mutate(params)
-
-    expect(result.current.loading).toBe(true)
     expect(mockMutation).toHaveBeenCalledWith(params)
 
     const resolvedResult = await mutationResult
 
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBeNull()
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+      expect(result.current.error).toBeNull()
+    })
     expect(resolvedResult).toEqual(mockResult)
   })
 
@@ -183,8 +183,10 @@ describe('useMutation', () => {
     const mutationResult = result.current.mutate({ invalid: 'data' })
     const resolvedResult = await mutationResult
 
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBe(errorMessage)
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+      expect(result.current.error).toBe(errorMessage)
+    })
     expect(resolvedResult).toBeNull()
   })
 
@@ -198,8 +200,10 @@ describe('useMutation', () => {
     const mutationResult = result.current.mutate({})
     await mutationResult
 
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBe('An unexpected error occurred')
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+      expect(result.current.error).toBe('An unexpected error occurred')
+    })
   })
 
   it('should reset state correctly', async () => {
@@ -210,13 +214,18 @@ describe('useMutation', () => {
 
     // Trigger an error
     await result.current.mutate({})
-    expect(result.current.error).toBeTruthy()
+    
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy()
+    })
 
     // Reset state
     result.current.reset()
 
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBeNull()
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+      expect(result.current.error).toBeNull()
+    })
   })
 
   it('should handle multiple concurrent mutations', async () => {

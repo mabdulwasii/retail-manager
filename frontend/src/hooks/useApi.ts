@@ -29,8 +29,9 @@ export function useApi<T>(
       const result = await apiCall()
       setState({ data: result, loading: false, error: null })
     } catch (error) {
-      const errorMessage = error instanceof AxiosError
-        ? error.response?.data?.message || error.message
+      const isAxiosError = (error as any)?.isAxiosError === true
+      const errorMessage = isAxiosError
+        ? (error as AxiosError).response?.data?.message || (error as AxiosError).message
         : 'An unexpected error occurred'
 
       setState(prev => ({ ...prev, loading: false, error: errorMessage }))
@@ -66,8 +67,9 @@ export function useMutation<T, P = unknown>(
       setLoading(false)
       return result
     } catch (error) {
-      const errorMessage = error instanceof AxiosError
-        ? error.response?.data?.message || error.message
+      const isAxiosError = (error as any)?.isAxiosError === true
+      const errorMessage = isAxiosError
+        ? (error as AxiosError).response?.data?.message || (error as AxiosError).message
         : 'An unexpected error occurred'
 
       setError(errorMessage)
