@@ -277,6 +277,9 @@
             </plugin>
 
             <!-- Convert OpenAPI JSON to AsciiDoc -->
+            <!-- DISABLED: swagger2markup-maven-plugin dependencies no longer available in Maven Central -->
+            <!-- API documentation is still available via Springdoc OpenAPI UI at /swagger-ui.html -->
+            <!--
             <plugin>
                 <groupId>io.github.swagger2markup</groupId>
                 <artifactId>swagger2markup-maven-plugin</artifactId>
@@ -300,6 +303,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <!-- AsciiDoc Plugin for Documentation -->
             <plugin>
