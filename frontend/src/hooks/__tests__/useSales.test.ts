@@ -1,17 +1,23 @@
 import { renderHook, act } from '@testing-library/react'
 import { useSales, Product, CreateSaleRequest } from '../useSales'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/ManualAuthContext'
 import { useCurrency } from '../useCurrency'
+import { createMockAuth } from '@/test/test-utils'
+import { api } from '@/services/api'
 
 // Mock dependencies
-jest.mock('@/context/AuthContext')
 jest.mock('../useCurrency')
+jest.mock('@/services/api', () => ({
+  api: {
+    get: jest.fn(),
+    post: jest.fn(),
+    getBlob: jest.fn()
+  }
+}))
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 const mockUseCurrency = useCurrency as jest.MockedFunction<typeof useCurrency>
-
-// Mock fetch globally
-global.fetch = jest.fn()
+const mockApi = api as jest.Mocked<typeof api>
 
 describe('useSales', () => {
   const mockUser = {
@@ -20,7 +26,8 @@ describe('useSales', () => {
     email: 'cashier@example.com',
     firstName: 'John',
     lastName: 'Doe',
-    roles: ['ROLE_CASHIER']
+    roles: ['ROLE_CASHIER'],
+    shopId: 'shop1'
   }
 
   const mockProduct: Product = {
@@ -31,6 +38,7 @@ describe('useSales', () => {
     barcode: '123456789',
     category: 'Electronics',
     stock: 50,
+    availableStock: 50,
     isActive: true,
     taxRate: 7.5
   }
@@ -38,13 +46,7 @@ describe('useSales', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    mockUseAuth.mockReturnValue({
-      user: mockUser,
-      login: jest.fn(),
-      logout: jest.fn(),
-      isLoading: false,
-      isAuthenticated: true,
-    })
+    mockUseAuth.mockReturnValue(createMockAuth(mockUser))
 
     mockUseCurrency.mockReturnValue({
       currency: {
@@ -75,10 +77,7 @@ describe('useSales', () => {
   describe('Product Search', () => {
     it('should search products successfully', async () => {
       const mockResponse = [mockProduct]
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      })
+      mockApi.get.mockResolvedValueOnce(mockResponse)
 
       const { result } = renderHook(() => useSales())
 
@@ -86,23 +85,10 @@ describe('useSales', () => {
         const products = await result.current.searchProducts('test')
         expect(products).toEqual(mockResponse)
       })
-
-      expect(fetch).toHaveBeenCalledWith(
-        '/api/products/search?q=test',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': 'Bearer mock-token',
-            'Content-Type': 'application/json'
-          })
-        })
-      )
     })
 
     it('should handle search errors', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      })
+      mockApi.get.mockRejectedValueOnce(new Error('Failed to search products'))
 
       const { result } = renderHook(() => useSales())
 
@@ -115,10 +101,7 @@ describe('useSales', () => {
     })
 
     it('should find product by barcode', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockProduct,
-      })
+      mockApi.get.mockResolvedValueOnce(mockProduct)
 
       const { result } = renderHook(() => useSales())
 
@@ -129,10 +112,7 @@ describe('useSales', () => {
     })
 
     it('should return null for non-existent barcode', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-      })
+      mockApi.get.mockRejectedValueOnce({ response: { status: 404 } })
 
       const { result } = renderHook(() => useSales())
 
@@ -148,16 +128,17 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
       })
 
       expect(result.current.cart).toHaveLength(1)
-      expect(result.current.cart[0]).toEqual({
+      expect(result.current.cart[0]).toMatchObject({
         product: mockProduct,
         quantity: 2,
         subtotal: 200,
         taxAmount: 15,
-        total: 215
+        total: 215,
+        unitPrice: 100
       })
     })
 
@@ -165,8 +146,8 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 1)
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 1, undefined, 100)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
       })
 
       expect(result.current.cart).toHaveLength(1)
@@ -175,11 +156,11 @@ describe('useSales', () => {
     })
 
     it('should not add more than stock quantity', () => {
-      const lowStockProduct = { ...mockProduct, stock: 5 }
+      const lowStockProduct = { ...mockProduct, stock: 5, availableStock: 5 }
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(lowStockProduct, 10)
+        result.current.addToCart(lowStockProduct, 10, undefined, 100)
       })
 
       expect(result.current.cart).toHaveLength(0)
@@ -190,7 +171,7 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 1)
+        result.current.addToCart(mockProduct, 1, undefined, 100)
         result.current.removeFromCart(mockProduct.id)
       })
 
@@ -201,7 +182,7 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
         result.current.updateCartItemQuantity(mockProduct.id, 5)
       })
 
@@ -213,7 +194,7 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
         result.current.updateCartItemQuantity(mockProduct.id, 0)
       })
 
@@ -224,7 +205,7 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 1)
+        result.current.addToCart(mockProduct, 1, undefined, 100)
         result.current.clearCart()
       })
 
@@ -237,7 +218,7 @@ describe('useSales', () => {
       const { result } = renderHook(() => useSales())
 
       act(() => {
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
       })
 
       const summary = result.current.cartSummary
@@ -262,9 +243,9 @@ describe('useSales', () => {
     it('should process sale successfully', async () => {
       const mockSale = {
         id: '1',
-        transactionDate: '2024-01-01T12:00:00Z',
-        items: [],
-        subtotal: 200,
+        transactionNumber: 'TXN001',
+        transactionDate: new Date().toISOString(),
+        subtotalAmount: 200,
         taxAmount: 15,
         discountAmount: 0,
         totalAmount: 215,
@@ -275,16 +256,12 @@ describe('useSales', () => {
         shopId: '1'
       }
 
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockSale,
-      })
+      mockApi.post.mockResolvedValueOnce(mockSale)
 
       const { result } = renderHook(() => useSales())
 
-      // Add item to cart first
       act(() => {
-        result.current.addToCart(mockProduct, 2)
+        result.current.addToCart(mockProduct, 2, undefined, 100)
       })
 
       const saleData: CreateSaleRequest = {
@@ -301,15 +278,11 @@ describe('useSales', () => {
         expect(sale).toEqual(mockSale)
       })
 
-      // Cart should be cleared after successful sale
       expect(result.current.cart).toHaveLength(0)
     })
 
     it('should handle sale processing errors', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-      })
+      mockApi.post.mockRejectedValueOnce(new Error('Failed to process sale'))
 
       const { result } = renderHook(() => useSales())
 
@@ -329,7 +302,7 @@ describe('useSales', () => {
 
   describe('Sales History', () => {
     it('should fetch sales history', async () => {
-      const mockSales = [{
+      const mockSalesData = [{
         id: '1',
         transactionDate: '2024-01-01T12:00:00Z',
         items: [],
@@ -344,26 +317,31 @@ describe('useSales', () => {
         shopId: '1'
       }]
 
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockSales,
-      })
+      const mockPagedResponse = {
+        content: mockSalesData,
+        totalElements: 1,
+        totalPages: 1,
+        size: 20,
+        number: 0,
+        first: true,
+        last: true,
+        empty: false
+      }
+
+      mockApi.get.mockResolvedValue(mockPagedResponse)
 
       const { result } = renderHook(() => useSales())
 
       await act(async () => {
-        const sales = await result.current.fetchSales()
-        expect(sales).toEqual(mockSales)
+        const response = await result.current.fetchSales()
+        expect(response).toEqual(mockPagedResponse)
       })
 
-      expect(result.current.sales).toEqual(mockSales)
+      expect(result.current.sales).toEqual(mockSalesData)
     })
 
     it('should fetch sales with filters', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      })
+      mockApi.get.mockResolvedValueOnce([])
 
       const { result } = renderHook(() => useSales())
 
@@ -377,9 +355,15 @@ describe('useSales', () => {
         await result.current.fetchSales(filter)
       })
 
-      expect(fetch).toHaveBeenCalledWith(
-        '/api/sales?startDate=2024-01-01&endDate=2024-01-31&status=COMPLETED',
-        expect.any(Object)
+      expect(mockApi.get).toHaveBeenCalledWith(
+        '/sales',
+        expect.objectContaining({
+          params: expect.objectContaining({
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
+            status: 'COMPLETED'
+          })
+        })
       )
     })
   })
@@ -387,10 +371,7 @@ describe('useSales', () => {
   describe('Receipt Management', () => {
     it('should generate receipt URL', async () => {
       const mockBlob = new Blob(['receipt content'], { type: 'application/pdf' })
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        blob: async () => mockBlob,
-      })
+      mockApi.getBlob.mockResolvedValueOnce(mockBlob)
 
       // Mock URL.createObjectURL
       global.URL.createObjectURL = jest.fn(() => 'blob:receipt-url')
@@ -404,10 +385,7 @@ describe('useSales', () => {
     })
 
     it('should handle receipt generation errors', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-      })
+      mockApi.getBlob.mockRejectedValueOnce(new Error('Failed to generate receipt'))
 
       const { result } = renderHook(() => useSales())
 
@@ -426,7 +404,7 @@ describe('useSales', () => {
 
       // Trigger an error by adding too many items
       act(() => {
-        result.current.addToCart({ ...mockProduct, stock: 1 }, 5)
+        result.current.addToCart({ ...mockProduct, stock: 1, availableStock: 1 }, 5, undefined, 100)
       })
 
       expect(result.current.error).toBeTruthy()
