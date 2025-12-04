@@ -6,6 +6,9 @@ import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
 import com.princely.shopmanager.auth.service.KeycloakUserService;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
+import com.princely.shopmanager.core.dto.ShopCreateRequest;
+import com.princely.shopmanager.core.dto.ShopResponse;
+import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,13 +20,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
-import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,9 +32,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -52,8 +55,8 @@ import static org.mockito.Mockito.when;
  *
  * Key Design Decisions:
  * - PostgreSQL container is singleton and shared across all test classes
- * - Database is reset via Flyway + @Sql before each test method
- * - @Commit ensures test data is visible across transaction boundaries (fixes permission loading)
+ * - Database is reset via Flyway + @Sql before each test method (@Sql auto-commits by default)
+ * - Test data from test-data.sql is visible immediately (no manual transaction management needed)
  * - Active profile "test" loads application-test.yml configuration
  * - @DynamicPropertySource registers TestContainer properties before Spring context loads
  *
@@ -82,8 +85,6 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Sql(scripts = "/test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Commit  // Force commit so permissions are visible across transactions
-@Transactional
 public abstract class AbstractIntegrationTest {
 
     /**
@@ -662,6 +663,92 @@ public abstract class AbstractIntegrationTest {
                 System.err.println("Warning: Could not create default test shop: " + e.getMessage());
             }
         }
+    }
+
+    // ============================================
+    // Shop Test Data Helpers
+    // ============================================
+
+    /**
+     * Creates a sample ShopCreateRequest for testing.
+     *
+     * @param name Shop name
+     * @return ShopCreateRequest with test data
+     */
+    protected ShopCreateRequest createSampleShopCreateRequest(String name) {
+        return ShopCreateRequest.builder()
+            .name(name + "-" + UUID.randomUUID().toString().substring(0, 8))
+            .description("Test shop description for " + name)
+            .address("123 Test Street")
+            .city("Test City")
+            .state("Test State")
+            .country("Test Country")
+            .postalCode("12345")
+            .phoneNumber("+15551234567")
+            .email("test-" + name.toLowerCase().replaceAll("[^a-z0-9]", "") + "@example.com")
+            .taxId("TAX" + System.currentTimeMillis())
+            .openingDate(LocalDateTime.now().plusDays(1))
+            .build();
+    }
+
+    /**
+     * Creates a sample ShopUpdateRequest for testing.
+     *
+     * @param description New description
+     * @return ShopUpdateRequest with test data
+     */
+    protected ShopUpdateRequest createSampleShopUpdateRequest(String description) {
+        return ShopUpdateRequest.builder()
+            .description(description)
+            .city("Updated City")
+            .phoneNumber("+15559876543")
+            .build();
+    }
+
+    /**
+     * Asserts that a ShopResponse is valid.
+     *
+     * @param response Shop response to validate
+     * @param expectedName Expected shop name (or null to skip name check)
+     */
+    protected void assertValidShopResponse(ShopResponse response, String expectedName) {
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotBlank();
+        assertThat(response.getTenantId()).isNotBlank();
+        assertThat(response.getCreatedAt()).isNotNull();
+        assertThat(response.getUpdatedAt()).isNotNull();
+
+        if (expectedName != null) {
+            assertThat(response.getName()).contains(expectedName);
+        }
+    }
+
+    /**
+     * Asserts that a paginated response is valid.
+     *
+     * @param responseBody Response body as string
+     * @param expectedSize Expected minimum number of elements
+     */
+    protected void assertValidPagedResponse(String responseBody, int expectedSize) {
+        assertThat(responseBody).isNotBlank();
+        assertThat(responseBody).contains("\"content\"");
+        assertThat(responseBody).contains("\"totalElements\"");
+        assertThat(responseBody).contains("\"totalPages\"");
+    }
+
+    /**
+     * Sets up test data for a specific tenant.
+     *
+     * @param tenantId Tenant ID
+     * @return Map containing test data (testShop, tenantId)
+     */
+    protected Map<String, Object> setupTenantTestData(String tenantId) {
+        setTenantContext(tenantId);
+        Shop testShop = createTestShop("IntegrationTest", tenantId);
+        return Map.of(
+            "testShop", testShop,
+            "tenantId", tenantId
+        );
     }
 
     /**
