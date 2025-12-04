@@ -378,6 +378,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                    <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
+                    <shutdown>kill</shutdown>
+                    <argLine>-Xmx2048m @{argLine}</argLine>
                     <systemPropertyVariables>
                         <spring.profiles.active>test</spring.profiles.active>
                     </systemPropertyVariables>
@@ -550,6 +555,11 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
+                            <shutdown>kill</shutdown>
+                            <argLine>-Xmx2048m @{argLine}</argLine>
                             <systemPropertyVariables>
                                 <spring.profiles.active>test</spring.profiles.active>
                             </systemPropertyVariables>
@@ -567,6 +577,11 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <forkedProcessExitTimeoutInSeconds>120</forkedProcessExitTimeoutInSeconds>
+                            <shutdown>kill</shutdown>
+                            <argLine>-Xmx3072m @{argLine}</argLine>
                             <systemPropertyVariables>
                                 <spring.profiles.active>test</spring.profiles.active>
                             </systemPropertyVariables>

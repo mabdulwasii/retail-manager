@@ -2,8 +2,11 @@ spring:
   datasource:
     # URL, username, password, and driver are set dynamically by @DynamicPropertySource in AbstractIntegrationTest
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+      maximum-pool-size: 5        # Reduced from 10 for test environment
+      minimum-idle: 1             # Reduced from 2
+      max-lifetime: 300000        # 5 minutes
+      connection-timeout: 10000   # 10 seconds
+      leak-detection-threshold: 60000  # 60 seconds - detect connection leaks
 
   jpa:
     hibernate:
