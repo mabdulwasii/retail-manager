@@ -1,6 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
-import com.princely.shopmanager.IntegrationTestBase;
+import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.core.domain.Permission;
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Permission-Based Security Integration Tests")
-class PermissionSecurityIT extends IntegrationTestBase {
+class PermissionSecurityIT extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;

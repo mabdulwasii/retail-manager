@@ -1,6 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
-import com.princely.shopmanager.IntegrationTestBase;
+import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.auth.constants.SecurityRoles;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Shop Access Control Integration Tests")
-class ShopAccessControlIT extends IntegrationTestBase {
+class ShopAccessControlIT extends AbstractIntegrationTest {
 
     @Autowired
     private ShopAccessValidator shopAccessValidator;

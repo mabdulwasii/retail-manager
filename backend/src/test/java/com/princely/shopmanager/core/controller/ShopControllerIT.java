@@ -1,6 +1,6 @@
 package com.princely.shopmanager.core.controller;
 
-import com.princely.shopmanager.IntegrationTestBase;
+import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Error handling and edge cases
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class ShopControllerIT extends IntegrationTestBase {
+class ShopControllerIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should create shop successfully with valid data and OWNER role")

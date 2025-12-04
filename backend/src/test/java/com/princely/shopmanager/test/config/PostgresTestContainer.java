@@ -23,6 +23,7 @@ public class PostgresTestContainer extends PostgreSQLContainer<PostgresTestConta
         withDatabaseName("shopmanager_test");
         withUsername("test");
         withPassword("test");
+        withReuse(true);  // Enable container reuse for faster test execution
     }
 
     public static PostgresTestContainer getInstance() {
