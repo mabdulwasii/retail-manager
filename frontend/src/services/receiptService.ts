@@ -8,6 +8,8 @@ export interface Receipt {
   shopId: string
   shopName?: string
   generatedAt: string
+  printed?: boolean
+  emailed?: boolean
   printedAt?: string
   emailedAt?: string
   printedBy?: string
