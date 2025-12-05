@@ -62,10 +62,202 @@ INSERT INTO roles (id, name, description, is_system, tenant_id, created_at, upda
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
--- 4.5. ASSIGN PERMISSIONS TO TEST ROLES
+-- 4.5. CREATE PERMISSIONS FOR TESTS
 -- ========================================
--- Grant permissions to test roles by looking up permission IDs from Flyway migrations
--- Uses SELECT to find permissions by name (since Flyway creates them with auto-generated IDs)
+-- Insert permissions needed by test roles.
+-- This duplicates some Flyway migration data but ensures test-data.sql is self-contained
+-- and doesn't depend on Flyway transaction visibility.
+--
+-- NOTE: Flyway migrations create these same permissions for production.
+-- This section ensures they exist for integration tests where transaction isolation
+-- may prevent test-data.sql from seeing Flyway's inserted data.
+
+-- Product permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-product-create', 'PRODUCT_CREATE', 'Create new products', 'PRODUCT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-product-read', 'PRODUCT_READ', 'View product details', 'PRODUCT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-product-list', 'PRODUCT_LIST', 'List and search products', 'PRODUCT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-product-update', 'PRODUCT_UPDATE', 'Edit product details', 'PRODUCT', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-product-delete', 'PRODUCT_DELETE', 'Delete products', 'PRODUCT', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Category permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-category-create', 'CATEGORY_CREATE', 'Create product categories', 'CATEGORY', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-category-read', 'CATEGORY_READ', 'View category details', 'CATEGORY', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-category-list', 'CATEGORY_LIST', 'List and search categories', 'CATEGORY', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-category-update', 'CATEGORY_UPDATE', 'Edit category details', 'CATEGORY', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-category-delete', 'CATEGORY_DELETE', 'Delete categories', 'CATEGORY', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Inventory permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-inventory-create', 'INVENTORY_CREATE', 'Add stock to inventory', 'INVENTORY', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-read', 'INVENTORY_READ', 'View inventory details', 'INVENTORY', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-list', 'INVENTORY_LIST', 'List and search inventory', 'INVENTORY', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-update', 'INVENTORY_UPDATE', 'Adjust stock levels', 'INVENTORY', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-delete', 'INVENTORY_DELETE', 'Remove inventory records', 'INVENTORY', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-adjust', 'INVENTORY_ADJUST', 'Adjust inventory levels', 'INVENTORY', 'ADJUST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-reserve', 'INVENTORY_RESERVE', 'Reserve inventory', 'INVENTORY', 'RESERVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-history', 'INVENTORY_HISTORY', 'View inventory history', 'INVENTORY', 'HISTORY', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-history-view', 'INVENTORY_HISTORY_VIEW', 'View inventory movements', 'INVENTORY', 'HISTORY_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-inventory-forecast', 'INVENTORY_FORECAST', 'Forecast inventory needs', 'INVENTORY', 'FORECAST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Sales permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-sales-create', 'SALES_CREATE', 'Process sales transactions', 'SALES', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-sales-read', 'SALES_READ', 'View sale details', 'SALES', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-sales-list', 'SALES_LIST', 'List and search sales', 'SALES', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-sales-update', 'SALES_UPDATE', 'Edit sales transactions', 'SALES', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-sales-delete', 'SALES_DELETE', 'Delete sales records', 'SALES', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-sales-void', 'SALES_VOID', 'Void sales transactions', 'SALES', 'VOID', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Receipt permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-receipt-create', 'RECEIPT_CREATE', 'Generate receipts', 'RECEIPT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-receipt-read', 'RECEIPT_READ', 'View receipt details', 'RECEIPT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-receipt-list', 'RECEIPT_LIST', 'List receipts', 'RECEIPT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-receipt-send', 'RECEIPT_SEND', 'Send receipts', 'RECEIPT', 'SEND', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-receipt-email', 'RECEIPT_EMAIL', 'Email receipts', 'RECEIPT', 'EMAIL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Expense permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-expense-create', 'EXPENSE_CREATE', 'Record expenses', 'EXPENSE', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-read', 'EXPENSE_READ', 'View expense details', 'EXPENSE', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-list', 'EXPENSE_LIST', 'List and search expenses', 'EXPENSE', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-update', 'EXPENSE_UPDATE', 'Edit expense records', 'EXPENSE', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-delete', 'EXPENSE_DELETE', 'Delete expense records', 'EXPENSE', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-approve', 'EXPENSE_APPROVE', 'Approve expenses', 'EXPENSE', 'APPROVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Expense Category permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-expense-cat-create', 'EXPENSE_CATEGORY_CREATE', 'Create expense categories', 'EXPENSE_CATEGORY', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-cat-read', 'EXPENSE_CATEGORY_READ', 'View expense category details', 'EXPENSE_CATEGORY', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-cat-list', 'EXPENSE_CATEGORY_LIST', 'List expense categories', 'EXPENSE_CATEGORY', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-cat-update', 'EXPENSE_CATEGORY_UPDATE', 'Edit expense categories', 'EXPENSE_CATEGORY', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-expense-cat-delete', 'EXPENSE_CATEGORY_DELETE', 'Delete expense categories', 'EXPENSE_CATEGORY', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Investment permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-invest-create', 'INVESTMENT_CREATE', 'Create investments', 'INVESTMENT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-read', 'INVESTMENT_READ', 'View investment details', 'INVESTMENT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-list', 'INVESTMENT_LIST', 'List investments', 'INVESTMENT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-update', 'INVESTMENT_UPDATE', 'Edit investment records', 'INVESTMENT', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-delete', 'INVESTMENT_DELETE', 'Delete investment records', 'INVESTMENT', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-close', 'INVESTMENT_CLOSE', 'Close investments', 'INVESTMENT', 'CLOSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-invest-distribute', 'INVESTMENT_PROFIT_DISTRIBUTE', 'Distribute profits', 'INVESTMENT', 'PROFIT_DISTRIBUTE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Return permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-return-create', 'RETURN_CREATE', 'Process product returns', 'RETURN', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-return-read', 'RETURN_READ', 'View return details', 'RETURN', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-return-list', 'RETURN_LIST', 'List returns', 'RETURN', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-return-update', 'RETURN_UPDATE', 'Edit return status', 'RETURN', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-return-delete', 'RETURN_DELETE', 'Delete return records', 'RETURN', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-return-approve', 'RETURN_APPROVE', 'Approve returns', 'RETURN', 'APPROVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Tenant permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-tenant-create', 'TENANT_CREATE', 'Create tenants', 'TENANT', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-tenant-read', 'TENANT_READ', 'View tenant details', 'TENANT', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-tenant-list', 'TENANT_LIST', 'List tenants', 'TENANT', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-tenant-update', 'TENANT_UPDATE', 'Edit tenant settings', 'TENANT', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-tenant-delete', 'TENANT_DELETE', 'Delete tenants', 'TENANT', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Shop permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-shop-create', 'SHOP_CREATE', 'Create shops', 'SHOP', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-shop-read', 'SHOP_READ', 'View shop details', 'SHOP', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-shop-list', 'SHOP_LIST', 'List shops', 'SHOP', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-shop-list-all', 'SHOP_LIST_ALL', 'List all shops', 'SHOP', 'LIST_ALL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-shop-update', 'SHOP_UPDATE', 'Edit shop settings', 'SHOP', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-shop-delete', 'SHOP_DELETE', 'Delete shops', 'SHOP', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- User permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-user-create', 'USER_CREATE', 'Create users', 'USER', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-user-read', 'USER_READ', 'View user details', 'USER', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-user-list', 'USER_LIST', 'List users', 'USER', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-user-list-all', 'USER_LIST_ALL', 'List all users', 'USER', 'LIST_ALL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-user-update', 'USER_UPDATE', 'Edit user details', 'USER', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-user-delete', 'USER_DELETE', 'Delete users', 'USER', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Role permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-role-create', 'ROLE_CREATE', 'Create custom roles', 'ROLE', 'CREATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-role-read', 'ROLE_READ', 'View role details', 'ROLE', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-role-list', 'ROLE_LIST', 'List roles', 'ROLE', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-role-update', 'ROLE_UPDATE', 'Edit role permissions', 'ROLE', 'UPDATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-role-delete', 'ROLE_DELETE', 'Delete custom roles', 'ROLE', 'DELETE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-role-assign', 'ROLE_ASSIGN', 'Assign roles to users', 'ROLE', 'ASSIGN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Permission permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-permission-read', 'PERMISSION_READ', 'View permission details', 'PERMISSION', 'READ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-permission-list', 'PERMISSION_LIST', 'List all permissions', 'PERMISSION', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Audit Log permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-audit-view-shop', 'AUDIT_LOG_VIEW_SHOP', 'View shop-level audit logs', 'AUDIT_LOG', 'VIEW_SHOP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-audit-view-tenant', 'AUDIT_LOG_VIEW_TENANT', 'View tenant-level audit logs', 'AUDIT_LOG', 'VIEW_TENANT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Analytics permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-analytics-sales', 'ANALYTICS_SALES_VIEW', 'View sales analytics', 'ANALYTICS', 'SALES_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-analytics-invest', 'ANALYTICS_INVESTMENT_VIEW', 'View investment analytics', 'ANALYTICS', 'INVESTMENT_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-analytics-manage', 'ANALYTICS_MANAGE', 'Manage analytics settings', 'ANALYTICS', 'MANAGE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- Fraud Detection permissions
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-fraud-view', 'FRAUD_VIEW', 'View fraud alerts', 'FRAUD', 'VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-fraud-manage', 'FRAUD_MANAGE', 'Manage fraud rules', 'FRAUD', 'MANAGE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-fraud-list', 'FRAUD_LIST', 'List fraud alerts', 'FRAUD', 'LIST', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-fraud-investigate', 'FRAUD_INVESTIGATE', 'Investigate fraud cases', 'FRAUD', 'INVESTIGATE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-fraud-resolve', 'FRAUD_RESOLVE', 'Resolve fraud cases', 'FRAUD', 'RESOLVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('test-perm-fraud-detect', 'FRAUD_DETECT', 'Detect fraud patterns', 'FRAUD', 'DETECT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- System Admin permission
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
+VALUES
+    ('test-perm-system-admin', 'SYSTEM_ADMIN', 'Full system administration access', 'SYSTEM', 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (name) DO NOTHING;
+
+-- ========================================
+-- 4.6. ASSIGN PERMISSIONS TO TEST ROLES
+-- ========================================
+-- Grant permissions to test roles using the permissions created above
 
 -- TEST_ADMIN gets all permissions (matches WithMockPermissionsSecurityContextFactory SYSTEM_ADMIN/SUPER_ADMIN)
 INSERT INTO role_permissions (role_id, permission_id)
@@ -112,6 +304,8 @@ WHERE p.name IN (
 )
 ON CONFLICT DO NOTHING;
 
+-- DIAGNOSTIC: TEST_ADMIN permissions should be assigned above
+
 -- TEST_OWNER gets owner permissions (matches WithMockPermissionsSecurityContextFactory)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 'test-role-owner', p.id
@@ -155,6 +349,8 @@ WHERE p.name IN (
 )
 ON CONFLICT DO NOTHING;
 
+-- DIAGNOSTIC: TEST_OWNER permissions should be assigned above
+
 -- TEST_MANAGER gets manager permissions (matches WithMockPermissionsSecurityContextFactory)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 'test-role-manager', p.id
@@ -166,6 +362,8 @@ WHERE p.name IN (
     'USER_CREATE', 'USER_READ', 'USER_LIST', 'USER_UPDATE',
     -- Role
     'ROLE_READ', 'ROLE_LIST',
+    -- Permission
+    'PERMISSION_READ', 'PERMISSION_LIST',
     -- Product
     'PRODUCT_CREATE', 'PRODUCT_READ', 'PRODUCT_LIST', 'PRODUCT_UPDATE',
     -- Category

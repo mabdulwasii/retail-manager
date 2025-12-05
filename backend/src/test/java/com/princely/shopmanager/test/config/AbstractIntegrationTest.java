@@ -11,10 +11,12 @@ import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -81,6 +83,7 @@ import static org.mockito.Mockito.when;
  * }
  * </pre>
  */
+@Slf4j
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -133,6 +136,12 @@ public abstract class AbstractIntegrationTest {
      */
     @Autowired(required = false)
     protected ShopRepository shopRepository;
+
+    /**
+     * JdbcTemplate for raw SQL queries in diagnostic methods.
+     */
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
 
     /**
      * Mock KeycloakUserService to avoid requiring actual Keycloak connection in tests.
@@ -216,6 +225,59 @@ public abstract class AbstractIntegrationTest {
             user.setEnabled(true);
             return Optional.of(user);
         });
+    }
+
+    /**
+     * DIAGNOSTIC: Debug database state after test-data.sql loads.
+     * Logs counts and sample data to verify permission loading.
+     *
+     * This method runs AFTER @Sql executes test-data.sql.
+     */
+    @BeforeEach
+    void debugDatabaseState() {
+        try {
+            // Count core tables
+            Long permissionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM permissions", Long.class);
+            Long roleCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM roles WHERE id LIKE 'test-role-%'", Long.class);
+            Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users WHERE email LIKE '%@testretail.com'", Long.class);
+            Long rolePermCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM role_permissions WHERE role_id LIKE 'test-role-%'", Long.class);
+
+            log.info("========== DATABASE STATE AFTER test-data.sql ==========");
+            log.info("Permissions in database: {}", permissionCount);
+            log.info("Test roles created: {}", roleCount);
+            log.info("Test users created: {}", userCount);
+            log.info("Role-permission assignments: {}", rolePermCount);
+
+            // Check specific test-role-owner permissions
+            Long ownerPermCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM role_permissions WHERE role_id = 'test-role-owner'", Long.class);
+            log.info("TEST_OWNER role has {} permissions assigned", ownerPermCount);
+
+            // Sample permissions for TEST_OWNER
+            if (ownerPermCount != null && ownerPermCount > 0) {
+                List<String> samplePerms = jdbcTemplate.queryForList(
+                    "SELECT p.name FROM role_permissions rp " +
+                    "JOIN permissions p ON rp.permission_id = p.id " +
+                    "WHERE rp.role_id = 'test-role-owner' LIMIT 5",
+                    String.class);
+                log.info("Sample TEST_OWNER permissions: {}", samplePerms);
+            } else {
+                log.warn("⚠️  TEST_OWNER has ZERO permissions! role_permissions INSERT likely failed");
+            }
+
+            // Check if owner@testretail.com user has roles
+            Integer userRoleCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM user_roles ur " +
+                "JOIN users u ON ur.user_id = u.id " +
+                "WHERE u.email = 'owner@testretail.com'",
+                Integer.class);
+            log.info("owner@testretail.com has {} roles assigned", userRoleCount);
+
+            log.info("========================================================");
+
+        } catch (Exception e) {
+            log.error("Failed to debug database state", e);
+        }
     }
 
     // ============================================

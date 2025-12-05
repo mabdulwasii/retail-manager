@@ -90,12 +90,10 @@ class PermissionControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/permissions/grouped"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$", isA(Object.class)))
-            .andExpect(jsonPath("$.PRODUCT", isA(Iterable.class)))
-            .andExpect(jsonPath("$.SALES", isA(Iterable.class)))
-            .andExpect(jsonPath("$.INVENTORY", isA(Iterable.class)))
-            .andExpect(jsonPath("$.USER", isA(Iterable.class)))
-            .andExpect(jsonPath("$.ROLE", isA(Iterable.class)));
+            .andExpect(jsonPath("$", isA(Iterable.class))) // Returns array of PermissionGroupResponse
+            .andExpect(jsonPath("$[*].resource").value(hasItems("PRODUCT", "SALES", "INVENTORY", "USER", "ROLE")))
+            .andExpect(jsonPath("$[?(@.resource == 'PRODUCT')].permissions", isA(Iterable.class)))
+            .andExpect(jsonPath("$[?(@.resource == 'SALES')].permissions", isA(Iterable.class)));
     }
 
     @Test
@@ -105,7 +103,8 @@ class PermissionControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/permissions/grouped"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$", isA(Object.class)));
+            .andExpect(jsonPath("$", isA(Iterable.class))) // Returns array of PermissionGroupResponse
+            .andExpect(jsonPath("$[*].resource").value(hasItem("PRODUCT"))); // Manager should see at least PRODUCT permissions
     }
 
     @Test
@@ -115,11 +114,9 @@ class PermissionControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/permissions/grouped"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.TENANT", isA(Iterable.class))) // System admin sees tenant permissions
-            .andExpect(jsonPath("$.SHOP", isA(Iterable.class)))
-            .andExpect(jsonPath("$.PRODUCT", isA(Iterable.class)))
-            .andExpect(jsonPath("$.INVESTMENT", isA(Iterable.class)))
-            .andExpect(jsonPath("$.ANALYTICS", isA(Iterable.class)));
+            .andExpect(jsonPath("$", isA(Iterable.class))) // Returns array of PermissionGroupResponse
+            .andExpect(jsonPath("$[*].resource").value(hasItems("TENANT", "SHOP", "PRODUCT", "INVESTMENT", "ANALYTICS")))
+            .andExpect(jsonPath("$[?(@.resource == 'TENANT')].permissions", isA(Iterable.class))); // System admin sees tenant permissions
     }
 
     @Test
@@ -146,20 +143,11 @@ class PermissionControllerIT extends AbstractIntegrationTest {
     void shouldIncludeCorePermissionCategories() throws Exception {
         mockMvc.perform(get("/api/permissions/grouped"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.PRODUCT").exists())
-            .andExpect(jsonPath("$.SALES").exists())
-            .andExpect(jsonPath("$.INVENTORY").exists())
-            .andExpect(jsonPath("$.EXPENSE").exists())
-            .andExpect(jsonPath("$.USER").exists())
-            .andExpect(jsonPath("$.ROLE").exists())
-            .andExpect(jsonPath("$.SHOP").exists())
-            .andExpect(jsonPath("$.CATEGORY").exists())
-            .andExpect(jsonPath("$.INVESTMENT").exists())
-            .andExpect(jsonPath("$.RETURN").exists())
-            .andExpect(jsonPath("$.RECEIPT").exists())
-            .andExpect(jsonPath("$.AUDIT_LOG").exists())
-            .andExpect(jsonPath("$.ANALYTICS").exists())
-            .andExpect(jsonPath("$.FRAUD").exists());
+            .andExpect(jsonPath("$", isA(Iterable.class))) // Returns array of PermissionGroupResponse
+            .andExpect(jsonPath("$[*].resource").value(hasItems(
+                "PRODUCT", "SALES", "INVENTORY", "EXPENSE", "USER", "ROLE", "SHOP",
+                "CATEGORY", "INVESTMENT", "RETURN", "RECEIPT", "AUDIT_LOG", "ANALYTICS", "FRAUD"
+            )));
     }
 
     @Test

@@ -73,4 +73,6 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.testcontainers: INFO
     com.github.dockerjava: WARN
-    org.flywaydb: INFO
+    org.flywaydb: DEBUG  # Changed from INFO to DEBUG to see migration execution
+    org.springframework.jdbc: DEBUG  # Added to see @Sql script execution
+    org.springframework.test.context.jdbc: DEBUG  # Added to see @Sql transaction details
