@@ -1,6 +1,5 @@
 package com.princely.shopmanager.core.controller;
 
-import com.princely.shopmanager.auth.service.KeycloakUserService;
 import com.princely.shopmanager.core.domain.Permission;
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.Shop;
@@ -12,59 +11,20 @@ import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.test.TestConstants;
-import com.princely.shopmanager.test.config.PostgresTestContainer;
+import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@TestPropertySource(properties = {
-    "app.features.analytics.enabled=false",
-    "app.features.investment.enabled=false",
-    "app.features.fraud.enabled=false",
-    "spring.modulith.events.externalization.enabled=false"
-})
-@Transactional
 @DisplayName("UserController Integration Tests")
-class UserControllerTest {
-
-    @Container
-    static PostgresTestContainer postgres = PostgresTestContainer.getInstance();
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-    }
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private KeycloakUserService keycloakUserService;
+class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
