@@ -44,6 +44,9 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
         // Determine email based on role or explicit username
         String userEmail = getUserEmailForRole(annotation);
 
+        // Determine roles list for JwtPrincipal
+        List<String> roles = getRolesForAnnotation(annotation);
+
         // Create JwtPrincipal to match controller expectations
         JwtPrincipal principal = JwtPrincipal.builder()
             .subject(TestConstants.MOCK_USER_ID)
@@ -53,6 +56,7 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
             .lastName("User")
             .tenantId(annotation.tenantId())
             .shopId(annotation.shopId())
+            .roles(roles)
             .build();
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -232,6 +236,31 @@ public class WithMockPermissionsSecurityContextFactory implements WithSecurityCo
             case "EMPLOYEE", "CASHIER" -> TestConstants.EMPLOYEE_EMAIL;
             case "INVESTOR" -> TestConstants.INVESTOR_EMAIL;
             default -> annotation.username() + "@example.com";
+        };
+    }
+
+    /**
+     * Get the roles list for the JWT principal based on the annotation.
+     * Maps test role names to actual SecurityRoles constants for ShopAccessValidator.
+     *
+     * @param annotation The WithMockPermissions annotation
+     * @return List of role names for the principal
+     */
+    private List<String> getRolesForAnnotation(WithMockPermissions annotation) {
+        // If no role specified, return empty list
+        if (annotation.role().isEmpty()) {
+            return List.of();
+        }
+
+        // Map test role to SecurityRoles constant
+        return switch (annotation.role().toUpperCase()) {
+            case "SYSTEM_ADMIN", "SUPER_ADMIN" -> List.of("SYSTEM_ADMIN");
+            case "OWNER" -> List.of("OWNER");
+            case "TENANT_ADMIN" -> List.of("TENANT_ADMIN");
+            case "MANAGER" -> List.of("MANAGER");
+            case "EMPLOYEE", "CASHIER" -> List.of("EMPLOYEE");
+            case "INVESTOR" -> List.of("INVESTOR");
+            default -> List.of();
         };
     }
 }
