@@ -125,11 +125,13 @@ None - ready to commit!
 
 ## Related Commits
 
+- `84ab51d` - **test: reduce integration tests and improve test architecture** (THIS COMMIT)
 - `b946723` - fix: resolve @Sql configuration errors and SonarQube scan issues
 - `09137b3` - fix: resolve integration test failures and improve test infrastructure
 - `67e181c` - fix: update SonarCloud configuration for frontend analysis
 
 ---
 
+**Status**: ✅ COMPLETED
 **Last Updated**: 2025-12-17
 **Updated By**: Claude Code (AI Assistant)
