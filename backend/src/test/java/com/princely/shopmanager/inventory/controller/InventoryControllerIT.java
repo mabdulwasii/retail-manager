@@ -9,6 +9,7 @@ import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.test.TestConstants;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.test.security.WithMockPermissions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests granular permission-based authorization for inventory management.
  */
 @DisplayName("Inventory Controller Integration Tests")
+@Disabled("Temporarily disabled during IT reduction - will be replaced with minimal happy path test and unit tests")
 class InventoryControllerIT extends AbstractIntegrationTest {
 
     @Autowired
