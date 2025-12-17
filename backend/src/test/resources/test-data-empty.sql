@@ -1,0 +1,3 @@
+-- Empty SQL file for tests that create their own data
+-- This file is used to override the default test-data.sql from AbstractIntegrationTest
+-- without causing Spring's @Sql annotation to look for class-specific SQL files

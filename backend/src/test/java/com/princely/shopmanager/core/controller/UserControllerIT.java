@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("UserController Integration Tests")
-@Sql(scripts = {})  // Disable test-data.sql from AbstractIntegrationTest - this test creates its own data
+@Sql(scripts = "/test-data-empty.sql")  // Use empty SQL file instead of test-data.sql - this test creates its own data
 class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired

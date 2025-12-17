@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Error handling and edge cases
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Sql(scripts = {})  // Disable test-data.sql - this test creates its own data
+@Sql(scripts = "/test-data-empty.sql")  // Use empty SQL file instead of test-data.sql - this test creates its own data
 class ShopControllerIT extends AbstractIntegrationTest {
 
     @Test
