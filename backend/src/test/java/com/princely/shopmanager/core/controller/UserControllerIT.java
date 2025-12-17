@@ -18,12 +18,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.jdbc.Sql;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("UserController Integration Tests")
+@Sql(scripts = {})  // Disable test-data.sql from AbstractIntegrationTest - this test creates its own data
 class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Map;
 
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for ShopController.
- * 
+ *
  * This test class validates:
  * - Complete API functionality with real HTTP requests
  * - Authentication and authorization flows
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Error handling and edge cases
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Sql(scripts = {})  // Disable test-data.sql - this test creates its own data
 class ShopControllerIT extends AbstractIntegrationTest {
 
     @Test
