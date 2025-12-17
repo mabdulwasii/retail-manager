@@ -2,10 +2,13 @@ package com.princely.shopmanager.shared.exception;
 
 import org.springframework.http.HttpStatus;
 
+import lombok.Getter;
+
 /**
  * Centralized error codes for the application.
  * Each error code includes a description and HTTP status code.
  */
+@Getter
 public enum ErrorCode {
     // General errors (1000-1999)
     INTERNAL_SERVER_ERROR("errors.internal", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -71,26 +74,20 @@ public enum ErrorCode {
     BUSINESS_RULE_VIOLATION("errors.business.rule.violation", HttpStatus.CONFLICT),
     INVALID_STATE_TRANSITION("errors.state.transition.invalid", HttpStatus.CONFLICT);
 
+    /**
+     * -- GETTER --
+     *  Get the message key for internationalization
+     */
     private final String messageKey;
+    /**
+     * -- GETTER --
+     *  Get the HTTP status code
+     */
     private final HttpStatus httpStatus;
 
     ErrorCode(String messageKey, HttpStatus httpStatus) {
         this.messageKey = messageKey;
         this.httpStatus = httpStatus;
-    }
-
-    /**
-     * Get the message key for internationalization
-     */
-    public String getMessageKey() {
-        return messageKey;
-    }
-
-    /**
-     * Get the HTTP status code
-     */
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
     }
 
     /**

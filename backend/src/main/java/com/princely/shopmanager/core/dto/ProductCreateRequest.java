@@ -31,7 +31,7 @@ public class ProductCreateRequest {
     public static final int MAX_SUPPLIER_CONTACT_LENGTH = 200;
     public static final int MAX_DIMENSIONS_LENGTH = 100;
 
-    @Schema(description = "Product name", example = "Coca-Cola 500ml", required = true)
+    @Schema(description = "Product name", example = "Coca-Cola 500ml")
     @NotBlank(message = "Product name is required")
     @Size(min = MIN_NAME_LENGTH, max = MAX_NAME_LENGTH,
           message = "Product name must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters")
@@ -45,7 +45,7 @@ public class ProductCreateRequest {
     @Size(max = MAX_BARCODE_LENGTH, message = "Barcode must not exceed " + MAX_BARCODE_LENGTH + " characters")
     private String barcode;
 
-    @Schema(description = "Shop ID", required = true)
+    @Schema(description = "Shop ID")
     @NotBlank(message = "Shop ID is required")
     private String shopId;
 

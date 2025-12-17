@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class TenantConfigurationRequest {
 
     @NotEmpty(message = "Configuration key is required")
-    @Schema(description = "Configuration key", example = "tax_rate", required = true)
+    @Schema(description = "Configuration key", example = "tax_rate")
     private String key;
 
     @Schema(description = "Configuration value", example = "0.075")
@@ -27,11 +27,11 @@ public class TenantConfigurationRequest {
     private String defaultValue;
 
     @NotNull(message = "Value type is required")
-    @Schema(description = "Type of the configuration value", example = "NUMBER", required = true)
+    @Schema(description = "Type of the configuration value", example = "NUMBER")
     private TenantConfiguration.ValueType valueType;
 
     @NotNull(message = "Category is required")
-    @Schema(description = "Configuration category", example = "BUSINESS", required = true)
+    @Schema(description = "Configuration category", example = "BUSINESS")
     private TenantConfiguration.ConfigCategory category;
 
     @Schema(description = "Description of the configuration", example = "Sales tax rate as decimal")

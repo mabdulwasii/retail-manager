@@ -48,6 +48,7 @@ public class Inventory extends BaseEntity implements ShopAware {
     @Column(name = "minimum_stock", nullable = false)
     private Integer minimumStock = 0;
 
+    @Builder.Default
     @Column(name = "maximum_stock")
     private Integer maximumStock = 0;
 

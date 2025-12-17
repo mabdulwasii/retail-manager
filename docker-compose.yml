@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-P@ssw0rd!2024#Shop}
       POSTGRES_DB: ${POSTGRES_DB:-shopdb}
     ports:
-      - "5432:5432"
+      - "5436:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -45,7 +45,7 @@ services:
     command: start-dev
     ports:
       - "8443:8443"
-      - "8080:8080"
+      - "8090:8080"
     volumes:
       - ./docker/keycloak-realm.json:/tmp/keycloak-realm.json:ro
       - ./docker/certs/localhost.crt:/opt/keycloak/conf/localhost.crt:ro

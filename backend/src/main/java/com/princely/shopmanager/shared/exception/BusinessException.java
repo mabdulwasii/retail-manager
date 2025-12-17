@@ -2,30 +2,20 @@ package com.princely.shopmanager.shared.exception;
 
 import org.springframework.http.HttpStatus;
 
+import lombok.Getter;
+
 public class BusinessException extends RuntimeException {
+    @Getter
     private final String code;
+    @Getter
     private final ErrorCode errorCode;
+    @Getter
     private final HttpStatus httpStatus;
+    @Getter
     private final Object[] messageParams;
 
-    /**
-     * @deprecated Use {@link #BusinessException(ErrorCode, Object...)} instead
-     */
-    @Deprecated
     public BusinessException(String code, String message) {
         super(message);
-        this.code = code;
-        this.errorCode = null;
-        this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        this.messageParams = new Object[0];
-    }
-
-    /**
-     * @deprecated Use {@link #BusinessException(ErrorCode, Throwable, Object...)} instead
-     */
-    @Deprecated
-    public BusinessException(String code, String message, Throwable cause) {
-        super(message, cause);
         this.code = code;
         this.errorCode = null;
         this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -59,21 +49,5 @@ public class BusinessException extends RuntimeException {
         this.errorCode = errorCode;
         this.httpStatus = errorCode.getHttpStatus();
         this.messageParams = messageParams;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
-    }
-
-    public Object[] getMessageParams() {
-        return messageParams;
     }
 }

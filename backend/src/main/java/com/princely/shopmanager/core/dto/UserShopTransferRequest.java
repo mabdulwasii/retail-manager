@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class UserShopTransferRequest {
 
     @NotBlank(message = "New shop ID is required")
-    @Schema(description = "ID of the shop to transfer the user to", example = "shop-456", required = true)
+    @Schema(description = "ID of the shop to transfer the user to", example = "shop-456")
     private String newShopId;
 
     @Size(max = 500, message = "Reason cannot exceed 500 characters")
