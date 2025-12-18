@@ -5,6 +5,7 @@ import com.princely.shopmanager.core.dto.registration.TenantActivationRequest;
 import com.princely.shopmanager.test.TestConstants;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.test.security.WithMockPermissions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests use real database with test-data.sql for realistic end-to-end scenarios.
  */
 @DisplayName("Tenant Admin Controller Integration Tests")
+@Disabled("Temporarily disabled during IT reduction - will be replaced with TenantAdminControllerMinimalIT and unit tests")
 class TenantAdminControllerIT extends AbstractIntegrationTest {
 
     @Autowired

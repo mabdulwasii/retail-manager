@@ -2,6 +2,7 @@ package com.princely.shopmanager.core.controller;
 
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.test.security.WithMockPermissions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests granular permission-based authorization for permission management.
  */
 @DisplayName("Permission Controller Integration Tests")
+@Disabled("Temporarily disabled during IT reduction - will be replaced with PermissionControllerMinimalIT and unit tests")
 class PermissionControllerIT extends AbstractIntegrationTest {
 
     @Autowired

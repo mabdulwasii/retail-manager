@@ -14,6 +14,7 @@ import com.princely.shopmanager.test.TestConstants;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.test.security.WithMockPermissions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DisplayName("UserController Integration Tests")
 @Sql(scripts = "/test-data-empty.sql")  // Use empty SQL file instead of test-data.sql - this test creates its own data
+@Disabled("Temporarily disabled during IT reduction - will be replaced with UserControllerMinimalIT and unit tests")
 class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired

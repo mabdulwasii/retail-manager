@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+    Logback configuration for integration tests.
+
+    Strategy:
+    - Keep application logs at INFO level for debugging test failures
+    - Suppress noisy infrastructure logs (Spring, Hibernate, TestContainers, Docker)
+    - Show errors from all components
+    -->
+
+    <!-- Keep application logs at INFO level for debugging -->
+    <logger name="com.princely.shopmanager" level="INFO"/>
+
+    <!-- Suppress noisy Spring Boot startup logs -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.boot" level="WARN"/>
+    <logger name="org.springframework.boot.test" level="ERROR"/>
+    <logger name="org.springframework.test" level="WARN"/>
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.springframework.security" level="WARN"/>
+    <logger name="org.springframework.data" level="WARN"/>
+
+    <!-- Suppress Hibernate SQL and transaction logs -->
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="ERROR"/>
+    <logger name="org.hibernate.type" level="ERROR"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="ERROR"/>
+
+    <!-- Suppress TestContainers startup noise -->
+    <logger name="org.testcontainers" level="WARN"/>
+    <logger name="com.github.dockerjava" level="ERROR"/>
+    <logger name="tc" level="ERROR"/>
+
+    <!-- Suppress HTTP client logs -->
+    <logger name="org.apache.http" level="ERROR"/>
+
+    <!-- Suppress HikariCP connection pool logs -->
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+    <!-- Suppress Flyway migration logs -->
+    <logger name="org.flywaydb" level="WARN"/>
+
+    <!-- Suppress Mockito warnings -->
+    <logger name="org.mockito" level="ERROR"/>
+
+    <!-- Console appender with clean pattern -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger at INFO level -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

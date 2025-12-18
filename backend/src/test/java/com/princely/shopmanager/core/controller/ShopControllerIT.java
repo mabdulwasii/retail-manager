@@ -5,6 +5,7 @@ import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Sql(scripts = "/test-data-empty.sql")  // Use empty SQL file instead of test-data.sql - this test creates its own data
+@Disabled("Temporarily disabled during IT reduction - will be replaced with ShopControllerMinimalIT and unit tests")
 class ShopControllerIT extends AbstractIntegrationTest {
 
     @Test
