@@ -196,7 +196,6 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         ResponseEntity<Void> response = performAuthenticatedDelete(
             "/products/" + productId,
             "manager",
-            Void.class,
             "MANAGER"
         );
 
