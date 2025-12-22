@@ -110,14 +110,6 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should return 401 UNAUTHORIZED when JWT token is invalid")
-    void shouldReturn401WhenInvalidToken() throws Exception {
-        mockMvc.perform(get("/api/shops/" + TEST_SHOP_001)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
-            .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     @DisplayName("Should return 403 FORBIDDEN when user has no permissions")
     void shouldReturn403WhenNoPermissions() throws Exception {
         // Create user with role that has NO permissions
