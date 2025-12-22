@@ -461,12 +461,12 @@ ON CONFLICT (id) DO NOTHING;
 -- 8. PRODUCTS (Master Catalog)
 -- Note: price and cost_price removed in V32 - pricing is now in inventory table
 -- ========================================
-INSERT INTO products (id, name, description, sku, barcode, category_id, shop_id, status, is_discountable, created_at, updated_at, version)
+INSERT INTO products (id, name, description, sku, barcode, category_id, shop_id, status, is_discountable, is_taxable, created_at, updated_at, version)
 VALUES
-    ('850e8400-e29b-41d4-a716-446655440001', 'Wireless Mouse', 'Ergonomic wireless mouse with USB receiver', 'MOUSE-001', '1234567890123', '950e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('850e8400-e29b-41d4-a716-446655440002', 'USB Keyboard', 'Standard USB keyboard with numeric pad', 'KB-001', '1234567890124', '950e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('850e8400-e29b-41d4-a716-446655440003', 'Cotton T-Shirt', 'Premium cotton t-shirt, multiple sizes', 'TSHIRT-001', '1234567890125', '950e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('850e8400-e29b-41d4-a716-446655440004', 'Energy Drink', 'Refreshing energy drink, 250ml can', 'DRINK-001', '1234567890126', '950e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('850e8400-e29b-41d4-a716-446655440001', 'Wireless Mouse', 'Ergonomic wireless mouse with USB receiver', 'MOUSE-001', '1234567890123', '950e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('850e8400-e29b-41d4-a716-446655440002', 'USB Keyboard', 'Standard USB keyboard with numeric pad', 'KB-001', '1234567890124', '950e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('850e8400-e29b-41d4-a716-446655440003', 'Cotton T-Shirt', 'Premium cotton t-shirt, multiple sizes', 'TSHIRT-001', '1234567890125', '950e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('850e8400-e29b-41d4-a716-446655440004', 'Energy Drink', 'Refreshing energy drink, 250ml can', 'DRINK-001', '1234567890126', '950e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================

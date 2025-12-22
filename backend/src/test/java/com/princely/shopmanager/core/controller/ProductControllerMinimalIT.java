@@ -22,17 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
  *
- * NOTE: 8/10 tests disabled - require additional service dependencies or configuration.
- * PASSING (2/10):
+ * PASSING (5/10):
  * - POST /shops/{shopId}/products - Create product ✓
  * - GET /shops/{shopId}/products/low-stock - Low stock ✓
+ * - GET /products/search - Search by barcode ✓
+ * - PUT /products/{productId} - Update product ✓
+ * - PATCH /products/{productId} - Partial update ✓
  *
- * DISABLED (8/10):
+ * DISABLED (5/10):
  * - GET /shops/{shopId}/products - List products (not implemented)
  * - GET /products/{productId} - Get by ID (not implemented)
- * - GET /products/search - Search (JSON deserialization error)
- * - PUT /products/{productId} - Update (JSON deserialization error)
- * - PATCH /products/{productId} - Partial update (JSON deserialization error)
  * - DELETE /products/{productId} - Delete (503 SERVICE_UNAVAILABLE)
  * - GET /products/{productId}/inventory-summary - Inventory summary (503 SERVICE_UNAVAILABLE)
  * - GET /shops/{shopId}/products/out-of-stock - Out of stock (503 SERVICE_UNAVAILABLE)
@@ -82,8 +81,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
     // @DisplayName("GET /products/{productId} - Should get product by ID")
     // void shouldGetProductById() { ... }
 
-    // @Test
-    // @DisplayName("GET /products/search - Should search products by barcode")
+    @Test
+    @DisplayName("GET /products/search - Should search products by barcode")
     void shouldSearchProductsByBarcode() {
         // Given - Use existing product from test-data.sql (TestConstants.BARCODE_WIRELESS_MOUSE)
         setTenantContext(TEST_TENANT_001);
@@ -102,8 +101,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getBarcode()).isEqualTo(BARCODE_WIRELESS_MOUSE);
     }
 
-    // @Test
-    // @DisplayName("PUT /products/{productId} - Should update product")
+    @Test
+    @DisplayName("PUT /products/{productId} - Should update product")
     void shouldUpdateProduct() {
         // Given - Use existing product from test-data.sql (TestConstants.PROD_USB_KEYBOARD)
         setTenantContext(TEST_TENANT_001);
@@ -128,8 +127,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getName()).isEqualTo("Updated Keyboard Name");
     }
 
-    // @Test
-    // @DisplayName("PATCH /products/{productId} - Should partial update product")
+    @Test
+    @DisplayName("PATCH /products/{productId} - Should partial update product")
     void shouldPartialUpdateProduct() {
         // Given - Use existing product from test-data.sql (TestConstants.PROD_COTTON_TSHIRT)
         setTenantContext(TEST_TENANT_001);
