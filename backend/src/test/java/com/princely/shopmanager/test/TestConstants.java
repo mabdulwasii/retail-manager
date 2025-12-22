@@ -153,9 +153,11 @@ public final class TestConstants {
     // ==========================================
     // EXPENSE UUIDs
     // ==========================================
-    public static final String EXP_001 = "f50e8400-e29b-41d4-a716-446655440001";
-    public static final String EXP_002 = "f50e8400-e29b-41d4-a716-446655440002";
-    public static final String EXP_003 = "f50e8400-e29b-41d4-a716-446655440003";
+    public static final String EXP_001 = "f50e8400-e29b-41d4-a716-446655440001"; // APPROVED
+    public static final String EXP_002 = "f50e8400-e29b-41d4-a716-446655440002"; // PENDING_APPROVAL
+    public static final String EXP_003 = "f50e8400-e29b-41d4-a716-446655440003"; // APPROVED
+    public static final String EXP_004 = "f50e8400-e29b-41d4-a716-446655440004"; // DRAFT (editable)
+    public static final String EXP_005 = "f50e8400-e29b-41d4-a716-446655440005"; // REJECTED (editable)
 
     // ==========================================
     // INVESTMENT UUIDs
