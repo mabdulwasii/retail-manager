@@ -35,7 +35,9 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
      * Format: EndpointPermission(httpMethod, path, requiredPermission, allowedRoles...)
      *
      * MUST be updated whenever a new endpoint is added to any controller.
-     * Updated: 2025-12-22 - Added Phase 2 & 3 endpoints (Sales, Expense, Investment, InvestmentRound, ProductReturn - 37 total new endpoints)
+     * Updated: 2025-12-22 - Added Phase 2, 3 & 4 endpoints (97 total new endpoints)
+     *   - Phase 2 & 3: Sales, Expense, Investment, InvestmentRound, ProductReturn (37 endpoints)
+     *   - Phase 4: Analytics, ShopCustomization, Receipt, Tenant, FeatureFlag, FraudDetection (60 endpoints)
      */
     private static final List<EndpointPermission> ENDPOINT_REGISTRY = List.of(
         // ========================================
@@ -174,7 +176,91 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
         // ========================================
         endpoint("POST", "/api/shops/{shopId}/returns", "RETURN_CREATE", "OWNER", "MANAGER"),
         endpoint("POST", "/api/shops/{shopId}/returns/{returnId}/process", "RETURN_APPROVE", "OWNER", "MANAGER"),
-        endpoint("GET", "/api/shops/{shopId}/returns", "RETURN_LIST", "OWNER", "MANAGER", "EMPLOYEE")
+        endpoint("GET", "/api/shops/{shopId}/returns", "RETURN_LIST", "OWNER", "MANAGER", "EMPLOYEE"),
+
+        // ========================================
+        // ANALYTICS ENDPOINTS (5 total)
+        // ========================================
+        endpoint("GET", "/api/analytics/sales-summary", "ANALYTICS_SALES_VIEW", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/analytics/investment-roi", "ANALYTICS_INVESTMENT_VIEW", "OWNER", "INVESTOR"),
+        endpoint("GET", "/api/analytics/fraud-statistics", "FRAUD_VIEW", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/analytics/revenue-analytics", "ANALYTICS_SALES_VIEW", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/analytics/clear-cache/{shopId}", "ANALYTICS_MANAGE", "OWNER"),
+
+        // ========================================
+        // SHOP CUSTOMIZATION ENDPOINTS (8 total)
+        // ========================================
+        endpoint("GET", "/api/shops/{shopId}/customization", "SHOP_READ", "OWNER", "MANAGER"),
+        endpoint("PUT", "/api/shops/{shopId}/customization", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/shops/{shopId}/customization", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/shops/{shopId}/customization/colors", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/shops/{shopId}/customization/theme", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/shops/{shopId}/customization/logo", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/shops/{shopId}/customization/contact", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/shops/{shopId}/customization", "SHOP_UPDATE", "OWNER"),
+
+        // ========================================
+        // RECEIPT ENDPOINTS (9 total)
+        // ========================================
+        endpoint("GET", "/api/receipts", "RECEIPT_LIST", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/receipts/{receiptId}", "RECEIPT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/receipts/by-number/{receiptNumber}", "RECEIPT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/receipts/transaction/{transactionId}", "RECEIPT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/receipts/{receiptId}/content", "RECEIPT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/receipts/{receiptId}/printable", "RECEIPT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("POST", "/api/receipts/{receiptId}/mark-printed", "RECEIPT_CREATE", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("POST", "/api/receipts/{receiptId}/mark-emailed", "RECEIPT_EMAIL", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/receipts/regenerate/{transactionId}", "RECEIPT_CREATE", "OWNER", "MANAGER"),
+
+        // ========================================
+        // TENANT ENDPOINTS (10 total)
+        // ========================================
+        endpoint("POST", "/api/tenants/{tenantId}/users", "USER_CREATE", "TENANT_ADMIN"),
+        endpoint("GET", "/api/tenants/{tenantId}/users", "USER_LIST", "TENANT_ADMIN"),
+        endpoint("GET", "/api/tenants/{tenantId}/configurations", "TENANT_CONFIG_READ", "TENANT_ADMIN"),
+        endpoint("GET", "/api/tenants/{tenantId}/configurations/category/{category}", "TENANT_CONFIG_READ", "TENANT_ADMIN"),
+        endpoint("GET", "/api/tenants/{tenantId}/configurations/{key}", "TENANT_CONFIG_READ", "TENANT_ADMIN"),
+        endpoint("POST", "/api/tenants/{tenantId}/configurations", "TENANT_CONFIG_CREATE", "TENANT_ADMIN"),
+        endpoint("PUT", "/api/tenants/{tenantId}/configurations/{key}", "TENANT_CONFIG_UPDATE", "TENANT_ADMIN"),
+        endpoint("PATCH", "/api/tenants/{tenantId}/configurations/{key}", "TENANT_CONFIG_UPDATE", "TENANT_ADMIN"),
+        endpoint("DELETE", "/api/tenants/{tenantId}/configurations/{key}", "TENANT_CONFIG_DELETE", "TENANT_ADMIN"),
+        endpoint("POST", "/api/tenants/{tenantId}/configurations/bulk", "TENANT_CONFIG_CREATE", "TENANT_ADMIN"),
+
+        // ========================================
+        // FEATURE FLAG ENDPOINTS (12 total)
+        // ========================================
+        endpoint("GET", "/api/feature-flags/check", "PUBLIC", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("POST", "/api/feature-flags", "FEATURE_FLAG_CREATE", "SYSTEM_ADMIN", "TENANT_ADMIN"),
+        endpoint("GET", "/api/feature-flags", "PUBLIC", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/feature-flags/all", "FEATURE_FLAG_READ", "SYSTEM_ADMIN"),
+        endpoint("PUT", "/api/feature-flags/{featureFlagId}", "FEATURE_FLAG_UPDATE", "SYSTEM_ADMIN", "TENANT_ADMIN"),
+        endpoint("PATCH", "/api/feature-flags/{featureFlagId}", "FEATURE_FLAG_UPDATE", "SYSTEM_ADMIN", "TENANT_ADMIN"),
+        endpoint("DELETE", "/api/feature-flags/{featureFlagId}", "FEATURE_FLAG_DELETE", "SYSTEM_ADMIN"),
+        endpoint("GET", "/api/feature-flags/config", "PUBLIC", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/feature-flags/check/investment", "PUBLIC", "OWNER", "INVESTOR"),
+        endpoint("GET", "/api/feature-flags/check/analytics", "PUBLIC", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/feature-flags/check/fraud", "PUBLIC", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/feature-flags/check/reporting", "PUBLIC", "OWNER", "MANAGER"),
+
+        // ========================================
+        // FRAUD DETECTION ENDPOINTS (16 total)
+        // ========================================
+        endpoint("GET", "/api/fraud/alerts", "FRAUD_LIST", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/fraud/alerts/{alertId}", "FRAUD_LIST", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/alerts/{alertId}/acknowledge", "FRAUD_INVESTIGATE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/alerts/{alertId}/resolve", "FRAUD_RESOLVE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/alerts/{alertId}/false-positive", "FRAUD_RESOLVE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/fraud/risk-assessments", "FRAUD_LIST", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/risk-assessments/{assessmentId}/approve", "FRAUD_RESOLVE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/risk-assessments/{assessmentId}/reject", "FRAUD_RESOLVE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/fraud/rules", "FRAUD_LIST", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/fraud/rules", "FRAUD_DETECT", "OWNER", "MANAGER"),
+        endpoint("PUT", "/api/fraud/rules/{ruleId}", "FRAUD_DETECT", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/fraud/rules/{ruleId}", "FRAUD_DETECT", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/fraud/rules/{ruleId}", "FRAUD_DETECT", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/fraud/statistics", "FRAUD_LIST", "OWNER", "MANAGER"),
+        endpoint("PUT", "/api/fraud/rules/{ruleId}/status", "FRAUD_DETECT", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/fraud/rules/{ruleId}/status", "FRAUD_DETECT", "OWNER", "MANAGER")
     );
 
     /**

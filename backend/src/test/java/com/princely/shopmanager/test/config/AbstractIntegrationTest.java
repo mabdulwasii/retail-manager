@@ -1058,7 +1058,7 @@ public abstract class AbstractIntegrationTest {
                 );
             } catch (Exception e) {
                 // Log but don't fail tests on cleanup errors
-                log.err.println("Warning: Error during test data cleanup: " + e.getMessage());
+                System.err.println("Warning: Error during test data cleanup: " + e.getMessage());
             }
         }
     }
