@@ -18,13 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Minimal integration test for TenantController - Happy Path Only.
  *
- * PASSING (3/10):
+ * PASSING (4/10):
  * - GET /tenants/{tenantId}/users - List users ✓
  * - GET /tenants/{tenantId}/configurations - List configurations ✓
  * - GET /tenants/{tenantId}/configurations/category/{category} - Get by category ✓
+ * - GET /tenants/{tenantId}/configurations/{key} - Get by key ✓
  *
- * DISABLED (7/10):
- * - GET /tenants/{tenantId}/configurations/{key} - Get by key (400 BAD_REQUEST)
+ * DISABLED (6/10):
  * - POST /tenants/{tenantId}/users - Create user (400 BAD_REQUEST - validation or keycloak)
  * - POST /tenants/{tenantId}/configurations - Create configuration (400 BAD_REQUEST)
  * - PUT /tenants/{tenantId}/configurations/{key} - Update configuration (404 NOT_FOUND)
@@ -120,8 +120,8 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("GET /tenants/{tenantId}/configurations/{key} - Should get configuration by key")
+    @Test
+    @DisplayName("GET /tenants/{tenantId}/configurations/{key} - Should get configuration by key")
     void shouldGetConfigurationByKey() {
         // Given
         setTenantContext(TEST_TENANT_001);

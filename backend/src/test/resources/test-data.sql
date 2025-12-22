@@ -571,14 +571,33 @@ ON CONFLICT (id) DO NOTHING;
 -- INSERT INTO inventory_movements ...
 
 -- ========================================
--- 20. AUDIT LOGS
+-- 20. TENANT CONFIGURATIONS
+-- ========================================
+INSERT INTO tenant_configurations (id, tenant_id, config_key, config_value, category, description, value_type, editable, active, created_at, updated_at, version)
+VALUES
+    ('400e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'business.name', 'Test Retail Corp', 'BUSINESS', 'Business legal name', 'STRING', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('400e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 'business.currency', 'USD', 'BUSINESS', 'Default currency', 'STRING', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('400e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'system.timezone', 'America/New_York', 'SECURITY', 'System timezone', 'STRING', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- ========================================
+-- 21. SHOP CUSTOMIZATIONS
+-- ========================================
+INSERT INTO shop_customizations (id, shop_id, primary_color, secondary_color, accent_color, logo_url, theme_variant, font_size, font_family, created_at, updated_at, version)
+VALUES
+    ('500e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', '#007bff', '#6c757d', '#28a745', 'https://example.com/logo.png', 'LIGHT', 'MEDIUM', 'Inter', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('500e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440002', '#ff5733', '#333333', '#ffc107', NULL, 'DARK', 'LARGE', 'Arial', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- ========================================
+-- 22. AUDIT LOGS
 -- TODO: Verify schema matches
 -- ========================================
 -- Commented out for now - may have schema mismatches
 -- INSERT INTO audit_logs ...
 
 -- ========================================
--- 21. FEATURE FLAGS
+-- 23. FEATURE FLAGS
 -- TODO: Verify schema matches
 -- ========================================
 -- Commented out for now - may have schema mismatches
