@@ -27,30 +27,25 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
  *
- * NOTE: 7/9 tests disabled - require additional service dependencies or configuration.
- * Similar to SalesTransactionController, write operations (create, update, approve, reject, delete)
- * and summary endpoint fail with JSON deserialization errors. The backend returns error responses
- * with unexpected fields that cannot be mapped to ExpenseResponse.
- *
- * PASSING (2/9):
+ * PASSING (7/9):
+ * - POST /shops/{shopId}/expenses - Create ✓
  * - GET /expenses/{expenseId} - Get by ID ✓
  * - GET /shops/{shopId}/expenses - List expenses ✓
+ * - PUT /expenses/{expenseId} - Update ✓
+ * - PATCH /expenses/{expenseId} - Partial update ✓
+ * - POST /expenses/{expenseId}/approve - Approve ✓
+ * - DELETE /expenses/{expenseId} - Delete ✓
  *
- * DISABLED (7/9):
- * - POST /shops/{shopId}/expenses - Create
- * - PUT /expenses/{expenseId} - Update
- * - PATCH /expenses/{expenseId} - Partial update
- * - POST /expenses/{expenseId}/approve - Approve
- * - POST /expenses/{expenseId}/reject - Reject
- * - DELETE /expenses/{expenseId} - Delete
- * - GET /shops/{shopId}/expenses/summary - Get summary
+ * DISABLED (2/9):
+ * - POST /expenses/{expenseId}/reject - Reject (JSON deserialization error)
+ * - GET /shops/{shopId}/expenses/summary - Get summary (500 error)
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Expense Controller - Minimal Happy Path Integration Tests")
 class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
 
-    // @Test
-    // @DisplayName("POST /shops/{shopId}/expenses - Should create expense")
+    @Test
+    @DisplayName("POST /shops/{shopId}/expenses - Should create expense")
     void shouldCreateExpense() {
         // Given - Use existing shop and category from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -76,7 +71,7 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().title()).isEqualTo("Office Supplies");
-        assertThat(response.getBody().status()).isEqualTo(ExpenseStatus.PENDING_APPROVAL);
+        assertThat(response.getBody().status()).isEqualTo(ExpenseStatus.DRAFT);  // New expenses start as DRAFT
     }
 
     @Test
@@ -119,21 +114,21 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody()).contains("Electricity Bill");
     }
 
-    // @Test
-    // @DisplayName("PUT /expenses/{expenseId} - Should update expense")
+    @Test
+    @DisplayName("PUT /expenses/{expenseId} - Should update expense")
     void shouldUpdateExpense() {
-        // Given - Use existing expense from test-data.sql
+        // Given - Use DRAFT expense from test-data.sql (EXP_004 - editable)
         setTenantContext(TEST_TENANT_001);
 
         ExpenseUpdateRequest request = ExpenseUpdateRequest.builder()
-            .title("Updated Electricity Bill")
+            .title("Updated Office Supplies")
             .description("Updated description")
-            .amount(new BigDecimal("275.00"))
+            .amount(new BigDecimal("175.00"))
             .build();
 
         // When
         ResponseEntity<ExpenseResponse> response = performAuthenticatedPutWithShop(
-            "/expenses/" + EXP_001,
+            "/expenses/" + EXP_004,
             request,
             "manager@testretail.com",
             TEST_SHOP_001,
@@ -143,13 +138,15 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().title()).isEqualTo("Updated Electricity Bill");
+        assertThat(response.getBody().title()).isEqualTo("Updated Office Supplies");
+        assertThat(response.getBody().description()).isEqualTo("Updated description");
+        assertThat(response.getBody().amount()).isEqualByComparingTo(new BigDecimal("175.00"));
     }
 
-    // @Test
-    // @DisplayName("PATCH /expenses/{expenseId} - Should partial update expense")
+    @Test
+    @DisplayName("PATCH /expenses/{expenseId} - Should partial update expense")
     void shouldPartialUpdateExpense() {
-        // Given - Use existing expense from test-data.sql
+        // Given - Use DRAFT expense from test-data.sql (EXP_004 - editable)
         setTenantContext(TEST_TENANT_001);
 
         ExpenseUpdateRequest request = ExpenseUpdateRequest.builder()
@@ -158,7 +155,7 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
 
         // When
         ResponseEntity<ExpenseResponse> response = performAuthenticatedPatchWithShop(
-            "/expenses/" + EXP_001,
+            "/expenses/" + EXP_004,
             request,
             "manager@testretail.com",
             TEST_SHOP_001,
@@ -171,8 +168,8 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().description()).isEqualTo("Patched description only");
     }
 
-    // @Test
-    // @DisplayName("POST /expenses/{expenseId}/approve - Should approve expense")
+    @Test
+    @DisplayName("POST /expenses/{expenseId}/approve - Should approve expense")
     void shouldApproveExpense() {
         // Given - Use existing pending expense from test-data.sql (EXP_002 is PENDING_APPROVAL)
         setTenantContext(TEST_TENANT_001);
@@ -231,8 +228,8 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().status()).isEqualTo(ExpenseStatus.REJECTED);
     }
 
-    // @Test
-    // @DisplayName("DELETE /expenses/{expenseId} - Should delete expense")
+    @Test
+    @DisplayName("DELETE /expenses/{expenseId} - Should delete expense")
     void shouldDeleteExpense() {
         // Given - Create a new expense to delete
         setTenantContext(TEST_TENANT_001);

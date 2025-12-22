@@ -402,6 +402,7 @@ public abstract class AbstractIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + createMockTokenWithTenantAndShop(username, tenantId, shopId, List.of(roles)));
         headers.set("X-Test-User", username);
+        headers.set("X-Test-User-Id", getUserIdForEmail(username));  // Add user UUID for principal
         headers.set("X-Test-Tenant", tenantId);
         if (shopId != null) {
             headers.set("X-Test-Shop", shopId);
@@ -439,8 +440,8 @@ public abstract class AbstractIntegrationTest {
             (System.currentTimeMillis() / 1000) + 3600 // 1 hour expiry
         );
 
-        // Encode as Base64 for a simple mock token format
-        String encodedPayload = Base64.getEncoder().encodeToString(payload.getBytes());
+        // Encode as Base64 URL-safe for a simple mock token format (matches TestJwtSecurityConfig decoder)
+        String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
 
         return TEST_TOKEN_PREFIX + "." + encodedPayload + ".signature";
     }
@@ -458,6 +459,25 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
+     * Maps common test user emails to their database UUIDs from test-data.sql.
+     * Used to set the X-Test-User-Id header for proper authentication in tests.
+     *
+     * @param email User email
+     * @return User UUID
+     */
+    private String getUserIdForEmail(String email) {
+        // Map test users to their IDs from test-data.sql
+        return switch (email) {
+            case "admin@testretail.com" -> "750e8400-e29b-41d4-a716-446655440001";
+            case "owner@testretail.com" -> "750e8400-e29b-41d4-a716-446655440002";
+            case "manager@testretail.com" -> "750e8400-e29b-41d4-a716-446655440003";
+            case "employee@testretail.com" -> "750e8400-e29b-41d4-a716-446655440004";
+            case "investor@testretail.com" -> "750e8400-e29b-41d4-a716-446655440005";
+            default -> email; // Fallback to email for unknown users
+        };
+    }
+
+    /**
      * Creates a mock token with tenant and shop context.
      *
      * @param subject Token subject (username)
@@ -471,7 +491,7 @@ public abstract class AbstractIntegrationTest {
         String payload;
         if (shopId != null) {
             payload = String.format(
-                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"tenant_id\":\"%s\",\"shop_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
+                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s\",\"tenant_id\":\"%s\",\"shop_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
                 subject,
                 roles.toString(),
                 subject,
@@ -483,7 +503,7 @@ public abstract class AbstractIntegrationTest {
             );
         } else {
             payload = String.format(
-                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"tenant_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
+                "{\"sub\":\"%s\",\"iss\":\"shop-manager\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s\",\"tenant_id\":\"%s\",\"iat\":%d,\"exp\":%d}",
                 subject,
                 roles.toString(),
                 subject,

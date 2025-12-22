@@ -91,6 +91,7 @@ public class TestSecurityConfig {
                     throws ServletException, IOException {
 
                 String username = request.getHeader("X-Test-User");
+                String userId = request.getHeader("X-Test-User-Id");
                 String tenantId = request.getHeader("X-Test-Tenant");
                 String shopId = request.getHeader("X-Test-Shop");
                 String rolesHeader = request.getHeader("X-Test-Roles");
@@ -107,7 +108,7 @@ public class TestSecurityConfig {
                     // Create JwtPrincipal
                     JwtPrincipal principal = JwtPrincipal.builder()
                         .subject(username)
-                        .userId(username)
+                        .userId(userId != null ? userId : username)  // Use X-Test-User-Id if provided, fallback to username
                         .preferredUsername(username)
                         .tenantId(tenantId)
                         .shopId(shopId)
