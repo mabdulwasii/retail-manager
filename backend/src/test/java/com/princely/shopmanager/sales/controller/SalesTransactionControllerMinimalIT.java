@@ -25,10 +25,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
  *
- * NOTE: All tests disabled - require additional service dependencies properly configured
- * Similar to ProductControllerMinimalIT, these operations fail with 503 SERVICE_UNAVAILABLE
- * and JSON deserialization errors. Services (ReceiptService, InventoryService, etc.) need
- * proper initialization or mocking.
+ * PASSING (2/6):
+ * - GET /sales/{id} - Get by ID ✓
+ * - GET /sales - List transactions ✓
+ *
+ * DISABLED (4/6):
+ * - POST /sales - Create (requires InventoryService for stock deduction)
+ * - GET /sales/{id}/receipt - Get receipt (ReceiptService dependency)
+ * - GET /sales/by-date-range - Get by date range (needs investigation)
+ * - POST /sales/{id}/void - Void transaction (depends on create)
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("SalesTransaction Controller - Minimal Happy Path Integration Tests")
@@ -69,8 +74,8 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getLineItems()).hasSize(1);
     }
 
-    // @Test
-    // @DisplayName("GET /sales/{id} - Should get sales transaction by ID")
+    @Test
+    @DisplayName("GET /sales/{id} - Should get sales transaction by ID")
     void shouldGetSalesTransactionById() {
         // Given - Use existing sales transaction from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -110,8 +115,8 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody()).isNotNull();
     }
 
-    // @Test
-    // @DisplayName("GET /sales - Should list sales transactions")
+    @Test
+    @DisplayName("GET /sales - Should list sales transactions")
     void shouldListSalesTransactions() {
         // Given - Use existing shop from test-data.sql (has sales transactions)
         setTenantContext(TEST_TENANT_001);
