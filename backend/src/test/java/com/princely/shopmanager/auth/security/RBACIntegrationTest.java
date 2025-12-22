@@ -35,37 +35,146 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
      * Format: EndpointPermission(httpMethod, path, requiredPermission, allowedRoles...)
      *
      * MUST be updated whenever a new endpoint is added to any controller.
+     * Updated: 2025-12-22 - Added Phase 2 & 3 endpoints (Sales, Expense, Investment, InvestmentRound, ProductReturn - 37 total new endpoints)
      */
     private static final List<EndpointPermission> ENDPOINT_REGISTRY = List.of(
-        // Product endpoints
-        endpoint("POST", "/api/shops/{shopId}/products", "PRODUCT_CREATE", "OWNER", "MANAGER"),
-        endpoint("GET", "/api/shops/{shopId}/products", "PRODUCT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
-        endpoint("GET", "/api/products/{productId}", "PRODUCT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
-        endpoint("PUT", "/api/products/{productId}", "PRODUCT_UPDATE", "OWNER", "MANAGER"),
-        endpoint("DELETE", "/api/products/{productId}", "PRODUCT_DELETE", "OWNER", "MANAGER"),
-
-        // Shop endpoints
+        // ========================================
+        // SHOP ENDPOINTS (13 total)
+        // ========================================
         endpoint("POST", "/api/shops", "SHOP_CREATE", "OWNER"),
+        endpoint("GET", "/api/shops", "SHOP_LIST", "OWNER", "MANAGER"),
         endpoint("GET", "/api/shops/{shopId}", "SHOP_READ", "OWNER", "MANAGER", "EMPLOYEE"),
         endpoint("PUT", "/api/shops/{shopId}", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/shops/{shopId}", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/shops/{shopId}", "SHOP_DELETE", "OWNER"),
         endpoint("PATCH", "/api/shops/{shopId}/status", "SHOP_STATUS_CHANGE", "OWNER"),
+        endpoint("PUT", "/api/shops/{shopId}/configuration", "SHOP_UPDATE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/shops/{shopId}/users", "USER_CREATE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/users", "USER_LIST", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/staff", "USER_LIST", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/staff-by-role", "USER_LIST", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/shops/{shopId}/bulk-invite", "USER_CREATE", "OWNER"),
 
-        // User endpoints
+        // ========================================
+        // USER ENDPOINTS (6 total)
+        // ========================================
         endpoint("GET", "/api/users/profile", "USER_READ", "OWNER", "MANAGER", "EMPLOYEE"),
         endpoint("GET", "/api/users/{userId}", "USER_READ", "OWNER", "MANAGER"),
         endpoint("PATCH", "/api/users/{userId}", "USER_UPDATE", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/users/{userId}", "USER_DELETE", "OWNER"),
+        endpoint("GET", "/api/users/{userId}/activity", "USER_READ", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/users/{userId}/permissions", "USER_PERMISSION_READ", "OWNER", "MANAGER"),
 
-        // Role endpoints
+        // ========================================
+        // ROLE ENDPOINTS (7 total)
+        // ========================================
         endpoint("GET", "/api/roles", "ROLE_READ", "OWNER", "MANAGER"),
         endpoint("GET", "/api/roles/{roleId}", "ROLE_READ", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/users/{userId}/roles", "ROLE_READ", "OWNER", "MANAGER"),
         endpoint("POST", "/api/roles", "ROLE_CREATE", "OWNER"),
+        endpoint("PUT", "/api/roles/{roleId}", "ROLE_UPDATE", "OWNER"),
+        endpoint("PATCH", "/api/roles/{roleId}", "ROLE_UPDATE", "OWNER"),
+        endpoint("DELETE", "/api/roles/{roleId}", "ROLE_DELETE", "OWNER"),
 
-        // Permission endpoints
+        // ========================================
+        // PERMISSION ENDPOINTS (2 total)
+        // ========================================
         endpoint("GET", "/api/permissions", "PERMISSION_READ", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/permissions/grouped", "PERMISSION_READ", "OWNER", "MANAGER"),
 
-        // Inventory endpoints
+        // ========================================
+        // CATEGORY ENDPOINTS (6 total)
+        // ========================================
+        endpoint("POST", "/api/shops/{shopId}/categories", "CATEGORY_CREATE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/categories", "CATEGORY_LIST", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/categories/{id}", "CATEGORY_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("PUT", "/api/categories/{id}", "CATEGORY_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/categories/{id}", "CATEGORY_UPDATE", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/categories/{id}", "CATEGORY_DELETE", "OWNER"),
+
+        // ========================================
+        // PRODUCT ENDPOINTS (10 total)
+        // ========================================
+        endpoint("POST", "/api/shops/{shopId}/products", "PRODUCT_CREATE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/products", "PRODUCT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/shops/{shopId}/products/low-stock", "PRODUCT_READ", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/products/out-of-stock", "PRODUCT_READ", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/products/{productId}", "PRODUCT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/products/search", "PRODUCT_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("PUT", "/api/products/{productId}", "PRODUCT_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/products/{productId}", "PRODUCT_UPDATE", "OWNER", "MANAGER"),
+        endpoint("DELETE", "/api/products/{productId}", "PRODUCT_DELETE", "OWNER"),
+        endpoint("GET", "/api/products/{productId}/inventory-summary", "INVENTORY_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+
+        // ========================================
+        // TENANT ADMIN ENDPOINTS (3 total)
+        // ========================================
+        endpoint("GET", "/api/admin/tenants/pending", "TENANT_LIST", "SYSTEM_ADMIN"),
+        endpoint("GET", "/api/admin/tenants/{tenantId}", "TENANT_READ", "SYSTEM_ADMIN"),
+        endpoint("POST", "/api/admin/tenants/{tenantId}/activate", "TENANT_UPDATE", "SYSTEM_ADMIN"),
+
+        // ========================================
+        // INVENTORY ENDPOINTS (2 existing)
+        // ========================================
         endpoint("POST", "/api/shops/{shopId}/inventory", "INVENTORY_CREATE", "OWNER", "MANAGER"),
-        endpoint("GET", "/api/shops/{shopId}/inventory", "INVENTORY_READ", "OWNER", "MANAGER", "EMPLOYEE")
+        endpoint("GET", "/api/shops/{shopId}/inventory", "INVENTORY_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+
+        // ========================================
+        // SALES TRANSACTION ENDPOINTS (6 total)
+        // ========================================
+        endpoint("POST", "/api/sales", "SALES_CREATE", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/sales/{id}", "SALES_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/sales/{transactionId}/receipt", "SALES_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/sales", "SALES_LIST", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/sales/by-date-range", "SALES_LIST", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/sales/{id}/void", "SALES_VOID", "OWNER"),
+
+        // ========================================
+        // EXPENSE ENDPOINTS (9 total)
+        // ========================================
+        endpoint("POST", "/api/shops/{shopId}/expenses", "EXPENSE_CREATE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/expenses/{expenseId}", "EXPENSE_READ", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("GET", "/api/shops/{shopId}/expenses", "EXPENSE_LIST", "OWNER", "MANAGER", "EMPLOYEE"),
+        endpoint("PUT", "/api/expenses/{expenseId}", "EXPENSE_UPDATE", "OWNER", "MANAGER"),
+        endpoint("PATCH", "/api/expenses/{expenseId}", "EXPENSE_UPDATE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/expenses/{expenseId}/approve", "EXPENSE_APPROVE", "OWNER"),
+        endpoint("POST", "/api/expenses/{expenseId}/reject", "EXPENSE_REJECT", "OWNER"),
+        endpoint("DELETE", "/api/expenses/{expenseId}", "EXPENSE_DELETE", "OWNER"),
+        endpoint("GET", "/api/shops/{shopId}/expenses/summary", "EXPENSE_SUMMARY_VIEW", "OWNER", "MANAGER"),
+
+        // ========================================
+        // INVESTMENT ENDPOINTS (11 total)
+        // ========================================
+        endpoint("POST", "/api/investments", "INVESTMENT_CREATE", "OWNER"),
+        endpoint("GET", "/api/shops/{shopId}/investments", "INVESTMENT_LIST", "OWNER", "INVESTOR"),
+        endpoint("GET", "/api/my-investments", "INVESTMENT_LIST", "INVESTOR"),
+        endpoint("GET", "/api/investments/{investmentId}", "INVESTMENT_READ", "OWNER", "INVESTOR"),
+        endpoint("PUT", "/api/investments/{investmentId}/status", "INVESTMENT_UPDATE", "OWNER"),
+        endpoint("PATCH", "/api/investments/{investmentId}/status", "INVESTMENT_UPDATE", "OWNER"),
+        endpoint("POST", "/api/investments/{investmentId}/withdraw", "INVESTMENT_CLOSE", "OWNER"),
+        endpoint("GET", "/api/investments/{investmentId}/distributions", "INVESTMENT_READ", "OWNER", "INVESTOR"),
+        endpoint("GET", "/api/my-distributions", "INVESTMENT_READ", "INVESTOR"),
+        endpoint("POST", "/api/distributions/{distributionId}/approve", "INVESTMENT_PROFIT_DISTRIBUTE", "OWNER"),
+        endpoint("POST", "/api/distributions/{distributionId}/mark-paid", "INVESTMENT_PROFIT_DISTRIBUTE", "OWNER"),
+
+        // ========================================
+        // INVESTMENT ROUND ENDPOINTS (8 total)
+        // ========================================
+        endpoint("POST", "/api/shops/{shopId}/investment-rounds", "INVESTMENT_CREATE", "OWNER"),
+        endpoint("GET", "/api/shops/{shopId}/investment-rounds", "INVESTMENT_LIST", "OWNER", "INVESTOR"),
+        endpoint("GET", "/api/investment-rounds/{roundId}", "INVESTMENT_READ", "OWNER", "INVESTOR"),
+        endpoint("PUT", "/api/investment-rounds/{roundId}", "INVESTMENT_UPDATE", "OWNER"),
+        endpoint("PATCH", "/api/investment-rounds/{roundId}", "INVESTMENT_UPDATE", "OWNER"),
+        endpoint("DELETE", "/api/investment-rounds/{roundId}", "INVESTMENT_DELETE", "OWNER"),
+        endpoint("POST", "/api/investment-rounds/{roundId}/close", "INVESTMENT_CLOSE", "OWNER"),
+        endpoint("POST", "/api/investment-rounds/{roundId}/investors", "INVESTMENT_CREATE", "OWNER"),
+
+        // ========================================
+        // PRODUCT RETURN ENDPOINTS (3 total)
+        // ========================================
+        endpoint("POST", "/api/shops/{shopId}/returns", "RETURN_CREATE", "OWNER", "MANAGER"),
+        endpoint("POST", "/api/shops/{shopId}/returns/{returnId}/process", "RETURN_APPROVE", "OWNER", "MANAGER"),
+        endpoint("GET", "/api/shops/{shopId}/returns", "RETURN_LIST", "OWNER", "MANAGER", "EMPLOYEE")
     );
 
     /**

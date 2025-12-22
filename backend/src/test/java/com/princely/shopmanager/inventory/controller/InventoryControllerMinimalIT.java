@@ -1,7 +1,5 @@
 package com.princely.shopmanager.inventory.controller;
 
-import com.princely.shopmanager.core.dto.ProductCreateRequest;
-import com.princely.shopmanager.core.dto.ProductResponse;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
@@ -9,34 +7,28 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Map;
 
+import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Minimal integration test for InventoryController - Happy Path Only.
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Sql(scripts = "/test-data-empty.sql")
 @DisplayName("Inventory Controller - Minimal Happy Path Integration Tests")
 class InventoryControllerMinimalIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("POST /shops/{shopId}/inventory - Should create inventory")
     void shouldCreateInventory() {
-        // Given
-        String tenantId = "tenant-inv-create";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
-        String productId = createTestProduct(shopId, "Inventory Product");
+        // Given - Use existing shop and product from test-data.sql (TestConstants.TEST_SHOP_001, PROD_WIRELESS_MOUSE)
+        setTenantContext(TEST_TENANT_001);
 
         InventoryCreateRequest request = InventoryCreateRequest.builder()
-            .productId(productId)
+            .productId(PROD_WIRELESS_MOUSE)
             .currentStock(100)
             .minimumStock(10)
             .costPrice(BigDecimal.valueOf(10.00))
@@ -44,10 +36,11 @@ class InventoryControllerMinimalIT extends AbstractIntegrationTest {
             .build();
 
         // When
-        ResponseEntity<String> response = performAuthenticatedPost(
-            "/shops/" + shopId + "/inventory",
+        ResponseEntity<String> response = performAuthenticatedPostWithShop(
+            "/shops/" + TEST_SHOP_001 + "/inventory",
             request,
             "manager",
+            TEST_SHOP_001,
             String.class,
             "MANAGER"
         );
@@ -59,41 +52,20 @@ class InventoryControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /shops/{shopId}/inventory - Should list inventory")
     void shouldListInventory() {
-        // Given
-        String tenantId = "tenant-inv-list";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
 
         // When
-        ResponseEntity<String> response = performAuthenticatedGetWithPagination(
-            "/shops/" + shopId + "/inventory",
+        ResponseEntity<String> response = performAuthenticatedGetWithPaginationAndShop(
+            "/shops/" + TEST_SHOP_001 + "/inventory",
             0,
             10,
             "manager",
+            TEST_SHOP_001,
             "MANAGER"
         );
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    // Helper method to create test product
-    private String createTestProduct(String shopId, String name) {
-        ProductCreateRequest request = ProductCreateRequest.builder()
-            .shopId(shopId)
-            .name(name)
-            .unit("piece")
-            .build();
-
-        ResponseEntity<ProductResponse> response = performAuthenticatedPost(
-            "/shops/" + shopId + "/products",
-            request,
-            "manager",
-            ProductResponse.class,
-            "MANAGER"
-        );
-
-        return response.getBody().getId();
     }
 }

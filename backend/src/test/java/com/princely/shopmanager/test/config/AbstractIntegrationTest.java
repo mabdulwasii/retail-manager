@@ -10,7 +10,11 @@ import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.repository.TenantRepository;
+import com.princely.shopmanager.test.TestConstants;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -21,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -88,6 +93,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@Import(TestSecurityConfig.class)
 @Sql(
     scripts = "/test-data.sql",
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD,
@@ -95,12 +101,19 @@ import static org.mockito.Mockito.when;
 )
 public abstract class AbstractIntegrationTest {
 
+    public static final java.lang.String POSTAL_CODE = "12345";
+    public static final String TEST_MAIL = "test@example.com";
+    public static final String TEST_COUNTRY = "Test Country";
+    public static final String TEST_STATE = "Test State";
+    public static final String PHONE_NUMBER = "+15551234567";
+    public static final String TEST_STREET = "123 Test Street";
+    public static final String TEST_CITY = "Test City";
     /**
      * PostgreSQL container shared across all integration tests.
      * Uses singleton pattern for container reuse and performance.
      */
     @Container
-    public static PostgresTestContainer postgresContainer = PostgresTestContainer.getInstance();
+    public static final PostgresTestContainer postgresContainer = PostgresTestContainer.getInstance();
 
     /**
      * Random port for the embedded web server.
@@ -136,6 +149,20 @@ public abstract class AbstractIntegrationTest {
      */
     @Autowired(required = false)
     protected ShopRepository shopRepository;
+
+    /**
+     * TenantRepository for creating test tenant data.
+     * May be null if not available in test context.
+     */
+    @Autowired(required = false)
+    protected TenantRepository tenantRepository;
+
+    /**
+     * EntityManager for persisting entities with manually-set IDs.
+     * Used in test data creation.
+     */
+    @PersistenceContext
+    protected EntityManager entityManager;
 
     /**
      * JdbcTemplate for raw SQL queries in diagnostic methods.
@@ -221,7 +248,7 @@ public abstract class AbstractIntegrationTest {
             UserRepresentation user = new UserRepresentation();
             user.setId(userId);
             user.setUsername("test-user");
-            user.setEmail("test@example.com");
+            user.setEmail(TEST_MAIL);
             user.setEnabled(true);
             return Optional.of(user);
         });
@@ -336,8 +363,30 @@ public abstract class AbstractIntegrationTest {
      * @return Authentication headers with mock token
      */
     protected HttpHeaders createAuthHeaders(String username, String... roles) {
-        // Default: use test tenant and shop for backward compatibility
-        return createAuthHeadersWithContext(username, "test-tenant", "test-shop", roles);
+        // Use current tenant from TenantContext if available, otherwise fall back to test defaults
+        String tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TestConstants.TEST_TENANT_001;
+        }
+        // Use TEST_SHOP_001 as default shop for backward compatibility
+        return createAuthHeadersWithContext(username, tenantId, TestConstants.TEST_SHOP_001, roles);
+    }
+
+    /**
+     * Helper method to create authentication headers with shop context.
+     *
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param roles User roles
+     * @return Authentication headers with mock token
+     */
+    protected HttpHeaders createAuthHeaders(String username, String shopId, String... roles) {
+        // Use current tenant from TenantContext
+        String tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = "test-tenant";
+        }
+        return createAuthHeadersWithContext(username, tenantId, shopId, roles);
     }
 
     /**
@@ -481,6 +530,32 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
+     * Performs a POST request with authentication and shop context.
+     *
+     * @param endpoint API endpoint path
+     * @param body Request body object
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param responseType Expected response type
+     * @param roles User roles
+     * @return Response entity
+     */
+    protected <T> ResponseEntity<T> performAuthenticatedPostWithShop(
+        String endpoint, Object body, String username, String shopId, Class<T> responseType, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+
+        return restTemplate.exchange(
+            getApiUrl(endpoint),
+            HttpMethod.POST,
+            entity,
+            responseType
+        );
+    }
+
+    /**
      * Performs a GET request with authentication.
      *
      * @param endpoint API endpoint path
@@ -493,6 +568,30 @@ public abstract class AbstractIntegrationTest {
         String endpoint, String username, Class<T> responseType, String... roles) {
 
         HttpHeaders headers = createAuthHeaders(username, roles);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        return restTemplate.exchange(
+            getApiUrl(endpoint),
+            HttpMethod.GET,
+            entity,
+            responseType
+        );
+    }
+
+    /**
+     * Performs a GET request with authentication and shop context.
+     *
+     * @param endpoint API endpoint path
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param responseType Expected response type
+     * @param roles User roles
+     * @return Response entity
+     */
+    protected <T> ResponseEntity<T> performAuthenticatedGetWithShop(
+        String endpoint, String username, String shopId, Class<T> responseType, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         return restTemplate.exchange(
@@ -517,6 +616,32 @@ public abstract class AbstractIntegrationTest {
         String endpoint, int page, int size, String username, String... roles) {
 
         HttpHeaders headers = createAuthHeaders(username, roles);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        String url = UriComponentsBuilder.fromUriString(getApiUrl(endpoint))
+            .queryParam("page", page)
+            .queryParam("size", size)
+            .build()
+            .toUriString();
+
+        return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    }
+
+    /**
+     * Performs a GET request with authentication, shop context, and pagination.
+     *
+     * @param endpoint API endpoint path
+     * @param page Page number
+     * @param size Page size
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param roles User roles
+     * @return Response entity with paginated results
+     */
+    protected ResponseEntity<String> performAuthenticatedGetWithPaginationAndShop(
+        String endpoint, int page, int size, String username, String shopId, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         String url = UriComponentsBuilder.fromUriString(getApiUrl(endpoint))
@@ -554,6 +679,32 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
+     * Performs a PUT request with authentication and shop context.
+     *
+     * @param endpoint API endpoint path
+     * @param body Request body object
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param responseType Expected response type
+     * @param roles User roles
+     * @return Response entity
+     */
+    protected <T> ResponseEntity<T> performAuthenticatedPutWithShop(
+        String endpoint, Object body, String username, String shopId, Class<T> responseType, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+
+        return restTemplate.exchange(
+            getApiUrl(endpoint),
+            HttpMethod.PUT,
+            entity,
+            responseType
+        );
+    }
+
+    /**
      * Performs a PATCH request with authentication.
      *
      * @param endpoint API endpoint path
@@ -567,6 +718,32 @@ public abstract class AbstractIntegrationTest {
         String endpoint, Object body, String username, Class<T> responseType, String... roles) {
 
         HttpHeaders headers = createAuthHeaders(username, roles);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+
+        return restTemplate.exchange(
+            getApiUrl(endpoint),
+            HttpMethod.PATCH,
+            entity,
+            responseType
+        );
+    }
+
+    /**
+     * Performs a PATCH request with authentication and shop context.
+     *
+     * @param endpoint API endpoint path
+     * @param body Request body object
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param responseType Expected response type
+     * @param roles User roles
+     * @return Response entity
+     */
+    protected <T> ResponseEntity<T> performAuthenticatedPatchWithShop(
+        String endpoint, Object body, String username, String shopId, Class<T> responseType, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Object> entity = new HttpEntity<>(body, headers);
 
@@ -600,6 +777,29 @@ public abstract class AbstractIntegrationTest {
         );
     }
 
+    /**
+     * Performs a DELETE request with authentication and shop context.
+     *
+     * @param endpoint API endpoint path
+     * @param username Username for authentication
+     * @param shopId Shop identifier
+     * @param roles User roles
+     * @return Response entity
+     */
+    protected ResponseEntity<Void> performAuthenticatedDeleteWithShop(
+        String endpoint, String username, String shopId, String... roles) {
+
+        HttpHeaders headers = createAuthHeaders(username, shopId, roles);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        return restTemplate.exchange(
+            getApiUrl(endpoint),
+            HttpMethod.DELETE,
+            entity,
+            Void.class
+        );
+    }
+
     // ============================================
     // Test Data Helper Methods
     // ============================================
@@ -615,6 +815,7 @@ public abstract class AbstractIntegrationTest {
             .id(tenantId)
             .name("Test Tenant " + tenantId)
             .contactEmail("test@" + tenantId.replace("-", "") + ".com")
+            .primaryAddress("123 Test Address")
             .status(Tenant.TenantStatus.ACTIVE)
             .build();
     }
@@ -630,19 +831,41 @@ public abstract class AbstractIntegrationTest {
         if (shopRepository == null) {
             throw new IllegalStateException("ShopRepository not available - ensure proper test context");
         }
+        if (tenantRepository == null) {
+            throw new IllegalStateException("TenantRepository not available - ensure proper test context");
+        }
+
+        // Fetch or create tenant using JDBC to bypass @GeneratedValue issues
+        Tenant tenant = tenantRepository.findById(tenantId)
+            .orElseGet(() -> {
+                // Insert tenant directly via JDBC with manually-set ID
+                jdbcTemplate.update(
+                    "INSERT INTO tenants (id, name, contact_email, primary_address, status, created_at, updated_at, version) " +
+                    "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) " +
+                    "ON CONFLICT (id) DO NOTHING",
+                    tenantId,
+                    "Test Tenant " + tenantId,
+                    "test@" + tenantId.replace("-", "") + ".com",
+                    "123 Test Address",
+                    "ACTIVE"
+                );
+                // Fetch the tenant we just inserted
+                return tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new IllegalStateException("Failed to create tenant: " + tenantId));
+            });
 
         Shop shop = Shop.builder()
-            .id("shop-" + UUID.randomUUID().toString())
+            // Don't set ID manually - let JPA generate it to avoid persist issues
             .name(name + "-" + UUID.randomUUID().toString().substring(0, 8))
-            .tenant(createTenant(tenantId))
+            .tenant(tenant)
             .description("Test shop for integration testing")
-            .address("123 Test Street")
-            .city("Test City")
-            .state("Test State")
-            .country("Test Country")
-            .postalCode("12345")
-            .phoneNumber("+15551234567")
-            .email("test@example.com")
+            .address(TEST_STREET)
+            .city(TEST_CITY)
+            .state(TEST_STATE)
+            .country(TEST_COUNTRY)
+            .postalCode(POSTAL_CODE)
+            .phoneNumber(PHONE_NUMBER)
+            .email(TEST_MAIL)
             .taxId("TAX" + System.currentTimeMillis())
             .status(Shop.ShopStatus.ACTIVE)
             .openingDate(LocalDateTime.now())
@@ -680,7 +903,7 @@ public abstract class AbstractIntegrationTest {
             try {
                 condition.run();
                 return; // Success
-            } catch (AssertionError | Exception e) {
+            } catch (AssertionError | Exception exception) {
                 try {
                     Thread.sleep(intervalMs);
                 } catch (InterruptedException ie) {
@@ -712,13 +935,13 @@ public abstract class AbstractIntegrationTest {
                         .name("Test Shop")
                         .tenant(createTenant("test-tenant"))
                         .description("Default test shop for integration testing")
-                        .address("123 Test Street")
-                        .city("Test City")
-                        .state("Test State")
-                        .country("Test Country")
-                        .postalCode("12345")
-                        .phoneNumber("+15551234567")
-                        .email("test@example.com")
+                        .address(TEST_STREET)
+                        .city(TEST_CITY)
+                        .state(TEST_STATE)
+                        .country(TEST_COUNTRY)
+                        .postalCode(POSTAL_CODE)
+                        .phoneNumber(PHONE_NUMBER)
+                        .email(TEST_MAIL)
                         .taxId("TAX-TEST")
                         .status(Shop.ShopStatus.ACTIVE)
                         .openingDate(LocalDateTime.now())
@@ -746,12 +969,12 @@ public abstract class AbstractIntegrationTest {
         return ShopCreateRequest.builder()
             .name(name + "-" + UUID.randomUUID().toString().substring(0, 8))
             .description("Test shop description for " + name)
-            .address("123 Test Street")
-            .city("Test City")
-            .state("Test State")
-            .country("Test Country")
-            .postalCode("12345")
-            .phoneNumber("+15551234567")
+            .address(TEST_STREET)
+            .city(TEST_CITY)
+            .state(TEST_STATE)
+            .country(TEST_COUNTRY)
+            .postalCode(POSTAL_CODE)
+            .phoneNumber(PHONE_NUMBER)
             .email("test-" + name.toLowerCase().replaceAll("[^a-z0-9]", "") + "@example.com")
             .taxId("TAX" + System.currentTimeMillis())
             .openingDate(LocalDateTime.now().plusDays(1))
@@ -807,13 +1030,14 @@ public abstract class AbstractIntegrationTest {
      * Sets up test data for a specific tenant.
      *
      * @param tenantId Tenant ID
-     * @return Map containing test data (testShop, tenantId)
+     * @return Map containing test data (testShop, shopId, tenantId)
      */
     protected Map<String, Object> setupTenantTestData(String tenantId) {
         setTenantContext(tenantId);
         Shop testShop = createTestShop("IntegrationTest", tenantId);
         return Map.of(
             "testShop", testShop,
+            "shopId", testShop.getId(),
             "tenantId", tenantId
         );
     }
@@ -834,7 +1058,7 @@ public abstract class AbstractIntegrationTest {
                 );
             } catch (Exception e) {
                 // Log but don't fail tests on cleanup errors
-                System.err.println("Warning: Error during test data cleanup: " + e.getMessage());
+                log.err.println("Warning: Error during test data cleanup: " + e.getMessage());
             }
         }
     }

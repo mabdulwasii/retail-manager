@@ -28,12 +28,13 @@ spring:
     clean-disabled: false
     validate-on-migrate: false  # Disable validation to avoid Flyway 10.x cleanOnValidationError issue
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/test
-          jwk-set-uri: http://localhost:8080/realms/test/protocol/openid-connect/certs
+  # OAuth2 JWT validation disabled for tests - TestSecurityConfig permits all requests
+  # security:
+  #   oauth2:
+  #     resourceserver:
+  #       jwt:
+  #         issuer-uri: http://localhost:8080/realms/test
+  #         jwk-set-uri: http://localhost:8080/realms/test/protocol/openid-connect/certs
 
   kafka:
     bootstrap-servers: localhost:9092

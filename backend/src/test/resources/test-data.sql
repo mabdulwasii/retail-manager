@@ -18,7 +18,8 @@
 INSERT INTO tenants (id, name, description, status, company_registration, tax_id, contact_email, primary_address, created_at, updated_at, version)
 VALUES
     ('550e8400-e29b-41d4-a716-446655440001', 'Test Retail Corp', 'Test tenant for integration testing', 'ACTIVE', 'REG-TEST-001', 'TAX-TEST-001', 'admin@testretail.com', '123 Business St', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('550e8400-e29b-41d4-a716-446655440002', 'Demo Electronics Ltd', 'Demo tenant for testing multi-tenancy', 'ACTIVE', 'REG-TEST-002', 'TAX-TEST-002', 'admin@demoelectronics.com', '456 Commerce Ave', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('550e8400-e29b-41d4-a716-446655440002', 'Demo Electronics Ltd', 'Demo tenant for testing multi-tenancy', 'ACTIVE', 'REG-TEST-002', 'TAX-TEST-002', 'admin@demoelectronics.com', '456 Commerce Ave', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('550e8400-e29b-41d4-a716-446655440003', 'Pending Tenant Corp', 'Pending tenant awaiting activation', 'INACTIVE', 'REG-TEST-003', 'TAX-TEST-003', 'contact@pendingtenant.com', '789 Pending Blvd', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
@@ -28,7 +29,8 @@ INSERT INTO shops (id, name, tenant_id, address, city, state, country, postal_co
 VALUES
     ('650e8400-e29b-41d4-a716-446655440001', 'Downtown Store', '550e8400-e29b-41d4-a716-446655440001', '123 Main St', 'New York', 'NY', 'USA', '10001', '+1-555-0101', 'downtown@testretail.com', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('650e8400-e29b-41d4-a716-446655440002', 'Uptown Branch', '550e8400-e29b-41d4-a716-446655440001', '456 Broadway', 'New York', 'NY', 'USA', '10002', '+1-555-0102', 'uptown@testretail.com', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('650e8400-e29b-41d4-a716-446655440003', 'Demo Shop', '550e8400-e29b-41d4-a716-446655440002', '789 Tech Ave', 'San Francisco', 'CA', 'USA', '94102', '+1-555-0103', 'demo@electronics.com', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('650e8400-e29b-41d4-a716-446655440003', 'Demo Shop', '550e8400-e29b-41d4-a716-446655440002', '789 Tech Ave', 'San Francisco', 'CA', 'USA', '94102', '+1-555-0103', 'demo@electronics.com', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('650e8400-e29b-41d4-a716-446655440004', 'Pending Shop', '550e8400-e29b-41d4-a716-446655440003', '321 Future St', 'Boston', 'MA', 'USA', '02101', '+1-555-0104', 'shop@pendingtenant.com', 'INACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
@@ -44,7 +46,8 @@ VALUES
     ('750e8400-e29b-41d4-a716-446655440002', 'kc-owner-001', '550e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'owner@testretail.com', 'owner@testretail.com', 'John', 'Owner', '+1-555-1002', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('750e8400-e29b-41d4-a716-446655440003', 'kc-manager-001', '550e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'manager@testretail.com', 'manager@testretail.com', 'Jane', 'Manager', '+1-555-1003', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('750e8400-e29b-41d4-a716-446655440004', 'kc-employee-001', '550e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'employee@testretail.com', 'employee@testretail.com', 'Bob', 'Employee', '+1-555-1004', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('750e8400-e29b-41d4-a716-446655440005', 'kc-investor-001', '550e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'investor@testretail.com', 'investor@testretail.com', 'Alice', 'Investor', '+1-555-1005', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('750e8400-e29b-41d4-a716-446655440005', 'kc-investor-001', '550e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 'investor@testretail.com', 'investor@testretail.com', 'Alice', 'Investor', '+1-555-1005', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('750e8400-e29b-41d4-a716-446655440006', 'kc-pending-001', '550e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440004', 'contact@pendingtenant.com', 'contact@pendingtenant.com', 'Pending', 'Contact', '+1-555-1006', 'INACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================

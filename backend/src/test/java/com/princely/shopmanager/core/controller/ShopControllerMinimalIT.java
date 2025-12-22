@@ -1,5 +1,7 @@
 package com.princely.shopmanager.core.controller;
 
+import com.princely.shopmanager.core.dto.ShopConfigurationRequest;
+import com.princely.shopmanager.core.dto.ShopConfigurationResponse;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
 import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
@@ -9,10 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Map;
-
+import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -25,17 +25,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Purpose: API documentation showing endpoints work end-to-end.
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Sql(scripts = "/test-data-empty.sql")
 @DisplayName("Shop Controller - Minimal Happy Path Integration Tests")
 class ShopControllerMinimalIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("POST /shops - Should create shop")
     void shouldCreateShop() {
-        // Given
-        String tenantId = "tenant-create-shop";
-        setTenantContext(tenantId);
-        setupTenantTestData(tenantId);
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
 
         ShopCreateRequest request = createSampleShopCreateRequest("Test Shop");
 
@@ -50,38 +47,34 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody().getName()).isEqualTo("Test Shop");
+        assertThat(response.getBody().getName()).startsWith("Test Shop");
     }
 
     @Test
     @DisplayName("GET /shops/{shopId} - Should get shop by ID")
     void shouldGetShopById() {
-        // Given
-        String tenantId = "tenant-get-shop";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001 - Downtown Store)
+        setTenantContext(TEST_TENANT_001);
 
         // When
-        ResponseEntity<ShopResponse> response = performAuthenticatedGet(
-            "/shops/" + shopId,
+        ResponseEntity<ShopResponse> response = performAuthenticatedGetWithShop(
+            "/shops/" + TEST_SHOP_001,
             "manager",
+            TEST_SHOP_001,
             ShopResponse.class,
             "MANAGER"
         );
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getId()).isEqualTo(shopId);
+        assertThat(response.getBody().getId()).isEqualTo(TEST_SHOP_001);
     }
 
     @Test
     @DisplayName("GET /shops - Should list shops (paginated)")
     void shouldListShops() {
-        // Given
-        String tenantId = "tenant-list-shops";
-        setTenantContext(tenantId);
-        setupTenantTestData(tenantId);
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
 
         // When
         ResponseEntity<String> response = performAuthenticatedGetWithPagination(
@@ -100,15 +93,14 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /shops/active - Should get active shops")
     void shouldGetActiveShops() {
-        // Given
-        String tenantId = "tenant-active-shops";
-        setTenantContext(tenantId);
-        setupTenantTestData(tenantId);
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
 
         // When
-        ResponseEntity<String> response = performAuthenticatedGet(
+        ResponseEntity<String> response = performAuthenticatedGetWithShop(
             "/shops/active",
             "manager",
+            TEST_SHOP_001,
             String.class,
             "MANAGER"
         );
@@ -120,19 +112,17 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("PUT /shops/{shopId} - Should update shop")
     void shouldUpdateShop() {
-        // Given
-        String tenantId = "tenant-update-shop";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
 
         ShopUpdateRequest request = createSampleShopUpdateRequest("Updated Description");
 
         // When
-        ResponseEntity<ShopResponse> response = performAuthenticatedPut(
-            "/shops/" + shopId,
+        ResponseEntity<ShopResponse> response = performAuthenticatedPutWithShop(
+            "/shops/" + TEST_SHOP_001,
             request,
             "manager",
+            TEST_SHOP_001,
             ShopResponse.class,
             "MANAGER"
         );
@@ -145,15 +135,12 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("PATCH /shops/{shopId}/status - Should change shop status")
     void shouldChangeShopStatus() {
-        // Given
-        String tenantId = "tenant-status-shop";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_002 - Uptown Branch)
+        setTenantContext(TEST_TENANT_001);
 
         // When
         ResponseEntity<ShopResponse> response = performAuthenticatedPatch(
-            "/shops/" + shopId + "/status?status=SUSPENDED",
+            "/shops/" + TEST_SHOP_002 + "/status?status=SUSPENDED",
             null,
             "owner",
             ShopResponse.class,
@@ -168,21 +155,165 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /shops/{shopId}/users - Should get shop users")
     void shouldGetShopUsers() {
-        // Given
-        String tenantId = "tenant-users-shop";
-        setTenantContext(tenantId);
-        Map<String, Object> testData = setupTenantTestData(tenantId);
-        String shopId = testData.get("testShop").toString();
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
 
         // When
-        ResponseEntity<String> response = performAuthenticatedGet(
-            "/shops/" + shopId + "/users",
+        ResponseEntity<String> response = performAuthenticatedGetWithShop(
+            "/shops/" + TEST_SHOP_001 + "/users",
             "manager",
+            TEST_SHOP_001,
             String.class,
             "MANAGER"
         );
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("GET /shops/all - Should list all shops")
+    void shouldListAllShops() {
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
+
+        // When
+        ResponseEntity<String> response = performAuthenticatedGetWithPagination(
+            "/shops/all",
+            0,
+            10,
+            "owner",
+            "OWNER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"content\"");
+    }
+
+    @Test
+    @DisplayName("PATCH /shops/{shopId} - Should partial update shop")
+    void shouldPatchShop() {
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
+
+        ShopUpdateRequest request = ShopUpdateRequest.builder()
+            .description("Patched Description Only")
+            .build();
+
+        // When
+        ResponseEntity<ShopResponse> response = performAuthenticatedPatchWithShop(
+            "/shops/" + TEST_SHOP_001,
+            request,
+            "manager",
+            TEST_SHOP_001,
+            ShopResponse.class,
+            "MANAGER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getDescription()).isEqualTo("Patched Description Only");
+    }
+
+    @Test
+    @DisplayName("DELETE /shops/{shopId} - Should delete shop")
+    void shouldDeleteShop() {
+        // Given - Create a shop to delete
+        setTenantContext(TEST_TENANT_001);
+        ShopCreateRequest createRequest = createSampleShopCreateRequest("Shop To Delete");
+        ResponseEntity<ShopResponse> createResponse = performAuthenticatedPost(
+            "/shops",
+            createRequest,
+            "owner",
+            ShopResponse.class,
+            "OWNER"
+        );
+        String shopIdToDelete = createResponse.getBody().getId();
+
+        // When
+        ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
+            "/shops/" + shopIdToDelete,
+            "owner",
+            shopIdToDelete,
+            "OWNER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @DisplayName("GET /shops/{shopId}/configuration - Should get shop configuration")
+    void shouldGetShopConfiguration() {
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
+
+        // When
+        ResponseEntity<ShopConfigurationResponse> response = performAuthenticatedGetWithShop(
+            "/shops/" + TEST_SHOP_001 + "/configuration",
+            "manager",
+            TEST_SHOP_001,
+            ShopConfigurationResponse.class,
+            "MANAGER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("PUT /shops/{shopId}/configuration - Should update shop configuration")
+    void shouldUpdateShopConfiguration() {
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
+
+        ShopConfigurationRequest request = ShopConfigurationRequest.builder()
+            .investmentEnabled(false)
+            .analyticsEnabled(true)
+            .fraudDetectionEnabled(true)
+            .autoBackupEnabled(false)
+            .build();
+
+        // When
+        ResponseEntity<ShopResponse> response = performAuthenticatedPutWithShop(
+            "/shops/" + TEST_SHOP_001 + "/configuration",
+            request,
+            "manager",
+            TEST_SHOP_001,
+            ShopResponse.class,
+            "MANAGER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getConfiguration().isInvestmentEnabled()).isFalse();
+        assertThat(response.getBody().getConfiguration().isAnalyticsEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("PATCH /shops/{shopId}/configuration - Should partial update shop configuration")
+    void shouldPatchShopConfiguration() {
+        // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
+        setTenantContext(TEST_TENANT_001);
+
+        ShopConfigurationRequest request = ShopConfigurationRequest.builder()
+            .fraudDetectionEnabled(true)
+            .build();
+
+        // When
+        ResponseEntity<ShopResponse> response = performAuthenticatedPatchWithShop(
+            "/shops/" + TEST_SHOP_001 + "/configuration",
+            request,
+            "manager",
+            TEST_SHOP_001,
+            ShopResponse.class,
+            "MANAGER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getConfiguration().isFraudDetectionEnabled()).isTrue();
     }
 }

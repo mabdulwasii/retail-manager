@@ -39,6 +39,7 @@ public final class TestConstants {
     // ==========================================
     public static final String TEST_TENANT_001 = "550e8400-e29b-41d4-a716-446655440001";
     public static final String TEST_TENANT_002 = "550e8400-e29b-41d4-a716-446655440002";
+    public static final String TEST_TENANT_003 = "550e8400-e29b-41d4-a716-446655440003"; // INACTIVE - Pending
 
     // ==========================================
     // SHOP UUIDs
@@ -46,6 +47,7 @@ public final class TestConstants {
     public static final String TEST_SHOP_001 = "650e8400-e29b-41d4-a716-446655440001";
     public static final String TEST_SHOP_002 = "650e8400-e29b-41d4-a716-446655440002";
     public static final String TEST_SHOP_003 = "650e8400-e29b-41d4-a716-446655440003";
+    public static final String TEST_SHOP_004 = "650e8400-e29b-41d4-a716-446655440004"; // INACTIVE - Pending
 
     // ==========================================
     // USER UUIDs
@@ -55,6 +57,7 @@ public final class TestConstants {
     public static final String USER_MANAGER_001 = "750e8400-e29b-41d4-a716-446655440003";
     public static final String USER_EMPLOYEE_001 = "750e8400-e29b-41d4-a716-446655440004";
     public static final String USER_INVESTOR_001 = "750e8400-e29b-41d4-a716-446655440005";
+    public static final String USER_PENDING_001 = "750e8400-e29b-41d4-a716-446655440006"; // INACTIVE - Pending
 
     // ==========================================
     // USER EMAILS
@@ -64,6 +67,7 @@ public final class TestConstants {
     public static final String MANAGER_EMAIL = "manager@testretail.com";
     public static final String EMPLOYEE_EMAIL = "employee@testretail.com";
     public static final String INVESTOR_EMAIL = "investor@testretail.com";
+    public static final String PENDING_EMAIL = "contact@pendingtenant.com";
 
     // ==========================================
     // KEYCLOAK IDs
@@ -73,6 +77,7 @@ public final class TestConstants {
     public static final String KC_MANAGER_001 = "kc-manager-001";
     public static final String KC_EMPLOYEE_001 = "kc-employee-001";
     public static final String KC_INVESTOR_001 = "kc-investor-001";
+    public static final String KC_PENDING_001 = "kc-pending-001";
 
     // ==========================================
     // CATEGORY UUIDs
@@ -244,6 +249,29 @@ public final class TestConstants {
     public static final String TENANT_NAME_DEMO_ELECTRONICS = "Demo Electronics Ltd";
 
     // ==========================================
+    // ROLE IDs
+    // ==========================================
+    public static final String ROLE_ADMIN = "test-role-admin";
+    public static final String ROLE_OWNER = "test-role-owner";
+    public static final String ROLE_MANAGER = "test-role-manager";
+    public static final String ROLE_EMPLOYEE = "test-role-employee";
+    public static final String ROLE_INVESTOR = "test-role-investor";
+
+    // ==========================================
+    // PERMISSIONS
+    // ==========================================
+    public static final String PERMISSION_PRODUCT_CREATE = "test-perm-product-create";
+    public static final String PERMISSION_PRODUCT_READ = "test-perm-product-read";
+
+    // ==========================================
+    // PRODUCT BARCODES
+    // ==========================================
+    public static final String BARCODE_WIRELESS_MOUSE = "1234567890123";
+    public static final String BARCODE_USB_KEYBOARD = "2345678901234";
+    public static final String BARCODE_COTTON_TSHIRT = "3456789012345";
+    public static final String BARCODE_ENERGY_DRINK = "4567890123456";
+
+    // ==========================================
     // MOCK SECURITY CONTEXT DEFAULTS
     // ==========================================
     public static final String MOCK_USER_ID = "750e8400-e29b-41d4-a716-446655440000";
@@ -267,6 +295,13 @@ public final class TestConstants {
     public static final double TXN_002_AMOUNT = 25.99;  // 1 mouse
     public static final double TXN_003_AMOUNT = 19.99;  // 1 t-shirt
     public static final double TOTAL_SALES_AMOUNT = 97.96;
+
+    // ==========================================
+    // SALES TRANSACTION UUIDs
+    // ==========================================
+    public static final String SALES_TXN_001 = "c50e8400-e29b-41d4-a716-446655440001";
+    public static final String SALES_TXN_002 = "c50e8400-e29b-41d4-a716-446655440002";
+    public static final String SALES_TXN_003 = "c50e8400-e29b-41d4-a716-446655440003";
 
     // ==========================================
     // EXPENSE AMOUNTS (from test-data.sql)

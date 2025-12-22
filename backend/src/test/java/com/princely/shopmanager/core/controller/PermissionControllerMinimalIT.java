@@ -6,30 +6,45 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
 
+import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Minimal integration test for PermissionController - Happy Path Only.
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Sql(scripts = "/test-data-empty.sql")
 @DisplayName("Permission Controller - Minimal Happy Path Integration Tests")
 class PermissionControllerMinimalIT extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("GET /permissions - Should list all permissions")
     void shouldListPermissions() {
-        // Given
-        String tenantId = "tenant-perm-list";
-        setTenantContext(tenantId);
-        setupTenantTestData(tenantId);
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
 
         // When
         ResponseEntity<String> response = performAuthenticatedGet(
             "/permissions",
-            "owner",
+            "owner@testretail.com",
+            String.class,
+            "OWNER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("GET /permissions/grouped - Should list permissions grouped by resource")
+    void shouldListPermissionsGrouped() {
+        // Given - Use existing tenant from test-data.sql (TestConstants.TEST_TENANT_001)
+        setTenantContext(TEST_TENANT_001);
+
+        // When
+        ResponseEntity<String> response = performAuthenticatedGet(
+            "/permissions/grouped",
+            "owner@testretail.com",
             String.class,
             "OWNER"
         );
