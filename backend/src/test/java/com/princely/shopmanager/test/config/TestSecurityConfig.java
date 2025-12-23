@@ -92,6 +92,7 @@ public class TestSecurityConfig {
 
                 String username = request.getHeader("X-Test-User");
                 String userId = request.getHeader("X-Test-User-Id");
+                String keycloakId = request.getHeader("X-Test-Keycloak-Id");
                 String tenantId = request.getHeader("X-Test-Tenant");
                 String shopId = request.getHeader("X-Test-Shop");
                 String rolesHeader = request.getHeader("X-Test-Roles");
@@ -107,8 +108,8 @@ public class TestSecurityConfig {
 
                     // Create JwtPrincipal
                     JwtPrincipal principal = JwtPrincipal.builder()
-                        .subject(username)
-                        .userId(userId != null ? userId : username)  // Use X-Test-User-Id if provided, fallback to username
+                        .subject(keycloakId != null ? keycloakId : username)  // Use Keycloak ID if provided
+                        .userId(userId != null ? userId : username)  // Use database UUID if provided
                         .preferredUsername(username)
                         .tenantId(tenantId)
                         .shopId(shopId)
@@ -134,7 +135,7 @@ public class TestSecurityConfig {
 
                     // Set tenant context (since TenantFilter is disabled in tests)
                     TenantContext.setCurrentTenant(tenantId);
-                    TenantContext.setCurrentUser(username, username);
+                    TenantContext.setCurrentUser(keycloakId != null ? keycloakId : username, username);
                 }
 
                 try {

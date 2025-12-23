@@ -402,7 +402,8 @@ public abstract class AbstractIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + createMockTokenWithTenantAndShop(username, tenantId, shopId, List.of(roles)));
         headers.set("X-Test-User", username);
-        headers.set("X-Test-User-Id", getUserIdForEmail(username));  // Add user UUID for principal
+        headers.set("X-Test-User-Id", getUserIdForEmail(username));  // Database user UUID for principal
+        headers.set("X-Test-Keycloak-Id", getKeycloakIdForEmail(username));  // Keycloak ID for TenantContext
         headers.set("X-Test-Tenant", tenantId);
         if (shopId != null) {
             headers.set("X-Test-Shop", shopId);
@@ -456,6 +457,24 @@ public abstract class AbstractIntegrationTest {
      */
     protected String createMockTokenWithTenant(String subject, String tenantId, List<String> roles) {
         return createMockTokenWithTenantAndShop(subject, tenantId, null, roles);
+    }
+
+    /**
+     * Maps common test user emails to their Keycloak IDs from test-data.sql.
+     * Used to set the X-Test-Keycloak-Id header for TenantContext.
+     *
+     * @param email User email
+     * @return Keycloak ID
+     */
+    private String getKeycloakIdForEmail(String email) {
+        return switch (email) {
+            case "admin@testretail.com" -> "kc-admin-001";
+            case "owner@testretail.com" -> "kc-owner-001";
+            case "manager@testretail.com" -> "kc-manager-001";
+            case "employee@testretail.com" -> "kc-employee-001";
+            case "investor@testretail.com" -> "kc-investor-001";
+            default -> email; // Fallback to email for unknown users
+        };
     }
 
     /**

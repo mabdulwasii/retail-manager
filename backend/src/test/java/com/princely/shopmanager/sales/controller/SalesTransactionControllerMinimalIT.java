@@ -25,22 +25,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
  *
- * PASSING (2/6):
+ * PASSING (6/6):
+ * - POST /sales - Create ✓
  * - GET /sales/{id} - Get by ID ✓
  * - GET /sales - List transactions ✓
- *
- * DISABLED (4/6):
- * - POST /sales - Create (requires InventoryService for stock deduction)
- * - GET /sales/{id}/receipt - Get receipt (ReceiptService dependency)
- * - GET /sales/by-date-range - Get by date range (needs investigation)
- * - POST /sales/{id}/void - Void transaction (depends on create)
+ * - GET /sales/{id}/receipt - Get receipt ✓
+ * - GET /sales/by-date-range - Get by date range ✓
+ * - POST /sales/{id}/void - Void transaction ✓
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("SalesTransaction Controller - Minimal Happy Path Integration Tests")
 class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
 
-    // @Test
-    // @DisplayName("POST /sales - Should create sales transaction")
+    @Test
+    @DisplayName("POST /sales - Should create sales transaction")
     void shouldCreateSalesTransaction() {
         // Given - Use existing shop and products from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -72,6 +70,7 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().getShopId()).isEqualTo(TEST_SHOP_001);
         assertThat(response.getBody().getLineItems()).hasSize(1);
+        assertThat(response.getBody().getCustomerName()).isEqualTo("Test Customer");
     }
 
     @Test
@@ -95,15 +94,39 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getCustomerName()).isEqualTo("John Customer");
     }
 
-    // @Test
-    // @DisplayName("GET /sales/{transactionId}/receipt - Should get transaction receipt")
+    @Test
+    @DisplayName("GET /sales/{transactionId}/receipt - Should get transaction receipt")
     void shouldGetTransactionReceipt() {
-        // Given - Use existing sales transaction from test-data.sql
+        // Given - Create a new transaction (which auto-generates receipt)
         setTenantContext(TEST_TENANT_001);
 
-        // When
+        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
+            .productId(PROD_WIRELESS_MOUSE)
+            .quantity(1)
+            .unitPrice(new BigDecimal("25.99"))
+            .build();
+
+        SalesTransactionCreateRequest createRequest = SalesTransactionCreateRequest.builder()
+            .shopId(TEST_SHOP_001)
+            .customerName("Receipt Test Customer")
+            .lineItems(List.of(lineItem))
+            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
+            .build();
+
+        ResponseEntity<SalesTransactionResponse> createResponse = performAuthenticatedPostWithShop(
+            "/sales",
+            createRequest,
+            "manager@testretail.com",
+            TEST_SHOP_001,
+            SalesTransactionResponse.class,
+            "MANAGER"
+        );
+
+        String transactionId = createResponse.getBody().getId();
+
+        // When - Get the receipt
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/sales/" + SALES_TXN_001 + "/receipt",
+            "/sales/" + transactionId + "/receipt",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -113,6 +136,7 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).contains("Receipt Test Customer");
     }
 
     @Test
@@ -135,15 +159,15 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody()).contains("TXN-2024-001");
     }
 
-    // @Test
-    // @DisplayName("GET /sales/by-date-range - Should get sales by date range")
+    @Test
+    @DisplayName("GET /sales/by-date-range - Should get sales by date range")
     void shouldGetSalesByDateRange() {
         // Given - Use existing shop from test-data.sql
         setTenantContext(TEST_TENANT_001);
 
-        // When - Get last 7 days
-        String startDate = java.time.LocalDate.now().minusDays(7).toString();
-        String endDate = java.time.LocalDate.now().toString();
+        // When - Get last 7 days (using ISO DateTime format)
+        String startDate = java.time.LocalDate.now().minusDays(7).atStartOfDay().toString();
+        String endDate = java.time.LocalDate.now().atTime(23, 59, 59).toString();
 
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
             "/sales/by-date-range?shopId=" + TEST_SHOP_001 + "&startDate=" + startDate + "&endDate=" + endDate,
@@ -155,10 +179,11 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("TXN-2024"); // Should return transactions
     }
 
-    // @Test
-    // @DisplayName("POST /sales/{id}/void - Should void sales transaction")
+    @Test
+    @DisplayName("POST /sales/{id}/void - Should void sales transaction")
     void shouldVoidSalesTransaction() {
         // Given - Create a new transaction to void (can't void existing test data)
         setTenantContext(TEST_TENANT_001);

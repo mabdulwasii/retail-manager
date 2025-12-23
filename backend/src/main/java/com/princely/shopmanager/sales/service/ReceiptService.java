@@ -79,6 +79,7 @@ public class ReceiptService extends ShopAwareService {
             .printableContent(printableContent)
             .format(Receipt.ReceiptFormat.TEXT)
             .status(Receipt.ReceiptStatus.GENERATED)
+            .issuedDate(LocalDateTime.now())
             .generatedAt(LocalDateTime.now())
             .build();
 
