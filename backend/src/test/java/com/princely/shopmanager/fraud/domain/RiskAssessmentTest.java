@@ -360,7 +360,6 @@ class RiskAssessmentTest {
     void completeWorkflow_pendingToUnderReviewToApproved() {
         // Given
         assessment.setStatus(RiskAssessment.AssessmentStatus.PENDING);
-        String initialReviewer = "reviewer-123";
         String finalReviewer = "reviewer-456";
 
         // When & Then: PENDING → UNDER_REVIEW
