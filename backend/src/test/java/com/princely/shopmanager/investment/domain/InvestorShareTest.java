@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -244,7 +245,7 @@ class InvestorShareTest {
         // Then
         BigDecimal expectedShare = share.getProfitAmount()
             .multiply(share.getSharePercentage())
-            .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
         assertThat(share.getShareAmount()).isEqualByComparingTo(expectedShare);
     }
