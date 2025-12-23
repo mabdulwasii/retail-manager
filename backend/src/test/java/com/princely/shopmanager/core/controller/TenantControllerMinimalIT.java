@@ -11,42 +11,57 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Minimal integration test for TenantController - Happy Path Only.
  *
- * PASSING (4/10):
- * - GET /tenants/{tenantId}/users - List users ✓
- * - GET /tenants/{tenantId}/configurations - List configurations ✓
- * - GET /tenants/{tenantId}/configurations/category/{category} - Get by category ✓
- * - GET /tenants/{tenantId}/configurations/{key} - Get by key ✓
+ * Covers all 10 TenantController endpoints with simple happy-path tests.
+ * Comprehensive business logic tests are in TenantServiceTest (unit tests).
+ * Comprehensive RBAC tests are in RBACIntegrationTest.
  *
- * DISABLED (6/10):
- * - POST /tenants/{tenantId}/users - Create user (400 BAD_REQUEST - validation or keycloak)
- * - POST /tenants/{tenantId}/configurations - Create configuration (400 BAD_REQUEST)
- * - PUT /tenants/{tenantId}/configurations/{key} - Update configuration (404 NOT_FOUND)
- * - PATCH /tenants/{tenantId}/configurations/{key} - Partial update (404 NOT_FOUND)
- * - DELETE /tenants/{tenantId}/configurations/{key} - Delete configuration (404 NOT_FOUND)
- * - POST /tenants/{tenantId}/configurations/bulk - Bulk upsert (400 BAD_REQUEST)
+ * Purpose: API documentation showing all endpoints work end-to-end.
+ * All tests use existing test-data.sql fixtures for optimal performance.
+ *
+ * ENABLED (10/10):
+ * - POST /tenants/{tenantId}/users - Create user
+ * - GET /tenants/{tenantId}/users - List users
+ * - POST /tenants/{tenantId}/configurations - Create configuration
+ * - GET /tenants/{tenantId}/configurations - List configurations
+ * - GET /tenants/{tenantId}/configurations/category/{category} - Get by category
+ * - GET /tenants/{tenantId}/configurations/{key} - Get by key
+ * - PUT /tenants/{tenantId}/configurations/{key} - Update configuration
+ * - PATCH /tenants/{tenantId}/configurations/{key} - Partial update
+ * - DELETE /tenants/{tenantId}/configurations/{key} - Delete configuration
+ * - POST /tenants/{tenantId}/configurations/bulk - Bulk upsert
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Tenant Controller - Minimal Happy Path Integration Tests")
 class TenantControllerMinimalIT extends AbstractIntegrationTest {
 
-    // @Test
-    // @DisplayName("POST /tenants/{tenantId}/users - Should create user in tenant")
+    @Test
+    @DisplayName("POST /tenants/{tenantId}/users - Should create user in tenant")
     void shouldCreateUserInTenant() {
         // Given
         setTenantContext(TEST_TENANT_001);
+
+        // Mock Keycloak user creation to return success
+        when(keycloakUserService.createUser(any())).thenReturn("kc-new-user-id");
+
         UserCreateRequest request = UserCreateRequest.builder()
-            .username("newuser")
-            .email("newuser@testretail.com")
+            .username("newuser" + System.currentTimeMillis())  // Unique username
+            .email("newuser" + System.currentTimeMillis() + "@testretail.com")  // Unique email
             .password("Test@123456")
             .firstName("New")
             .lastName("User")
+            .phoneNumber("+1234567890")  // Required field
+            .shopId(TEST_SHOP_001)  // Required field
+            .roles(Set.of("test-role-employee"))  // At least one role required
             .build();
 
         // When
@@ -140,8 +155,8 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("POST /tenants/{tenantId}/configurations - Should create configuration")
+    @Test
+    @DisplayName("POST /tenants/{tenantId}/configurations - Should create configuration")
     void shouldCreateConfiguration() {
         // Given
         setTenantContext(TEST_TENANT_001);
@@ -167,14 +182,18 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
 
-    // @Test
-    // @DisplayName("PUT /tenants/{tenantId}/configurations/{key} - Should update configuration")
+    @Test
+    @DisplayName("PUT /tenants/{tenantId}/configurations/{key} - Should update configuration")
     void shouldUpdateConfiguration() {
-        // Given
+        // Given - Use existing configuration from test-data.sql
         setTenantContext(TEST_TENANT_001);
         String configKey = "business.name";
         TenantConfigurationRequest request = TenantConfigurationRequest.builder()
+            .key(configKey)
             .value("Updated Business Name")
+            .category(TenantConfiguration.ConfigCategory.BUSINESS)
+            .valueType(TenantConfiguration.ValueType.STRING)
+            .description("Updated business name")
             .build();
 
         // When
@@ -191,10 +210,10 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("PATCH /tenants/{tenantId}/configurations/{key} - Should partial update configuration value")
+    @Test
+    @DisplayName("PATCH /tenants/{tenantId}/configurations/{key} - Should partial update configuration value")
     void shouldPartialUpdateConfigurationValue() {
-        // Given
+        // Given - Use existing configuration from test-data.sql
         setTenantContext(TEST_TENANT_001);
         String configKey = "business.name";
 
@@ -212,16 +231,33 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("DELETE /tenants/{tenantId}/configurations/{key} - Should delete configuration")
+    @Test
+    @DisplayName("DELETE /tenants/{tenantId}/configurations/{key} - Should delete configuration")
     void shouldDeleteConfiguration() {
-        // Given
+        // Given - First create a config, then delete it (isolation due to @DirtiesContext)
         setTenantContext(TEST_TENANT_001);
-        String configKey = "test.config";
 
-        // When
+        // Create a deletable configuration
+        TenantConfigurationRequest createRequest = TenantConfigurationRequest.builder()
+            .key("deletable.config")
+            .value("value-to-delete")
+            .category(TenantConfiguration.ConfigCategory.BUSINESS)
+            .valueType(TenantConfiguration.ValueType.STRING)
+            .description("Config for deletion test")
+            .build();
+
+        performAuthenticatedPostWithShop(
+            "/tenants/" + TEST_TENANT_001 + "/configurations",
+            createRequest,
+            "admin@testretail.com",
+            TEST_SHOP_001,
+            String.class,
+            "TENANT_ADMIN"
+        );
+
+        // When - Delete it
         ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/tenants/" + TEST_TENANT_001 + "/configurations/" + configKey,
+            "/tenants/" + TEST_TENANT_001 + "/configurations/deletable.config",
             "admin@testretail.com",
             TEST_SHOP_001,
             "TENANT_ADMIN"
@@ -231,8 +267,8 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
-    // @Test
-    // @DisplayName("POST /tenants/{tenantId}/configurations/bulk - Should bulk upsert configurations")
+    @Test
+    @DisplayName("POST /tenants/{tenantId}/configurations/bulk - Should bulk upsert configurations")
     void shouldBulkUpsertConfigurations() {
         // Given
         setTenantContext(TEST_TENANT_001);

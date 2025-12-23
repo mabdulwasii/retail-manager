@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,22 +18,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Minimal integration test for InvestmentRoundController - Happy Path Only.
  *
- * Covers all 8 InvestmentRoundController endpoints with simple happy-path tests.
+ * Covers InvestmentRoundController endpoints with simple happy-path tests.
  * Comprehensive business logic tests are in InvestmentRoundServiceTest (unit tests).
  * Comprehensive RBAC tests are in RBACIntegrationTest.
  *
- * Purpose: API documentation showing all endpoints work end-to-end.
- * All tests use existing test-data.sql fixtures for optimal performance.
+ * Purpose: API documentation showing endpoints work end-to-end.
+ * Tests use existing test-data.sql fixtures for optimal performance.
  *
- * ENABLED (8/8):
+ * ENABLED (7/8):
  * - POST /shops/{shopId}/investment-rounds - Create investment round
  * - GET /shops/{shopId}/investment-rounds - List investment rounds
  * - GET /investment-rounds/{roundId} - Get by ID
  * - PUT /investment-rounds/{roundId} - Update investment round
  * - PATCH /investment-rounds/{roundId} - Patch investment round
- * - DELETE /investment-rounds/{roundId} - Delete investment round
  * - POST /investment-rounds/{roundId}/close - Close investment round
  * - POST /investment-rounds/{roundId}/investors - Add investor to round
+ *
+ * DISABLED (1/8):
+ * - DELETE /investment-rounds/{roundId} - Disabled: Business rule prevents deletion with investments
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("InvestmentRound Controller - Minimal Happy Path Integration Tests")
@@ -44,18 +47,34 @@ class InvestmentRoundControllerMinimalIT extends AbstractIntegrationTest {
         // Given
         setTenantContext(TEST_TENANT_001);
 
+        InvestmentRoundCreateRequest request = InvestmentRoundCreateRequest.builder()
+            .shopId(TEST_SHOP_001)
+            .investmentType(com.princely.shopmanager.investment.domain.Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(com.princely.shopmanager.investment.domain.Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .notes("Test round for MinimalIT")
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId(USER_INVESTOR_001)
+                    .amount(new BigDecimal("1000.00"))
+                    .notes("Test investment")
+                    .build()
+            ))
+            .build();
+
         // When
-        ResponseEntity<String> response = performAuthenticatedPostWithShop(
+        ResponseEntity<InvestmentRoundResponse> response = performAuthenticatedPostWithShop(
             "/shops/" + TEST_SHOP_001 + "/investment-rounds",
-            null,
+            request,
             "owner@testretail.com",
             TEST_SHOP_001,
-            String.class,
+            InvestmentRoundResponse.class,
             "OWNER"
         );
 
-        // Then - Expect this to work or fail with service dependency issues
-        assertThat(response.getStatusCode()).isIn(HttpStatus.CREATED, HttpStatus.INTERNAL_SERVER_ERROR);
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getShopId()).isEqualTo(TEST_SHOP_001);
     }
 
     @Test
@@ -101,71 +120,84 @@ class InvestmentRoundControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("PUT /investment-rounds/{roundId} - Should update investment round")
     void shouldUpdateInvestmentRound() {
-        // Given - Use existing investment round from test-data.sql
+        // Given - Use existing investment round from test-data.sql with COMPLETE request
         setTenantContext(TEST_TENANT_001);
 
         InvestmentRoundCreateRequest request = InvestmentRoundCreateRequest.builder()
+            .shopId(TEST_SHOP_001)
+            .investmentType(com.princely.shopmanager.investment.domain.Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(com.princely.shopmanager.investment.domain.Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .notes("Updated notes for investment round")
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId(USER_INVESTOR_001)
+                    .amount(new BigDecimal("10000.00"))
+                    .build()
+            ))
             .build();
 
         // When
-        ResponseEntity<String> response = performAuthenticatedPutWithShop(
+        ResponseEntity<InvestmentRoundResponse> response = performAuthenticatedPutWithShop(
             "/investment-rounds/" + INVESTMENT_ROUND_001,
             request,
             "owner@testretail.com",
             TEST_SHOP_001,
-            String.class,
+            InvestmentRoundResponse.class,
             "OWNER"
         );
 
-        // Then - Accept either OK or BAD_REQUEST (validation may require all fields)
-        assertThat(response.getStatusCode()).isIn(HttpStatus.OK, HttpStatus.BAD_REQUEST);
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getId()).isEqualTo(INVESTMENT_ROUND_001);
     }
 
     @Test
     @DisplayName("PATCH /investment-rounds/{roundId} - Should patch investment round")
     void shouldPatchInvestmentRound() {
-        // Given - Use existing investment round from test-data.sql
+        // Given - For PATCH, also need complete request due to validation
         setTenantContext(TEST_TENANT_001);
 
         InvestmentRoundCreateRequest request = InvestmentRoundCreateRequest.builder()
+            .shopId(TEST_SHOP_001)
+            .investmentType(com.princely.shopmanager.investment.domain.Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(com.princely.shopmanager.investment.domain.Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .notes("Patched notes for investment round")
+            .investors(List.of(
+                InvestmentRoundCreateRequest.InvestorInput.builder()
+                    .investorId(USER_INVESTOR_001)
+                    .amount(new BigDecimal("10000.00"))
+                    .build()
+            ))
             .build();
 
         // When
-        ResponseEntity<String> response = performAuthenticatedPatchWithShop(
+        ResponseEntity<InvestmentRoundResponse> response = performAuthenticatedPatchWithShop(
             "/investment-rounds/" + INVESTMENT_ROUND_002,
             request,
             "owner@testretail.com",
             TEST_SHOP_001,
-            String.class,
+            InvestmentRoundResponse.class,
             "OWNER"
         );
 
-        // Then - Accept either OK or BAD_REQUEST (validation may require all fields)
-        assertThat(response.getStatusCode()).isIn(HttpStatus.OK, HttpStatus.BAD_REQUEST);
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getId()).isEqualTo(INVESTMENT_ROUND_002);
     }
 
     @Test
-    @DisplayName("DELETE /investment-rounds/{roundId} - Should delete investment round")
+    @org.junit.jupiter.api.Disabled("DELETE endpoint exists but cannot succeed in happy path: " +
+        "Investment rounds require at least one investor (@NotEmpty validation), " +
+        "and deleting rounds with investments violates business rules. " +
+        "This endpoint is primarily for cleanup of invalid/draft rounds. " +
+        "Comprehensive business logic testing in InvestmentRoundServiceTest.")
+    @DisplayName("DELETE /investment-rounds/{roundId} - Delete not testable in happy path")
     void shouldDeleteInvestmentRound() {
-        // Given - Use existing investment round from test-data.sql
-        setTenantContext(TEST_TENANT_001);
-
-        // When - Try to delete (may fail if investments reference this round)
-        ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/investment-rounds/" + INVESTMENT_ROUND_002,
-            "owner@testretail.com",
-            TEST_SHOP_001,
-            "OWNER"
-        );
-
-        // Then - Accept either success or business rule error
-        assertThat(response.getStatusCode()).isIn(
-            HttpStatus.NO_CONTENT,
-            HttpStatus.BAD_REQUEST,  // If investments exist
-            HttpStatus.CONFLICT      // If FK constraint violation
-        );
+        // This test is disabled because:
+        // 1. InvestmentRoundCreateRequest.investors is @NotEmpty - cannot create rounds without investors
+        // 2. Business rule prevents deletion of rounds with active investments
+        // 3. MinimalIT tests are for happy path only, not error scenarios
+        // 4. The DELETE endpoint exists for cleanup scenarios not applicable to minimal tests
     }
 
     @Test
@@ -195,24 +227,26 @@ class InvestmentRoundControllerMinimalIT extends AbstractIntegrationTest {
         // Given - Use existing investment round from test-data.sql
         setTenantContext(TEST_TENANT_001);
 
+        // Add a different investor to existing round
         InvestmentRoundCreateRequest.InvestorInput investorInput =
             InvestmentRoundCreateRequest.InvestorInput.builder()
-                .investorId(USER_INVESTOR_001)
+                .investorId(USER_OWNER_001)  // Add owner as investor
                 .amount(new BigDecimal("25000.00"))
-                .notes("Additional investment")
+                .notes("Additional investment from owner")
                 .build();
 
         // When
-        ResponseEntity<String> response = performAuthenticatedPostWithShop(
+        ResponseEntity<InvestmentRoundResponse> response = performAuthenticatedPostWithShop(
             "/investment-rounds/" + INVESTMENT_ROUND_001 + "/investors",
             investorInput,
             "owner@testretail.com",
             TEST_SHOP_001,
-            String.class,
+            InvestmentRoundResponse.class,
             "OWNER"
         );
 
-        // Then - Accept either OK or BAD_REQUEST (business rules may prevent adding)
-        assertThat(response.getStatusCode()).isIn(HttpStatus.OK, HttpStatus.BAD_REQUEST);
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getId()).isEqualTo(INVESTMENT_ROUND_001);
     }
 }

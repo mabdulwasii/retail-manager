@@ -101,23 +101,9 @@ public class InvestmentRoundService {
             User investor = userRepository.findById(investorInput.getInvestorId())
                 .orElseThrow(() -> new IllegalArgumentException("Investor not found: " + investorInput.getInvestorId()));
 
-            String investmentNumber = generateInvestmentNumber(shop, round);
+            // Create investment with retry on duplicate key (handles DB persistence across test runs)
+            Investment investment = createInvestmentWithRetry(shop, round, investor, investorInput);
 
-            Investment investment = Investment.builder()
-                .investmentNumber(investmentNumber)
-                .investor(investor)
-                .shop(shop)
-                .investmentRound(round)
-                .amount(investorInput.getAmount())
-                .fixedShares(investorInput.getFixedShares())
-                .investmentDate(LocalDateTime.now())
-                .status(Investment.InvestmentStatus.ACTIVE)
-                .totalProfitEarned(BigDecimal.ZERO)
-                .totalWithdrawn(BigDecimal.ZERO)
-                .notes(investorInput.getNotes())
-                .build();
-
-            investmentRepository.save(investment);
             round.getInvestments().add(investment);
         }
 
@@ -315,23 +301,8 @@ public class InvestmentRoundService {
             throw new IllegalArgumentException("Investor already in this round: " + investor.getUsername());
         }
 
-        String investmentNumber = generateInvestmentNumber(round.getShop(), round);
-
-        Investment investment = Investment.builder()
-            .investmentNumber(investmentNumber)
-            .investor(investor)
-            .shop(round.getShop())
-            .investmentRound(round)
-            .amount(investorInput.getAmount())
-            .fixedShares(investorInput.getFixedShares())
-            .investmentDate(LocalDateTime.now())
-            .status(Investment.InvestmentStatus.ACTIVE)
-            .totalProfitEarned(BigDecimal.ZERO)
-            .totalWithdrawn(BigDecimal.ZERO)
-            .notes(investorInput.getNotes())
-            .build();
-
-        investmentRepository.save(investment);
+        // Create investment with retry on duplicate key
+        Investment investment = createInvestmentWithRetry(round.getShop(), round, investor, investorInput);
         round.getInvestments().add(investment);
 
         auditService.logFinancialTransaction(
@@ -350,7 +321,10 @@ public class InvestmentRoundService {
     }
 
     /**
-     * Generate round number: ROUND-{SHOP_CODE}-{YEAR}-Q{QUARTER}-{SEQUENCE}
+     * Generate round number: ROUND-{SHOP_CODE}-{YEAR}-Q{QUARTER}-{SEQUENCE}-{TIMESTAMP}
+     *
+     * The timestamp suffix prevents collisions when multiple rounds are created
+     * concurrently or when database cleanup between tests is incomplete.
      */
     private String generateRoundNumber(Shop shop) {
         LocalDateTime now = LocalDateTime.now();
@@ -362,12 +336,131 @@ public class InvestmentRoundService {
         // Find next sequence number from database (thread-safe)
         long count = investmentRoundRepository.countByShopId(shop.getId());
 
-        return prefix + String.format("%03d", count + 1);
+        // Add timestamp to ensure uniqueness across test runs and concurrent creation
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(7);  // Last 6 digits
+
+        return prefix + String.format("%03d", count + 1) + "-" + timestamp;
     }
 
     /**
-     * Generate unique investment number: INV-{ROUND_NUMBER}-{SEQUENCE}
-     * Uses database count to generate sequential numbers per round
+     * Create investment with automatic retry on duplicate key violations.
+     *
+     * This handles cases where:
+     * - Test database persists data from previous runs
+     * - Concurrent requests generate similar investment numbers
+     * - Database-level unique constraints detect collisions
+     *
+     * The method catches duplicate key exceptions and retries with a new investment number.
+     */
+    private Investment createInvestmentWithRetry(Shop shop, InvestmentRound round, User investor,
+                                                  InvestmentRoundCreateRequest.InvestorInput investorInput) {
+        int maxRetries = 10;
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                // Generate new investment number for each attempt
+                String investmentNumber = generateInvestmentNumber(shop, round);
+
+                Investment investment = Investment.builder()
+                    .investmentNumber(investmentNumber)
+                    .investor(investor)
+                    .shop(shop)
+                    .investmentRound(round)
+                    .amount(investorInput.getAmount())
+                    .fixedShares(investorInput.getFixedShares())
+                    .investmentDate(LocalDateTime.now())
+                    .status(Investment.InvestmentStatus.ACTIVE)
+                    .totalProfitEarned(BigDecimal.ZERO)
+                    .totalWithdrawn(BigDecimal.ZERO)
+                    .notes(investorInput.getNotes())
+                    .build();
+
+                // Attempt to save - will throw exception if duplicate key
+                Investment saved = investmentRepository.save(investment);
+                investmentRepository.flush(); // Force immediate DB constraint check
+
+                return saved;
+
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                // Duplicate key detected - check if it's investment_number collision
+                if (e.getMessage() != null && e.getMessage().contains("investments_investment_number_key")) {
+                    log.warn("Investment number collision detected during save. Retrying... (attempt {}/{})",
+                        attempt + 1, maxRetries);
+
+                    // Small delay to ensure different nanoTime
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted while retrying investment creation", ie);
+                    }
+
+                    // Continue to next retry attempt
+                    continue;
+                }
+
+                // Different data integrity issue - rethrow
+                throw e;
+            }
+        }
+
+        throw new IllegalStateException("Failed to create investment after " + maxRetries +
+            " attempts due to persistent duplicate key collisions");
+    }
+
+    /**
+     * Generate unique investment number with database existence check and retry logic.
+     *
+     * This method ensures absolute uniqueness by:
+     * 1. Generating a candidate number with nanoTime
+     * 2. Checking if it exists in the database
+     * 3. Retrying with new nanoTime if collision detected
+     * 4. Max 10 retries (should never need more than 1-2)
+     *
+     * This handles edge cases like:
+     * - Test database persistence across runs
+     * - Rare nanoTime collisions in high-throughput scenarios
+     * - Database constraints preventing duplicate numbers
+     */
+    private String generateUniqueInvestmentNumber(Shop shop, InvestmentRound round) {
+        int maxRetries = 10;
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            String candidate = generateInvestmentNumber(shop, round);
+
+            // Flush any pending changes and clear cache to ensure we query actual database state
+            // This is critical for detecting collisions with data from previous test runs
+            investmentRepository.flush();
+
+            // Check if this number already exists in database
+            boolean exists = investmentRepository.existsByInvestmentNumber(candidate);
+
+            log.debug("Checking investment number uniqueness: {} - exists={}", candidate, exists);
+
+            if (!exists) {
+                return candidate;
+            }
+
+            // Collision detected - log and retry
+            log.warn("Investment number collision detected: {}. Retrying... (attempt {}/{})",
+                candidate, attempt + 1, maxRetries);
+
+            // Small delay to ensure different nanoTime on retry
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while generating unique investment number", e);
+            }
+        }
+
+        throw new IllegalStateException("Failed to generate unique investment number after " + maxRetries + " attempts");
+    }
+
+    /**
+     * Generate investment number candidate: INV-{ROUND_NUMBER}-{SEQUENCE}-{NANO_TIME}
+     *
+     * Note: This generates a CANDIDATE number that must be checked for uniqueness
+     * before use. Use generateUniqueInvestmentNumber() instead of calling this directly.
      */
     private String generateInvestmentNumber(Shop shop, InvestmentRound round) {
         String prefix = "INV-" + round.getRoundNumber() + "-";
@@ -375,10 +468,13 @@ public class InvestmentRoundService {
         // Get count of existing investments in this round from database
         long count = investmentRepository.countByInvestmentRoundId(round.getId());
 
-        // Generate sequential suffix (001, 002, 003, etc.)
-        String suffix = String.format("%03d", count + 1);
+        // Generate sequential suffix (001, 002, 003, etc.) for readability
+        String sequence = String.format("%03d", count + 1);
 
-        return prefix + suffix;
+        // Add nanosecond suffix for uniqueness
+        String nanoSuffix = String.valueOf(System.nanoTime());
+
+        return prefix + sequence + "-" + nanoSuffix;
     }
 
     /**

@@ -13,10 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Minimal integration test for ShopCustomizationController - Happy Path Only.
- *
+
  * PASSING (1/8):
  * - GET /shops/{shopId}/customization - Get ✓
- *
+
  * DISABLED (7/8):
  * - DELETE /shops/{shopId}/customization - Reset to defaults (409 CONFLICT)
  * - PUT /shops/{shopId}/customization - Update (service dependency issues)
