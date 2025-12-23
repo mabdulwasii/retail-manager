@@ -40,8 +40,9 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 
     /**
      * Helper method to create a sales transaction (which auto-generates a receipt).
+     * Returns the transaction ID (not receipt ID) since receipts are accessed via transaction.
      */
-    private String createSalesTransactionAndGetReceiptId() {
+    private String createSalesTransactionAndGetTransactionId() {
         SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
             .productId(PROD_WIRELESS_MOUSE)
             .quantity(1)
@@ -65,19 +66,22 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return response.getBody().getId();
+    }
 
-        // Get the receipt that was auto-generated for this transaction
-        String transactionId = response.getBody().getId();
-        ResponseEntity<Receipt> receiptResponse = performAuthenticatedGetWithShop(
+    /**
+     * Helper method to get receipt ID from a transaction ID.
+     */
+    private String getReceiptIdFromTransactionId(String transactionId) {
+        ResponseEntity<Receipt> response = performAuthenticatedGetWithShop(
             "/receipts/transaction/" + transactionId,
             "manager@testretail.com",
             TEST_SHOP_001,
             Receipt.class,
             "MANAGER"
         );
-
-        assertThat(receiptResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return receiptResponse.getBody().getId();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().getId();
     }
 
     @Test
@@ -106,11 +110,11 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     void shouldGetReceiptById() {
         // Given - Create new transaction to get a receipt with content
         setTenantContext(TEST_TENANT_001);
-        String receiptId = createSalesTransactionAndGetReceiptId();
+        String transactionId = createSalesTransactionAndGetTransactionId();
 
-        // When
+        // When - Use transaction ID to get receipt (controller expects transactionId despite parameter name)
         ResponseEntity<Receipt> response = performAuthenticatedGetWithShop(
-            "/receipts/" + receiptId,
+            "/receipts/" + transactionId,
             "manager@testretail.com",
             TEST_SHOP_001,
             Receipt.class,
@@ -119,7 +123,7 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getId()).isEqualTo(receiptId);
+        assertThat(response.getBody().getTransaction().getId()).isEqualTo(transactionId);
         assertThat(response.getBody().getReceiptContent()).isNotNull();
     }
 
@@ -192,11 +196,11 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     void shouldGetReceiptContent() {
         // Given - Create new transaction to get receipt with content
         setTenantContext(TEST_TENANT_001);
-        String receiptId = createSalesTransactionAndGetReceiptId();
+        String transactionId = createSalesTransactionAndGetTransactionId();
 
         // When
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/receipts/" + receiptId + "/content",
+            "/receipts/" + transactionId + "/content",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -214,11 +218,11 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     void shouldGetPrintableContent() {
         // Given - Create new transaction to get receipt with content
         setTenantContext(TEST_TENANT_001);
-        String receiptId = createSalesTransactionAndGetReceiptId();
+        String transactionId = createSalesTransactionAndGetTransactionId();
 
         // When
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/receipts/" + receiptId + "/printable",
+            "/receipts/" + transactionId + "/printable",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -236,7 +240,8 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     void shouldMarkAsPrinted() {
         // Given - Create new transaction to get fresh receipt
         setTenantContext(TEST_TENANT_001);
-        String receiptId = createSalesTransactionAndGetReceiptId();
+        String transactionId = createSalesTransactionAndGetTransactionId();
+        String receiptId = getReceiptIdFromTransactionId(transactionId);
 
         // When
         ResponseEntity<Receipt> response = performAuthenticatedPostWithShop(
@@ -259,7 +264,8 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     void shouldMarkAsEmailed() {
         // Given - Create new transaction to get fresh receipt
         setTenantContext(TEST_TENANT_001);
-        String receiptId = createSalesTransactionAndGetReceiptId();
+        String transactionId = createSalesTransactionAndGetTransactionId();
+        String receiptId = getReceiptIdFromTransactionId(transactionId);
 
         // When
         ResponseEntity<Receipt> response = performAuthenticatedPostWithShop(
