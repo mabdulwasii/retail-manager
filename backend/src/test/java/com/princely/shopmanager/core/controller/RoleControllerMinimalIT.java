@@ -1,8 +1,6 @@
 package com.princely.shopmanager.core.controller;
 
-import com.princely.shopmanager.core.dto.RoleAssignmentRequest;
 import com.princely.shopmanager.core.dto.RoleCreateRequest;
-import com.princely.shopmanager.core.dto.RolePermissionUpdateRequest;
 import com.princely.shopmanager.core.dto.RoleResponse;
 import com.princely.shopmanager.core.dto.RoleUpdateRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
@@ -11,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
 
 import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;

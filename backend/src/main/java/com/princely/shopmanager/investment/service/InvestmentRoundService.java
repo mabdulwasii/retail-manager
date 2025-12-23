@@ -392,7 +392,7 @@ public class InvestmentRoundService {
                         Thread.sleep(1);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException("Interrupted while retrying investment creation", ie);
+                        throw new IllegalStateException("Interrupted while retrying investment creation", ie);
                     }
 
                     // Continue to next retry attempt
@@ -409,58 +409,10 @@ public class InvestmentRoundService {
     }
 
     /**
-     * Generate unique investment number with database existence check and retry logic.
-     *
-     * This method ensures absolute uniqueness by:
-     * 1. Generating a candidate number with nanoTime
-     * 2. Checking if it exists in the database
-     * 3. Retrying with new nanoTime if collision detected
-     * 4. Max 10 retries (should never need more than 1-2)
-     *
-     * This handles edge cases like:
-     * - Test database persistence across runs
-     * - Rare nanoTime collisions in high-throughput scenarios
-     * - Database constraints preventing duplicate numbers
-     */
-    private String generateUniqueInvestmentNumber(Shop shop, InvestmentRound round) {
-        int maxRetries = 10;
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-            String candidate = generateInvestmentNumber(shop, round);
-
-            // Flush any pending changes and clear cache to ensure we query actual database state
-            // This is critical for detecting collisions with data from previous test runs
-            investmentRepository.flush();
-
-            // Check if this number already exists in database
-            boolean exists = investmentRepository.existsByInvestmentNumber(candidate);
-
-            log.debug("Checking investment number uniqueness: {} - exists={}", candidate, exists);
-
-            if (!exists) {
-                return candidate;
-            }
-
-            // Collision detected - log and retry
-            log.warn("Investment number collision detected: {}. Retrying... (attempt {}/{})",
-                candidate, attempt + 1, maxRetries);
-
-            // Small delay to ensure different nanoTime on retry
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Interrupted while generating unique investment number", e);
-            }
-        }
-
-        throw new IllegalStateException("Failed to generate unique investment number after " + maxRetries + " attempts");
-    }
-
-    /**
      * Generate investment number candidate: INV-{ROUND_NUMBER}-{SEQUENCE}-{NANO_TIME}
      *
-     * Note: This generates a CANDIDATE number that must be checked for uniqueness
-     * before use. Use generateUniqueInvestmentNumber() instead of calling this directly.
+     * Note: This generates a CANDIDATE number. Uniqueness is ensured by retry logic
+     * in createInvestmentWithRetry() which handles database constraint violations.
      */
     private String generateInvestmentNumber(Shop shop, InvestmentRound round) {
         String prefix = "INV-" + round.getRoundNumber() + "-";
