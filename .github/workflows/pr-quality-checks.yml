@@ -41,12 +41,7 @@ jobs:
           cd backend
           ./mvnw verify -Pintegration-tests jacoco:report -B
           echo "✅ Integration tests completed"
-
-      - name: Merge coverage reports
-        run: |
-          cd backend
-          ./mvnw jacoco:merge jacoco:report -B
-          echo "✅ Coverage reports merged"
+          echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
       - name: SonarQube Scan
         env:
