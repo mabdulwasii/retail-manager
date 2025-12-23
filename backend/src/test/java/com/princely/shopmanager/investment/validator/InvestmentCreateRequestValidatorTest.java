@@ -13,12 +13,14 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("InvestmentCreateRequestValidator Tests")
 class InvestmentCreateRequestValidatorTest {
+
+    private static final BigDecimal TEST_INVESTMENT_AMOUNT = BigDecimal.valueOf(10000);
+    private static final BigDecimal TEST_PROFIT_PERCENTAGE = BigDecimal.valueOf(20);
 
     private Validator validator;
 
@@ -36,10 +38,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.PRODUCT_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .productIds(null)
             .build();
 
@@ -58,10 +60,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.PRODUCT_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .productIds(Set.of())
             .build();
 
@@ -79,10 +81,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.PRODUCT_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .productIds(Set.of("product-1", "product-2"))
             .build();
 
@@ -97,10 +99,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.CATEGORY_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .categoryFilter(null)
             .build();
 
@@ -119,10 +121,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.CATEGORY_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .categoryFilter("   ")
             .build();
 
@@ -140,10 +142,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.CATEGORY_SPECIFIC)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .categoryFilter("Electronics")
             .build();
 
@@ -158,10 +160,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .productIds(Set.of("product-1"))
             .build();
 
@@ -180,10 +182,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .categoryFilter("Electronics")
             .build();
 
@@ -202,10 +204,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .build();
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
@@ -221,7 +223,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .profitPercentage(null)
@@ -242,7 +244,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .profitPercentage(BigDecimal.ZERO)
@@ -262,7 +264,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .profitPercentage(BigDecimal.valueOf(101))
@@ -282,7 +284,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
             .profitPercentage(BigDecimal.valueOf(50))
@@ -299,7 +301,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.FIXED_SHARES)
             .fixedShares(null)
@@ -320,7 +322,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.FIXED_SHARES)
             .fixedShares(0)
@@ -340,7 +342,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.FIXED_SHARES)
             .fixedShares(100)
@@ -357,10 +359,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.TIME_WEIGHTED)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .maturityDate(null)
             .build();
 
@@ -377,10 +379,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.TIME_WEIGHTED)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .maturityDate(LocalDateTime.now().plusYears(1))
             .build();
 
@@ -395,7 +397,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(Investment.ProfitSharingModel.TIERED)
             .profitPercentage(null)
@@ -426,10 +428,10 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(null)
             .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
-            .profitPercentage(BigDecimal.valueOf(20))
+            .profitPercentage(TEST_PROFIT_PERCENTAGE)
             .build();
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
@@ -444,7 +446,7 @@ class InvestmentCreateRequestValidatorTest {
         InvestmentCreateRequest request = InvestmentCreateRequest.builder()
             .investorId("investor-1")
             .shopId("shop-1")
-            .amount(BigDecimal.valueOf(10000))
+            .amount(TEST_INVESTMENT_AMOUNT)
             .investmentType(Investment.InvestmentType.SHOP_WIDE)
             .profitSharingModel(null)
             .build();
