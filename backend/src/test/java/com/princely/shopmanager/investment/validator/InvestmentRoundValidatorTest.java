@@ -14,6 +14,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("InvestmentRoundValidator Tests")
 class InvestmentRoundValidatorTest {
 
+    private static final BigDecimal TEST_AMOUNT_10K = BigDecimal.valueOf(10000);
+    private static final BigDecimal TEST_AMOUNT_5K = BigDecimal.valueOf(5000);
+    private static final BigDecimal TEST_AMOUNT_50K = BigDecimal.valueOf(50000);
+    private static final BigDecimal TEST_AMOUNT_100K = BigDecimal.valueOf(100000);
+
     private InvestmentRoundValidator validator;
 
     @BeforeEach
@@ -33,12 +38,12 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .fixedShares(null) // Missing
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-2")
-                    .amount(BigDecimal.valueOf(5000))
+                    .amount(TEST_AMOUNT_5K)
                     .fixedShares(50)
                     .build()
             ))
@@ -60,12 +65,12 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .fixedShares(100)
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-2")
-                    .amount(BigDecimal.valueOf(5000))
+                    .amount(TEST_AMOUNT_5K)
                     .fixedShares(50)
                     .build()
             ))
@@ -86,7 +91,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -107,7 +112,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -129,7 +134,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -147,9 +152,9 @@ class InvestmentRoundValidatorTest {
     void shouldFailWhenTier1GreaterOrEqualTier2() {
         InvestmentRoundCreateRequest.TierConfigurationDTO tierConfig =
             InvestmentRoundCreateRequest.TierConfigurationDTO.builder()
-                .tier1Threshold(BigDecimal.valueOf(50000))
+                .tier1Threshold(TEST_AMOUNT_50K)
                 .tier2Threshold(BigDecimal.valueOf(40000)) // Less than tier1
-                .tier3Threshold(BigDecimal.valueOf(100000))
+                .tier3Threshold(TEST_AMOUNT_100K)
                 .tier1Multiplier(BigDecimal.valueOf(1.0))
                 .tier2Multiplier(BigDecimal.valueOf(1.5))
                 .tier3Multiplier(BigDecimal.valueOf(2.0))
@@ -163,7 +168,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -179,9 +184,9 @@ class InvestmentRoundValidatorTest {
     void shouldFailWhenTier2GreaterOrEqualTier3() {
         InvestmentRoundCreateRequest.TierConfigurationDTO tierConfig =
             InvestmentRoundCreateRequest.TierConfigurationDTO.builder()
-                .tier1Threshold(BigDecimal.valueOf(10000))
-                .tier2Threshold(BigDecimal.valueOf(100000))
-                .tier3Threshold(BigDecimal.valueOf(50000)) // Less than tier2
+                .tier1Threshold(TEST_AMOUNT_10K)
+                .tier2Threshold(TEST_AMOUNT_100K)
+                .tier3Threshold(TEST_AMOUNT_50K) // Less than tier2
                 .tier1Multiplier(BigDecimal.valueOf(1.0))
                 .tier2Multiplier(BigDecimal.valueOf(1.5))
                 .tier3Multiplier(BigDecimal.valueOf(2.0))
@@ -195,7 +200,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -211,9 +216,9 @@ class InvestmentRoundValidatorTest {
     void shouldFailWhenMultipliersAreInvalid() {
         InvestmentRoundCreateRequest.TierConfigurationDTO tierConfig =
             InvestmentRoundCreateRequest.TierConfigurationDTO.builder()
-                .tier1Threshold(BigDecimal.valueOf(10000))
-                .tier2Threshold(BigDecimal.valueOf(50000))
-                .tier3Threshold(BigDecimal.valueOf(100000))
+                .tier1Threshold(TEST_AMOUNT_10K)
+                .tier2Threshold(TEST_AMOUNT_50K)
+                .tier3Threshold(TEST_AMOUNT_100K)
                 .tier1Multiplier(BigDecimal.ZERO) // Invalid
                 .tier2Multiplier(BigDecimal.valueOf(-1)) // Invalid
                 .tier3Multiplier(BigDecimal.valueOf(2.0))
@@ -227,7 +232,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -244,9 +249,9 @@ class InvestmentRoundValidatorTest {
     void shouldPassWithValidTierConfiguration() {
         InvestmentRoundCreateRequest.TierConfigurationDTO tierConfig =
             InvestmentRoundCreateRequest.TierConfigurationDTO.builder()
-                .tier1Threshold(BigDecimal.valueOf(10000))
-                .tier2Threshold(BigDecimal.valueOf(50000))
-                .tier3Threshold(BigDecimal.valueOf(100000))
+                .tier1Threshold(TEST_AMOUNT_10K)
+                .tier2Threshold(TEST_AMOUNT_50K)
+                .tier3Threshold(TEST_AMOUNT_100K)
                 .tier1Multiplier(BigDecimal.valueOf(1.0))
                 .tier2Multiplier(BigDecimal.valueOf(1.5))
                 .tier3Multiplier(BigDecimal.valueOf(2.0))
@@ -260,7 +265,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -294,7 +299,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -327,7 +332,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -360,7 +365,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -395,7 +400,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -428,7 +433,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -461,7 +466,7 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build()
             ))
             .build();
@@ -562,11 +567,11 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId(null)
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("   ")
-                    .amount(BigDecimal.valueOf(5000))
+                    .amount(TEST_AMOUNT_5K)
                     .build()
             ))
             .build();
@@ -587,11 +592,11 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1") // Duplicate
-                    .amount(BigDecimal.valueOf(5000))
+                    .amount(TEST_AMOUNT_5K)
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-2")
@@ -616,11 +621,11 @@ class InvestmentRoundValidatorTest {
             .investors(List.of(
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-1")
-                    .amount(BigDecimal.valueOf(10000))
+                    .amount(TEST_AMOUNT_10K)
                     .build(),
                 InvestmentRoundCreateRequest.InvestorInput.builder()
                     .investorId("investor-2")
-                    .amount(BigDecimal.valueOf(5000))
+                    .amount(TEST_AMOUNT_5K)
                     .build()
             ))
             .build();
