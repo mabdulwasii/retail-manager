@@ -18,27 +18,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Minimal integration test for InvestmentController - Happy Path Only.
  *
- * Covers 11 InvestmentController endpoints with simple happy-path tests.
+ * Covers all 11 InvestmentController endpoints with simple happy-path tests.
  * Comprehensive business logic tests are in InvestmentServiceTest (unit tests).
  * Comprehensive RBAC tests are in RBACIntegrationTest.
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
  * All tests use existing test-data.sql fixtures for optimal performance.
  *
- * ENABLED (7/11):
+ * ENABLED (11/11):
  * - POST /investments - Deprecated endpoint (returns 500)
  * - GET /shops/{shopId}/investments - List shop investments
  * - GET /my-investments - List my investments
- * - GET /investments/{investmentId}/distributions - Get distributions
- * - GET /my-distributions - Get my distributions
- * - POST /distributions/{distributionId}/approve - Approve (placeholder)
- * - POST /distributions/{distributionId}/mark-paid - Mark paid (placeholder)
- *
- * DISABLED (4/11) - require investment data in test-data.sql (currently commented out):
  * - GET /investments/{investmentId} - Get by ID
  * - PUT /investments/{investmentId}/status - Update status
  * - PATCH /investments/{investmentId}/status - Patch status
  * - POST /investments/{investmentId}/withdraw - Process withdrawal
+ * - GET /investments/{investmentId}/distributions - Get distributions
+ * - GET /my-distributions - Get my distributions
+ * - POST /distributions/{distributionId}/approve - Approve (placeholder)
+ * - POST /distributions/{distributionId}/mark-paid - Mark paid (placeholder)
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Investment Controller - Minimal Happy Path Integration Tests")
@@ -102,9 +100,8 @@ class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("GET /investments/{investmentId} - Should get investment by ID")
-    // NOTE: Disabled - requires investment data in test-data.sql (currently commented out)
+    @Test
+    @DisplayName("GET /investments/{investmentId} - Should get investment by ID")
     void shouldGetInvestmentById() {
         // Given - Use existing investment from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -123,9 +120,8 @@ class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getId()).isEqualTo(INVESTMENT_001);
     }
 
-    // @Test
-    // @DisplayName("PUT /investments/{investmentId}/status - Should update investment status")
-    // NOTE: Disabled - requires investment data in test-data.sql (currently commented out)
+    @Test
+    @DisplayName("PUT /investments/{investmentId}/status - Should update investment status")
     void shouldUpdateInvestmentStatus() {
         // Given - Use existing investment from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -145,9 +141,8 @@ class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getStatus()).isEqualTo(Investment.InvestmentStatus.ACTIVE);
     }
 
-    // @Test
-    // @DisplayName("PATCH /investments/{investmentId}/status - Should patch investment status")
-    // NOTE: Disabled - requires investment data in test-data.sql (currently commented out)
+    @Test
+    @DisplayName("PATCH /investments/{investmentId}/status - Should patch investment status")
     void shouldPatchInvestmentStatus() {
         // Given - Use existing investment from test-data.sql
         setTenantContext(TEST_TENANT_001);
@@ -167,9 +162,8 @@ class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getStatus()).isEqualTo(Investment.InvestmentStatus.ACTIVE);
     }
 
-    // @Test
-    // @DisplayName("POST /investments/{investmentId}/withdraw - Should process withdrawal")
-    // NOTE: Disabled - requires investment data in test-data.sql (currently commented out)
+    @Test
+    @DisplayName("POST /investments/{investmentId}/withdraw - Should process withdrawal")
     void shouldProcessWithdrawal() {
         // Given - Use existing investment from test-data.sql
         setTenantContext(TEST_TENANT_001);

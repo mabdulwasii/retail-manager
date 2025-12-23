@@ -540,33 +540,44 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
--- 15. INVESTMENTS
--- TODO: Investment schema changed - needs update
+-- 15. INVESTMENT ROUNDS
 -- ========================================
--- Commented out - schema mismatch (test data has name/description/start_date/end_date, DB has investor_id/profit_sharing_model)
--- INSERT INTO investments ...
+INSERT INTO investment_rounds (id, round_number, shop_id, investment_type, profit_sharing_model, maturity_date, status, notes, created_at, updated_at, version)
+VALUES
+    ('550e8400-e29b-41d4-a716-446655440001', 'ROUND-TEST-2024-Q1-001', '650e8400-e29b-41d4-a716-446655440001', 'SHOP_WIDE', 'PROPORTIONAL_BY_AMOUNT', CURRENT_TIMESTAMP + INTERVAL '1 year', 'OPEN', 'Test investment round Q1 2024', CURRENT_TIMESTAMP - INTERVAL '30 days', CURRENT_TIMESTAMP - INTERVAL '30 days', 0),
+    ('550e8400-e29b-41d4-a716-446655440002', 'ROUND-TEST-2024-Q2-001', '650e8400-e29b-41d4-a716-446655440001', 'SHOP_WIDE', 'PROPORTIONAL_BY_AMOUNT', CURRENT_TIMESTAMP + INTERVAL '2 years', 'OPEN', 'Test investment round Q2 2024', CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days', 0)
+ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
--- 16. INVESTOR SHARES
+-- 16. INVESTMENTS
 -- ========================================
--- Commented out - depends on investments which is commented out
+INSERT INTO investments (id, investment_number, investor_id, shop_id, investment_round_id, amount, fixed_shares, investment_date, status, total_profit_earned, total_withdrawn, notes, created_at, updated_at, version)
+VALUES
+    ('050e8400-e29b-41d4-a716-446655440001', 'INV-2024-001', '750e8400-e29b-41d4-a716-446655440005', '650e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 50000.00, NULL, CURRENT_TIMESTAMP - INTERVAL '30 days', 'ACTIVE', 0.00, 0.00, 'Test investment 1', CURRENT_TIMESTAMP - INTERVAL '30 days', CURRENT_TIMESTAMP - INTERVAL '30 days', 0),
+    ('050e8400-e29b-41d4-a716-446655440002', 'INV-2024-002', '750e8400-e29b-41d4-a716-446655440005', '650e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', 75000.00, NULL, CURRENT_TIMESTAMP - INTERVAL '15 days', 'ACTIVE', 0.00, 0.00, 'Test investment 2', CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days', 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- ========================================
+-- 17. INVESTOR SHARES
+-- ========================================
+-- Commented out - depends on profit distributions
 -- INSERT INTO investor_shares ...
 
 -- ========================================
--- 17. PRODUCT RETURNS
+-- 18. PRODUCT RETURNS
 -- TODO: Verify schema matches
 -- ========================================
 -- Commented out for now - may have schema mismatches
 -- INSERT INTO product_returns ...
 
 -- ========================================
--- 18. RETURN ITEMS
+-- 19. RETURN ITEMS
 -- ========================================
 -- Commented out - depends on product_returns
 -- INSERT INTO return_items ...
 
 -- ========================================
--- 19. INVENTORY MOVEMENTS
+-- 20. INVENTORY MOVEMENTS
 -- TODO: Verify schema matches
 -- ========================================
 -- Commented out for now - may have schema mismatches
