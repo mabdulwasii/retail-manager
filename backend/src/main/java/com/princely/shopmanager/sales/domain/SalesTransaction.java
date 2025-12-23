@@ -1,5 +1,6 @@
 package com.princely.shopmanager.sales.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.shared.domain.BaseEntity;
@@ -25,6 +26,7 @@ import java.util.List;
 @Builder
 @ToString(exclude = {"shop", "cashier", "lineItems"})
 @EqualsAndHashCode(callSuper = true, exclude = {"shop", "cashier", "lineItems"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SalesTransaction extends BaseEntity implements ShopAware {
 
     @Id

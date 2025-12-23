@@ -1,5 +1,6 @@
 package com.princely.shopmanager.sales.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import com.princely.shopmanager.shared.domain.ShopAware;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString(exclude = "transaction")
 @EqualsAndHashCode(callSuper = true, exclude = "transaction")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Receipt extends BaseEntity implements ShopAware {
 
     @Id
@@ -27,6 +29,7 @@ public class Receipt extends BaseEntity implements ShopAware {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transaction_id", nullable = false)
+    @JsonIgnoreProperties({"lineItems", "shop", "cashier", "hibernateLazyInitializer", "handler"})
     private SalesTransaction transaction;
 
     @Column(name = "issued_date", nullable = false)
