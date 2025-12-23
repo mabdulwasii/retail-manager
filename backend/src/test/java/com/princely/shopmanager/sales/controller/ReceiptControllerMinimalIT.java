@@ -1,18 +1,12 @@
 package com.princely.shopmanager.sales.controller;
 
 import com.princely.shopmanager.sales.domain.Receipt;
-import com.princely.shopmanager.sales.domain.SalesTransaction;
-import com.princely.shopmanager.sales.dto.SalesTransactionCreateRequest;
-import com.princely.shopmanager.sales.dto.SalesTransactionResponse;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;

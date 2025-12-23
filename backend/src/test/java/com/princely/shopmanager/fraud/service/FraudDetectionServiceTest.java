@@ -11,7 +11,6 @@ import com.princely.shopmanager.fraud.repository.FraudRuleRepository;
 import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
-import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

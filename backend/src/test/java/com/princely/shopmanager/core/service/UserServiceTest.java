@@ -53,7 +53,6 @@ class UserServiceTest {
     private static final String TEST_TENANT_ID = "test-tenant";
     private static final String TEST_USER_ID = "test-user";
     private static final String TEST_SHOP_ID = "test-shop";
-    private static final String TEST_ROLE_ID = "test-role";
 
     // ============== getUserById Tests ==============
 
