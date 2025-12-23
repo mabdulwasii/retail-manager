@@ -219,23 +219,14 @@ class ShopControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("DELETE /shops/{shopId} - Should delete shop")
     void shouldDeleteShop() {
-        // Given - Create a shop to delete
+        // Given - Use existing deletable shop from test-data.sql
         setTenantContext(TEST_TENANT_001);
-        ShopCreateRequest createRequest = createSampleShopCreateRequest("Shop To Delete");
-        ResponseEntity<ShopResponse> createResponse = performAuthenticatedPost(
-            "/shops",
-            createRequest,
-            "owner",
-            ShopResponse.class,
-            "OWNER"
-        );
-        String shopIdToDelete = createResponse.getBody().getId();
 
-        // When
+        // When - Delete the existing deletable shop
         ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/shops/" + shopIdToDelete,
+            "/shops/" + SHOP_DELETABLE,
             "owner",
-            shopIdToDelete,
+            SHOP_DELETABLE,
             "OWNER"
         );
 

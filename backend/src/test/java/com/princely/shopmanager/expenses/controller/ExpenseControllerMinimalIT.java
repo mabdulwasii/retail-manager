@@ -231,30 +231,12 @@ class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("DELETE /expenses/{expenseId} - Should delete expense")
     void shouldDeleteExpense() {
-        // Given - Create a new expense to delete
+        // Given - Use existing deletable expense from test-data.sql
         setTenantContext(TEST_TENANT_001);
 
-        ExpenseCreateRequest createRequest = ExpenseCreateRequest.builder()
-            .title("Expense To Delete")
-            .categoryId(UUID.fromString(EXP_CAT_UTILITIES))
-            .amount(new BigDecimal("50.00"))
-            .expenseDate(LocalDate.now())
-            .build();
-
-        ResponseEntity<ExpenseResponse> createResponse = performAuthenticatedPostWithShop(
-            "/shops/" + TEST_SHOP_001 + "/expenses",
-            createRequest,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            ExpenseResponse.class,
-            "MANAGER"
-        );
-
-        String expenseIdToDelete = createResponse.getBody().id().toString();
-
-        // When
+        // When - Delete the existing deletable expense (EXP_DELETABLE is a DRAFT expense)
         ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/expenses/" + expenseIdToDelete,
+            "/expenses/" + EXP_DELETABLE,
             "owner@testretail.com",
             TEST_SHOP_001,
             "OWNER"

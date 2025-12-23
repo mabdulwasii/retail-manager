@@ -109,30 +109,16 @@ class RoleControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("PUT /roles/{roleId} - Should update custom role")
     void shouldUpdateRole() {
-        // Given - Create a custom role first (system roles cannot be modified)
+        // Given - Use existing deletable role from test-data.sql
         setTenantContext(TEST_TENANT_001);
-
-        RoleCreateRequest createRequest = RoleCreateRequest.builder()
-            .name("ROLE_TO_UPDATE")
-            .description("Original Description")
-            .build();
-
-        ResponseEntity<RoleResponse> createResponse = performAuthenticatedPost(
-            "/roles",
-            createRequest,
-            "owner@testretail.com",
-            RoleResponse.class,
-            "OWNER"
-        );
-        String roleId = createResponse.getBody().getId();
 
         RoleUpdateRequest updateRequest = RoleUpdateRequest.builder()
             .description("Updated Description")
             .build();
 
-        // When
+        // When - Update the existing deletable role
         ResponseEntity<RoleResponse> response = performAuthenticatedPut(
-            "/roles/" + roleId,
+            "/roles/" + ROLE_DELETABLE,
             updateRequest,
             "owner@testretail.com",
             RoleResponse.class,
@@ -147,30 +133,16 @@ class RoleControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("PATCH /roles/{roleId} - Should partially update custom role")
     void shouldPatchRole() {
-        // Given - Create a custom role first (system roles cannot be modified)
+        // Given - Use existing deletable role from test-data.sql
         setTenantContext(TEST_TENANT_001);
-
-        RoleCreateRequest createRequest = RoleCreateRequest.builder()
-            .name("ROLE_TO_PATCH")
-            .description("Original Description")
-            .build();
-
-        ResponseEntity<RoleResponse> createResponse = performAuthenticatedPost(
-            "/roles",
-            createRequest,
-            "owner@testretail.com",
-            RoleResponse.class,
-            "OWNER"
-        );
-        String roleId = createResponse.getBody().getId();
 
         RoleUpdateRequest patchRequest = RoleUpdateRequest.builder()
             .description("Patched Description")
             .build();
 
-        // When
+        // When - Patch the existing deletable role
         ResponseEntity<RoleResponse> response = performAuthenticatedPatch(
-            "/roles/" + roleId,
+            "/roles/" + ROLE_DELETABLE,
             patchRequest,
             "owner@testretail.com",
             RoleResponse.class,
@@ -185,26 +157,12 @@ class RoleControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("DELETE /roles/{roleId} - Should delete custom role")
     void shouldDeleteRole() {
-        // Given - Create a custom role first
+        // Given - Use existing deletable role from test-data.sql
         setTenantContext(TEST_TENANT_001);
 
-        RoleCreateRequest createRequest = RoleCreateRequest.builder()
-            .name("ROLE_TO_DELETE")
-            .description("Role to be deleted")
-            .build();
-
-        ResponseEntity<RoleResponse> createResponse = performAuthenticatedPost(
-            "/roles",
-            createRequest,
-            "owner@testretail.com",
-            RoleResponse.class,
-            "OWNER"
-        );
-        String roleIdToDelete = createResponse.getBody().getId();
-
-        // When
+        // When - Delete the existing deletable role
         ResponseEntity<Void> response = performAuthenticatedDelete(
-            "/roles/" + roleIdToDelete,
+            "/roles/" + ROLE_DELETABLE,
             "owner@testretail.com",
             "OWNER"
         );

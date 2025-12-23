@@ -161,35 +161,12 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /sales/{id}/void - Should void sales transaction")
     void shouldVoidSalesTransaction() {
-        // Given - Create a new transaction to void (can't void existing test data)
+        // Given - Use existing voidable transaction from test-data.sql (COMPLETED status)
         setTenantContext(TEST_TENANT_001);
 
-        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
-            .productId(PROD_USB_KEYBOARD)
-            .quantity(1)
-            .unitPrice(new BigDecimal("35.99"))
-            .build();
-
-        SalesTransactionCreateRequest createRequest = SalesTransactionCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .lineItems(List.of(lineItem))
-            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
-            .build();
-
-        ResponseEntity<SalesTransactionResponse> createResponse = performAuthenticatedPostWithShop(
-            "/sales",
-            createRequest,
-            "owner@testretail.com",
-            TEST_SHOP_001,
-            SalesTransactionResponse.class,
-            "OWNER"
-        );
-
-        String transactionIdToVoid = createResponse.getBody().getId();
-
-        // When - Void the transaction
+        // When - Void the existing transaction
         ResponseEntity<Void> response = performAuthenticatedPostWithShop(
-            "/sales/" + transactionIdToVoid + "/void?reason=Customer refund request",
+            "/sales/" + TXN_VOIDABLE + "/void?reason=Customer refund request",
             null,
             "owner@testretail.com",
             TEST_SHOP_001,

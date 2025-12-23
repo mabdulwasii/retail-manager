@@ -234,30 +234,12 @@ class TenantControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("DELETE /tenants/{tenantId}/configurations/{key} - Should delete configuration")
     void shouldDeleteConfiguration() {
-        // Given - First create a config, then delete it (isolation due to @DirtiesContext)
+        // Given - Use existing deletable configuration from test-data.sql
         setTenantContext(TEST_TENANT_001);
 
-        // Create a deletable configuration
-        TenantConfigurationRequest createRequest = TenantConfigurationRequest.builder()
-            .key("deletable.config")
-            .value("value-to-delete")
-            .category(TenantConfiguration.ConfigCategory.BUSINESS)
-            .valueType(TenantConfiguration.ValueType.STRING)
-            .description("Config for deletion test")
-            .build();
-
-        performAuthenticatedPostWithShop(
-            "/tenants/" + TEST_TENANT_001 + "/configurations",
-            createRequest,
-            "admin@testretail.com",
-            TEST_SHOP_001,
-            String.class,
-            "TENANT_ADMIN"
-        );
-
-        // When - Delete it
+        // When - Delete the existing deletable configuration (key: test.deletable.key)
         ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/tenants/" + TEST_TENANT_001 + "/configurations/deletable.config",
+            "/tenants/" + TEST_TENANT_001 + "/configurations/test.deletable.key",
             "admin@testretail.com",
             TEST_SHOP_001,
             "TENANT_ADMIN"

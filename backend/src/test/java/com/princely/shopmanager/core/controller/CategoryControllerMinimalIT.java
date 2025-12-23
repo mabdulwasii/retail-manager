@@ -151,29 +151,12 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("DELETE /categories/{id} - Should delete category")
     void shouldDeleteCategory() {
-        // Given - Create a category to delete (can't delete existing ones that have products)
+        // Given - Use existing deletable category from test-data.sql (has no products)
         setTenantContext(TEST_TENANT_001);
 
-        CategoryCreateRequest createRequest = CategoryCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .name("Category To Delete")
-            .description("This will be deleted")
-            .build();
-
-        ResponseEntity<CategoryResponse> createResponse = performAuthenticatedPostWithShop(
-            "/shops/" + TEST_SHOP_001 + "/categories",
-            createRequest,
-                TEST_OWNER_EMAIL,
-            TEST_SHOP_001,
-            CategoryResponse.class,
-            "OWNER"
-        );
-
-        String categoryIdToDelete = createResponse.getBody().getId();
-
-        // When
+        // When - Delete the existing deletable category
         ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/categories/" + categoryIdToDelete,
+            "/categories/" + CAT_DELETABLE,
                 TEST_OWNER_EMAIL,
             TEST_SHOP_001,
             "OWNER"

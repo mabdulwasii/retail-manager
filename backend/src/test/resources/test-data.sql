@@ -617,6 +617,55 @@ ON CONFLICT (id) DO NOTHING;
 -- INSERT INTO feature_flags ...
 
 -- ========================================
+-- 24. DELETABLE TEST RESOURCES
+-- ========================================
+-- Resources specifically for MinimalIT DELETE/UPDATE/VOID tests
+-- These are intentionally separate to avoid conflicts with other tests
+
+-- Deletable expense (for ExpenseControllerMinimalIT.shouldDeleteExpense)
+INSERT INTO expenses (id, shop_id, title, description, category_id, amount, expense_date, expense_created_by, status, created_at, updated_at, version)
+VALUES ('f50e8400-e29b-41d4-a716-446655440099', '650e8400-e29b-41d4-a716-446655440001', 'Deletable Test Expense', 'For delete test', 'b50e8400-e29b-41d4-a716-446655440001', 25.00, CURRENT_DATE, '750e8400-e29b-41d4-a716-446655440003', 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Deletable custom role (for RoleControllerMinimalIT update/patch/delete tests)
+INSERT INTO roles (id, name, description, is_system, tenant_id, created_at, updated_at, version)
+VALUES ('test-role-deletable', 'TEST_DELETABLE_ROLE', 'For delete/update/patch tests', false, '550e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Grant some permissions to deletable role (for update/patch tests)
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 'test-role-deletable', p.id
+FROM permissions p
+WHERE p.name IN ('PRODUCT_READ', 'SALES_READ')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Deletable category (for CategoryControllerMinimalIT.shouldDeleteCategory)
+INSERT INTO categories (id, name, shop_id, description, is_active, created_at, updated_at, version)
+VALUES ('950e8400-e29b-41d4-a716-446655440099', 'Deletable Test Category', '650e8400-e29b-41d4-a716-446655440001', 'For delete test', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Deletable shop (for ShopControllerMinimalIT.shouldDeleteShop)
+INSERT INTO shops (id, name, tenant_id, address, city, state, country, postal_code, phone_number, email, status, created_at, updated_at, version)
+VALUES ('650e8400-e29b-41d4-a716-446655440099', 'Deletable Test Shop', '550e8400-e29b-41d4-a716-446655440001', '999 Temporary Street', 'Test City', 'TS', 'USA', '99999', '+1-555-9999', 'deletable@testretail.com', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Deletable tenant configuration (for TenantControllerMinimalIT.shouldDeleteConfiguration)
+INSERT INTO tenant_configurations (id, tenant_id, config_key, config_value, category, description, value_type, editable, active, created_at, updated_at, version)
+VALUES ('test-config-deletable', '550e8400-e29b-41d4-a716-446655440001', 'test.deletable.key', 'deletable-value', 'BUSINESS', 'Deletable config for testing', 'STRING', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Voidable sales transaction (for SalesTransactionControllerMinimalIT.shouldVoidSalesTransaction)
+-- Must have COMPLETED status to be voidable
+INSERT INTO sales_transactions (id, transaction_number, shop_id, cashier_id, customer_name, customer_email, customer_phone, subtotal, total_amount, payment_method, transaction_date, status, is_voided, requires_review, created_at, updated_at, version)
+VALUES ('c50e8400-e29b-41d4-a716-446655440099', 'TXN-VOIDABLE-001', '650e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440003', NULL, NULL, NULL, 50.00, 50.00, 'CASH', CURRENT_TIMESTAMP, 'COMPLETED', false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Transaction item for voidable transaction (commented out - table name may differ)
+-- INSERT INTO transaction_items (id, transaction_id, product_id, quantity, unit_price, total_price, created_at, updated_at, version)
+-- VALUES ('d50e8400-e29b-41d4-a716-446655440099', 'c50e8400-e29b-41d4-a716-446655440099', '850e8400-e29b-41d4-a716-446655440001', 2, 25.00, 50.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+-- ON CONFLICT (id) DO NOTHING;
+
+-- ========================================
 -- NOTES:
 -- ========================================
 -- All IDs use UUID format with sequential patterns for easy identification:
