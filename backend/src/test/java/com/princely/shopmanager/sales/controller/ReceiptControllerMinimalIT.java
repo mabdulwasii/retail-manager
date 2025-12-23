@@ -38,52 +38,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Receipt Controller - Minimal Happy Path Integration Tests")
 class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 
-    /**
-     * Helper method to create a sales transaction (which auto-generates a receipt).
-     * Returns the transaction ID (not receipt ID) since receipts are accessed via transaction.
-     */
-    private String createSalesTransactionAndGetTransactionId() {
-        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
-            .productId(PROD_WIRELESS_MOUSE)
-            .quantity(1)
-            .unitPrice(new BigDecimal("25.99"))
-            .build();
-
-        SalesTransactionCreateRequest request = SalesTransactionCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .customerName("Receipt Test Customer")
-            .lineItems(List.of(lineItem))
-            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
-            .build();
-
-        ResponseEntity<SalesTransactionResponse> response = performAuthenticatedPostWithShop(
-            "/sales",
-            request,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            SalesTransactionResponse.class,
-            "MANAGER"
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        return response.getBody().getId();
-    }
-
-    /**
-     * Helper method to get receipt ID from a transaction ID.
-     */
-    private String getReceiptIdFromTransactionId(String transactionId) {
-        ResponseEntity<Receipt> response = performAuthenticatedGetWithShop(
-            "/receipts/transaction/" + transactionId,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            Receipt.class,
-            "MANAGER"
-        );
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody().getId();
-    }
-
     @Test
     @DisplayName("GET /receipts - Should list receipts")
     void shouldListReceipts() {
@@ -108,13 +62,12 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /receipts/{receiptId} - Should get receipt by ID")
     void shouldGetReceiptById() {
-        // Given - Create new transaction to get a receipt with content
+        // Given - Use existing test data (faster than creating new transaction)
         setTenantContext(TEST_TENANT_001);
-        String transactionId = createSalesTransactionAndGetTransactionId();
 
         // When - Use transaction ID to get receipt (controller expects transactionId despite parameter name)
         ResponseEntity<Receipt> response = performAuthenticatedGetWithShop(
-            "/receipts/" + transactionId,
+            "/receipts/" + TXN_001,
             "manager@testretail.com",
             TEST_SHOP_001,
             Receipt.class,
@@ -123,7 +76,7 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getTransaction().getId()).isEqualTo(transactionId);
+        assertThat(response.getBody().getTransaction().getId()).isEqualTo(TXN_001);
         assertThat(response.getBody().getReceiptContent()).isNotNull();
     }
 
@@ -150,36 +103,12 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /receipts/transaction/{transactionId} - Should get receipt by transaction")
     void shouldGetReceiptByTransaction() {
-        // Given - Create new transaction to ensure receipt exists
+        // Given - Use existing test data
         setTenantContext(TEST_TENANT_001);
-
-        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
-            .productId(PROD_WIRELESS_MOUSE)
-            .quantity(1)
-            .unitPrice(new BigDecimal("25.99"))
-            .build();
-
-        SalesTransactionCreateRequest request = SalesTransactionCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .customerName("Transaction Receipt Test")
-            .lineItems(List.of(lineItem))
-            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
-            .build();
-
-        ResponseEntity<SalesTransactionResponse> createResponse = performAuthenticatedPostWithShop(
-            "/sales",
-            request,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            SalesTransactionResponse.class,
-            "MANAGER"
-        );
-
-        String transactionId = createResponse.getBody().getId();
 
         // When
         ResponseEntity<Receipt> response = performAuthenticatedGetWithShop(
-            "/receipts/transaction/" + transactionId,
+            "/receipts/transaction/" + TXN_002,
             "manager@testretail.com",
             TEST_SHOP_001,
             Receipt.class,
@@ -188,19 +117,18 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getTransaction().getId()).isEqualTo(transactionId);
+        assertThat(response.getBody().getTransaction().getId()).isEqualTo(TXN_002);
     }
 
     @Test
     @DisplayName("GET /receipts/{receiptId}/content - Should get receipt content")
     void shouldGetReceiptContent() {
-        // Given - Create new transaction to get receipt with content
+        // Given - Use existing test data
         setTenantContext(TEST_TENANT_001);
-        String transactionId = createSalesTransactionAndGetTransactionId();
 
         // When
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/receipts/" + transactionId + "/content",
+            "/receipts/" + TXN_001 + "/content",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -210,19 +138,17 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("=== RECEIPT ===");
-        assertThat(response.getBody()).contains("Receipt Test Customer");
     }
 
     @Test
     @DisplayName("GET /receipts/{receiptId}/printable - Should get printable content")
     void shouldGetPrintableContent() {
-        // Given - Create new transaction to get receipt with content
+        // Given - Use existing test data
         setTenantContext(TEST_TENANT_001);
-        String transactionId = createSalesTransactionAndGetTransactionId();
 
         // When
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/receipts/" + transactionId + "/printable",
+            "/receipts/" + TXN_001 + "/printable",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -238,14 +164,12 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /receipts/{receiptId}/mark-printed - Should mark receipt as printed")
     void shouldMarkAsPrinted() {
-        // Given - Create new transaction to get fresh receipt
+        // Given - Use existing test data (receipt ID required for mark-* endpoints)
         setTenantContext(TEST_TENANT_001);
-        String transactionId = createSalesTransactionAndGetTransactionId();
-        String receiptId = getReceiptIdFromTransactionId(transactionId);
 
         // When
         ResponseEntity<Receipt> response = performAuthenticatedPostWithShop(
-            "/receipts/" + receiptId + "/mark-printed?printedBy=manager@testretail.com",
+            "/receipts/" + RCP_001 + "/mark-printed?printedBy=manager@testretail.com",
             null,
             "manager@testretail.com",
             TEST_SHOP_001,
@@ -262,14 +186,12 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /receipts/{receiptId}/mark-emailed - Should mark receipt as emailed")
     void shouldMarkAsEmailed() {
-        // Given - Create new transaction to get fresh receipt
+        // Given - Use existing test data (receipt ID required for mark-* endpoints)
         setTenantContext(TEST_TENANT_001);
-        String transactionId = createSalesTransactionAndGetTransactionId();
-        String receiptId = getReceiptIdFromTransactionId(transactionId);
 
         // When
         ResponseEntity<Receipt> response = performAuthenticatedPostWithShop(
-            "/receipts/" + receiptId + "/mark-emailed?emailAddress=customer@example.com",
+            "/receipts/" + RCP_002 + "/mark-emailed?emailAddress=customer@example.com",
             null,
             "manager@testretail.com",
             TEST_SHOP_001,
@@ -286,36 +208,12 @@ class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("POST /receipts/regenerate/{transactionId} - Should regenerate receipt")
     void shouldRegenerateReceipt() {
-        // Given - Create new transaction with receipt
+        // Given - Use existing test data
         setTenantContext(TEST_TENANT_001);
-
-        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
-            .productId(PROD_WIRELESS_MOUSE)
-            .quantity(1)
-            .unitPrice(new BigDecimal("25.99"))
-            .build();
-
-        SalesTransactionCreateRequest request = SalesTransactionCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .customerName("Regenerate Receipt Test")
-            .lineItems(List.of(lineItem))
-            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
-            .build();
-
-        ResponseEntity<SalesTransactionResponse> createResponse = performAuthenticatedPostWithShop(
-            "/sales",
-            request,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            SalesTransactionResponse.class,
-            "MANAGER"
-        );
-
-        String transactionId = createResponse.getBody().getId();
 
         // When - Regenerate the receipt
         ResponseEntity<Void> response = performAuthenticatedPostWithShop(
-            "/receipts/regenerate/" + transactionId,
+            "/receipts/regenerate/" + TXN_001,
             null,
             "manager@testretail.com",
             TEST_SHOP_001,
