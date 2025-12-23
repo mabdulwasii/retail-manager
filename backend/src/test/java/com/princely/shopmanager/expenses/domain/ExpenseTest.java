@@ -504,4 +504,266 @@ class ExpenseTest {
         // Then
         assertThat(shopId).isNull();
     }
+
+    // ==================== Complete Workflow Tests ====================
+
+    @Test
+    @DisplayName("Complete workflow - DRAFT → PENDING → APPROVED → PAID")
+    void completeWorkflow_draftToPendingToApprovedToPaid() {
+        // Given
+        expense.setStatus(ExpenseStatus.DRAFT);
+        UUID approverId = UUID.randomUUID();
+
+        // When & Then: DRAFT → PENDING_APPROVAL
+        expense.submitForApproval();
+        assertThat(expense.getStatus()).isEqualTo(ExpenseStatus.PENDING_APPROVAL);
+        assertThat(expense.isPending()).isTrue();
+
+        // When & Then: PENDING_APPROVAL → APPROVED
+        expense.approve(approverId, "Manager", "Approved");
+        assertThat(expense.getStatus()).isEqualTo(ExpenseStatus.APPROVED);
+        assertThat(expense.isApproved()).isTrue();
+        assertThat(expense.canBeEdited()).isFalse();
+
+        // When & Then: APPROVED → PAID
+        expense.markAsPaid();
+        assertThat(expense.getStatus()).isEqualTo(ExpenseStatus.PAID);
+        assertThat(expense.canBeEdited()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Complete workflow - DRAFT → PENDING → REJECTED → editable")
+    void completeWorkflow_draftToPendingToRejectedAndEditable() {
+        // Given
+        expense.setStatus(ExpenseStatus.DRAFT);
+        UUID rejecterId = UUID.randomUUID();
+
+        // When & Then: DRAFT → PENDING_APPROVAL
+        expense.submitForApproval();
+        assertThat(expense.getStatus()).isEqualTo(ExpenseStatus.PENDING_APPROVAL);
+
+        // When & Then: PENDING_APPROVAL → REJECTED
+        expense.reject(rejecterId, "CFO", "Rejected");
+        assertThat(expense.getStatus()).isEqualTo(ExpenseStatus.REJECTED);
+        assertThat(expense.isRejected()).isTrue();
+        assertThat(expense.canBeEdited()).isTrue(); // Can be edited after rejection
+    }
+
+    // ==================== Additional Edge Cases ====================
+
+    @Test
+    @DisplayName("approve - Should throw exception when status is REJECTED")
+    void approve_shouldThrowExceptionWhenRejected() {
+        // Given
+        expense.setStatus(ExpenseStatus.REJECTED);
+        UUID approverId = UUID.randomUUID();
+
+        // When / Then
+        assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Expense cannot be approved in current status");
+    }
+
+    @Test
+    @DisplayName("approve - Should throw exception when status is PAID")
+    void approve_shouldThrowExceptionWhenPaid() {
+        // Given
+        expense.setStatus(ExpenseStatus.PAID);
+        UUID approverId = UUID.randomUUID();
+
+        // When / Then
+        assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Expense cannot be approved in current status: PAID");
+    }
+
+    @Test
+    @DisplayName("reject - Should throw exception when status is APPROVED")
+    void reject_shouldThrowExceptionWhenApproved() {
+        // Given
+        expense.setStatus(ExpenseStatus.APPROVED);
+        UUID rejecterId = UUID.randomUUID();
+
+        // When / Then
+        assertThatThrownBy(() -> expense.reject(rejecterId, "Jane", "Notes"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Expense cannot be rejected in current status");
+    }
+
+    @Test
+    @DisplayName("submitForApproval - Should throw exception when status is REJECTED")
+    void submitForApproval_shouldThrowExceptionWhenRejected() {
+        // Given
+        expense.setStatus(ExpenseStatus.REJECTED);
+
+        // When / Then
+        assertThatThrownBy(() -> expense.submitForApproval())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Only draft expenses can be submitted for approval");
+    }
+
+    @Test
+    @DisplayName("markAsPaid - Should throw exception when status is DRAFT")
+    void markAsPaid_shouldThrowExceptionWhenDraft() {
+        // Given
+        expense.setStatus(ExpenseStatus.DRAFT);
+
+        // When / Then
+        assertThatThrownBy(() -> expense.markAsPaid())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Only approved expenses can be marked as paid");
+    }
+
+    @Test
+    @DisplayName("markAsPaid - Should throw exception when status is REJECTED")
+    void markAsPaid_shouldThrowExceptionWhenRejected() {
+        // Given
+        expense.setStatus(ExpenseStatus.REJECTED);
+
+        // When / Then
+        assertThatThrownBy(() -> expense.markAsPaid())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Only approved expenses can be marked as paid");
+    }
+
+    @Test
+    @DisplayName("Builder - Should create expense with all optional fields")
+    void builder_shouldCreateExpenseWithAllOptionalFields() {
+        // Given
+        String shopId = "shop-test";
+        String title = "Test Expense";
+        String description = "Test Description";
+        UUID categoryId = UUID.randomUUID();
+        BigDecimal amount = BigDecimal.valueOf(750.50);
+        LocalDate expenseDate = LocalDate.now().minusDays(5);
+        String paymentMethod = "CREDIT_CARD";
+        String vendorName = "Test Vendor";
+        String referenceNumber = "REF-TEST-001";
+        String receiptUrl = "http://example.com/receipt.pdf";
+        String notes = "Test notes";
+        UUID creatorId = UUID.randomUUID();
+        String creatorName = "Test Creator";
+
+        // When
+        Expense newExpense = Expense.builder()
+            .shopId(shopId)
+            .title(title)
+            .description(description)
+            .categoryId(categoryId)
+            .amount(amount)
+            .expenseDate(expenseDate)
+            .paymentMethod(paymentMethod)
+            .vendorName(vendorName)
+            .referenceNumber(referenceNumber)
+            .receiptUrl(receiptUrl)
+            .notes(notes)
+            .expenseCreatedBy(creatorId)
+            .createdByName(creatorName)
+            .build();
+
+        // Then
+        assertThat(newExpense.getShopId()).isEqualTo(shopId);
+        assertThat(newExpense.getTitle()).isEqualTo(title);
+        assertThat(newExpense.getDescription()).isEqualTo(description);
+        assertThat(newExpense.getCategoryId()).isEqualTo(categoryId);
+        assertThat(newExpense.getAmount()).isEqualByComparingTo(amount);
+        assertThat(newExpense.getExpenseDate()).isEqualTo(expenseDate);
+        assertThat(newExpense.getPaymentMethod()).isEqualTo(paymentMethod);
+        assertThat(newExpense.getVendorName()).isEqualTo(vendorName);
+        assertThat(newExpense.getReferenceNumber()).isEqualTo(referenceNumber);
+        assertThat(newExpense.getReceiptUrl()).isEqualTo(receiptUrl);
+        assertThat(newExpense.getNotes()).isEqualTo(notes);
+        assertThat(newExpense.getExpenseCreatedBy()).isEqualTo(creatorId);
+        assertThat(newExpense.getCreatedByName()).isEqualTo(creatorName);
+        assertThat(newExpense.getStatus()).isEqualTo(ExpenseStatus.DRAFT);
+        assertThat(newExpense.getTags()).isNotNull().isEmpty();
+    }
+
+    @Test
+    @DisplayName("cannotBeApproved - Should return true when status is APPROVED")
+    void cannotBeApproved_shouldReturnTrueWhenApproved() {
+        // Given
+        expense.setStatus(ExpenseStatus.APPROVED);
+
+        // When
+        boolean result = expense.cannotBeApproved();
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("cannotBeApproved - Should return true when status is REJECTED")
+    void cannotBeApproved_shouldReturnTrueWhenRejected() {
+        // Given
+        expense.setStatus(ExpenseStatus.REJECTED);
+
+        // When
+        boolean result = expense.cannotBeApproved();
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("cannotBeApproved - Should return true when status is PAID")
+    void cannotBeApproved_shouldReturnTrueWhenPaid() {
+        // Given
+        expense.setStatus(ExpenseStatus.PAID);
+
+        // When
+        boolean result = expense.cannotBeApproved();
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tag management - Should handle multiple tag operations")
+    void tagManagement_shouldHandleMultipleTagOperations() {
+        // When
+        expense.addTag("urgent");
+        expense.addTag("OFFICE");
+        expense.addTag("  supplies  ");
+
+        // Then
+        assertThat(expense.getTags()).containsExactlyInAnyOrder("urgent", "office", "supplies");
+
+        // When: Remove one tag
+        expense.removeTag("office");
+
+        // Then
+        assertThat(expense.getTags()).containsExactlyInAnyOrder("urgent", "supplies");
+        assertThat(expense.getTags()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("approve - Should set approval date to current date")
+    void approve_shouldSetApprovalDateToCurrentDate() {
+        // Given
+        expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
+        UUID approverId = UUID.randomUUID();
+        LocalDate today = LocalDate.now();
+
+        // When
+        expense.approve(approverId, "Approver", "Notes");
+
+        // Then
+        assertThat(expense.getApprovalDate()).isEqualTo(today);
+    }
+
+    @Test
+    @DisplayName("reject - Should set rejection date to current date")
+    void reject_shouldSetRejectionDateToCurrentDate() {
+        // Given
+        expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
+        UUID rejecterId = UUID.randomUUID();
+        LocalDate today = LocalDate.now();
+
+        // When
+        expense.reject(rejecterId, "Rejecter", "Notes");
+
+        // Then
+        assertThat(expense.getApprovalDate()).isEqualTo(today);
+    }
 }

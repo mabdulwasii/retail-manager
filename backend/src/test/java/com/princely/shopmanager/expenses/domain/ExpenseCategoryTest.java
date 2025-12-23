@@ -395,4 +395,267 @@ class ExpenseCategoryTest {
         assertThat(requiresApprovalForExact).isFalse();
         assertThat(requiresApprovalForSlightlyAbove).isTrue();
     }
+
+    // ==================== Additional Builder Tests ====================
+
+    @Test
+    @DisplayName("Builder - Should create category with all fields")
+    void builder_shouldCreateCategoryWithAllFields() {
+        // Given
+        String shopId = "shop-test";
+        String name = "Test Category";
+        String description = "Test Description";
+        Boolean isActive = false;
+        Boolean requiresApproval = false;
+        BigDecimal approvalLimit = BigDecimal.valueOf(1000);
+        String defaultPaymentMethod = "CREDIT_CARD";
+        String glAccountCode = "GL-1001";
+        Boolean taxDeductible = false;
+        Boolean autoApprovalEnabled = true;
+
+        // When
+        ExpenseCategory newCategory = ExpenseCategory.builder()
+            .shopId(shopId)
+            .name(name)
+            .description(description)
+            .isActive(isActive)
+            .requiresApproval(requiresApproval)
+            .approvalLimit(approvalLimit)
+            .defaultPaymentMethod(defaultPaymentMethod)
+            .glAccountCode(glAccountCode)
+            .taxDeductible(taxDeductible)
+            .autoApprovalEnabled(autoApprovalEnabled)
+            .build();
+
+        // Then
+        assertThat(newCategory.getShopId()).isEqualTo(shopId);
+        assertThat(newCategory.getName()).isEqualTo(name);
+        assertThat(newCategory.getDescription()).isEqualTo(description);
+        assertThat(newCategory.getIsActive()).isEqualTo(isActive);
+        assertThat(newCategory.getRequiresApproval()).isEqualTo(requiresApproval);
+        assertThat(newCategory.getApprovalLimit()).isEqualByComparingTo(approvalLimit);
+        assertThat(newCategory.getDefaultPaymentMethod()).isEqualTo(defaultPaymentMethod);
+        assertThat(newCategory.getGlAccountCode()).isEqualTo(glAccountCode);
+        assertThat(newCategory.getTaxDeductible()).isEqualTo(taxDeductible);
+        assertThat(newCategory.getAutoApprovalEnabled()).isEqualTo(autoApprovalEnabled);
+    }
+
+    // ==================== Additional Edge Cases ====================
+
+    @Test
+    @DisplayName("canAutoApprove - Should return false when all conditions fail")
+    void canAutoApprove_shouldReturnFalseWhenAllConditionsFail() {
+        // Given
+        category.setAutoApprovalEnabled(false);
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(BigDecimal.valueOf(100));
+        category.setIsActive(false);
+        BigDecimal amount = BigDecimal.valueOf(500);
+
+        // When
+        boolean result = category.canAutoApprove(amount);
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("requiresApprovalForAmount - Should handle zero amount")
+    void requiresApprovalForAmount_shouldHandleZeroAmount() {
+        // Given
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(BigDecimal.ZERO);
+
+        // When
+        boolean requiresApprovalForZero = category.requiresApprovalForAmount(BigDecimal.ZERO);
+        boolean requiresApprovalForPositive = category.requiresApprovalForAmount(BigDecimal.ONE);
+
+        // Then
+        assertThat(requiresApprovalForZero).isFalse(); // Zero equals limit
+        assertThat(requiresApprovalForPositive).isTrue(); // Positive exceeds zero limit
+    }
+
+    @Test
+    @DisplayName("canAutoApprove - Should handle category with zero approval limit")
+    void canAutoApprove_shouldHandleCategoryWithZeroApprovalLimit() {
+        // Given
+        category.setAutoApprovalEnabled(true);
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(BigDecimal.ZERO);
+        category.setIsActive(true);
+
+        // When
+        boolean canAutoApproveZero = category.canAutoApprove(BigDecimal.ZERO);
+        boolean canAutoApprovePositive = category.canAutoApprove(BigDecimal.ONE);
+
+        // Then
+        assertThat(canAutoApproveZero).isTrue(); // Zero equals limit
+        assertThat(canAutoApprovePositive).isFalse(); // Positive exceeds limit
+    }
+
+    @Test
+    @DisplayName("requiresApprovalForAmount - Should handle very large amounts")
+    void requiresApprovalForAmount_shouldHandleVeryLargeAmounts() {
+        // Given
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(new BigDecimal("1000000"));
+        BigDecimal veryLargeAmount = new BigDecimal("999999999.99");
+
+        // When
+        boolean result = category.requiresApprovalForAmount(veryLargeAmount);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("requiresApprovalForAmount - Should handle small decimal amounts")
+    void requiresApprovalForAmount_shouldHandleSmallDecimalAmounts() {
+        // Given
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(new BigDecimal("10.00"));
+        BigDecimal smallAmount = new BigDecimal("0.01");
+
+        // When
+        boolean result = category.requiresApprovalForAmount(smallAmount);
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("activate - Should activate inactive category")
+    void activate_shouldActivateInactiveCategory() {
+        // Given
+        category.setIsActive(false);
+
+        // When
+        category.activate();
+
+        // Then
+        assertThat(category.getIsActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("canAutoApprove - Should require category to be active")
+    void canAutoApprove_shouldRequireCategoryToBeActive() {
+        // Given
+        category.setAutoApprovalEnabled(true);
+        category.setRequiresApproval(false);
+        category.setIsActive(false);
+
+        // When
+        boolean result = category.canAutoApprove(BigDecimal.valueOf(100));
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("canAutoApprove - Should work when approval limit equals amount")
+    void canAutoApprove_shouldWorkWhenApprovalLimitEqualsAmount() {
+        // Given
+        BigDecimal limit = BigDecimal.valueOf(500);
+        category.setAutoApprovalEnabled(true);
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(limit);
+        category.setIsActive(true);
+
+        // When
+        boolean result = category.canAutoApprove(limit);
+
+        // Then
+        assertThat(result).isTrue(); // Amount equals limit, so doesn't require approval
+    }
+
+    @Test
+    @DisplayName("setApprovalLimit - Should allow setting limit to null")
+    void setApprovalLimit_shouldAllowSettingLimitToNull() {
+        // Given
+        category.setApprovalLimit(BigDecimal.valueOf(1000));
+
+        // When
+        category.setApprovalLimit(null);
+
+        // Then
+        assertThat(category.getApprovalLimit()).isNull();
+    }
+
+    @Test
+    @DisplayName("setApprovalLimit - Should replace existing limit")
+    void setApprovalLimit_shouldReplaceExistingLimit() {
+        // Given
+        category.setApprovalLimit(BigDecimal.valueOf(500));
+
+        // When
+        category.setApprovalLimit(BigDecimal.valueOf(1000));
+
+        // Then
+        assertThat(category.getApprovalLimit()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+    }
+
+    @Test
+    @DisplayName("Complete workflow - Auto-approval scenario")
+    void completeWorkflow_autoApprovalScenario() {
+        // Given: Category with auto-approval enabled and $500 limit
+        category.setAutoApprovalEnabled(true);
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(BigDecimal.valueOf(500));
+        category.setIsActive(true);
+
+        // When & Then: Amount below limit can be auto-approved
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(250))).isTrue();
+        assertThat(category.requiresApprovalForAmount(BigDecimal.valueOf(250))).isFalse();
+
+        // When & Then: Amount above limit requires manual approval
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(750))).isFalse();
+        assertThat(category.requiresApprovalForAmount(BigDecimal.valueOf(750))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Complete workflow - No approval required scenario")
+    void completeWorkflow_noApprovalRequiredScenario() {
+        // Given: Category with no approval required
+        category.setRequiresApproval(false);
+        category.setAutoApprovalEnabled(true);
+        category.setIsActive(true);
+
+        // When & Then: Any amount can be auto-approved
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(1))).isTrue();
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(1000000))).isTrue();
+        assertThat(category.requiresApprovalForAmount(BigDecimal.valueOf(1000000))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Complete workflow - Always requires approval scenario")
+    void completeWorkflow_alwaysRequiresApprovalScenario() {
+        // Given: Category with no approval limit (always requires approval)
+        category.setRequiresApproval(true);
+        category.setApprovalLimit(null);
+        category.setAutoApprovalEnabled(false);
+        category.setIsActive(true);
+
+        // When & Then: All amounts require approval
+        assertThat(category.requiresApprovalForAmount(BigDecimal.valueOf(0.01))).isTrue();
+        assertThat(category.requiresApprovalForAmount(BigDecimal.valueOf(1000000))).isTrue();
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(1))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Complete workflow - Inactive category scenario")
+    void completeWorkflow_inactiveCategoryScenario() {
+        // Given: Inactive category
+        category.setIsActive(false);
+        category.setAutoApprovalEnabled(true);
+        category.setRequiresApproval(false);
+
+        // When & Then: Inactive category cannot auto-approve
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(100))).isFalse();
+
+        // When: Activate the category
+        category.activate();
+
+        // Then: Now can auto-approve
+        assertThat(category.canAutoApprove(BigDecimal.valueOf(100))).isTrue();
+    }
 }
