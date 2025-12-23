@@ -97,36 +97,12 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /sales/{transactionId}/receipt - Should get transaction receipt")
     void shouldGetTransactionReceipt() {
-        // Given - Create a new transaction (which auto-generates receipt)
+        // Given - Use existing transaction from test-data.sql (has auto-generated receipt)
         setTenantContext(TEST_TENANT_001);
 
-        SalesTransactionCreateRequest.LineItemRequest lineItem = SalesTransactionCreateRequest.LineItemRequest.builder()
-            .productId(PROD_WIRELESS_MOUSE)
-            .quantity(1)
-            .unitPrice(new BigDecimal("25.99"))
-            .build();
-
-        SalesTransactionCreateRequest createRequest = SalesTransactionCreateRequest.builder()
-            .shopId(TEST_SHOP_001)
-            .customerName("Receipt Test Customer")
-            .lineItems(List.of(lineItem))
-            .paymentMethod(SalesTransaction.PaymentMethod.CASH)
-            .build();
-
-        ResponseEntity<SalesTransactionResponse> createResponse = performAuthenticatedPostWithShop(
-            "/sales",
-            createRequest,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            SalesTransactionResponse.class,
-            "MANAGER"
-        );
-
-        String transactionId = createResponse.getBody().getId();
-
-        // When - Get the receipt
+        // When - Get the receipt for existing transaction
         ResponseEntity<String> response = performAuthenticatedGetWithShop(
-            "/sales/" + transactionId + "/receipt",
+            "/sales/" + SALES_TXN_001 + "/receipt",
             "manager@testretail.com",
             TEST_SHOP_001,
             String.class,
@@ -136,7 +112,7 @@ class SalesTransactionControllerMinimalIT extends AbstractIntegrationTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).contains("Receipt Test Customer");
+        assertThat(response.getBody()).contains("TXN-2024-001");
     }
 
     @Test
