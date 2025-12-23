@@ -186,21 +186,6 @@ class InvestmentRoundControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("DELETE endpoint exists but cannot succeed in happy path: " +
-        "Investment rounds require at least one investor (@NotEmpty validation), " +
-        "and deleting rounds with investments violates business rules. " +
-        "This endpoint is primarily for cleanup of invalid/draft rounds. " +
-        "Comprehensive business logic testing in InvestmentRoundServiceTest.")
-    @DisplayName("DELETE /investment-rounds/{roundId} - Delete not testable in happy path")
-    void shouldDeleteInvestmentRound() {
-        // This test is disabled because:
-        // 1. InvestmentRoundCreateRequest.investors is @NotEmpty - cannot create rounds without investors
-        // 2. Business rule prevents deletion of rounds with active investments
-        // 3. MinimalIT tests are for happy path only, not error scenarios
-        // 4. The DELETE endpoint exists for cleanup scenarios not applicable to minimal tests
-    }
-
-    @Test
     @DisplayName("POST /investment-rounds/{roundId}/close - Should close investment round")
     void shouldCloseInvestmentRound() {
         // Given - Use existing investment round from test-data.sql

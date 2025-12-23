@@ -23,15 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TenantRegistrationControllerMinimalIT extends AbstractIntegrationTest {
 
     @Test
-    @org.junit.jupiter.api.Disabled("Placeholder test - requires complex registration data structure")
-    @DisplayName("POST /api/public/registration/tenant - Should register tenant")
-    void shouldRegisterTenant() {
-        // Given - Public endpoint
-        // When/Then - This test would need proper request body
-        // Skipping detailed implementation - requires complex registration data structure
-    }
-
-    @Test
     @DisplayName("GET /api/public/registration/check-tenant-name - Should check tenant name availability")
     void shouldCheckTenantNameAvailability() {
         // Given

@@ -224,26 +224,4 @@ class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
-
-    @Test
-    @org.junit.jupiter.api.Disabled("Requires distribution test data not yet available in test-data.sql")
-    @DisplayName("POST /distributions/{distributionId}/approve - Should approve distribution")
-    void shouldApproveDistribution() {
-        // Given - Would need a distribution ID from test data
-        setTenantContext(TEST_TENANT_001);
-
-        // NOTE: This test requires a distribution to exist, which may not be in test-data.sql
-        // Skipping detailed test - would need to create distribution first or use test data constant
-    }
-
-    @Test
-    @org.junit.jupiter.api.Disabled("Requires approved distribution test data not yet available in test-data.sql")
-    @DisplayName("POST /distributions/{distributionId}/mark-paid - Should mark distribution as paid")
-    void shouldMarkDistributionAsPaid() {
-        // Given - Would need a distribution ID from test data
-        setTenantContext(TEST_TENANT_001);
-
-        // NOTE: This test requires a distribution to exist and be approved
-        // Skipping detailed test - would need to create and approve distribution first
-    }
 }

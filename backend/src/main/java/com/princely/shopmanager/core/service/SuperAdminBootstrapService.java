@@ -40,7 +40,7 @@ public class SuperAdminBootstrapService {
     @Value("${app.bootstrap.superadmin.username:superadmin}")
     private String superAdminUsername;
 
-    @Value("${app.bootstrap.superadmin.email:superAdmin@shopmanager.local}")
+    @Value("${app.bootstrap.superadmin.email:superadmin@shopmanager.local}")
     private String superAdminEmail;
 
     @Value("${app.bootstrap.superadmin.firstname:Super}")
@@ -49,10 +49,10 @@ public class SuperAdminBootstrapService {
     @Value("${app.bootstrap.superadmin.lastname:Admin}")
     private String superAdminLastName;
 
-    @Value("${app.bootstrap.superadmin.phonenumber:+1-000-000-0000}")
+    @Value("${app.bootstrap.superadmin.phonenumber:1-000-000-0000}")
     private String superAdminPhoneNumber;
 
-    @Value("${app.bootstrap.superadmin.password:}")
+    @Value("${app.bootstrap.superadmin.password:changeme}")
     private String superAdminPassword;
 
     /**

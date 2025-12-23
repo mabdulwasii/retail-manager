@@ -154,16 +154,6 @@ class ShopCustomizationControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("Multipart file upload requires MockMvc setup not available in RestTemplate-based AbstractIntegrationTest. " +
-        "This endpoint is tested in ShopCustomizationControllerTest (WebMvcTest). " +
-        "MinimalIT focuses on JSON-based endpoints only.")
-    @DisplayName("POST /shops/{shopId}/customization/logo - Should upload logo")
-    void shouldUploadLogo() {
-        // Multipart file upload testing requires MockMvc, not RestTemplate
-        // This endpoint is properly tested in ShopCustomizationControllerTest with @WebMvcTest
-    }
-
-    @Test
     @DisplayName("PATCH /shops/{shopId}/customization/contact - Should update contact info")
     void shouldUpdateContactInfo() {
         // Given
