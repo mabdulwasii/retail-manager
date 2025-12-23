@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
@@ -11,7 +12,6 @@ import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
-import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
@@ -24,15 +24,16 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 
 /**
  * Service class for managing product catalog operations.
@@ -609,7 +610,7 @@ public class ProductService extends ShopAwareService {
      */
     private String generateRandomAlphanumeric(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        java.util.Random random = new java.util.Random();
+        Random random = new Random();
         StringBuilder sb = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {

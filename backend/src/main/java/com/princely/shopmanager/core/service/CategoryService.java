@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -104,7 +105,7 @@ public class CategoryService extends ShopAwareService {
             .description(request.getDescription())
             .parent(parent)
             .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
-            .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+            .isActive(Optional.ofNullable(request.getIsActive()).orElse(true))
             .imageUrl(request.getImageUrl())
             .build();
 
