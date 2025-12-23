@@ -520,10 +520,10 @@ ON CONFLICT (id) DO NOTHING;
 -- 13. RECEIPTS
 -- Note: No tenant_id. Receipt linked to transaction which is shop-scoped.
 -- ========================================
-INSERT INTO receipts (id, receipt_number, transaction_id, issued_date, generated_at, format, status, receipt_content, printable_content, created_at, updated_at, version)
+INSERT INTO receipts (id, receipt_number, transaction_id, issued_date, generated_at, format, status, receipt_content, printable_content, email_sent, sms_sent, printed_count, created_at, updated_at, version)
 VALUES
-    ('e50e8400-e29b-41d4-a716-446655440001', 'RCP-2024-001', 'c50e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-001', 'SALES RECEIPT\nTHANK YOU!', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 0),
-    ('e50e8400-e29b-41d4-a716-446655440002', 'RCP-2024-002', 'c50e8400-e29b-41d4-a716-446655440002', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-002', 'SALES RECEIPT\nTHANK YOU!', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 0)
+    ('e50e8400-e29b-41d4-a716-446655440001', 'RCP-2024-001', 'c50e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-001', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 0),
+    ('e50e8400-e29b-41d4-a716-446655440002', 'RCP-2024-002', 'c50e8400-e29b-41d4-a716-446655440002', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-002', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
