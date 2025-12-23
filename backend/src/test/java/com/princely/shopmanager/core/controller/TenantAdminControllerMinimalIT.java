@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.doNothing;
  * Covers all 3 TenantAdminController endpoints with simple happy-path tests.
  * System admin operations for tenant registration approval workflow.
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("TenantAdmin Controller - Minimal Happy Path Integration Tests")
 class TenantAdminControllerMinimalIT extends AbstractIntegrationTest {
 

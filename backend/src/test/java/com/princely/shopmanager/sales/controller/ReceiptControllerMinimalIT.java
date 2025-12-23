@@ -9,7 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - POST /receipts/{receiptId}/mark-emailed - Mark emailed ✓
  * - POST /receipts/regenerate/{transactionId} - Regenerate receipt ✓
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("Receipt Controller - Minimal Happy Path Integration Tests")
 class ReceiptControllerMinimalIT extends AbstractIntegrationTest {
 

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Covers all 2 ApiRootController endpoints (API discovery/root).
  * Purpose: API documentation showing all endpoints work end-to-end.
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("ApiRoot Controller - Minimal Happy Path Integration Tests")
 class ApiRootControllerMinimalIT extends AbstractIntegrationTest {
 

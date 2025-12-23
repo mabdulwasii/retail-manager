@@ -9,7 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - POST /expenses/{expenseId}/reject - Reject (JSON deserialization error)
  * - GET /shops/{shopId}/expenses/summary - Get summary (500 error)
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("Expense Controller - Minimal Happy Path Integration Tests")
 class ExpenseControllerMinimalIT extends AbstractIntegrationTest {
 

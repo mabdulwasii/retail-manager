@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - PUT /fraud/rules/{ruleId}/status - Enable/Disable rule
  * - PATCH /fraud/rules/{ruleId}/status - Enable/Disable rule (PATCH)
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("Fraud Detection Controller - Minimal Happy Path Integration Tests")
 class FraudDetectionControllerMinimalIT extends AbstractIntegrationTest {
 

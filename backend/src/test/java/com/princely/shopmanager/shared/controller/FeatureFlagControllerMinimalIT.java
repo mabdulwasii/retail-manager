@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.princely.shopmanager.test.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - PATCH /feature-flags/{id} - Partial update (requires existing flag)
  * - DELETE /feature-flags/{id} - Delete feature flag (requires existing flag)
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("Feature Flag Controller - Minimal Happy Path Integration Tests")
 class FeatureFlagControllerMinimalIT extends AbstractIntegrationTest {
 

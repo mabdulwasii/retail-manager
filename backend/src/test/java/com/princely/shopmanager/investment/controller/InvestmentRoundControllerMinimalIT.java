@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * DISABLED (1/8):
  * - DELETE /investment-rounds/{roundId} - Disabled: Business rule prevents deletion with investments
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("InvestmentRound Controller - Minimal Happy Path Integration Tests")
 class InvestmentRoundControllerMinimalIT extends AbstractIntegrationTest {
 

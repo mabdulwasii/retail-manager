@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - POST /distributions/{distributionId}/approve - Approve (placeholder)
  * - POST /distributions/{distributionId}/mark-paid - Mark paid (placeholder)
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 @DisplayName("Investment Controller - Minimal Happy Path Integration Tests")
 class InvestmentControllerMinimalIT extends AbstractIntegrationTest {
 
