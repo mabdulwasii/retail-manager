@@ -1,6 +1,5 @@
 package com.princely.shopmanager.investment.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.investment.domain.Investment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +14,6 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class InvestmentResponse {
 
     private String id;

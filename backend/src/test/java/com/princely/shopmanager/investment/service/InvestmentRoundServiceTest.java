@@ -180,17 +180,21 @@ class InvestmentRoundServiceTest {
         // Then: Investment numbers should be sequential
         assertThat(response.getInvestments()).hasSize(3);
 
-        // Extract all investment numbers and verify they're unique and sequential
+        // Extract all investment numbers and verify they're unique and follow pattern
         List<String> investmentNumbers = response.getInvestments().stream()
             .map(InvestmentRoundResponse.InvestmentSummary::getInvestmentNumber)
             .sorted()
             .toList();
 
-        assertThat(investmentNumbers).containsExactly(
-            "INV-ROUND-TES-2025-Q4-001-001",
-            "INV-ROUND-TES-2025-Q4-001-002",
-            "INV-ROUND-TES-2025-Q4-001-003"
-        );
+        // Investment numbers now include nanoTime suffix for collision prevention
+        // Format: INV-{ROUND}-{SEQ}-{NANOTIME}
+        assertThat(investmentNumbers).hasSize(3);
+        assertThat(investmentNumbers.get(0)).matches("INV-ROUND-TES-2025-Q4-001-001-\\d+");
+        assertThat(investmentNumbers.get(1)).matches("INV-ROUND-TES-2025-Q4-001-002-\\d+");
+        assertThat(investmentNumbers.get(2)).matches("INV-ROUND-TES-2025-Q4-001-003-\\d+");
+
+        // Verify all numbers are unique
+        assertThat(investmentNumbers).doesNotHaveDuplicates();
 
         // Verify countByInvestmentRoundId was called 3 times
         verify(investmentRepository, times(3)).countByInvestmentRoundId("round-123");
@@ -230,9 +234,13 @@ class InvestmentRoundServiceTest {
             "admin"
         );
 
-        // Then: New investment should get number 006 (not 001)
+        // Then: New investment should get sequence 006 (not 001)
+        // Format: INV-{ROUND}-{SEQ}-{NANOTIME}
         assertThat(response.getInvestments()).hasSize(1);
-        assertThat(response.getInvestments().get(0).getInvestmentNumber()).endsWith("-006");
+        String investmentNumber = response.getInvestments().get(0).getInvestmentNumber();
+        // Should contain sequence 006 followed by nanoTime suffix
+        // Round number is ROUND-TES-2025-Q4-001 (line 209)
+        assertThat(investmentNumber).matches("INV-ROUND-TES-2025-Q4-001-006-\\d+");
 
         // Verify database count was used
         verify(investmentRepository).countByInvestmentRoundId("round-existing");

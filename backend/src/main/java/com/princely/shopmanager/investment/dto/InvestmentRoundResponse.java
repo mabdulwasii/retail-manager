@@ -1,6 +1,5 @@
 package com.princely.shopmanager.investment.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.princely.shopmanager.investment.domain.Investment;
 import com.princely.shopmanager.investment.domain.InvestmentRound;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,7 +19,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Investment round details with summary information")
 public class InvestmentRoundResponse {
 
