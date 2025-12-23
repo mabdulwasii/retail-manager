@@ -12,7 +12,7 @@ public class BusinessException extends RuntimeException {
     @Getter
     private final HttpStatus httpStatus;
     @Getter
-    private final Object[] messageParams;
+    private final transient Object[] messageParams;
 
     public BusinessException(String code, String message) {
         super(message);

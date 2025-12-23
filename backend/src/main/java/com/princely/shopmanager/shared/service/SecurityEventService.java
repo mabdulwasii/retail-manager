@@ -23,6 +23,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @Slf4j
 public class SecurityEventService {
 
+    // Default value constant
+    private static final String DEFAULT_UNKNOWN = "UNKNOWN";
+
     private final AuditService auditService;
     private final ShopRepository shopRepository;
 
@@ -55,7 +58,7 @@ public class SecurityEventService {
 
         auditService.logSecurityEvent(
             getCurrentShop(),
-            "UNKNOWN",
+            DEFAULT_UNKNOWN,
             userName,
             AuditLog.ActionType.LOGIN_FAILED,
             "Authentication failed: " + event.getException().getMessage(),
@@ -161,7 +164,7 @@ public class SecurityEventService {
     }
 
     private String extractUserId(Authentication auth) {
-        if (auth == null) return "UNKNOWN";
+        if (auth == null) return DEFAULT_UNKNOWN;
 
         if (auth.getPrincipal() instanceof Jwt jwt) {
             return jwt.getClaimAsString("sub");
@@ -171,7 +174,7 @@ public class SecurityEventService {
     }
 
     private String extractUserName(Authentication auth) {
-        if (auth == null) return "UNKNOWN";
+        if (auth == null) return DEFAULT_UNKNOWN;
 
         if (auth.getPrincipal() instanceof Jwt jwt) {
             String preferredUsername = jwt.getClaimAsString("preferred_username");
@@ -199,7 +202,7 @@ public class SecurityEventService {
             return request.getRemoteAddr();
         } catch (Exception e) {
             log.debug("Failed to extract client IP address: {}", e.getMessage());
-            return "UNKNOWN";
+            return DEFAULT_UNKNOWN;
         }
     }
 

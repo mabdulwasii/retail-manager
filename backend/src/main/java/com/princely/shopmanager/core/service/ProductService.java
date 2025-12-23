@@ -55,6 +55,8 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class ProductService extends ShopAwareService {
 
+    private static final String ENTITY_TYPE_PRODUCT = "Product";
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final InventoryRepository inventoryRepository;
@@ -159,7 +161,7 @@ public class ProductService extends ShopAwareService {
         product = productRepository.save(product);
 
         // Audit the creation
-        auditService.logEntityCreation("Product", product.getId(),
+        auditService.logEntityCreation(ENTITY_TYPE_PRODUCT, product.getId(),
             "Product created: " + product.getName() + " (SKU: " + product.getSku() + ")");
 
         // Publish product created event
@@ -264,7 +266,7 @@ public class ProductService extends ShopAwareService {
 
         // Audit if there were changes
         if (!changes.isEmpty()) {
-            auditService.logEntityModification("Product", product.getId(),
+            auditService.logEntityModification(ENTITY_TYPE_PRODUCT, product.getId(),
                 "Product updated: " + changes);
         }
 
@@ -330,7 +332,7 @@ public class ProductService extends ShopAwareService {
         product.setStatus(Product.ProductStatus.DISCONTINUED);
         productRepository.save(product);
 
-        auditService.logEntityModification("Product", product.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_PRODUCT, product.getId(),
             "Product discontinued: " + product.getName());
 
         log.info("Successfully discontinued product: {}", productId);

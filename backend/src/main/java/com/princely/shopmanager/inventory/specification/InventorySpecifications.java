@@ -7,6 +7,10 @@ import java.time.LocalDate;
 
 public class InventorySpecifications {
 
+    // Field name constants
+    private static final String FIELD_EXPIRY_DATE = "expiryDate";
+    private static final String FIELD_PRODUCT = "product";
+
     public static Specification<Inventory> hasLowStock() {
         return (root, query, cb) ->
             cb.lessThanOrEqualTo(
@@ -19,8 +23,8 @@ public class InventorySpecifications {
         LocalDate threshold = LocalDate.now().plusDays(days);
         return (root, query, cb) ->
             cb.and(
-                cb.isNotNull(root.get("expiryDate")),
-                cb.lessThanOrEqualTo(root.get("expiryDate"), threshold)
+                cb.isNotNull(root.get(FIELD_EXPIRY_DATE)),
+                cb.lessThanOrEqualTo(root.get(FIELD_EXPIRY_DATE), threshold)
             );
     }
 
@@ -36,7 +40,7 @@ public class InventorySpecifications {
 
     public static Specification<Inventory> forProduct(String productId) {
         return (root, query, cb) ->
-            cb.equal(root.get("product").get("id"), productId);
+            cb.equal(root.get(FIELD_PRODUCT).get("id"), productId);
     }
 
     public static Specification<Inventory> atLocation(String location) {
@@ -55,19 +59,19 @@ public class InventorySpecifications {
     public static Specification<Inventory> isExpired() {
         return (root, query, cb) ->
             cb.and(
-                cb.isNotNull(root.get("expiryDate")),
-                cb.lessThan(root.get("expiryDate"), LocalDate.now())
+                cb.isNotNull(root.get(FIELD_EXPIRY_DATE)),
+                cb.lessThan(root.get(FIELD_EXPIRY_DATE), LocalDate.now())
             );
     }
 
     public static Specification<Inventory> forCategory(String categoryId) {
         return (root, query, cb) ->
-            cb.equal(root.get("product").get("category").get("id"), categoryId);
+            cb.equal(root.get(FIELD_PRODUCT).get("category").get("id"), categoryId);
     }
 
     public static Specification<Inventory> productNameContains(String productName) {
         return (root, query, cb) ->
-            cb.like(cb.lower(root.get("product").get("name")),
+            cb.like(cb.lower(root.get(FIELD_PRODUCT).get("name")),
                    "%" + productName.toLowerCase() + "%");
     }
 }

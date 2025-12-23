@@ -3,7 +3,10 @@ package com.princely.shopmanager.core.controller;
 import com.princely.shopmanager.core.dto.registration.TenantActivationRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +26,12 @@ import static org.mockito.Mockito.doNothing;
  * System admin operations for tenant registration approval workflow.
  */
 @Transactional
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DisplayName("TenantAdmin Controller - Minimal Happy Path Integration Tests")
 class TenantAdminControllerMinimalIT extends AbstractIntegrationTest {
 
     @Test
+    @Order(1)
     @DisplayName("GET /admin/tenants/pending - Should list pending tenant registrations")
     void shouldListPendingRegistrations() {
         // Given - System admin context (no specific tenant)
@@ -46,6 +51,7 @@ class TenantAdminControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("GET /admin/tenants/{tenantId} - Should get tenant details")
     void shouldGetTenantDetails() {
         // Given - Use existing pending tenant from test-data.sql (TestConstants.TEST_TENANT_003)
@@ -65,6 +71,7 @@ class TenantAdminControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(3)
     @DisplayName("POST /admin/tenants/{tenantId}/activate - Should activate pending tenant")
     void shouldActivateTenant() {
         // Given - Use existing pending tenant from test-data.sql (TestConstants.TEST_TENANT_003)

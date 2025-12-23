@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EntityAuditListener {
 
+    private static final String DEFAULT_UNKNOWN_USER = "unknown";
+
     private static AuditService auditService;
     private static ShopRepository shopRepository;
     private static ObjectMapper objectMapper;

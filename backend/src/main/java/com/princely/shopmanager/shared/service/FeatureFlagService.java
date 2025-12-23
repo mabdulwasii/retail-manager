@@ -21,6 +21,9 @@ import java.util.Optional;
 @Slf4j
 public class FeatureFlagService {
 
+    // Error message constants
+    private static final String ERROR_FLAG_NOT_FOUND = "Feature flag not found: ";
+
     private final FeatureFlagRepository featureFlagRepository;
     private final ShopRepository shopRepository;
 
@@ -125,7 +128,7 @@ public class FeatureFlagService {
     @CacheEvict(value = "feature-flags", allEntries = true)
     public FeatureFlag updateFeatureFlag(String featureFlagId, boolean enabled, String modifiedBy) {
         FeatureFlag featureFlag = featureFlagRepository.findById(featureFlagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature flag not found: " + featureFlagId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_FLAG_NOT_FOUND + featureFlagId));
 
         featureFlag.setEnabled(enabled);
         featureFlag.setLastModifiedBy(modifiedBy);
@@ -140,7 +143,7 @@ public class FeatureFlagService {
     public FeatureFlag updateFeatureFlagSchedule(String featureFlagId, LocalDateTime effectiveFrom,
                                                 LocalDateTime effectiveUntil, String modifiedBy) {
         FeatureFlag featureFlag = featureFlagRepository.findById(featureFlagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature flag not found: " + featureFlagId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_FLAG_NOT_FOUND + featureFlagId));
 
         featureFlag.setEffectiveFrom(effectiveFrom);
         featureFlag.setEffectiveUntil(effectiveUntil);
@@ -157,7 +160,7 @@ public class FeatureFlagService {
     public FeatureFlag updateFeatureFlagConfiguration(String featureFlagId, Map<String, String> configuration,
                                                      String modifiedBy) {
         FeatureFlag featureFlag = featureFlagRepository.findById(featureFlagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature flag not found: " + featureFlagId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_FLAG_NOT_FOUND + featureFlagId));
 
         featureFlag.getConfiguration().clear();
         featureFlag.getConfiguration().putAll(configuration);
@@ -212,7 +215,7 @@ public class FeatureFlagService {
     @CacheEvict(value = "feature-flags", allEntries = true)
     public void deleteFeatureFlag(String featureFlagId) {
         FeatureFlag featureFlag = featureFlagRepository.findById(featureFlagId)
-            .orElseThrow(() -> new IllegalArgumentException("Feature flag not found: " + featureFlagId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_FLAG_NOT_FOUND + featureFlagId));
 
         featureFlagRepository.delete(featureFlag);
         log.info("Deleted feature flag '{}' for shop '{}'",

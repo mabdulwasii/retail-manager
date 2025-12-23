@@ -29,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InvestmentProfitService {
 
+    // Log message constants
+    private static final String LOG_ZERO_ROUND_AMOUNT = "Total round amount is zero or null for round {}";
+
     private final InvestmentRepository investmentRepository;
     private final InvestorDistributionRepository distributionRepository;
     private final SalesTransactionRepository salesTransactionRepository;
@@ -182,7 +185,7 @@ public class InvestmentProfitService {
                     .sumAmountByInvestmentRoundId(round.getId());
 
                 if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
-                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    log.warn(LOG_ZERO_ROUND_AMOUNT, round.getId());
                     yield BigDecimal.ZERO;
                 }
 
@@ -219,7 +222,7 @@ public class InvestmentProfitService {
                     .sumAmountByInvestmentRoundId(round.getId());
 
                 if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
-                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    log.warn(LOG_ZERO_ROUND_AMOUNT, round.getId());
                     yield BigDecimal.ZERO;
                 }
 
@@ -241,7 +244,7 @@ public class InvestmentProfitService {
                     .sumAmountByInvestmentRoundId(round.getId());
 
                 if (totalRoundAmount == null || totalRoundAmount.compareTo(BigDecimal.ZERO) == 0) {
-                    log.warn("Total round amount is zero or null for round {}", round.getId());
+                    log.warn(LOG_ZERO_ROUND_AMOUNT, round.getId());
                     yield BigDecimal.ZERO;
                 }
 

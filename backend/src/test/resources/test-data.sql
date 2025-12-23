@@ -600,7 +600,7 @@ INSERT INTO shop_customizations (id, shop_id, primary_color, secondary_color, ac
 VALUES
     ('500e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', '#007bff', '#6c757d', '#28a745', 'https://example.com/logo.png', 'LIGHT', 'MEDIUM', 'Inter', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
     ('500e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440002', '#ff5733', '#333333', '#ffc107', NULL, 'DARK', 'LARGE', 'Arial', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (shop_id) DO NOTHING;
 
 -- ========================================
 -- 22. AUDIT LOGS

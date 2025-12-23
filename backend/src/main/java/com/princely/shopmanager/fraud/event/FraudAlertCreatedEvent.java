@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class FraudAlertCreatedEvent extends ApplicationEvent {
 
-    private final FraudAlert alert;
+    private final transient FraudAlert alert;
     private final String tenantId;
     private final String shopId;
 

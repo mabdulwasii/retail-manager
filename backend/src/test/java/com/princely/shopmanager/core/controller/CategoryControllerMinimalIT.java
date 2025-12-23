@@ -5,7 +5,10 @@ import com.princely.shopmanager.core.dto.CategoryResponse;
 import com.princely.shopmanager.core.dto.CategoryUpdateRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +26,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Purpose: API documentation showing all endpoints work end-to-end.
  */
 @Transactional
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DisplayName("Category Controller - Minimal Happy Path Integration Tests")
 class CategoryControllerMinimalIT extends AbstractIntegrationTest {
 
     public static final String TEST_OWNER_EMAIL = "owner@testretail.com";
 
     @Test
+    @Order(1)
     @DisplayName("POST /shops/{shopId}/categories - Should create category")
     void shouldCreateCategory() {
         // Given - Use existing shop from test-data.sql
@@ -58,6 +63,7 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("GET /shops/{shopId}/categories - Should list categories")
     void shouldListCategories() {
         // Given - Use existing shop from test-data.sql (has categories in test-data.sql)
@@ -78,6 +84,7 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(3)
     @DisplayName("GET /categories/{id} - Should get category by ID")
     void shouldGetCategoryById() {
         // Given - Use existing category from test-data.sql
@@ -98,6 +105,7 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(4)
     @DisplayName("PUT /categories/{id} - Should update category")
     void shouldUpdateCategory() {
         // Given - Use existing category from test-data.sql
@@ -124,6 +132,7 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(5)
     @DisplayName("PATCH /categories/{id} - Should partial update category")
     void shouldPartialUpdateCategory() {
         // Given - Use existing category from test-data.sql
@@ -149,6 +158,7 @@ class CategoryControllerMinimalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @Order(6)
     @DisplayName("DELETE /categories/{id} - Should delete category")
     void shouldDeleteCategory() {
         // Given - Use existing deletable category from test-data.sql (has no products)

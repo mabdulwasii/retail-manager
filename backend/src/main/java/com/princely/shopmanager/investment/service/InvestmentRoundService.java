@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 public class InvestmentRoundService {
 
     // Error message constants
-    private static final String ERROR_ROUND_NOT_FOUND = ERROR_ROUND_NOT_FOUND;
+    private static final String ERROR_ROUND_NOT_FOUND = "Investment round not found: ";
 
     private final InvestmentRoundRepository investmentRoundRepository;
     private final InvestmentRepository investmentRepository;

@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class TenantConfigurationService {
 
+    private static final String ERROR_CONFIG_PREFIX = "Configuration '";
+
     private final TenantConfigurationRepository configurationRepository;
     private final TenantRepository tenantRepository;
 
@@ -139,7 +141,7 @@ public class TenantConfigurationService {
         // Check if configuration is editable
         if (!configuration.isEditable()) {
             throw new IllegalStateException(
-                "Configuration '" + key + "' is not editable"
+                ERROR_CONFIG_PREFIX + key + "' is not editable"
             );
         }
 
@@ -176,7 +178,7 @@ public class TenantConfigurationService {
 
         if (!configuration.isEditable()) {
             throw new IllegalStateException(
-                "Configuration '" + key + "' is not editable"
+                ERROR_CONFIG_PREFIX + key + "' is not editable"
             );
         }
 
@@ -194,7 +196,7 @@ public class TenantConfigurationService {
 
         if (!configuration.isEditable()) {
             throw new IllegalStateException(
-                "Configuration '" + key + "' is not editable and cannot be deleted"
+                ERROR_CONFIG_PREFIX + key + "' is not editable and cannot be deleted"
             );
         }
 

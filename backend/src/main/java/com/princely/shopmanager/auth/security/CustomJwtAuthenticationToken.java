@@ -17,7 +17,7 @@ import lombok.Getter;
 @Getter
 public class CustomJwtAuthenticationToken extends JwtAuthenticationToken {
 
-    private final JwtPrincipal jwtPrincipal;
+    private final transient JwtPrincipal jwtPrincipal;
 
     public CustomJwtAuthenticationToken(Jwt jwt, Collection<? extends GrantedAuthority> authorities, JwtPrincipal principal) {
         super(jwt, authorities, principal.getPreferredUsername());

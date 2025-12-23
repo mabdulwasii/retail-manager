@@ -13,6 +13,8 @@ import java.math.BigDecimal;
  */
 public class InvestmentCreateRequestValidator implements ConstraintValidator<ValidInvestmentCreateRequest, InvestmentCreateRequest> {
 
+    private static final String TEXT_INVESTMENT_TYPE = " investment type";
+
     @Override
     public boolean isValid(InvestmentCreateRequest request, ConstraintValidatorContext context) {
         if (request == null) {
@@ -42,7 +44,7 @@ public class InvestmentCreateRequestValidator implements ConstraintValidator<Val
             case PRODUCT_SPECIFIC:
                 if (request.getProductIds() == null || request.getProductIds().isEmpty()) {
                     context.buildConstraintViolationWithTemplate(
-                            "Product IDs are required for " + request.getInvestmentType().getDisplayName() + " investment type"
+                            "Product IDs are required for " + request.getInvestmentType().getDisplayName() + TEXT_INVESTMENT_TYPE
                     ).addPropertyNode("productIds").addConstraintViolation();
                     isValid = false;
                 }
@@ -51,7 +53,7 @@ public class InvestmentCreateRequestValidator implements ConstraintValidator<Val
             case CATEGORY_SPECIFIC:
                 if (request.getCategoryFilter() == null || request.getCategoryFilter().isBlank()) {
                     context.buildConstraintViolationWithTemplate(
-                            "Category filter is required for " + request.getInvestmentType().getDisplayName() + " investment type"
+                            "Category filter is required for " + request.getInvestmentType().getDisplayName() + TEXT_INVESTMENT_TYPE
                     ).addPropertyNode("categoryFilter").addConstraintViolation();
                     isValid = false;
                 }
@@ -60,13 +62,13 @@ public class InvestmentCreateRequestValidator implements ConstraintValidator<Val
             case SHOP_WIDE:
                 if (request.getProductIds() != null && !request.getProductIds().isEmpty()) {
                     context.buildConstraintViolationWithTemplate(
-                            "Product IDs should not be specified for " + request.getInvestmentType().getDisplayName() + " investment type"
+                            "Product IDs should not be specified for " + request.getInvestmentType().getDisplayName() + TEXT_INVESTMENT_TYPE
                     ).addPropertyNode("productIds").addConstraintViolation();
                     isValid = false;
                 }
                 if (request.getCategoryFilter() != null && !request.getCategoryFilter().isBlank()) {
                     context.buildConstraintViolationWithTemplate(
-                            "Category filter should not be specified for " + request.getInvestmentType().getDisplayName() + " investment type"
+                            "Category filter should not be specified for " + request.getInvestmentType().getDisplayName() + TEXT_INVESTMENT_TYPE
                     ).addPropertyNode("categoryFilter").addConstraintViolation();
                     isValid = false;
                 }

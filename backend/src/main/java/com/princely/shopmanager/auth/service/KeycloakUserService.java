@@ -35,6 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class KeycloakUserService {
 
+    // Error message constants
+    private static final String ERROR_USER_NOT_FOUND = "User not found: ";
+
     private final Keycloak keycloakAdmin;
 
     @Value("${keycloak.realm:shop-manager}")
@@ -116,7 +119,7 @@ public class KeycloakUserService {
             userResource.update(user);
             log.info("User status updated successfully: {}", userId);
         } catch (NotFoundException e) {
-            throw new KeycloakUserException("User not found: " + userId, e);
+            throw new KeycloakUserException(ERROR_USER_NOT_FOUND + userId, e);
         } catch (Exception e) {
             log.error("Error updating user status: {}", userId, e);
             throw new KeycloakUserException("Failed to update user status: " + e.getMessage(), e);
@@ -147,7 +150,7 @@ public class KeycloakUserService {
                 log.info("Roles assigned successfully to user: {}", userId);
             }
         } catch (NotFoundException e) {
-            throw new KeycloakUserException("User not found: " + userId, e);
+            throw new KeycloakUserException(ERROR_USER_NOT_FOUND + userId, e);
         } catch (Exception e) {
             log.error("Error assigning roles to user: {}", userId, e);
             throw new KeycloakUserException("Failed to assign roles: " + e.getMessage(), e);
@@ -280,7 +283,7 @@ public class KeycloakUserService {
 
             log.info("User updated successfully in Keycloak: {}", keycloakId);
         } catch (NotFoundException e) {
-            throw new KeycloakUserException("User not found: " + keycloakId, e);
+            throw new KeycloakUserException(ERROR_USER_NOT_FOUND + keycloakId, e);
         } catch (Exception e) {
             log.error("Error updating user in Keycloak: {}", keycloakId, e);
             throw new KeycloakUserException("Failed to update user: " + e.getMessage(), e);
@@ -297,7 +300,7 @@ public class KeycloakUserService {
             realmResource.users().get(keycloakId).remove();
             log.info("User deleted successfully from Keycloak: {}", keycloakId);
         } catch (NotFoundException e) {
-            throw new KeycloakUserException("User not found: " + keycloakId, e);
+            throw new KeycloakUserException(ERROR_USER_NOT_FOUND + keycloakId, e);
         } catch (Exception e) {
             log.error("Error deleting user from Keycloak: {}", keycloakId, e);
             throw new KeycloakUserException("Failed to delete user: " + e.getMessage(), e);
