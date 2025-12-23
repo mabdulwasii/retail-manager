@@ -45,10 +45,11 @@
         <!-- Credentials must be provided via environment variables or command line -->
         <sonar.login>${env.SONAR_LOGIN}</sonar.login>
         <sonar.password>${env.SONAR_PASSWORD}</sonar.password>
-        <!-- Project identification for SonarCloud -->
+        <!-- Project identification for SonarCloud - Using same project as frontend (monorepo) -->
         <sonar.organization>${env.SONAR_ORGANIZATION}</sonar.organization>
-        <sonar.projectKey>shop-manager-backend</sonar.projectKey>
-        <sonar.projectName>Shop Manager Backend</sonar.projectName>
+        <sonar.projectKey>mabdulwasii_retail-manager</sonar.projectKey>
+        <sonar.projectName>Retail Manager</sonar.projectName>
+        <sonar.moduleKey>backend</sonar.moduleKey>
         <sonar.exclusions>
             **/config/**/*,
             **/dto/**/*,

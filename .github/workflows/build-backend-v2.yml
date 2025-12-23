@@ -99,7 +99,8 @@ jobs:
         run: |
           cd backend
           ./mvnw sonar:sonar \
-            -Dsonar.projectKey=shop-manager-backend \
+            -Dsonar.projectKey=mabdulwasii_retail-manager \
+            -Dsonar.moduleKey=backend \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
