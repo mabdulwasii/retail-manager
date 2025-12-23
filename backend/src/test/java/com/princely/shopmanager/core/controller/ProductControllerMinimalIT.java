@@ -21,20 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Comprehensive RBAC tests are in RBACIntegrationTest.
  *
  * Purpose: API documentation showing all endpoints work end-to-end.
+ * All tests use existing test-data.sql fixtures for optimal performance.
  *
- * PASSING (5/10):
- * - POST /shops/{shopId}/products - Create product ✓
- * - GET /shops/{shopId}/products/low-stock - Low stock ✓
- * - GET /products/search - Search by barcode ✓
- * - PUT /products/{productId} - Update product ✓
- * - PATCH /products/{productId} - Partial update ✓
- *
- * DISABLED (5/10):
- * - GET /shops/{shopId}/products - List products (not implemented)
- * - GET /products/{productId} - Get by ID (not implemented)
- * - DELETE /products/{productId} - Delete (503 SERVICE_UNAVAILABLE)
- * - GET /products/{productId}/inventory-summary - Inventory summary (503 SERVICE_UNAVAILABLE)
- * - GET /shops/{shopId}/products/out-of-stock - Out of stock (503 SERVICE_UNAVAILABLE)
+ * ENABLED (10/10):
+ * - POST /shops/{shopId}/products - Create product
+ * - GET /shops/{shopId}/products - List products
+ * - GET /products/{productId} - Get by ID
+ * - GET /products/search - Search by barcode
+ * - PUT /products/{productId} - Update product
+ * - PATCH /products/{productId} - Partial update
+ * - DELETE /products/{productId} - Delete product
+ * - GET /products/{productId}/inventory-summary - Inventory summary
+ * - GET /shops/{shopId}/products/low-stock - Low stock products
+ * - GET /shops/{shopId}/products/out-of-stock - Out of stock products
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Product Controller - Minimal Happy Path Integration Tests")
@@ -68,18 +67,47 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getName()).isEqualTo("Coca Cola 500ml");
     }
 
-    // NOTE: Following tests disabled - require additional service dependencies (CategoryService, InventoryService)
-    // These operations fail with 503 SERVICE_UNAVAILABLE or return error responses
-    // Original tests used setupTenantTestData() which created dynamic test data
-    // Consider re-enabling when service dependencies are properly mocked/configured
+    @Test
+    @DisplayName("GET /shops/{shopId}/products - Should list products")
+    void shouldListProducts() {
+        // Given - Use existing shop from test-data.sql
+        setTenantContext(TEST_TENANT_001);
 
-    // @Test
-    // @DisplayName("GET /shops/{shopId}/products - Should list products")
-    // void shouldListProducts() { ... }
+        // When
+        ResponseEntity<String> response = performAuthenticatedGetWithPaginationAndShop(
+            "/shops/" + TEST_SHOP_001 + "/products",
+            0,
+            20,
+            "owner@testretail.com",
+            TEST_SHOP_001,
+            "OWNER"
+        );
 
-    // @Test
-    // @DisplayName("GET /products/{productId} - Should get product by ID")
-    // void shouldGetProductById() { ... }
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("Wireless Mouse");
+    }
+
+    @Test
+    @DisplayName("GET /products/{productId} - Should get product by ID")
+    void shouldGetProductById() {
+        // Given - Use existing product from test-data.sql
+        setTenantContext(TEST_TENANT_001);
+
+        // When
+        ResponseEntity<ProductResponse> response = performAuthenticatedGetWithShop(
+            "/products/" + PROD_WIRELESS_MOUSE,
+            "owner@testretail.com",
+            TEST_SHOP_001,
+            ProductResponse.class,
+            "OWNER"
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getId()).isEqualTo(PROD_WIRELESS_MOUSE);
+        assertThat(response.getBody().getName()).contains("Wireless Mouse");
+    }
 
     @Test
     @DisplayName("GET /products/search - Should search products by barcode")
@@ -152,8 +180,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getBody().getDescription()).isEqualTo("Patched Description for T-Shirt");
     }
 
-    // @Test
-    // @DisplayName("DELETE /products/{productId} - Should delete product")
+    @Test
+    @DisplayName("DELETE /products/{productId} - Should delete product")
     void shouldDeleteProduct() {
         // Given - Use existing product from test-data.sql (TestConstants.PROD_ENERGY_DRINK)
         setTenantContext(TEST_TENANT_001);
@@ -170,8 +198,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
-    // @Test
-    // @DisplayName("GET /products/{productId}/inventory-summary - Should get inventory summary")
+    @Test
+    @DisplayName("GET /products/{productId}/inventory-summary - Should get inventory summary")
     void shouldGetInventorySummary() {
         // Given - Use existing product from test-data.sql (TestConstants.PROD_WIRELESS_MOUSE)
         setTenantContext(TEST_TENANT_001);
@@ -209,8 +237,8 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("GET /shops/{shopId}/products/out-of-stock - Should get out of stock products")
+    @Test
+    @DisplayName("GET /shops/{shopId}/products/out-of-stock - Should get out of stock products")
     void shouldGetOutOfStockProducts() {
         // Given - Use existing shop from test-data.sql (TestConstants.TEST_SHOP_001)
         setTenantContext(TEST_TENANT_001);
