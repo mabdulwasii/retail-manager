@@ -1,10 +1,7 @@
 package com.princely.shopmanager.fraud.controller;
 
-import com.princely.shopmanager.fraud.domain.RiskAssessment;
-import com.princely.shopmanager.fraud.dto.FraudRuleRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -234,57 +231,37 @@ class FraudDetectionControllerMinimalIT extends AbstractIntegrationTest {
         // Placeholder: FraudRuleRequest creation requires complex setup
 
         // When
-        // ResponseEntity<String> response = performAuthenticatedPostWithShop(...);
+        // TODO: Implement when fraud rule test data is available
 
         // Then
-        // assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // TODO: Add assertions
     }
 
-    // @Test
-    // @DisplayName("PUT /fraud/rules/{ruleId} - Should update fraud rule")
+    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
+    @DisplayName("PUT /fraud/rules/{ruleId} - Should update fraud rule")
     void shouldUpdateFraudRule() {
         // Given - Requires existing fraud rule
         setTenantContext(TEST_TENANT_001);
-        String ruleId = "fraud-rule-placeholder";
 
-        // When
-        // ResponseEntity<String> response = performAuthenticatedPutWithShop(...);
-
-        // Then
-        // assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // TODO: Implement when fraud rule test data is available
     }
 
-    // @Test
-    // @DisplayName("PATCH /fraud/rules/{ruleId} - Should partial update fraud rule")
+    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
+    @DisplayName("PATCH /fraud/rules/{ruleId} - Should partial update fraud rule")
     void shouldPatchFraudRule() {
         // Given - Requires existing fraud rule
         setTenantContext(TEST_TENANT_001);
-        String ruleId = "fraud-rule-placeholder";
 
-        // When
-        // ResponseEntity<String> response = performAuthenticatedPatchWithShop(...);
-
-        // Then
-        // assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // TODO: Implement when fraud rule test data is available
     }
 
-    // @Test
-    // @DisplayName("DELETE /fraud/rules/{ruleId} - Should delete fraud rule")
+    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
+    @DisplayName("DELETE /fraud/rules/{ruleId} - Should delete fraud rule")
     void shouldDeleteFraudRule() {
         // Given - Requires existing fraud rule
         setTenantContext(TEST_TENANT_001);
-        String ruleId = "fraud-rule-placeholder";
 
-        // When
-        ResponseEntity<Void> response = performAuthenticatedDeleteWithShop(
-            "/fraud/rules/" + ruleId,
-            "manager@testretail.com",
-            TEST_SHOP_001,
-            "MANAGER"
-        );
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        // TODO: Implement when fraud rule test data is available
     }
 
     // @Test
