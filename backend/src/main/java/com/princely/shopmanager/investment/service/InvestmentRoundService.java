@@ -41,6 +41,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InvestmentRoundService {
 
+    // Error message constants
+    private static final String ERROR_ROUND_NOT_FOUND = ERROR_ROUND_NOT_FOUND;
+
     private final InvestmentRoundRepository investmentRoundRepository;
     private final InvestmentRepository investmentRepository;
     private final ShopRepository shopRepository;
@@ -136,7 +139,7 @@ public class InvestmentRoundService {
     @Transactional(readOnly = true)
     public InvestmentRoundResponse getInvestmentRound(String roundId) {
         InvestmentRound round = investmentRoundRepository.findById(roundId)
-            .orElseThrow(() -> new IllegalArgumentException("Investment round not found: " + roundId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROUND_NOT_FOUND + roundId));
         return mapToResponse(round);
     }
 
@@ -169,7 +172,7 @@ public class InvestmentRoundService {
         log.info("Updating investment round {}", roundId);
 
         InvestmentRound round = investmentRoundRepository.findById(roundId)
-            .orElseThrow(() -> new IllegalArgumentException("Investment round not found: " + roundId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROUND_NOT_FOUND + roundId));
 
         if (round.getStatus() == InvestmentRound.RoundStatus.CLOSED ||
             round.getStatus() == InvestmentRound.RoundStatus.COMPLETED) {
@@ -210,7 +213,7 @@ public class InvestmentRoundService {
         log.info("Deleting investment round {}", roundId);
 
         InvestmentRound round = investmentRoundRepository.findById(roundId)
-            .orElseThrow(() -> new IllegalArgumentException("Investment round not found: " + roundId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROUND_NOT_FOUND + roundId));
 
         // Check if any distributions have been made
         boolean hasDistributions = round.getInvestments().stream()
@@ -246,7 +249,7 @@ public class InvestmentRoundService {
         log.info("Closing investment round {}", roundId);
 
         InvestmentRound round = investmentRoundRepository.findById(roundId)
-            .orElseThrow(() -> new IllegalArgumentException("Investment round not found: " + roundId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROUND_NOT_FOUND + roundId));
 
         if (round.getStatus() != InvestmentRound.RoundStatus.OPEN) {
             throw new IllegalStateException("Round is not open: " + round.getStatus());
@@ -284,7 +287,7 @@ public class InvestmentRoundService {
         log.info("Adding investor {} to round {}", investorInput.getInvestorId(), roundId);
 
         InvestmentRound round = investmentRoundRepository.findById(roundId)
-            .orElseThrow(() -> new IllegalArgumentException("Investment round not found: " + roundId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROUND_NOT_FOUND + roundId));
 
         if (round.getStatus() != InvestmentRound.RoundStatus.OPEN) {
             throw new IllegalStateException("Can only add investors to OPEN rounds");
