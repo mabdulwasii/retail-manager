@@ -4,6 +4,7 @@ import com.princely.shopmanager.core.dto.ProductCreateRequest;
 import com.princely.shopmanager.core.dto.ProductResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -15,14 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Minimal integration test for ProductController - Happy Path Only.
- *
  * Covers all 10 ProductController endpoints with simple happy-path tests.
  * Comprehensive business logic tests are in ProductServiceTest (unit tests).
  * Comprehensive RBAC tests are in RBACIntegrationTest.
- *
  * Purpose: API documentation showing all endpoints work end-to-end.
  * All tests use existing test-data.sql fixtures for optimal performance.
- *
+
  * ENABLED (10/10):
  * - POST /shops/{shopId}/products - Create product
  * - GET /shops/{shopId}/products - List products
@@ -64,6 +63,7 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Assertions.assertNotNull(response.getBody());
         assertThat(response.getBody().getName()).isEqualTo("Coca Cola 500ml");
     }
 
@@ -105,6 +105,7 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertNotNull(response.getBody());
         assertThat(response.getBody().getId()).isEqualTo(PROD_WIRELESS_MOUSE);
         assertThat(response.getBody().getName()).contains("Wireless Mouse");
     }
@@ -126,6 +127,7 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertNotNull(response.getBody());
         assertThat(response.getBody().getBarcode()).isEqualTo(BARCODE_WIRELESS_MOUSE);
     }
 
@@ -152,6 +154,7 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertNotNull(response.getBody());
         assertThat(response.getBody().getName()).isEqualTo("Updated Keyboard Name");
     }
 
@@ -177,6 +180,7 @@ class ProductControllerMinimalIT extends AbstractIntegrationTest {
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertNotNull(response.getBody());
         assertThat(response.getBody().getDescription()).isEqualTo("Patched Description for T-Shirt");
     }
 

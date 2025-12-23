@@ -21,6 +21,7 @@ package com.princely.shopmanager.test;
  * - 250e84XX... = Returns
  * - 350e84XX... = Return Items
  * - 450e84XX... = Inventory Movements
+ * - 5a0e84XX... = Investment Rounds
  *
  * Usage:
  * <pre>
@@ -166,6 +167,18 @@ public final class TestConstants {
     public static final String INVESTMENT_002 = "050e8400-e29b-41d4-a716-446655440002";
 
     // ==========================================
+    // INVESTMENT ROUND UUIDs
+    // ==========================================
+    public static final String INVESTMENT_ROUND_001 = "5a0e8400-e29b-41d4-a716-446655440001";
+    public static final String INVESTMENT_ROUND_002 = "5a0e8400-e29b-41d4-a716-446655440002";
+
+    // ==========================================
+    // INVESTMENT ROUND NUMBERS
+    // ==========================================
+    public static final String ROUND_NUMBER_001 = "ROUND-TEST-2024-Q1-001";
+    public static final String ROUND_NUMBER_002 = "ROUND-TEST-2024-Q2-001";
+
+    // ==========================================
     // INVESTOR SHARE UUIDs
     // ==========================================
     public static final String SHARE_001 = "150e8400-e29b-41d4-a716-446655440001";
@@ -216,6 +229,7 @@ public final class TestConstants {
     public static final int EXPECTED_RECEIPT_COUNT = 2;
     public static final int EXPECTED_EXPENSE_COUNT = 3;
     public static final int EXPECTED_INVESTMENT_COUNT = 2;
+    public static final int EXPECTED_INVESTMENT_ROUND_COUNT = 2;
     public static final int EXPECTED_INVESTOR_SHARE_COUNT = 4;
     public static final int EXPECTED_RETURN_COUNT = 1;
     public static final int EXPECTED_INVENTORY_MOVEMENT_COUNT = 4;
