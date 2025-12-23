@@ -36,6 +36,18 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final MessageService messageService;
 
+    // Constraint detail map keys
+    private static final String KEY_VIOLATION_TYPE = "violationType";
+    private static final String KEY_CONSTRAINT_NAME = "constraintName";
+    private static final String KEY_COLUMN = "column";
+    private static final String KEY_ATTEMPTED_VALUE = "attemptedValue";
+    private static final String KEY_TABLE = "table";
+
+    // Constraint violation types
+    private static final String VIOLATION_UNIQUE_CONSTRAINT = "UNIQUE_CONSTRAINT";
+    private static final String VIOLATION_NOT_NULL = "NOT_NULL";
+    private static final String VIOLATION_FOREIGN_KEY = "FOREIGN_KEY";
+
     // Regex patterns for extracting constraint details from PostgreSQL error messages
     private static final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(
         "duplicate key value violates unique constraint \"([^\"]+)\".*Key \\(([^)]+)\\)=\\(([^)]+)\\)",
@@ -64,15 +76,15 @@ public class GlobalExceptionHandler {
         // Try to extract duplicate key violation details
         Matcher duplicateMatcher = DUPLICATE_KEY_PATTERN.matcher(errorMessage);
         if (duplicateMatcher.find()) {
-            details.put("violationType", "UNIQUE_CONSTRAINT");
-            details.put("constraintName", duplicateMatcher.group(1));
-            details.put("column", duplicateMatcher.group(2));
-            details.put("attemptedValue", duplicateMatcher.group(3));
+            details.put(KEY_VIOLATION_TYPE, VIOLATION_UNIQUE_CONSTRAINT);
+            details.put(KEY_CONSTRAINT_NAME, duplicateMatcher.group(1));
+            details.put(KEY_COLUMN, duplicateMatcher.group(2));
+            details.put(KEY_ATTEMPTED_VALUE, duplicateMatcher.group(3));
 
             // Extract table name from constraint name (usually format: table_column_key)
             String constraintName = duplicateMatcher.group(1);
             if (constraintName.contains("_")) {
-                details.put("table", constraintName.split("_")[0]);
+                details.put(KEY_TABLE, constraintName.split("_")[0]);
             }
             return details;
         }
@@ -80,19 +92,19 @@ public class GlobalExceptionHandler {
         // Try to extract NOT NULL violation details
         Matcher notNullMatcher = NOT_NULL_PATTERN.matcher(errorMessage);
         if (notNullMatcher.find()) {
-            details.put("violationType", "NOT_NULL");
-            details.put("column", notNullMatcher.group(1));
-            details.put("table", notNullMatcher.group(2));
+            details.put(KEY_VIOLATION_TYPE, VIOLATION_NOT_NULL);
+            details.put(KEY_COLUMN, notNullMatcher.group(1));
+            details.put(KEY_TABLE, notNullMatcher.group(2));
             return details;
         }
 
         // Try to extract foreign key violation details
         Matcher foreignKeyMatcher = FOREIGN_KEY_PATTERN.matcher(errorMessage);
         if (foreignKeyMatcher.find()) {
-            details.put("violationType", "FOREIGN_KEY");
-            details.put("constraintName", foreignKeyMatcher.group(1));
-            details.put("column", foreignKeyMatcher.group(2));
-            details.put("attemptedValue", foreignKeyMatcher.group(3));
+            details.put(KEY_VIOLATION_TYPE, VIOLATION_FOREIGN_KEY);
+            details.put(KEY_CONSTRAINT_NAME, foreignKeyMatcher.group(1));
+            details.put(KEY_COLUMN, foreignKeyMatcher.group(2));
+            details.put(KEY_ATTEMPTED_VALUE, foreignKeyMatcher.group(3));
             return details;
         }
 
