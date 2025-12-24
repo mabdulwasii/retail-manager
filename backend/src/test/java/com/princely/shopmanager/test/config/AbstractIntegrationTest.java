@@ -4,29 +4,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
 import com.princely.shopmanager.auth.service.KeycloakUserService;
-import com.princely.shopmanager.core.domain.Shop;
-import com.princely.shopmanager.core.domain.Tenant;
 import com.princely.shopmanager.core.dto.ShopCreateRequest;
-import com.princely.shopmanager.core.dto.ShopResponse;
 import com.princely.shopmanager.core.dto.ShopUpdateRequest;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.test.TestConstants;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -40,12 +38,17 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +57,7 @@ import static org.mockito.Mockito.when;
  *
  * This class provides:
  * - Real PostgreSQL database via TestContainers (same as production)
- * - Test data loaded from test-data.sql before each test
+ * - Test data loaded from test-data.sql before each test (@Sql with ISOLATED mode)
  * - Flyway migrations executed automatically
  * - Container reuse for fast test execution
  * - Both MockMvc AND TestRestTemplate for flexible testing
@@ -63,8 +66,8 @@ import static org.mockito.Mockito.when;
  *
  * Key Design Decisions:
  * - PostgreSQL container is singleton and shared across all test classes
- * - Database is reset via Flyway + @Sql before each test method (@Sql auto-commits by default)
- * - Test data from test-data.sql is visible immediately (no manual transaction management needed)
+ * - Database is reset via @Sql(test-data.sql) before each test method (ISOLATED transaction mode)
+ * - No manual cleanup needed - @Sql re-runs automatically, resetting database state
  * - Active profile "test" loads application-test.yml configuration
  * - @DynamicPropertySource registers TestContainer properties before Spring context loads
  *
@@ -219,12 +222,6 @@ public abstract class AbstractIntegrationTest {
         // Clear tenant context before each test
         TenantContext.clear();
 
-        // Clean up any leftover test data
-        cleanupTestData();
-
-        // Setup default test data
-        setupTestData();
-
         // Mock user creation - return random UUID
         when(keycloakUserService.createUser(any(CreateKeycloakUserRequest.class)))
                 .thenAnswer(invocation -> UUID.randomUUID().toString());
@@ -252,59 +249,6 @@ public abstract class AbstractIntegrationTest {
             user.setEnabled(true);
             return Optional.of(user);
         });
-    }
-
-    /**
-     * DIAGNOSTIC: Debug database state after test-data.sql loads.
-     * Logs counts and sample data to verify permission loading.
-     *
-     * This method runs AFTER @Sql executes test-data.sql.
-     */
-    @BeforeEach
-    void debugDatabaseState() {
-        try {
-            // Count core tables
-            Long permissionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM permissions", Long.class);
-            Long roleCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM roles WHERE id LIKE 'test-role-%'", Long.class);
-            Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users WHERE email LIKE '%@testretail.com'", Long.class);
-            Long rolePermCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM role_permissions WHERE role_id LIKE 'test-role-%'", Long.class);
-
-            log.info("========== DATABASE STATE AFTER test-data.sql ==========");
-            log.info("Permissions in database: {}", permissionCount);
-            log.info("Test roles created: {}", roleCount);
-            log.info("Test users created: {}", userCount);
-            log.info("Role-permission assignments: {}", rolePermCount);
-
-            // Check specific test-role-owner permissions
-            Long ownerPermCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM role_permissions WHERE role_id = 'test-role-owner'", Long.class);
-            log.info("TEST_OWNER role has {} permissions assigned", ownerPermCount);
-
-            // Sample permissions for TEST_OWNER
-            if (ownerPermCount != null && ownerPermCount > 0) {
-                List<String> samplePerms = jdbcTemplate.queryForList(
-                    "SELECT p.name FROM role_permissions rp " +
-                    "JOIN permissions p ON rp.permission_id = p.id " +
-                    "WHERE rp.role_id = 'test-role-owner' LIMIT 5",
-                    String.class);
-                log.info("Sample TEST_OWNER permissions: {}", samplePerms);
-            } else {
-                log.warn("⚠️  TEST_OWNER has ZERO permissions! role_permissions INSERT likely failed");
-            }
-
-            // Check if owner@testretail.com user has roles
-            Integer userRoleCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_roles ur " +
-                "JOIN users u ON ur.user_id = u.id " +
-                "WHERE u.email = 'owner@testretail.com'",
-                Integer.class);
-            log.info("owner@testretail.com has {} roles assigned", userRoleCount);
-
-            log.info("========================================================");
-
-        } catch (Exception e) {
-            log.error("Failed to debug database state", e);
-        }
     }
 
     // ============================================
@@ -341,13 +285,6 @@ public abstract class AbstractIntegrationTest {
      */
     protected void setTenantContext(String tenantId) {
         TenantContext.setCurrentTenantId(tenantId);
-    }
-
-    /**
-     * Helper method to clear tenant context.
-     */
-    protected void clearTenantContext() {
-        TenantContext.clear();
     }
 
     // ============================================
@@ -417,47 +354,6 @@ public abstract class AbstractIntegrationTest {
     // ============================================
     // Mock Token Methods
     // ============================================
-
-    /**
-     * Creates a mock token for testing with the given claims.
-     * This creates a simple Base64-encoded token that can be used for testing
-     * without requiring JWT dependencies.
-     *
-     * @param subject Token subject (username)
-     * @param issuer Token issuer
-     * @param roles List of user roles
-     * @return Mock token string
-     */
-    protected String createMockToken(String subject, String issuer, List<String> roles) {
-        // Create a simple JSON-like structure for the token payload
-        String payload = String.format(
-            "{\"sub\":\"%s\",\"iss\":\"%s\",\"roles\":%s,\"preferred_username\":\"%s\",\"email\":\"%s@test.com\",\"iat\":%d,\"exp\":%d}",
-            subject,
-            issuer,
-            roles.toString(),
-            subject,
-            subject,
-            System.currentTimeMillis() / 1000,
-            (System.currentTimeMillis() / 1000) + 3600 // 1 hour expiry
-        );
-
-        // Encode as Base64 URL-safe for a simple mock token format (matches TestJwtSecurityConfig decoder)
-        String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
-
-        return TEST_TOKEN_PREFIX + "." + encodedPayload + ".signature";
-    }
-
-    /**
-     * Creates a mock token with tenant context.
-     *
-     * @param subject Token subject (username)
-     * @param tenantId Tenant identifier
-     * @param roles List of user roles
-     * @return Mock token string
-     */
-    protected String createMockTokenWithTenant(String subject, String tenantId, List<String> roles) {
-        return createMockTokenWithTenantAndShop(subject, tenantId, null, roles);
-    }
 
     /**
      * Maps common test user emails to their Keycloak IDs from test-data.sql.
@@ -840,161 +736,6 @@ public abstract class AbstractIntegrationTest {
     }
 
     // ============================================
-    // Test Data Helper Methods
-    // ============================================
-
-    /**
-     * Creates a test tenant entity.
-     *
-     * @param tenantId Tenant ID
-     * @return Tenant entity
-     */
-    protected Tenant createTenant(String tenantId) {
-        return Tenant.builder()
-            .id(tenantId)
-            .name("Test Tenant " + tenantId)
-            .contactEmail("test@" + tenantId.replace("-", "") + ".com")
-            .primaryAddress("123 Test Address")
-            .status(Tenant.TenantStatus.ACTIVE)
-            .build();
-    }
-
-    /**
-     * Creates and persists a test shop entity.
-     *
-     * @param name Shop name
-     * @param tenantId Tenant ID
-     * @return Created shop entity
-     */
-    protected Shop createTestShop(String name, String tenantId) {
-        if (shopRepository == null) {
-            throw new IllegalStateException("ShopRepository not available - ensure proper test context");
-        }
-        if (tenantRepository == null) {
-            throw new IllegalStateException("TenantRepository not available - ensure proper test context");
-        }
-
-        // Fetch or create tenant using JDBC to bypass @GeneratedValue issues
-        Tenant tenant = tenantRepository.findById(tenantId)
-            .orElseGet(() -> {
-                // Insert tenant directly via JDBC with manually-set ID
-                jdbcTemplate.update(
-                    "INSERT INTO tenants (id, name, contact_email, primary_address, status, created_at, updated_at, version) " +
-                    "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) " +
-                    "ON CONFLICT (id) DO NOTHING",
-                    tenantId,
-                    "Test Tenant " + tenantId,
-                    "test@" + tenantId.replace("-", "") + ".com",
-                    "123 Test Address",
-                    "ACTIVE"
-                );
-                // Fetch the tenant we just inserted
-                return tenantRepository.findById(tenantId)
-                    .orElseThrow(() -> new IllegalStateException("Failed to create tenant: " + tenantId));
-            });
-
-        Shop shop = Shop.builder()
-            // Don't set ID manually - let JPA generate it to avoid persist issues
-            .name(name + "-" + UUID.randomUUID().toString().substring(0, 8))
-            .tenant(tenant)
-            .description("Test shop for integration testing")
-            .address(TEST_STREET)
-            .city(TEST_CITY)
-            .state(TEST_STATE)
-            .country(TEST_COUNTRY)
-            .postalCode(POSTAL_CODE)
-            .phoneNumber(PHONE_NUMBER)
-            .email(TEST_MAIL)
-            .taxId("TAX" + System.currentTimeMillis())
-            .status(Shop.ShopStatus.ACTIVE)
-            .openingDate(LocalDateTime.now())
-            .build();
-
-        return shopRepository.save(shop);
-    }
-
-    /**
-     * Helper method to wait for async operations to complete.
-     * Useful for testing event-driven functionality.
-     *
-     * @param milliseconds Time to wait in milliseconds
-     */
-    protected void waitForAsync(long milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while waiting for async operation", e);
-        }
-    }
-
-    /**
-     * Helper method to assert that an operation eventually succeeds.
-     * Useful for testing eventual consistency scenarios.
-     *
-     * @param condition Condition to check
-     * @param timeoutMs Maximum time to wait in milliseconds
-     * @param intervalMs Interval between checks in milliseconds
-     */
-    protected void eventually(Runnable condition, long timeoutMs, long intervalMs) {
-        long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - startTime < timeoutMs) {
-            try {
-                condition.run();
-                return; // Success
-            } catch (AssertionError | Exception exception) {
-                try {
-                    Thread.sleep(intervalMs);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Interrupted while waiting", ie);
-                }
-            }
-        }
-        // Final attempt
-        condition.run();
-    }
-
-    // ============================================
-    // Setup/Cleanup Methods
-    // ============================================
-
-    /**
-     * Template method for test data setup.
-     * Override in subclasses to provide specific test data.
-     */
-    protected void setupTestData() {
-        // Create default test shop for integration tests
-        if (shopRepository != null) {
-            try {
-                // Check if test shop already exists
-                if (!shopRepository.existsById("test-shop")) {
-                    Shop testShop = Shop.builder()
-                        .id("test-shop")
-                        .name("Test Shop")
-                        .tenant(createTenant("test-tenant"))
-                        .description("Default test shop for integration testing")
-                        .address(TEST_STREET)
-                        .city(TEST_CITY)
-                        .state(TEST_STATE)
-                        .country(TEST_COUNTRY)
-                        .postalCode(POSTAL_CODE)
-                        .phoneNumber(PHONE_NUMBER)
-                        .email(TEST_MAIL)
-                        .taxId("TAX-TEST")
-                        .status(Shop.ShopStatus.ACTIVE)
-                        .openingDate(LocalDateTime.now())
-                        .build();
-                    shopRepository.save(testShop);
-                }
-            } catch (Exception e) {
-                // Log but don't fail if shop already exists or other issues
-                System.err.println("Warning: Could not create default test shop: " + e.getMessage());
-            }
-        }
-    }
-
-    // ============================================
     // Shop Test Data Helpers
     // ============================================
 
@@ -1032,73 +773,5 @@ public abstract class AbstractIntegrationTest {
             .city("Updated City")
             .phoneNumber("+15559876543")
             .build();
-    }
-
-    /**
-     * Asserts that a ShopResponse is valid.
-     *
-     * @param response Shop response to validate
-     * @param expectedName Expected shop name (or null to skip name check)
-     */
-    protected void assertValidShopResponse(ShopResponse response, String expectedName) {
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotBlank();
-        assertThat(response.getTenantId()).isNotBlank();
-        assertThat(response.getCreatedAt()).isNotNull();
-        assertThat(response.getUpdatedAt()).isNotNull();
-
-        if (expectedName != null) {
-            assertThat(response.getName()).contains(expectedName);
-        }
-    }
-
-    /**
-     * Asserts that a paginated response is valid.
-     *
-     * @param responseBody Response body as string
-     * @param expectedSize Expected minimum number of elements
-     */
-    protected void assertValidPagedResponse(String responseBody, int expectedSize) {
-        assertThat(responseBody).isNotBlank();
-        assertThat(responseBody).contains("\"content\"");
-        assertThat(responseBody).contains("\"totalElements\"");
-        assertThat(responseBody).contains("\"totalPages\"");
-    }
-
-    /**
-     * Sets up test data for a specific tenant.
-     *
-     * @param tenantId Tenant ID
-     * @return Map containing test data (testShop, shopId, tenantId)
-     */
-    protected Map<String, Object> setupTenantTestData(String tenantId) {
-        setTenantContext(tenantId);
-        Shop testShop = createTestShop("IntegrationTest", tenantId);
-        return Map.of(
-            "testShop", testShop,
-            "shopId", testShop.getId(),
-            "tenantId", tenantId
-        );
-    }
-
-    /**
-     * Cleans up test data from the database.
-     * Override in subclasses for specific cleanup needs.
-     */
-    protected void cleanupTestData() {
-        if (shopRepository != null) {
-            // Clean up shops created during tests
-            try {
-                shopRepository.deleteAll(
-                    shopRepository.findAll().stream()
-                        .filter(shop -> shop.getName().contains("Test") ||
-                               shop.getDescription().contains("Test"))
-                        .toList()
-                );
-            } catch (Exception e) {
-                // Log but don't fail tests on cleanup errors
-                System.err.println("Warning: Error during test data cleanup: " + e.getMessage());
-            }
-        }
     }
 }

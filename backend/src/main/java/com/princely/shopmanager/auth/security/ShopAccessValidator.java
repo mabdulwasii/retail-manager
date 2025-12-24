@@ -3,8 +3,10 @@ package com.princely.shopmanager.auth.security;
 import com.princely.shopmanager.auth.constants.SecurityRoles;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility service for validating shop access permissions.
@@ -128,17 +130,5 @@ public class ShopAccessValidator {
         return principal.hasRole(SecurityRoles.TENANT_ADMIN) ||
                principal.hasRole(SecurityRoles.SYSTEM_ADMIN) ||
                principal.hasRole(SecurityRoles.OWNER);
-    }
-
-    /**
-     * Checks if the user has tenant-wide administrative privileges.
-     *
-     * @deprecated Use {@link #hasTenantWideAccess(JwtPrincipal)} instead
-     * @param principal The JWT principal containing user information
-     * @return true if user is TENANT_ADMIN, OWNER, or SYSTEM_ADMIN
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    public boolean isTenantAdmin(JwtPrincipal principal) {
-        return hasTenantWideAccess(principal);
     }
 }

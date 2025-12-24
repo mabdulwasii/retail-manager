@@ -7,14 +7,15 @@ import com.princely.shopmanager.expenses.repository.ExpenseCategoryRepository;
 import com.princely.shopmanager.shared.exception.BusinessException;
 import com.princely.shopmanager.shared.exception.BusinessRuleViolationException;
 import com.princely.shopmanager.shared.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service responsible for updating expense fields.
