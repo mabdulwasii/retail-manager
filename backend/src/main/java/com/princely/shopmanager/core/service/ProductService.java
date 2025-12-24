@@ -62,6 +62,7 @@ public class ProductService extends ShopAwareService {
     private final InventoryRepository inventoryRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProductFieldUpdater productFieldUpdater;
 
     public ProductService(
             ShopAccessValidator shopAccessValidator,
@@ -70,13 +71,15 @@ public class ProductService extends ShopAwareService {
             CategoryRepository categoryRepository,
             InventoryRepository inventoryRepository,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ProductFieldUpdater productFieldUpdater) {
         super(shopAccessValidator, shopRepository);
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.inventoryRepository = inventoryRepository;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.productFieldUpdater = productFieldUpdater;
     }
 
     /**
@@ -193,74 +196,12 @@ public class ProductService extends ShopAwareService {
         log.info("Updating product: {}, user: {}", productId, principal.getUsername());
 
         Product product = findProductForUser(productId, principal);
-
-        // Track changes for audit
         StringBuilder changes = new StringBuilder();
 
-        // Update fields if provided
-        if (request.getName() != null && !request.getName().equals(product.getName())) {
-            changes.append("Name: ").append(product.getName()).append(" → ").append(request.getName()).append("; ");
-            product.setName(request.getName());
-        }
-
-        if (request.getDescription() != null) {
-            product.setDescription(request.getDescription());
-        }
-
-        if (request.getBarcode() != null && !request.getBarcode().equals(product.getBarcode())) {
-            // Check barcode uniqueness
-            if (productRepository.existsByBarcodeAndShopId(request.getBarcode(), product.getShop().getId())) {
-                throw new IllegalArgumentException("Barcode already exists: " + request.getBarcode());
-            }
-            product.setBarcode(request.getBarcode());
-        }
-
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found: " + request.getCategoryId()));
-            product.setCategory(category);
-        }
-
-        if (request.getUnit() != null) {
-            product.setUnit(request.getUnit());
-        }
-
-        if (request.getWeightInGrams() != null) {
-            product.setWeightInGrams(request.getWeightInGrams());
-        }
-
-        if (request.getDimensions() != null) {
-            product.setDimensions(request.getDimensions());
-        }
-
-        if (request.getSupplierName() != null) {
-            product.setSupplierName(request.getSupplierName());
-        }
-
-        if (request.getSupplierContact() != null) {
-            product.setSupplierContact(request.getSupplierContact());
-        }
-
-        if (request.getImageUrl() != null) {
-            product.setImageUrl(request.getImageUrl());
-        }
-
-        if (request.getStatus() != null && request.getStatus() != product.getStatus()) {
-            changes.append("Status: ").append(product.getStatus()).append(" → ").append(request.getStatus()).append("; ");
-            product.setStatus(request.getStatus());
-        }
-
-        if (request.getIsTaxable() != null) {
-            product.setTaxable(request.getIsTaxable());
-        }
-
-        if (request.getIsDiscountable() != null) {
-            product.setDiscountable(request.getIsDiscountable());
-        }
-
-        if (request.getMetadata() != null) {
-            product.setMetadata(request.getMetadata());
-        }
+        // Delegate field updates to specialized service
+        productFieldUpdater.updateBasicFields(product, request, changes);
+        productFieldUpdater.updateCatalogFields(product, request);
+        productFieldUpdater.updateSupplierAndPricingFields(product, request);
 
         product = productRepository.save(product);
 
