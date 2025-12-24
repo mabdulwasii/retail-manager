@@ -99,8 +99,9 @@ class SalesTransactionTest {
     @DisplayName("Should initialize lineItems as empty list")
     void shouldInitializeLineItemsAsEmptyList() {
         // Then
-        assertThat(transaction.getLineItems()).isNotNull();
-        assertThat(transaction.getLineItems()).isEmpty();
+        assertThat(transaction.getLineItems())
+            .isNotNull()
+            .isEmpty();
     }
 
     // addLineItem tests
@@ -121,8 +122,9 @@ class SalesTransactionTest {
         transaction.addLineItem(lineItem);
 
         // Then
-        assertThat(transaction.getLineItems()).hasSize(1);
-        assertThat(transaction.getLineItems()).contains(lineItem);
+        assertThat(transaction.getLineItems())
+            .hasSize(1)
+            .contains(lineItem);
         assertThat(lineItem.getTransaction()).isEqualTo(transaction);
     }
 

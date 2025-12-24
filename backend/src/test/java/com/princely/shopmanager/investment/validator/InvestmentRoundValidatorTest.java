@@ -51,8 +51,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("All investors must provide fixed shares"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("All investors must provide fixed shares"));
     }
 
     @Test
@@ -119,8 +120,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Time weighting rules are required"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Time weighting rules are required"));
     }
 
     @Test
@@ -141,8 +143,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Tier configuration is required"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Tier configuration is required"));
     }
 
     // ========== Tier Configuration Validation Tests ==========
@@ -175,8 +178,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Tier 1 threshold must be less than Tier 2"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Tier 1 threshold must be less than Tier 2"));
     }
 
     @Test
@@ -207,8 +211,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Tier 2 threshold must be less than Tier 3"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Tier 2 threshold must be less than Tier 3"));
     }
 
     @Test
@@ -239,8 +244,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Tier 1 multiplier must be greater than 0"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Tier 1 multiplier must be greater than 0"));
         assertThat(errors).anyMatch(e -> e.contains("Tier 2 multiplier must be greater than 0"));
     }
 
@@ -306,8 +312,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Base years must be less than Year 2 threshold"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Base years must be less than Year 2 threshold"));
     }
 
     @Test
@@ -339,8 +346,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Year 2 threshold must be less than Year 3 threshold"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Year 2 threshold must be less than Year 3 threshold"));
     }
 
     @Test
@@ -372,8 +380,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Base multiplier must be greater than 0"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Base multiplier must be greater than 0"));
         assertThat(errors).anyMatch(e -> e.contains("Year 2 multiplier must be greater than 0"));
         assertThat(errors).anyMatch(e -> e.contains("Maximum multiplier must be greater than 0"));
     }
@@ -407,8 +416,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Base multiplier should not be greater than Year 2 multiplier"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Base multiplier should not be greater than Year 2 multiplier"));
     }
 
     @Test
@@ -440,8 +450,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Year 3 multiplier cannot exceed maximum multiplier"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Year 3 multiplier cannot exceed maximum multiplier"));
     }
 
     @Test
@@ -490,8 +501,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("At least one investor is required"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("At least one investor is required"));
     }
 
     @Test
@@ -506,8 +518,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("At least one investor is required"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("At least one investor is required"));
     }
 
     @Test
@@ -527,8 +540,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Investment amount must be greater than 0"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Investment amount must be greater than 0"));
     }
 
     @Test
@@ -552,8 +566,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Investor 1") && e.contains("amount must be greater than 0"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Investor 1") && e.contains("amount must be greater than 0"));
         assertThat(errors).anyMatch(e -> e.contains("Investor 2") && e.contains("amount must be greater than 0"));
     }
 
@@ -578,8 +593,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Investor ID is required"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Investor ID is required"));
     }
 
     @Test
@@ -607,8 +623,9 @@ class InvestmentRoundValidatorTest {
 
         List<String> errors = validator.validate(request);
 
-        assertThat(errors).isNotEmpty();
-        assertThat(errors).anyMatch(e -> e.contains("Duplicate investor IDs are not allowed"));
+        assertThat(errors)
+            .isNotEmpty()
+            .anyMatch(e -> e.contains("Duplicate investor IDs are not allowed"));
     }
 
     @Test

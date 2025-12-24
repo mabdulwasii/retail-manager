@@ -47,11 +47,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("productIds") &&
-            v.getMessage().contains("Product IDs are required")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("productIds") &&
+                v.getMessage().contains("Product IDs are required")
+            );
     }
 
     @Test
@@ -69,10 +70,9 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("productIds")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v -> v.getPropertyPath().toString().equals("productIds"));
     }
 
     @Test
@@ -108,11 +108,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("categoryFilter") &&
-            v.getMessage().contains("Category filter is required")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("categoryFilter") &&
+                v.getMessage().contains("Category filter is required")
+            );
     }
 
     @Test
@@ -130,10 +131,9 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("categoryFilter")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v -> v.getPropertyPath().toString().equals("categoryFilter"));
     }
 
     @Test
@@ -169,11 +169,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("productIds") &&
-            v.getMessage().contains("should not be specified")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("productIds") &&
+                v.getMessage().contains("should not be specified")
+            );
     }
 
     @Test
@@ -191,11 +192,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("categoryFilter") &&
-            v.getMessage().contains("should not be specified")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("categoryFilter") &&
+                v.getMessage().contains("should not be specified")
+            );
     }
 
     @Test
@@ -231,11 +233,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("profitPercentage") &&
-            v.getMessage().contains("Profit percentage is required")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("profitPercentage") &&
+                v.getMessage().contains("Profit percentage is required")
+            );
     }
 
     @Test
@@ -252,10 +255,9 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getMessage().contains("must be between 0 and 100")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v -> v.getMessage().contains("must be between 0 and 100"));
     }
 
     @Test
@@ -272,10 +274,9 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getMessage().contains("must be between 0 and 100")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v -> v.getMessage().contains("must be between 0 and 100"));
     }
 
     @Test
@@ -309,11 +310,12 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getPropertyPath().toString().equals("fixedShares") &&
-            v.getMessage().contains("must be greater than 0")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getPropertyPath().toString().equals("fixedShares") &&
+                v.getMessage().contains("must be greater than 0")
+            );
     }
 
     @Test
@@ -405,10 +407,9 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getMessage().contains("Profit percentage is required")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v -> v.getMessage().contains("Profit percentage is required"));
     }
 
     // ========== Null/Edge Case Tests ==========

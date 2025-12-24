@@ -173,8 +173,9 @@ class ReceiptTest {
         // Then
         // Both timestamps should be set (note: they may be equal due to fast execution)
         assertThat(firstPrintTime).isNotNull();
-        assertThat(secondPrintTime).isNotNull();
-        assertThat(secondPrintTime).isAfterOrEqualTo(firstPrintTime);
+        assertThat(secondPrintTime)
+            .isNotNull()
+            .isAfterOrEqualTo(firstPrintTime);
         assertThat(receipt.getPrintedCount()).isEqualTo(2);
     }
 

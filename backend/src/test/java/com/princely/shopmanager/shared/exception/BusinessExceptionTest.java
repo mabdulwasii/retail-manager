@@ -20,10 +20,9 @@ class BusinessExceptionTest {
         BusinessException exception = new BusinessException(code, message);
 
         // Then
-        assertThat(exception.getCode()).isEqualTo(code);
-        assertThat(exception.getMessage()).isEqualTo(message);
-        assertThat(exception.getErrorCode()).isNull();
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception)
+            .extracting("code", "message", "errorCode", "httpStatus")
+            .containsExactly(code, message, null, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getMessageParams()).isEmpty();
     }
 
@@ -37,10 +36,9 @@ class BusinessExceptionTest {
         BusinessException exception = new BusinessException(errorCode);
 
         // Then
-        assertThat(exception.getCode()).isEqualTo("TENANT_NOT_FOUND");
-        assertThat(exception.getMessage()).isEqualTo(errorCode.getMessageKey());
-        assertThat(exception.getErrorCode()).isEqualTo(errorCode);
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception)
+            .extracting("code", "message", "errorCode", "httpStatus")
+            .containsExactly("TENANT_NOT_FOUND", errorCode.getMessageKey(), errorCode, HttpStatus.NOT_FOUND);
         assertThat(exception.getMessageParams()).isEmpty();
     }
 
@@ -55,13 +53,12 @@ class BusinessExceptionTest {
         BusinessException exception = new BusinessException(errorCode, params);
 
         // Then
-        assertThat(exception.getCode()).isEqualTo("PRODUCT_NOT_FOUND");
-        assertThat(exception.getMessage()).isEqualTo(errorCode.getMessageKey());
-        assertThat(exception.getErrorCode()).isEqualTo(errorCode);
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessageParams()).hasSize(2);
-        assertThat(exception.getMessageParams()[0]).isEqualTo("product-123");
-        assertThat(exception.getMessageParams()[1]).isEqualTo("Shop A");
+        assertThat(exception)
+            .extracting("code", "message", "errorCode", "httpStatus")
+            .containsExactly("PRODUCT_NOT_FOUND", errorCode.getMessageKey(), errorCode, HttpStatus.NOT_FOUND);
+        assertThat(exception.getMessageParams())
+            .hasSize(2)
+            .containsExactly("product-123", "Shop A");
     }
 
     @Test
