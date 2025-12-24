@@ -124,7 +124,7 @@ public class InventoryAllocationService {
         public final Product product;
         public final SalesTransactionCreateRequest.LineItemRequest request;
         public final List<Inventory> inventories;
-        public int remainingQuantity;
+        int remainingQuantity;
 
         public InventoryAllocation(Product product, SalesTransactionCreateRequest.LineItemRequest request,
                            List<Inventory> inventories) {

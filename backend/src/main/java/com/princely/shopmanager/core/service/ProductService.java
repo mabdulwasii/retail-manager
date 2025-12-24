@@ -56,6 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductService extends ShopAwareService {
 
     private static final String ENTITY_TYPE_PRODUCT = "Product";
+    private static final Random RANDOM = new Random();
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -553,11 +554,10 @@ public class ProductService extends ShopAwareService {
      */
     private String generateRandomAlphanumeric(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        Random random = new Random();
         StringBuilder sb = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
+            sb.append(chars.charAt(RANDOM.nextInt(chars.length())));
         }
 
         return sb.toString();
