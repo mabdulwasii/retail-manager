@@ -1,0 +1,139 @@
+spring:
+  profiles:
+    active: embedded
+
+  # Embedded H2 Database Configuration
+  datasource:
+    url: jdbc:h2:file:./data/shopmanager;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  # H2 Console (disabled by default for security)
+  h2:
+    console:
+      enabled: false
+      path: /h2-console
+
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: false
+
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration,classpath:db/migration/h2
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  # Security Configuration (Local JWT)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          enabled: false
+
+  # File Upload Configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Kafka Disabled (Using Spring Events)
+  kafka:
+    enabled: false
+
+# Application Configuration
+application:
+  mode: embedded
+
+  # Local JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET:changeThisToASecureRandomGeneratedSecretKeyForProductionUseAtLeast256BitsLong}
+    expiration-ms: 86400000  # 24 hours
+    refresh-expiration-ms: 604800000  # 7 days
+    issuer: shop-manager-embedded
+
+  # Local Storage Configuration
+  storage:
+    type: filesystem
+    location: ${STORAGE_PATH:./data/uploads}
+    max-file-size: 10485760  # 10 MB
+    allowed-extensions: jpg,jpeg,png,pdf,csv,xlsx
+
+  # Cloud Sync Configuration
+  sync:
+    enabled: ${CLOUD_SYNC_ENABLED:false}
+    cloud-endpoint: ${CLOUD_API_URL:}
+    api-key: ${CLOUD_API_KEY:}
+    store-id: ${STORE_ID:}
+    schedule:
+      cron: ${SYNC_CRON:0 0 * * * ?}  # Every hour
+      batch-size: 100
+      retry-max-attempts: 3
+      retry-backoff-ms: 60000  # 1 minute
+    privacy:
+      anonymize-pii: ${ANONYMIZE_PII:false}
+      fields-to-anonymize: customerName,customerPhone,customerEmail
+    resilience:
+      circuit-breaker-enabled: true
+      failure-threshold: 5
+      timeout-seconds: 30
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8081}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/json
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.princely.shopmanager: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+  file:
+    name: ./logs/shop-manager.log
+    max-size: 10MB
+    max-history: 7
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Actuator Info
+info:
+  app:
+    name: Shop Manager Embedded
+    version: ${APP_VERSION:1.0.0}
+    environment: ${APP_ENVIRONMENT:embedded}
+    description: Standalone Shop Manager for local retail stores
