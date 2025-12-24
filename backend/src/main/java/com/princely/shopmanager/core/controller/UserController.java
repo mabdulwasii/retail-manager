@@ -142,7 +142,7 @@ public class UserController {
         summary = "Get user by ID",
         description = "Retrieves details of a specific user."
     )
-    @GetMapping("/users/{userId}")
+    @GetMapping("/{userId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_READ)")
     public ResponseEntity<UserResponse> getUserById(
         @Parameter(description = "User ID") @PathVariable String userId
@@ -166,7 +166,7 @@ public class UserController {
         summary = "Update user",
         description = "Partially updates an existing user. Only provided fields will be updated (PATCH semantics)."
     )
-    @PatchMapping("/users/{userId}")
+    @PatchMapping("/{userId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_UPDATE)")
     public ResponseEntity<UserResponse> updateUser(
         @Parameter(description = "User ID") @PathVariable String userId,
@@ -194,7 +194,7 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User or shop not found"),
         @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     })
-    @PatchMapping("/users/{userId}/transfer-shop")
+    @PatchMapping("/{userId}/transfer-shop")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_TRANSFER_SHOP)")
     public ResponseEntity<UserResponse> transferUserToShop(
         @Parameter(description = "User ID") @PathVariable String userId,
@@ -215,7 +215,7 @@ public class UserController {
         summary = "Delete user",
         description = "Soft deletes a user by setting status to INACTIVE and removes from Keycloak."
     )
-    @DeleteMapping("/users/{userId}")
+    @DeleteMapping("/{userId}")
     @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).USER_DELETE)")
     public ResponseEntity<Void> deleteUser(
         @Parameter(description = "User ID") @PathVariable String userId

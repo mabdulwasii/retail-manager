@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class InvestmentService {
 
+    // Error message constants
+    private static final String ERROR_INVESTMENT_NOT_FOUND = "Investment not found";
+
     private final InvestmentRepository investmentRepository;
     private final InvestorDistributionRepository distributionRepository;
     private final ShopRepository shopRepository;
@@ -68,13 +71,13 @@ public class InvestmentService {
     @Transactional(readOnly = true)
     public InvestmentResponse getInvestmentById(String investmentId) {
         Investment investment = investmentRepository.findById(investmentId)
-            .orElseThrow(() -> new EntityNotFoundException("Investment not found"));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_INVESTMENT_NOT_FOUND));
         return mapToResponse(investment);
     }
 
     public InvestmentResponse updateInvestmentStatus(String investmentId, Investment.InvestmentStatus status) {
         Investment investment = investmentRepository.findById(investmentId)
-            .orElseThrow(() -> new EntityNotFoundException("Investment not found"));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_INVESTMENT_NOT_FOUND));
 
         Investment.InvestmentStatus previousStatus = investment.getStatus();
         investment.setStatus(status);
@@ -88,7 +91,7 @@ public class InvestmentService {
 
     public InvestmentResponse processWithdrawal(String investmentId, WithdrawalRequest request) {
         Investment investment = investmentRepository.findById(investmentId)
-            .orElseThrow(() -> new EntityNotFoundException("Investment not found"));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_INVESTMENT_NOT_FOUND));
 
         if (!investment.canWithdraw(request.getAmount())) {
             throw new IllegalStateException("Insufficient balance for withdrawal");

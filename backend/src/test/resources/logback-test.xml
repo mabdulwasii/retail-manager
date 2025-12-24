@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+    Logback configuration for integration tests.
+
+    Strategy:
+    - Keep application logs at INFO level for debugging test failures
+    - Suppress noisy infrastructure logs (Spring, Hibernate, TestContainers, Docker)
+    - Show errors from all components
+    -->
+
+    <!-- Keep application logs at WARN level (only warnings and errors) -->
+    <logger name="com.princely.shopmanager" level="WARN"/>
+
+    <!-- Suppress ALL infrastructure logs -->
+    <logger name="org.springframework" level="ERROR"/>
+    <logger name="org.springframework.boot" level="ERROR"/>
+    <logger name="org.springframework.boot.test" level="ERROR"/>
+    <logger name="org.springframework.test" level="ERROR"/>
+    <logger name="org.springframework.web" level="ERROR"/>
+    <logger name="org.springframework.security" level="ERROR"/>
+    <logger name="org.springframework.data" level="ERROR"/>
+
+    <!-- Suppress ALL Hibernate logs -->
+    <logger name="org.hibernate" level="ERROR"/>
+    <logger name="org.hibernate.SQL" level="ERROR"/>
+    <logger name="org.hibernate.type" level="ERROR"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="ERROR"/>
+
+    <!-- Suppress ALL TestContainers logs -->
+    <logger name="org.testcontainers" level="ERROR"/>
+    <logger name="com.github.dockerjava" level="ERROR"/>
+    <logger name="tc" level="ERROR"/>
+
+    <!-- Suppress HTTP client logs -->
+    <logger name="org.apache.http" level="ERROR"/>
+
+    <!-- Suppress HikariCP -->
+    <logger name="com.zaxxer.hikari" level="ERROR"/>
+
+    <!-- Suppress Flyway -->
+    <logger name="org.flywaydb" level="ERROR"/>
+
+    <!-- Suppress Mockito -->
+    <logger name="org.mockito" level="ERROR"/>
+
+    <!-- Suppress Liquibase -->
+    <logger name="liquibase" level="ERROR"/>
+
+    <!-- Console appender with minimal pattern -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5level %logger{20} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger at ERROR level (only errors) -->
+    <root level="ERROR">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

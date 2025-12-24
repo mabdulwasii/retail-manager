@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class RiskAssessmentCreatedEvent extends ApplicationEvent {
 
-    private final RiskAssessment assessment;
+    private final transient RiskAssessment assessment;
     private final String tenantId;
     private final String shopId;
 

@@ -26,15 +26,15 @@ import java.util.List;
 @Schema(description = "Request to create an investment round with investors")
 public class InvestmentRoundCreateRequest {
 
-    @Schema(description = "Shop ID where the investment round is created", required = true)
+    @Schema(description = "Shop ID where the investment round is created")
     @NotBlank(message = "Shop ID is required")
     private String shopId;
 
-    @Schema(description = "Investment type for this round", required = true, example = "SHOP_WIDE")
+    @Schema(description = "Investment type for this round", example = "SHOP_WIDE")
     @NotNull(message = "Investment type is required")
     private Investment.InvestmentType investmentType;
 
-    @Schema(description = "Profit sharing model for this round", required = true, example = "PROPORTIONAL_BY_AMOUNT")
+    @Schema(description = "Profit sharing model for this round", example = "PROPORTIONAL_BY_AMOUNT")
     @NotNull(message = "Profit sharing model is required")
     private Investment.ProfitSharingModel profitSharingModel;
 
@@ -52,7 +52,7 @@ public class InvestmentRoundCreateRequest {
     @Schema(description = "Notes about this investment round")
     private String notes;
 
-    @Schema(description = "List of investors participating in this round", required = true)
+    @Schema(description = "List of investors participating in this round")
     @NotEmpty(message = "At least one investor is required")
     @Valid
     private List<InvestorInput> investors;
@@ -67,11 +67,11 @@ public class InvestmentRoundCreateRequest {
     @Schema(description = "Individual investor participation details")
     public static class InvestorInput {
 
-        @Schema(description = "Investor user ID", required = true)
+        @Schema(description = "Investor user ID")
         @NotBlank(message = "Investor ID is required")
         private String investorId;
 
-        @Schema(description = "Investment amount", required = true, example = "100000.00")
+        @Schema(description = "Investment amount", example = "100000.00")
         @NotNull(message = "Investment amount is required")
         private java.math.BigDecimal amount;
 

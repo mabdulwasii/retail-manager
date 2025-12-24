@@ -21,6 +21,8 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.princely.shopmanager.auth.constants.SecurityRoles.ROLE_SYSTEM_ADMIN;
+
 /**
  * Service responsible for bootstrapping super admin user on application startup
  */
@@ -40,7 +42,7 @@ public class SuperAdminBootstrapService {
     @Value("${app.bootstrap.superadmin.username:superadmin}")
     private String superAdminUsername;
 
-    @Value("${app.bootstrap.superadmin.email:superAdmin@shopmanager.local}")
+    @Value("${app.bootstrap.superadmin.email:superadmin@shopmanager.local}")
     private String superAdminEmail;
 
     @Value("${app.bootstrap.superadmin.firstname:Super}")
@@ -49,10 +51,10 @@ public class SuperAdminBootstrapService {
     @Value("${app.bootstrap.superadmin.lastname:Admin}")
     private String superAdminLastName;
 
-    @Value("${app.bootstrap.superadmin.phonenumber:+1-000-000-0000}")
+    @Value("${app.bootstrap.superadmin.phonenumber:1-000-000-0000}")
     private String superAdminPhoneNumber;
 
-    @Value("${app.bootstrap.superadmin.password:}")
+    @Value("${app.bootstrap.superadmin.password:changeme}")
     private String superAdminPassword;
 
     /**
@@ -90,7 +92,7 @@ public class SuperAdminBootstrapService {
      * Check if any super admin user exists
      */
     private boolean hasSuperAdminUser() {
-        Optional<Role> superAdminRole = roleRepository.findByName("SYSTEM_ADMIN");
+        Optional<Role> superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN);
         if (superAdminRole.isEmpty()) {
             log.warn("SYSTEM_ADMIN role not found in database");
             return false;
@@ -106,7 +108,7 @@ public class SuperAdminBootstrapService {
      */
     private void createBootstrapSuperAdmin() {
         // Get or create SYSTEM_ADMIN role
-        Role superAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
+        Role superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN)
             .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found. Please ensure database migrations have been applied."));
 
         // Generate password if not provided
@@ -180,7 +182,7 @@ public class SuperAdminBootstrapService {
      * Get current super admin count
      */
     public long getSuperAdminCount() {
-        Optional<Role> superAdminRole = roleRepository.findByName("SYSTEM_ADMIN");
+        Optional<Role> superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN);
         if (superAdminRole.isEmpty()) {
             return 0;
         }

@@ -29,6 +29,11 @@ import java.util.Map;
 @Slf4j
 public class FraudAlertNotificationService {
 
+    // Role name constants
+    private static final String ROLE_MANAGER = "MANAGER";
+    private static final String ROLE_TENANT_ADMIN = "TENANT_ADMIN";
+    private static final String FIELD_RISK_SCORE = "riskScore";
+
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final UserService userService;
@@ -107,21 +112,21 @@ public class FraudAlertNotificationService {
             case CRITICAL -> {
                 // Critical alerts: Notify all admins, managers, and owners
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("TENANT_ADMIN", "OWNER", "MANAGER"),
+                    List.of(ROLE_TENANT_ADMIN, "OWNER", ROLE_MANAGER),
                     tenantId
                 );
             }
             case HIGH -> {
                 // High alerts: Notify admins and managers
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("TENANT_ADMIN", "MANAGER"),
+                    List.of(ROLE_TENANT_ADMIN, ROLE_MANAGER),
                     tenantId
                 );
             }
             case MEDIUM -> {
                 // Medium alerts: Notify managers only
                 yield userService.getUsersByRolesAndTenant(
-                    List.of("MANAGER"),
+                    List.of(ROLE_MANAGER),
                     tenantId
                 );
             }
@@ -141,7 +146,7 @@ public class FraudAlertNotificationService {
 
         // Risk assessments require review by admins and senior managers
         return userService.getUsersByRolesAndTenant(
-            List.of("TENANT_ADMIN", "OWNER"),
+            List.of(ROLE_TENANT_ADMIN, "OWNER"),
             tenantId
         );
     }
@@ -161,7 +166,7 @@ public class FraudAlertNotificationService {
             templateVariables.put("severity", alert.getSeverity().name());
             templateVariables.put("title", alert.getTitle());
             templateVariables.put("description", alert.getDescription());
-            templateVariables.put("riskScore", alert.getRiskScore());
+            templateVariables.put(FIELD_RISK_SCORE, alert.getRiskScore());
             templateVariables.put("confidenceLevel", alert.getConfidenceLevel());
             templateVariables.put("detectionTime", alert.getDetectionTimestamp().format(FORMATTER));
             templateVariables.put("shopName", alert.getShopName());
@@ -195,7 +200,7 @@ public class FraudAlertNotificationService {
             metadata.put("alertNumber", alert.getAlertNumber());
             metadata.put("alertType", alert.getAlertType().name());
             metadata.put("severity", alert.getSeverity().name());
-            metadata.put("riskScore", alert.getRiskScore());
+            metadata.put(FIELD_RISK_SCORE, alert.getRiskScore());
             metadata.put("shopId", alert.getShopId());
 
             notificationService.sendNotification(
@@ -251,7 +256,7 @@ public class FraudAlertNotificationService {
             templateVariables.put("assessmentId", assessment.getId());
             templateVariables.put("assessmentType", assessment.getAssessmentType().name());
             templateVariables.put("riskLevel", assessment.getRiskLevel().name());
-            templateVariables.put("riskScore", assessment.getRiskScore());
+            templateVariables.put(FIELD_RISK_SCORE, assessment.getRiskScore());
             templateVariables.put("assessmentDate", assessment.getAssessmentDate().format(FORMATTER));
             templateVariables.put("shopName", assessment.getShopName());
             templateVariables.put("details", assessment.getDetails());
@@ -284,7 +289,7 @@ public class FraudAlertNotificationService {
             metadata.put("assessmentId", assessment.getId());
             metadata.put("assessmentType", assessment.getAssessmentType().name());
             metadata.put("riskLevel", assessment.getRiskLevel().name());
-            metadata.put("riskScore", assessment.getRiskScore());
+            metadata.put(FIELD_RISK_SCORE, assessment.getRiskScore());
             metadata.put("shopId", assessment.getShopId());
 
             notificationService.sendNotification(

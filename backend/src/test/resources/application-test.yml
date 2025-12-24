@@ -2,8 +2,11 @@ spring:
   datasource:
     # URL, username, password, and driver are set dynamically by @DynamicPropertySource in AbstractIntegrationTest
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+      maximum-pool-size: 5        # Reduced from 10 for test environment
+      minimum-idle: 1             # Reduced from 2
+      max-lifetime: 300000        # 5 minutes
+      connection-timeout: 10000   # 10 seconds
+      leak-detection-threshold: 60000  # 60 seconds - detect connection leaks
 
   jpa:
     hibernate:
@@ -25,12 +28,13 @@ spring:
     clean-disabled: false
     validate-on-migrate: false  # Disable validation to avoid Flyway 10.x cleanOnValidationError issue
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/test
-          jwk-set-uri: http://localhost:8080/realms/test/protocol/openid-connect/certs
+  # OAuth2 JWT validation disabled for tests - TestSecurityConfig permits all requests
+  # security:
+  #   oauth2:
+  #     resourceserver:
+  #       jwt:
+  #         issuer-uri: http://localhost:8080/realms/test
+  #         jwk-set-uri: http://localhost:8080/realms/test/protocol/openid-connect/certs
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -59,15 +63,18 @@ app:
     client-id: test-client
     client-secret: test-secret
 
-# Logging
+# Logging - Minimal verbosity for test execution
 logging:
   level:
-    root: INFO
-    com.princely.shopmanager: DEBUG
-    org.springframework.security: INFO
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.testcontainers: INFO
-    com.github.dockerjava: WARN
-    org.flywaydb: INFO
+    root: WARN
+    com.princely.shopmanager: WARN
+    org.springframework: ERROR
+    org.springframework.security: ERROR
+    org.springframework.web: ERROR
+    org.hibernate: ERROR
+    org.hibernate.SQL: ERROR
+    org.testcontainers: ERROR
+    com.github.dockerjava: ERROR
+    org.flywaydb: ERROR
+    org.springframework.jdbc: ERROR
+    org.springframework.test: ERROR

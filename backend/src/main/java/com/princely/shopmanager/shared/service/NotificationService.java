@@ -18,6 +18,8 @@ import java.util.Map;
 @Slf4j
 public class NotificationService {
 
+    private static final String FIELD_TENANT_NAME = "tenantName";
+
     private final EmailService emailService;
 
     /**

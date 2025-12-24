@@ -166,7 +166,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
      * @param userEmail User's email address
      * @return Set of permission names the user has
      */
-    @Cacheable(value = "userPermissions", key = "#userEmail", unless = "#result.isEmpty()")
+//    @Cacheable(value = "userPermissions", key = "#userEmail", unless = "#result.isEmpty()")
     private Set<String> loadUserPermissions(String userEmail) {
         // Use JOIN FETCH query to avoid N+1 problem
         Optional<User> userOptional = userRepository.findByEmailWithPermissions(userEmail);

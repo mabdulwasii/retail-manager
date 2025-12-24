@@ -39,6 +39,11 @@ import java.util.stream.Collectors;
 @Transactional
 public class FraudManagementService {
 
+    // Error message and entity type constants
+    private static final String ERROR_SHOP_NOT_FOUND = "Shop not found: ";
+    private static final String ENTITY_TYPE_FRAUD_RULE = "FraudRule";
+    private static final String ERROR_FRAUD_RULE_NOT_FOUND = "Fraud rule not found: ";
+
     private final FraudAlertRepository fraudAlertRepository;
     private final FraudRuleRepository fraudRuleRepository;
     private final RiskAssessmentRepository riskAssessmentRepository;
@@ -110,7 +115,7 @@ public class FraudManagementService {
 
         if (shopId != null) {
             Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
+                .orElseThrow(() -> new EntityNotFoundException(ERROR_SHOP_NOT_FOUND + shopId));
 
             if (status != null) {
                 assessments = riskAssessmentRepository.findByShopAndStatusIn(shop, List.of(status), pageable);
@@ -154,7 +159,7 @@ public class FraudManagementService {
 
         if (shopId != null) {
             Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + shopId));
+                .orElseThrow(() -> new EntityNotFoundException(ERROR_SHOP_NOT_FOUND + shopId));
 
             if (enabled != null) {
                 return fraudRuleRepository.findByShopAndEnabled(shop, enabled)
@@ -185,7 +190,7 @@ public class FraudManagementService {
         Shop shop = null;
         if (request.getShopId() != null) {
             shop = shopRepository.findById(request.getShopId())
-                .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + request.getShopId()));
+                .orElseThrow(() -> new EntityNotFoundException(ERROR_SHOP_NOT_FOUND + request.getShopId()));
         }
 
         // Check for duplicate rule names within the same scope
@@ -211,7 +216,7 @@ public class FraudManagementService {
 
         rule = fraudRuleRepository.save(rule);
 
-        auditService.logEntityCreation("FraudRule", rule.getId(),
+        auditService.logEntityCreation(ENTITY_TYPE_FRAUD_RULE, rule.getId(),
             String.format("Created fraud rule '%s' of type %s", rule.getRuleName(), rule.getRuleType()));
 
         log.info("Fraud rule created: {} ({})", rule.getRuleName(), rule.getId());
@@ -220,12 +225,12 @@ public class FraudManagementService {
 
     public FraudRule updateFraudRule(String ruleId, FraudRuleRequest request) {
         FraudRule rule = fraudRuleRepository.findById(ruleId)
-            .orElseThrow(() -> new EntityNotFoundException("Fraud rule not found: " + ruleId));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_FRAUD_RULE_NOT_FOUND + ruleId));
 
         Shop shop = null;
         if (request.getShopId() != null) {
             shop = shopRepository.findById(request.getShopId())
-                .orElseThrow(() -> new EntityNotFoundException("Shop not found: " + request.getShopId()));
+                .orElseThrow(() -> new EntityNotFoundException(ERROR_SHOP_NOT_FOUND + request.getShopId()));
         }
 
         // Check for duplicate rule names (excluding current rule)
@@ -250,7 +255,7 @@ public class FraudManagementService {
 
         rule = fraudRuleRepository.save(rule);
 
-        auditService.logEntityModification("FraudRule", rule.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_FRAUD_RULE, rule.getId(),
             String.format("Updated fraud rule '%s'", rule.getRuleName()));
 
         log.info("Fraud rule updated: {} ({})", rule.getRuleName(), rule.getId());
@@ -259,11 +264,11 @@ public class FraudManagementService {
 
     public void deleteFraudRule(String ruleId) {
         FraudRule rule = fraudRuleRepository.findById(ruleId)
-            .orElseThrow(() -> new EntityNotFoundException("Fraud rule not found: " + ruleId));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_FRAUD_RULE_NOT_FOUND + ruleId));
 
         fraudRuleRepository.delete(rule);
 
-        auditService.logEntityDeletion("FraudRule", rule.getId(),
+        auditService.logEntityDeletion(ENTITY_TYPE_FRAUD_RULE, rule.getId(),
             String.format("Deleted fraud rule '%s'", rule.getRuleName()));
 
         log.info("Fraud rule deleted: {} ({})", rule.getRuleName(), rule.getId());
@@ -271,12 +276,12 @@ public class FraudManagementService {
 
     public FraudRule updateRuleStatus(String ruleId, boolean enabled) {
         FraudRule rule = fraudRuleRepository.findById(ruleId)
-            .orElseThrow(() -> new EntityNotFoundException("Fraud rule not found: " + ruleId));
+            .orElseThrow(() -> new EntityNotFoundException(ERROR_FRAUD_RULE_NOT_FOUND + ruleId));
 
         rule.setEnabled(enabled);
         rule = fraudRuleRepository.save(rule);
 
-        auditService.logEntityModification("FraudRule", rule.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_FRAUD_RULE, rule.getId(),
             String.format("Fraud rule '%s' %s", rule.getRuleName(), enabled ? "enabled" : "disabled"));
 
         log.info("Fraud rule status updated: {} - enabled: {}", rule.getRuleName(), enabled);

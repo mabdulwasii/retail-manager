@@ -76,6 +76,12 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
+      - name: Configure TestContainers
+        run: |
+          mkdir -p ~/.testcontainers
+          echo "testcontainers.reuse.enable=true" > ~/.testcontainers/testcontainers.properties
+          echo "testcontainers.ryuk.disabled=false" >> ~/.testcontainers/testcontainers.properties
+
       - name: Run unit tests with coverage
         run: |
           cd backend
@@ -88,12 +94,7 @@ jobs:
           cd backend
           ./mvnw verify -Pintegration-tests jacoco:report -B
           echo "✅ Integration tests completed"
-
-      - name: Merge coverage reports
-        run: |
-          cd backend
-          ./mvnw jacoco:merge jacoco:report -B
-          echo "✅ Coverage reports merged"
+          echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
       - name: SonarQube Scan
         env:
@@ -104,7 +105,8 @@ jobs:
         run: |
           cd backend
           ./mvnw sonar:sonar \
-            -Dsonar.projectKey=shop-manager-backend \
+            -Dsonar.projectKey=mabdulwasii_retail-manager \
+            -Dsonar.moduleKey=backend \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \

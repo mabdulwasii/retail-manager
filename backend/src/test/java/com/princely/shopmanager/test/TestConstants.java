@@ -21,6 +21,7 @@ package com.princely.shopmanager.test;
  * - 250e84XX... = Returns
  * - 350e84XX... = Return Items
  * - 450e84XX... = Inventory Movements
+ * - 5a0e84XX... = Investment Rounds
  *
  * Usage:
  * <pre>
@@ -39,6 +40,7 @@ public final class TestConstants {
     // ==========================================
     public static final String TEST_TENANT_001 = "550e8400-e29b-41d4-a716-446655440001";
     public static final String TEST_TENANT_002 = "550e8400-e29b-41d4-a716-446655440002";
+    public static final String TEST_TENANT_003 = "550e8400-e29b-41d4-a716-446655440003"; // INACTIVE - Pending
 
     // ==========================================
     // SHOP UUIDs
@@ -46,6 +48,8 @@ public final class TestConstants {
     public static final String TEST_SHOP_001 = "650e8400-e29b-41d4-a716-446655440001";
     public static final String TEST_SHOP_002 = "650e8400-e29b-41d4-a716-446655440002";
     public static final String TEST_SHOP_003 = "650e8400-e29b-41d4-a716-446655440003";
+    public static final String TEST_SHOP_004 = "650e8400-e29b-41d4-a716-446655440004"; // INACTIVE - Pending
+    public static final String SHOP_DELETABLE = "650e8400-e29b-41d4-a716-446655440099"; // For ShopControllerMinimalIT.shouldDeleteShop
 
     // ==========================================
     // USER UUIDs
@@ -55,6 +59,7 @@ public final class TestConstants {
     public static final String USER_MANAGER_001 = "750e8400-e29b-41d4-a716-446655440003";
     public static final String USER_EMPLOYEE_001 = "750e8400-e29b-41d4-a716-446655440004";
     public static final String USER_INVESTOR_001 = "750e8400-e29b-41d4-a716-446655440005";
+    public static final String USER_PENDING_001 = "750e8400-e29b-41d4-a716-446655440006"; // INACTIVE - Pending
 
     // ==========================================
     // USER EMAILS
@@ -64,6 +69,7 @@ public final class TestConstants {
     public static final String MANAGER_EMAIL = "manager@testretail.com";
     public static final String EMPLOYEE_EMAIL = "employee@testretail.com";
     public static final String INVESTOR_EMAIL = "investor@testretail.com";
+    public static final String PENDING_EMAIL = "contact@pendingtenant.com";
 
     // ==========================================
     // KEYCLOAK IDs
@@ -73,6 +79,7 @@ public final class TestConstants {
     public static final String KC_MANAGER_001 = "kc-manager-001";
     public static final String KC_EMPLOYEE_001 = "kc-employee-001";
     public static final String KC_INVESTOR_001 = "kc-investor-001";
+    public static final String KC_PENDING_001 = "kc-pending-001";
 
     // ==========================================
     // CATEGORY UUIDs
@@ -80,6 +87,7 @@ public final class TestConstants {
     public static final String CAT_ELECTRONICS = "950e8400-e29b-41d4-a716-446655440001";
     public static final String CAT_CLOTHING = "950e8400-e29b-41d4-a716-446655440002";
     public static final String CAT_FOOD_BEVERAGE = "950e8400-e29b-41d4-a716-446655440003";
+    public static final String CAT_DELETABLE = "950e8400-e29b-41d4-a716-446655440099"; // For CategoryControllerMinimalIT.shouldDeleteCategory
 
     // ==========================================
     // PRODUCT UUIDs
@@ -118,6 +126,7 @@ public final class TestConstants {
     public static final String TXN_001 = "c50e8400-e29b-41d4-a716-446655440001";
     public static final String TXN_002 = "c50e8400-e29b-41d4-a716-446655440002";
     public static final String TXN_003 = "c50e8400-e29b-41d4-a716-446655440003";
+    public static final String TXN_VOIDABLE = "c50e8400-e29b-41d4-a716-446655440099"; // For SalesTransactionControllerMinimalIT.shouldVoidSalesTransaction
 
     // ==========================================
     // TRANSACTION NUMBERS
@@ -132,6 +141,7 @@ public final class TestConstants {
     public static final String TXN_ITEM_001 = "d50e8400-e29b-41d4-a716-446655440001";
     public static final String TXN_ITEM_002 = "d50e8400-e29b-41d4-a716-446655440002";
     public static final String TXN_ITEM_003 = "d50e8400-e29b-41d4-a716-446655440003";
+    public static final String TXN_ITEM_VOIDABLE = "d50e8400-e29b-41d4-a716-446655440099"; // For voidable transaction
 
     // ==========================================
     // RECEIPT UUIDs
@@ -148,15 +158,30 @@ public final class TestConstants {
     // ==========================================
     // EXPENSE UUIDs
     // ==========================================
-    public static final String EXP_001 = "f50e8400-e29b-41d4-a716-446655440001";
-    public static final String EXP_002 = "f50e8400-e29b-41d4-a716-446655440002";
-    public static final String EXP_003 = "f50e8400-e29b-41d4-a716-446655440003";
+    public static final String EXP_001 = "f50e8400-e29b-41d4-a716-446655440001"; // APPROVED
+    public static final String EXP_002 = "f50e8400-e29b-41d4-a716-446655440002"; // PENDING_APPROVAL
+    public static final String EXP_003 = "f50e8400-e29b-41d4-a716-446655440003"; // APPROVED
+    public static final String EXP_004 = "f50e8400-e29b-41d4-a716-446655440004"; // DRAFT (editable)
+    public static final String EXP_005 = "f50e8400-e29b-41d4-a716-446655440005"; // REJECTED (editable)
+    public static final String EXP_DELETABLE = "f50e8400-e29b-41d4-a716-446655440099"; // For ExpenseControllerMinimalIT.shouldDeleteExpense
 
     // ==========================================
     // INVESTMENT UUIDs
     // ==========================================
     public static final String INVESTMENT_001 = "050e8400-e29b-41d4-a716-446655440001";
     public static final String INVESTMENT_002 = "050e8400-e29b-41d4-a716-446655440002";
+
+    // ==========================================
+    // INVESTMENT ROUND UUIDs
+    // ==========================================
+    public static final String INVESTMENT_ROUND_001 = "5a0e8400-e29b-41d4-a716-446655440001";
+    public static final String INVESTMENT_ROUND_002 = "5a0e8400-e29b-41d4-a716-446655440002";
+
+    // ==========================================
+    // INVESTMENT ROUND NUMBERS
+    // ==========================================
+    public static final String ROUND_NUMBER_001 = "ROUND-TEST-2024-Q1-001";
+    public static final String ROUND_NUMBER_002 = "ROUND-TEST-2024-Q2-001";
 
     // ==========================================
     // INVESTOR SHARE UUIDs
@@ -209,6 +234,7 @@ public final class TestConstants {
     public static final int EXPECTED_RECEIPT_COUNT = 2;
     public static final int EXPECTED_EXPENSE_COUNT = 3;
     public static final int EXPECTED_INVESTMENT_COUNT = 2;
+    public static final int EXPECTED_INVESTMENT_ROUND_COUNT = 2;
     public static final int EXPECTED_INVESTOR_SHARE_COUNT = 4;
     public static final int EXPECTED_RETURN_COUNT = 1;
     public static final int EXPECTED_INVENTORY_MOVEMENT_COUNT = 4;
@@ -244,6 +270,30 @@ public final class TestConstants {
     public static final String TENANT_NAME_DEMO_ELECTRONICS = "Demo Electronics Ltd";
 
     // ==========================================
+    // ROLE IDs
+    // ==========================================
+    public static final String ROLE_ADMIN = "test-role-admin";
+    public static final String ROLE_OWNER = "test-role-owner";
+    public static final String ROLE_MANAGER = "test-role-manager";
+    public static final String ROLE_EMPLOYEE = "test-role-employee";
+    public static final String ROLE_INVESTOR = "test-role-investor";
+    public static final String ROLE_DELETABLE = "test-role-deletable"; // For RoleControllerMinimalIT update/patch/delete tests
+
+    // ==========================================
+    // PERMISSIONS
+    // ==========================================
+    public static final String PERMISSION_PRODUCT_CREATE = "test-perm-product-create";
+    public static final String PERMISSION_PRODUCT_READ = "test-perm-product-read";
+
+    // ==========================================
+    // PRODUCT BARCODES
+    // ==========================================
+    public static final String BARCODE_WIRELESS_MOUSE = "1234567890123";
+    public static final String BARCODE_USB_KEYBOARD = "2345678901234";
+    public static final String BARCODE_COTTON_TSHIRT = "3456789012345";
+    public static final String BARCODE_ENERGY_DRINK = "4567890123456";
+
+    // ==========================================
     // MOCK SECURITY CONTEXT DEFAULTS
     // ==========================================
     public static final String MOCK_USER_ID = "750e8400-e29b-41d4-a716-446655440000";
@@ -269,6 +319,13 @@ public final class TestConstants {
     public static final double TOTAL_SALES_AMOUNT = 97.96;
 
     // ==========================================
+    // SALES TRANSACTION UUIDs
+    // ==========================================
+    public static final String SALES_TXN_001 = "c50e8400-e29b-41d4-a716-446655440001";
+    public static final String SALES_TXN_002 = "c50e8400-e29b-41d4-a716-446655440002";
+    public static final String SALES_TXN_003 = "c50e8400-e29b-41d4-a716-446655440003";
+
+    // ==========================================
     // EXPENSE AMOUNTS (from test-data.sql)
     // ==========================================
     public static final double EXP_001_AMOUNT = 250.00;   // Utilities
@@ -281,4 +338,9 @@ public final class TestConstants {
     // ==========================================
     public static final double INV_001_AMOUNT = 50000.00;
     public static final double INV_002_AMOUNT = 25000.00;
+
+    // ==========================================
+    // TENANT CONFIGURATION IDs
+    // ==========================================
+    public static final String CONFIG_DELETABLE = "test-config-deletable"; // For TenantControllerMinimalIT.shouldDeleteConfiguration
 }

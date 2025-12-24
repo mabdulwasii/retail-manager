@@ -25,7 +25,7 @@ public class FeatureFlagCreateRequest {
     @NotBlank(message = "Feature name is required")
     @Pattern(regexp = "^[a-z][a-z0-9._-]*$", message = "Feature name must start with lowercase letter and contain only lowercase letters, numbers, dots, hyphens, and underscores")
     @Size(min = 3, max = 100, message = "Feature name must be between 3 and 100 characters")
-    @Schema(description = "Unique name of the feature", example = "analytics.enabled", required = true)
+    @Schema(description = "Unique name of the feature", example = "analytics.enabled")
     private String featureName;
 
     @Builder.Default

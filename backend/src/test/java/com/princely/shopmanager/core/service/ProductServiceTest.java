@@ -75,6 +75,9 @@ class ProductServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private ProductFieldUpdater productFieldUpdater;
+
     private ProductService productService;
 
     private Shop testShop;
@@ -124,7 +127,8 @@ class ProductServiceTest {
             categoryRepository,
             inventoryRepository,
             auditService,
-            eventPublisher
+            eventPublisher,
+            productFieldUpdater
         );
     }
 
@@ -249,6 +253,18 @@ class ProductServiceTest {
         when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
         when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
+
+        // Mock ProductFieldUpdater to actually update the product and populate changes
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Product product = invocation.getArgument(0);
+            ProductUpdateRequest request = invocation.getArgument(1);
+            StringBuilder changes = invocation.getArgument(2);
+            if (request.getName() != null && !request.getName().equals(product.getName())) {
+                changes.append("Name: ").append(product.getName()).append(" → ").append(request.getName()).append("; ");
+                product.setName(request.getName());
+            }
+            return null;
+        }).when(productFieldUpdater).updateBasicFields(any(), any(), any());
 
         // Act
         ProductResponse response = productService.updateProduct("product-1", updateRequest, testPrincipal);

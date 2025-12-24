@@ -1,5 +1,6 @@
 package com.princely.shopmanager.core.service;
 
+import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
@@ -11,7 +12,6 @@ import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
-import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.ProductCreatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
@@ -24,15 +24,16 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 
 /**
  * Service class for managing product catalog operations.
@@ -54,11 +55,15 @@ import org.springframework.security.access.AccessDeniedException;
 @Transactional
 public class ProductService extends ShopAwareService {
 
+    private static final String ENTITY_TYPE_PRODUCT = "Product";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final InventoryRepository inventoryRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProductFieldUpdater productFieldUpdater;
 
     public ProductService(
             ShopAccessValidator shopAccessValidator,
@@ -67,13 +72,15 @@ public class ProductService extends ShopAwareService {
             CategoryRepository categoryRepository,
             InventoryRepository inventoryRepository,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ProductFieldUpdater productFieldUpdater) {
         super(shopAccessValidator, shopRepository);
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.inventoryRepository = inventoryRepository;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.productFieldUpdater = productFieldUpdater;
     }
 
     /**
@@ -158,7 +165,7 @@ public class ProductService extends ShopAwareService {
         product = productRepository.save(product);
 
         // Audit the creation
-        auditService.logEntityCreation("Product", product.getId(),
+        auditService.logEntityCreation(ENTITY_TYPE_PRODUCT, product.getId(),
             "Product created: " + product.getName() + " (SKU: " + product.getSku() + ")");
 
         // Publish product created event
@@ -190,80 +197,18 @@ public class ProductService extends ShopAwareService {
         log.info("Updating product: {}, user: {}", productId, principal.getUsername());
 
         Product product = findProductForUser(productId, principal);
-
-        // Track changes for audit
         StringBuilder changes = new StringBuilder();
 
-        // Update fields if provided
-        if (request.getName() != null && !request.getName().equals(product.getName())) {
-            changes.append("Name: ").append(product.getName()).append(" → ").append(request.getName()).append("; ");
-            product.setName(request.getName());
-        }
-
-        if (request.getDescription() != null) {
-            product.setDescription(request.getDescription());
-        }
-
-        if (request.getBarcode() != null && !request.getBarcode().equals(product.getBarcode())) {
-            // Check barcode uniqueness
-            if (productRepository.existsByBarcodeAndShopId(request.getBarcode(), product.getShop().getId())) {
-                throw new IllegalArgumentException("Barcode already exists: " + request.getBarcode());
-            }
-            product.setBarcode(request.getBarcode());
-        }
-
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found: " + request.getCategoryId()));
-            product.setCategory(category);
-        }
-
-        if (request.getUnit() != null) {
-            product.setUnit(request.getUnit());
-        }
-
-        if (request.getWeightInGrams() != null) {
-            product.setWeightInGrams(request.getWeightInGrams());
-        }
-
-        if (request.getDimensions() != null) {
-            product.setDimensions(request.getDimensions());
-        }
-
-        if (request.getSupplierName() != null) {
-            product.setSupplierName(request.getSupplierName());
-        }
-
-        if (request.getSupplierContact() != null) {
-            product.setSupplierContact(request.getSupplierContact());
-        }
-
-        if (request.getImageUrl() != null) {
-            product.setImageUrl(request.getImageUrl());
-        }
-
-        if (request.getStatus() != null && request.getStatus() != product.getStatus()) {
-            changes.append("Status: ").append(product.getStatus()).append(" → ").append(request.getStatus()).append("; ");
-            product.setStatus(request.getStatus());
-        }
-
-        if (request.getIsTaxable() != null) {
-            product.setTaxable(request.getIsTaxable());
-        }
-
-        if (request.getIsDiscountable() != null) {
-            product.setDiscountable(request.getIsDiscountable());
-        }
-
-        if (request.getMetadata() != null) {
-            product.setMetadata(request.getMetadata());
-        }
+        // Delegate field updates to specialized service
+        productFieldUpdater.updateBasicFields(product, request, changes);
+        productFieldUpdater.updateCatalogFields(product, request);
+        productFieldUpdater.updateSupplierAndPricingFields(product, request);
 
         product = productRepository.save(product);
 
         // Audit if there were changes
         if (!changes.isEmpty()) {
-            auditService.logEntityModification("Product", product.getId(),
+            auditService.logEntityModification(ENTITY_TYPE_PRODUCT, product.getId(),
                 "Product updated: " + changes);
         }
 
@@ -329,7 +274,7 @@ public class ProductService extends ShopAwareService {
         product.setStatus(Product.ProductStatus.DISCONTINUED);
         productRepository.save(product);
 
-        auditService.logEntityModification("Product", product.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_PRODUCT, product.getId(),
             "Product discontinued: " + product.getName());
 
         log.info("Successfully discontinued product: {}", productId);
@@ -609,11 +554,10 @@ public class ProductService extends ShopAwareService {
      */
     private String generateRandomAlphanumeric(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        java.util.Random random = new java.util.Random();
         StringBuilder sb = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
+            sb.append(chars.charAt(RANDOM.nextInt(chars.length())));
         }
 
         return sb.toString();

@@ -19,6 +19,8 @@ import java.util.Optional;
 @Slf4j
 public abstract class TenantAwareRepository<T, ID> extends SimpleJpaRepository<T, ID> {
 
+    private static final String FIELD_TENANT_ID = "tenantId";
+
     @PersistenceContext
     protected EntityManager entityManager;
 
@@ -49,7 +51,7 @@ public abstract class TenantAwareRepository<T, ID> extends SimpleJpaRepository<T
 
         try {
             Query query = entityManager.createQuery(queryStr, getDomainClass());
-            query.setParameter("tenantId", tenantId);
+            query.setParameter(FIELD_TENANT_ID, tenantId);
             return query.getResultList();
         } catch (Exception e) {
             log.debug("Tenant-aware query failed for {}, falling back to default: {}",
@@ -71,7 +73,7 @@ public abstract class TenantAwareRepository<T, ID> extends SimpleJpaRepository<T
         try {
             Query query = entityManager.createQuery(queryStr, getDomainClass());
             query.setParameter("id", id);
-            query.setParameter("tenantId", tenantId);
+            query.setParameter(FIELD_TENANT_ID, tenantId);
             List<T> results = query.getResultList();
             return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
         } catch (Exception e) {
@@ -97,7 +99,7 @@ public abstract class TenantAwareRepository<T, ID> extends SimpleJpaRepository<T
         for (int i = 0; i < parameters.length; i += 2) {
             query.setParameter((String) parameters[i], parameters[i + 1]);
         }
-        query.setParameter("tenantId", tenantId);
+        query.setParameter(FIELD_TENANT_ID, tenantId);
 
         return query.getResultList();
     }
@@ -118,7 +120,7 @@ public abstract class TenantAwareRepository<T, ID> extends SimpleJpaRepository<T
         for (int i = 0; i < parameters.length; i += 2) {
             query.setParameter((String) parameters[i], parameters[i + 1]);
         }
-        query.setParameter("tenantId", tenantId);
+        query.setParameter(FIELD_TENANT_ID, tenantId);
 
         return (Long) query.getSingleResult();
     }

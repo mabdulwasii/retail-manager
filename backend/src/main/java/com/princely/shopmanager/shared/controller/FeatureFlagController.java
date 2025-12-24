@@ -47,6 +47,10 @@ import java.util.stream.Collectors;
 @SecurityRequirement(name = "bearerAuth")
 public class FeatureFlagController {
 
+    // Status constants
+    private static final String STATUS_NOT_FOUND = "NOT_FOUND";
+    private static final String STATUS_RESOLVED = "RESOLVED";
+
     private final FeatureFlagService featureFlagService;
 
     /**
@@ -86,7 +90,7 @@ public class FeatureFlagController {
         boolean enabled = featureFlagService.isFeatureEnabled(shopId, featureName);
 
         // Determine source
-        String source = "NOT_FOUND";
+        String source = STATUS_NOT_FOUND;
         if (enabled) {
             source = shopId != null ? "SHOP_SPECIFIC" : "GLOBAL";
         }
@@ -504,7 +508,7 @@ public class FeatureFlagController {
             .featureName(FeatureFlag.INVESTMENT_ENABLED)
             .shopId(shopId)
             .enabled(enabled)
-            .source(enabled ? "RESOLVED" : "NOT_FOUND")
+            .source(enabled ? STATUS_RESOLVED : STATUS_NOT_FOUND)
             .build());
     }
 
@@ -528,7 +532,7 @@ public class FeatureFlagController {
             .featureName(FeatureFlag.ANALYTICS_ENABLED)
             .shopId(shopId)
             .enabled(enabled)
-            .source(enabled ? "RESOLVED" : "NOT_FOUND")
+            .source(enabled ? STATUS_RESOLVED : STATUS_NOT_FOUND)
             .build());
     }
 
@@ -552,7 +556,7 @@ public class FeatureFlagController {
             .featureName(FeatureFlag.FRAUD_ENABLED)
             .shopId(shopId)
             .enabled(enabled)
-            .source(enabled ? "RESOLVED" : "NOT_FOUND")
+            .source(enabled ? STATUS_RESOLVED : STATUS_NOT_FOUND)
             .build());
     }
 
@@ -576,7 +580,7 @@ public class FeatureFlagController {
             .featureName(FeatureFlag.ADVANCED_REPORTING)
             .shopId(shopId)
             .enabled(enabled)
-            .source(enabled ? "RESOLVED" : "NOT_FOUND")
+            .source(enabled ? STATUS_RESOLVED : STATUS_NOT_FOUND)
             .build());
     }
 }

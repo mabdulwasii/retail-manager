@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TenantRegistrationService {
 
+    private static final String FIELD_TENANT_ID = "tenantId";
+
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;

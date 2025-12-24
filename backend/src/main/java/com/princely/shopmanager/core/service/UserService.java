@@ -42,6 +42,9 @@ public class UserService {
     @Autowired(required = false)
     private KeycloakUserService keycloakUserService;
 
+    // Error message constants
+    private static final String ERROR_USER_NOT_FOUND = "User not found with ID: ";
+
     public UserService(UserRepository userRepository,
                       TenantRepository tenantRepository,
                       RoleRepository roleRepository,
@@ -268,7 +271,7 @@ public class UserService {
         log.info("Updating user {}", userId);
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         // Update fields if provided
         if (request.getEmail() != null) {
@@ -332,7 +335,7 @@ public class UserService {
         log.info("Deleting user {}", userId);
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         // Delete from Keycloak FIRST (if enabled and keycloakId exists)
         // If this fails, transaction will rollback
@@ -404,7 +407,7 @@ public class UserService {
 
         // Validate user exists
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         // Validate new shop exists
         Shop newShop = shopRepository.findById(request.getNewShopId())

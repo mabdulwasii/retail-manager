@@ -222,7 +222,11 @@ public class ShopCustomizationService {
             .orElseThrow(() -> new IllegalArgumentException(SHOP_NOT_FOUND + shopId));
 
         // Delete existing customization if it exists
-        customizationRepository.findByShop(shop).ifPresent(customizationRepository::delete);
+        customizationRepository.findByShop(shop).ifPresent(existing -> {
+            customizationRepository.delete(existing);
+            // Flush to avoid unique constraint violation on shop_id
+            customizationRepository.flush();
+        });
 
         // Create new default customization
         ShopCustomization defaultCustomization = ShopCustomization.builder()

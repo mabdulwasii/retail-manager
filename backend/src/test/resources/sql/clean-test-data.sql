@@ -1,7 +1,12 @@
 -- Clean up test data after integration tests
 -- This script removes all test data inserted during integration tests
 
--- Clean up shop customizations first (foreign key dependency)
+-- Clean up investment-related tables (in correct FK dependency order)
+DELETE FROM investment_products;
+DELETE FROM investments;
+DELETE FROM investment_rounds;
+
+-- Clean up shop customizations (foreign key dependency)
 DELETE FROM shop_customizations WHERE id LIKE 'test-custom-%';
 
 -- Clean up feature flags

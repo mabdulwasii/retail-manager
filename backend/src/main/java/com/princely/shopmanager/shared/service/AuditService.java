@@ -20,6 +20,13 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
 
+    // Default user identifiers for system-level actions
+    private static final String SYSTEM_USER_ID = "SYSTEM";
+    private static final String SYSTEM_USERNAME = "system";
+
+    // Entity type constants
+    private static final String ENTITY_TYPE_EXPENSE = "EXPENSE";
+
     @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logSecurityEvent(Shop shop, String userId, String username,
@@ -44,8 +51,8 @@ public class AuditService {
                                    String oldValues, String newValues) {
         try {
             // Default to SYSTEM if userId is null
-            String effectiveUserId = userId != null ? userId : "SYSTEM";
-            String effectiveUsername = username != null ? username : "system";
+            String effectiveUserId = userId != null ? userId : SYSTEM_USER_ID;
+            String effectiveUsername = username != null ? username : SYSTEM_USERNAME;
 
             AuditLog auditLog = AuditLog.createDataModification(
                 shop, effectiveUserId, effectiveUsername, actionType, entityType, entityId,
@@ -83,8 +90,8 @@ public class AuditService {
                               Map<String, String> details, AuditLog.Severity severity) {
         try {
             // Default to SYSTEM if userId is null
-            String effectiveUserId = userId != null ? userId : "SYSTEM";
-            String effectiveUsername = username != null ? username : "system";
+            String effectiveUserId = userId != null ? userId : SYSTEM_USER_ID;
+            String effectiveUsername = username != null ? username : SYSTEM_USERNAME;
 
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
@@ -115,8 +122,8 @@ public class AuditService {
                         String errorMessage) {
         try {
             // Default to SYSTEM if userId is null
-            String effectiveUserId = userId != null ? userId : "SYSTEM";
-            String effectiveUsername = username != null ? username : "system";
+            String effectiveUserId = userId != null ? userId : SYSTEM_USER_ID;
+            String effectiveUsername = username != null ? username : SYSTEM_USERNAME;
 
             AuditLog auditLog = AuditLog.builder()
                 .shop(shop)
@@ -144,8 +151,8 @@ public class AuditService {
     public void logEntityCreation(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .userId("SYSTEM")
-                .username("system")
+                .userId(SYSTEM_USER_ID)
+                .username(SYSTEM_USERNAME)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.CREATE)
                 .entityType(entityType)
@@ -168,8 +175,8 @@ public class AuditService {
     public void logEntityModification(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .userId("SYSTEM")
-                .username("system")
+                .userId(SYSTEM_USER_ID)
+                .username(SYSTEM_USERNAME)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
                 .entityType(entityType)
@@ -192,8 +199,8 @@ public class AuditService {
     public void logEntityDeletion(String entityType, String entityId, String description) {
         try {
             AuditLog auditLog = AuditLog.builder()
-                .userId("SYSTEM")
-                .username("system")
+                .userId(SYSTEM_USER_ID)
+                .username(SYSTEM_USERNAME)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
                 .entityType(entityType)
@@ -221,7 +228,7 @@ public class AuditService {
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.FINANCIAL_TRANSACTION)
                 .actionType(AuditLog.ActionType.CREATE)
-                .entityType("EXPENSE")
+                .entityType(ENTITY_TYPE_EXPENSE)
                 .entityId(expenseId.toString())
                 .actionDescription("Expense created with amount: " + amount)
                 .actionDate(LocalDateTime.now())
@@ -245,7 +252,7 @@ public class AuditService {
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
-                .entityType("EXPENSE")
+                .entityType(ENTITY_TYPE_EXPENSE)
                 .entityId(expenseId.toString())
                 .actionDescription("Expense updated")
                 .actionDate(LocalDateTime.now())
@@ -268,7 +275,7 @@ public class AuditService {
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.BUSINESS_PROCESS)
                 .actionType(approved ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT)
-                .entityType("EXPENSE")
+                .entityType(ENTITY_TYPE_EXPENSE)
                 .entityId(expenseId.toString())
                 .actionDescription("Expense " + (approved ? "approved" : "rejected"))
                 .actionDate(LocalDateTime.now())
@@ -291,7 +298,7 @@ public class AuditService {
                 .userId(userId.toString())
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
-                .entityType("EXPENSE")
+                .entityType(ENTITY_TYPE_EXPENSE)
                 .entityId(expenseId.toString())
                 .actionDescription("Expense deleted")
                 .actionDate(LocalDateTime.now())
@@ -317,8 +324,8 @@ public class AuditService {
                 .actionType(AuditLog.ActionType.CREATE)
                 .actionDescription(eventType + ": " + description)
                 .actionDate(LocalDateTime.now())
-                .userId("SYSTEM")
-                .username("SYSTEM")
+                .userId(SYSTEM_USER_ID)
+                .username(SYSTEM_USER_ID)
                 .build();
 
             auditLogRepository.save(auditLog);

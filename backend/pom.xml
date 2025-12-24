@@ -45,10 +45,11 @@
         <!-- Credentials must be provided via environment variables or command line -->
         <sonar.login>${env.SONAR_LOGIN}</sonar.login>
         <sonar.password>${env.SONAR_PASSWORD}</sonar.password>
-        <!-- Project identification for SonarCloud -->
+        <!-- Project identification for SonarCloud - Using same project as frontend (monorepo) -->
         <sonar.organization>${env.SONAR_ORGANIZATION}</sonar.organization>
-        <sonar.projectKey>shop-manager-backend</sonar.projectKey>
-        <sonar.projectName>Shop Manager Backend</sonar.projectName>
+        <sonar.projectKey>mabdulwasii_retail-manager</sonar.projectKey>
+        <sonar.projectName>Retail Manager</sonar.projectName>
+        <sonar.moduleKey>backend</sonar.moduleKey>
         <sonar.exclusions>
             **/config/**/*,
             **/dto/**/*,
@@ -378,8 +379,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- Parallel execution configuration -->
+                    <parallel>classes</parallel>
+                    <threadCount>4</threadCount>
+                    <perCoreThreadCount>true</perCoreThreadCount>
+                    <forkCount>1C</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
+                    <shutdown>kill</shutdown>
+                    <argLine>-Xmx2048m @{argLine}</argLine>
                     <systemPropertyVariables>
                         <spring.profiles.active>test</spring.profiles.active>
+                        <!-- JUnit 5 parallel execution properties -->
+                        <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                        <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                        <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                        <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+                        <junit.jupiter.execution.parallel.config.dynamic.factor>1.0</junit.jupiter.execution.parallel.config.dynamic.factor>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -550,8 +566,23 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <!-- Parallel execution configuration -->
+                            <parallel>classes</parallel>
+                            <threadCount>4</threadCount>
+                            <perCoreThreadCount>true</perCoreThreadCount>
+                            <forkCount>1C</forkCount>
+                            <reuseForks>true</reuseForks>
+                            <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
+                            <shutdown>kill</shutdown>
+                            <argLine>-Xmx2048m @{argLine}</argLine>
                             <systemPropertyVariables>
                                 <spring.profiles.active>test</spring.profiles.active>
+                                <!-- JUnit 5 parallel execution properties -->
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+                                <junit.jupiter.execution.parallel.config.dynamic.factor>1.0</junit.jupiter.execution.parallel.config.dynamic.factor>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
@@ -567,6 +598,11 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <forkedProcessExitTimeoutInSeconds>120</forkedProcessExitTimeoutInSeconds>
+                            <shutdown>kill</shutdown>
+                            <argLine>-Xmx3072m @{argLine}</argLine>
                             <systemPropertyVariables>
                                 <spring.profiles.active>test</spring.profiles.active>
                             </systemPropertyVariables>

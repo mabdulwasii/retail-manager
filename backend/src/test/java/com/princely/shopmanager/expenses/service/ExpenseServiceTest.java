@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -53,6 +54,12 @@ class ExpenseServiceTest {
     @Mock
     private com.princely.shopmanager.core.repository.ShopRepository shopRepository;
 
+    @Mock
+    private ExpenseFieldUpdater fieldUpdater;
+
+    @Mock
+    private ExpenseSpecificationBuilder specificationBuilder;
+
     @InjectMocks
     private ExpenseService expenseService;
 
@@ -79,6 +86,17 @@ class ExpenseServiceTest {
 
         // Mock shop access validator to allow access by default (no access restriction)
         lenient().when(shopAccessValidator.hasNoAccessToShop(anyString(), any(JwtPrincipal.class))).thenReturn(false);
+
+        // Mock field updater to clean tags (trim, lowercase, remove empty)
+        lenient().when(fieldUpdater.cleanTags(any())).thenAnswer(invocation -> {
+            Set<String> tags = invocation.getArgument(0);
+            return tags.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(tag -> !tag.isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
+        });
 
         category = ExpenseCategory.builder()
             .id(categoryId)

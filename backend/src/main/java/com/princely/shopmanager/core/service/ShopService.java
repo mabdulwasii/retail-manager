@@ -48,6 +48,9 @@ import java.util.UUID;
 @CacheConfig(cacheNames = "shops")
 public class ShopService {
 
+    // Error message constants
+    private static final String ERROR_SHOP_NOT_FOUND = "Shop not found: ";
+
     private final ShopRepository shopRepository;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
@@ -138,7 +141,7 @@ public class ShopService {
         log.info("Updating shop: {}", shopId);
 
         Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_SHOP_NOT_FOUND + shopId));
 
         // Verify tenant access using centralized validator
         tenantSecurityValidator.validateShopAccess(shop);
@@ -177,7 +180,7 @@ public class ShopService {
     @Cacheable(key = "#shopId", condition = "#shopId != null")
     public ShopResponse getShop(String shopId) {
         Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_SHOP_NOT_FOUND + shopId));
 
         // Verify tenant access using centralized validator
         tenantSecurityValidator.validateShopAccess(shop);
@@ -268,7 +271,7 @@ public class ShopService {
         log.info("Changing shop status: {} to {}", shopId, newStatus);
 
         Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_SHOP_NOT_FOUND + shopId));
 
         // Verify tenant access using centralized validator
         tenantSecurityValidator.validateShopAccess(shop);
@@ -307,7 +310,7 @@ public class ShopService {
         log.info("Deleting shop: {}", shopId);
 
         Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_SHOP_NOT_FOUND + shopId));
 
         // Verify tenant access using centralized validator
         tenantSecurityValidator.validateShopAccess(shop);

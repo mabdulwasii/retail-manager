@@ -180,17 +180,21 @@ class InvestmentRoundServiceTest {
         // Then: Investment numbers should be sequential
         assertThat(response.getInvestments()).hasSize(3);
 
-        // Extract all investment numbers and verify they're unique and sequential
+        // Extract all investment numbers and verify they're unique and follow pattern
         List<String> investmentNumbers = response.getInvestments().stream()
             .map(InvestmentRoundResponse.InvestmentSummary::getInvestmentNumber)
             .sorted()
             .toList();
 
-        assertThat(investmentNumbers).containsExactly(
-            "INV-ROUND-TES-2025-Q4-001-001",
-            "INV-ROUND-TES-2025-Q4-001-002",
-            "INV-ROUND-TES-2025-Q4-001-003"
-        );
+        // Investment numbers now include nanoTime suffix for collision prevention
+        // Format: INV-{ROUND}-{SEQ}-{NANOTIME}
+        assertThat(investmentNumbers).hasSize(3);
+        assertThat(investmentNumbers.get(0)).matches("INV-ROUND-TES-2025-Q4-001-001-\\d+");
+        assertThat(investmentNumbers.get(1)).matches("INV-ROUND-TES-2025-Q4-001-002-\\d+");
+        assertThat(investmentNumbers.get(2)).matches("INV-ROUND-TES-2025-Q4-001-003-\\d+");
+
+        // Verify all numbers are unique
+        assertThat(investmentNumbers).doesNotHaveDuplicates();
 
         // Verify countByInvestmentRoundId was called 3 times
         verify(investmentRepository, times(3)).countByInvestmentRoundId("round-123");
@@ -230,9 +234,13 @@ class InvestmentRoundServiceTest {
             "admin"
         );
 
-        // Then: New investment should get number 006 (not 001)
+        // Then: New investment should get sequence 006 (not 001)
+        // Format: INV-{ROUND}-{SEQ}-{NANOTIME}
         assertThat(response.getInvestments()).hasSize(1);
-        assertThat(response.getInvestments().get(0).getInvestmentNumber()).endsWith("-006");
+        String investmentNumber = response.getInvestments().get(0).getInvestmentNumber();
+        // Should contain sequence 006 followed by nanoTime suffix
+        // Round number is ROUND-TES-2025-Q4-001 (line 209)
+        assertThat(investmentNumber).matches("INV-ROUND-TES-2025-Q4-001-006-\\d+");
 
         // Verify database count was used
         verify(investmentRepository).countByInvestmentRoundId("round-existing");
@@ -309,5 +317,265 @@ class InvestmentRoundServiceTest {
             ))
             .notes("Test round")
             .build();
+    }
+
+    @Test
+    @DisplayName("Should get investment round by ID")
+    void shouldGetInvestmentRound() {
+        // Given
+        InvestmentRound round = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(round));
+
+        // When
+        InvestmentRoundResponse response = investmentRoundService.getInvestmentRound("round-1");
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo("round-1");
+        assertThat(response.getRoundNumber()).isEqualTo("ROUND-TES-2025-Q1-001");
+        verify(investmentRoundRepository).findById("round-1");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when getting non-existent round")
+    void shouldThrowExceptionWhenGettingNonExistentRound() {
+        // Given
+        when(investmentRoundRepository.findById("non-existent")).thenReturn(Optional.empty());
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> investmentRoundService.getInvestmentRound("non-existent"));
+
+        verify(investmentRoundRepository).findById("non-existent");
+    }
+
+    @Test
+    @DisplayName("Should update investment round successfully")
+    void shouldUpdateInvestmentRound() {
+        // Given
+        InvestmentRound existingRound = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .notes("Old notes")
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(existingRound));
+        when(investmentRoundRepository.save(any(InvestmentRound.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        InvestmentRoundCreateRequest updateRequest = InvestmentRoundCreateRequest.builder()
+            .notes("Updated notes")
+            .maturityDate(LocalDate.now().plusMonths(18))
+            .build();
+
+        // When
+        InvestmentRoundResponse response = investmentRoundService.updateInvestmentRound("round-1", updateRequest, "admin");
+
+        // Then
+        assertThat(response.getNotes()).isEqualTo("Updated notes");
+        verify(investmentRoundRepository).save(existingRound);
+        verify(auditService).logFinancialTransaction(any(), any(), any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating closed round")
+    void shouldThrowExceptionWhenUpdatingClosedRound() {
+        // Given
+        InvestmentRound closedRound = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.CLOSED)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(closedRound));
+
+        InvestmentRoundCreateRequest updateRequest = InvestmentRoundCreateRequest.builder()
+            .notes("Updated notes")
+            .build();
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+            () -> investmentRoundService.updateInvestmentRound("round-1", updateRequest, "admin"));
+    }
+
+    @Test
+    @DisplayName("Should delete investment round successfully")
+    void shouldDeleteInvestmentRound() {
+        // Given
+        Investment investment = Investment.builder()
+            .id("inv-1")
+            .totalProfitEarned(BigDecimal.ZERO)
+            .build();
+
+        InvestmentRound round = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investments(new HashSet<>(List.of(investment)))
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(round));
+
+        // When
+        investmentRoundService.deleteInvestmentRound("round-1", "admin");
+
+        // Then
+        verify(investmentRoundRepository).delete(round);
+        verify(auditService).logFinancialTransaction(any(), any(), any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when deleting round with distributions")
+    void shouldThrowExceptionWhenDeletingRoundWithDistributions() {
+        // Given
+        Investment investment = Investment.builder()
+            .id("inv-1")
+            .totalProfitEarned(BigDecimal.valueOf(1000))
+            .build();
+
+        InvestmentRound round = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investments(new HashSet<>(List.of(investment)))
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(round));
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+            () -> investmentRoundService.deleteInvestmentRound("round-1", "admin"));
+
+        verify(investmentRoundRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("Should close investment round successfully")
+    void shouldCloseRound() {
+        // Given
+        InvestmentRound openRound = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(openRound));
+        when(investmentRoundRepository.save(any(InvestmentRound.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        InvestmentRoundResponse response = investmentRoundService.closeRound("round-1", "admin");
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(InvestmentRound.RoundStatus.CLOSED);
+        verify(investmentRoundRepository).save(openRound);
+        verify(auditService).logFinancialTransaction(any(), any(), any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when closing non-open round")
+    void shouldThrowExceptionWhenClosingNonOpenRound() {
+        // Given
+        InvestmentRound closedRound = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .status(InvestmentRound.RoundStatus.CLOSED)
+            .investments(new HashSet<>())
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(closedRound));
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+            () -> investmentRoundService.closeRound("round-1", "admin"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when adding duplicate investor to round")
+    void shouldThrowExceptionWhenAddingDuplicateInvestor() {
+        // Given
+        Investment existingInvestment = Investment.builder()
+            .id("inv-1")
+            .investor(testInvestor)
+            .build();
+
+        InvestmentRound round = InvestmentRound.builder()
+            .id("round-1")
+            .roundNumber("ROUND-TES-2025-Q1-001")
+            .shop(testShop)
+            .status(InvestmentRound.RoundStatus.OPEN)
+            .investments(new HashSet<>(List.of(existingInvestment)))
+            .build();
+
+        when(investmentRoundRepository.findById("round-1")).thenReturn(Optional.of(round));
+        when(userRepository.findById("investor-1")).thenReturn(Optional.of(testInvestor));
+
+        InvestmentRoundCreateRequest.InvestorInput duplicateInvestor =
+            InvestmentRoundCreateRequest.InvestorInput.builder()
+                .investorId("investor-1")
+                .amount(BigDecimal.valueOf(10000))
+                .build();
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> investmentRoundService.addInvestorToRound("round-1", duplicateInvestor, "admin"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating round with validation errors")
+    void shouldThrowExceptionWhenCreatingRoundWithValidationErrors() {
+        // Given
+        when(validator.validate(any())).thenReturn(List.of("Total shares must equal 100%", "Invalid tier configuration"));
+
+        InvestmentRoundCreateRequest request = createTestRequest();
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> investmentRoundService.createInvestmentRound(request, "admin"));
+
+        verify(investmentRoundRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when shop not found during round creation")
+    void shouldThrowExceptionWhenShopNotFound() {
+        // Given
+        when(shopRepository.findById("non-existent-shop")).thenReturn(Optional.empty());
+
+        InvestmentRoundCreateRequest request = InvestmentRoundCreateRequest.builder()
+            .shopId("non-existent-shop")
+            .investmentType(Investment.InvestmentType.SHOP_WIDE)
+            .profitSharingModel(Investment.ProfitSharingModel.PROPORTIONAL_BY_AMOUNT)
+            .investors(List.of())
+            .build();
+
+        when(validator.validate(any())).thenReturn(List.of());
+
+        // When/Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> investmentRoundService.createInvestmentRound(request, "admin"));
     }
 }

@@ -1,5 +1,6 @@
 package com.princely.shopmanager.shared.listener;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
@@ -8,12 +9,15 @@ import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.domain.BaseEntity;
 import com.princely.shopmanager.shared.service.AuditService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.*;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreRemove;
+import jakarta.persistence.PreUpdate;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j

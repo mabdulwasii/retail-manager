@@ -35,7 +35,7 @@ public class ShopCreateRequest {
     public static final int MAX_EMAIL_LENGTH = 255;
     public static final int MAX_TAX_ID_LENGTH = 50;
 
-    @Schema(description = "Shop name", example = "Downtown Electronics Store", required = true)
+    @Schema(description = "Shop name", example = "Downtown Electronics Store")
     @NotBlank(message = "Shop name is required")
     @Size(min = MIN_NAME_LENGTH, max = MAX_NAME_LENGTH, message = "Shop name must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters")
     private String name;
@@ -44,7 +44,7 @@ public class ShopCreateRequest {
     @Size(max = MAX_DESCRIPTION_LENGTH, message = "Description must not exceed " + MAX_DESCRIPTION_LENGTH + " characters")
     private String description;
 
-    @Schema(description = "Shop physical address", example = "123 Main Street", required = true)
+    @Schema(description = "Shop physical address", example = "123 Main Street")
     @NotBlank(message = "Address is required")
     @Size(max = MAX_ADDRESS_LENGTH, message = "Address must not exceed " + MAX_ADDRESS_LENGTH + " characters")
     private String address;
@@ -70,7 +70,7 @@ public class ShopCreateRequest {
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
     private String phoneNumber;
 
-    @Schema(description = "Contact email address", example = "contact@downtownelectronics.com", required = true)
+    @Schema(description = "Contact email address", example = "contact@downtownelectronics.com")
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     @Size(max = MAX_EMAIL_LENGTH, message = "Email must not exceed " + MAX_EMAIL_LENGTH + " characters")

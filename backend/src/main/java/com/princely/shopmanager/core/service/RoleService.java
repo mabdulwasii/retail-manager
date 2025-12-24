@@ -36,6 +36,11 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final TenantRepository tenantRepository;
 
+    // Error message constants
+    private static final String ERROR_ROLE_NOT_FOUND = "Role not found with ID: ";
+    private static final String ERROR_USER_NOT_FOUND = "User not found with ID: ";
+    private static final String ERROR_SYSTEM_ROLE_IMMUTABLE = "Cannot modify permissions of system role: ";
+
     /**
      * Get all available roles for the current tenant.
      * Returns system roles (available to all tenants) + tenant-specific custom roles.
@@ -60,7 +65,7 @@ public class RoleService {
     public Role getRoleById(String roleId) {
         log.debug("Retrieving role by ID: {}", roleId);
         return roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
     }
 
     /**
@@ -87,7 +92,7 @@ public class RoleService {
     public Set<Role> getUserRoles(String userId) {
         log.debug("Retrieving roles for user: {}", userId);
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
         return user.getRoles();
     }
 
@@ -107,7 +112,7 @@ public class RoleService {
         log.info("Assigning role {} to user {}", roleIdentifier, userId);
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         // Try to find role by ID first, then by name
         Role role = roleRepository.findById(roleIdentifier)
@@ -148,10 +153,10 @@ public class RoleService {
         log.info("Removing role {} from user {}", roleId, userId);
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // Validate removal permissions
         validateRoleAssignment(user, role);
@@ -198,7 +203,7 @@ public class RoleService {
     @Transactional(readOnly = true)
     public boolean userHasRole(String userId, String roleName) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_USER_NOT_FOUND + userId));
 
         return user.getRoles().stream()
             .anyMatch(role -> role.getName().equals(roleName));
@@ -270,7 +275,7 @@ public class RoleService {
         log.info("Updating role: {}", roleId);
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // System roles cannot be updated
         if (role.isSystem()) {
@@ -302,7 +307,7 @@ public class RoleService {
         log.info("Deleting role: {}", roleId);
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // System roles cannot be deleted
         if (role.isSystem()) {
@@ -337,11 +342,11 @@ public class RoleService {
         log.info("Adding permission {} to role {}", permissionIdentifier, roleId);
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // System roles cannot be modified
         if (role.isSystem()) {
-            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+            throw new SecurityException(ERROR_SYSTEM_ROLE_IMMUTABLE + role.getName());
         }
 
         Permission permission = permissionRepository.findById(permissionIdentifier)
@@ -371,11 +376,11 @@ public class RoleService {
         log.info("Removing permission {} from role {}", permissionId, roleId);
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // System roles cannot be modified
         if (role.isSystem()) {
-            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+            throw new SecurityException(ERROR_SYSTEM_ROLE_IMMUTABLE + role.getName());
         }
 
         Permission permission = permissionRepository.findById(permissionId)
@@ -402,11 +407,11 @@ public class RoleService {
         log.info("Bulk updating permissions for role {}: {} permissions", roleId, permissionIdentifiers.size());
 
         Role role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+            .orElseThrow(() -> new IllegalArgumentException(ERROR_ROLE_NOT_FOUND + roleId));
 
         // System roles cannot be modified
         if (role.isSystem()) {
-            throw new SecurityException("Cannot modify permissions of system role: " + role.getName());
+            throw new SecurityException(ERROR_SYSTEM_ROLE_IMMUTABLE + role.getName());
         }
 
         // Resolve all permissions

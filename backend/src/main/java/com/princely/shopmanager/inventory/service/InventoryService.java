@@ -47,6 +47,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class InventoryService extends ShopAwareService {
 
+    // Entity type constant for audit logging
+    private static final String ENTITY_TYPE_INVENTORY = "Inventory";
+
     private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository historyRepository;
     private final ProductRepository productRepository;
@@ -118,7 +121,7 @@ public class InventoryService extends ShopAwareService {
             request.getCurrentStock(), 0, request.getCurrentStock(),
             null, InventoryHistory.ReferenceType.PROCUREMENT, "Initial stock");
 
-        auditService.logEntityCreation("Inventory", inventory.getId(),
+        auditService.logEntityCreation(ENTITY_TYPE_INVENTORY, inventory.getId(),
             "Created inventory for product: " + product.getName() + " with stock: " + request.getCurrentStock());
 
         return mapToResponse(inventory);
@@ -151,7 +154,7 @@ public class InventoryService extends ShopAwareService {
             quantityChange, previousStock, newStock,
             null, InventoryHistory.ReferenceType.ADJUSTMENT, request.getReason());
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Stock adjusted from %d to %d. Reason: %s", previousStock, newStock, request.getReason()));
 
         return mapToResponse(inventory);
@@ -214,7 +217,7 @@ public class InventoryService extends ShopAwareService {
             -quantity, previousStock, inventory.getCurrentStock(),
             saleId, InventoryHistory.ReferenceType.SALE, "Stock sold");
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Sold %d units, remaining stock: %d", quantity, inventory.getCurrentStock()));
     }
 
@@ -229,7 +232,7 @@ public class InventoryService extends ShopAwareService {
             quantity, previousStock, inventory.getCurrentStock(),
             returnId, InventoryHistory.ReferenceType.RETURN, "Stock returned");
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Returned %d units, new stock: %d", quantity, inventory.getCurrentStock()));
     }
 
@@ -273,7 +276,7 @@ public class InventoryService extends ShopAwareService {
         inventory.setStatus(status);
         inventory = inventoryRepository.save(inventory);
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Status changed from %s to %s", previousStatus, status));
 
         // Publish inventory updated event
@@ -345,7 +348,7 @@ public class InventoryService extends ShopAwareService {
 
         inventory = inventoryRepository.save(inventory);
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             "Updated inventory: " + changes.toString());
 
         // Publish inventory updated event
@@ -384,7 +387,7 @@ public class InventoryService extends ShopAwareService {
         // Delete inventory
         inventoryRepository.delete(inventory);
 
-        auditService.logEntityDeletion("Inventory", inventoryId,
+        auditService.logEntityDeletion(ENTITY_TYPE_INVENTORY, inventoryId,
             String.format("Deleted inventory for product: %s (batch: %s)",
                 productName, inventory.getBatchNumber()));
 
@@ -465,7 +468,7 @@ public class InventoryService extends ShopAwareService {
         );
 
         // Log the reorder suggestion
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Reorder suggestion created: %d units (current stock: %d, minimum: %d)",
                 suggestedQuantity, inventory.getAvailableStock(), inventory.getMinimumStock()));
 
@@ -483,7 +486,7 @@ public class InventoryService extends ShopAwareService {
         inventory.setReorderPoint(newReorderPoint);
         inventoryRepository.save(inventory);
 
-        auditService.logEntityModification("Inventory", inventory.getId(),
+        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
             String.format("Reorder point updated from %d to %d", oldReorderPoint, newReorderPoint));
     }
 

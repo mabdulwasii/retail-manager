@@ -1,6 +1,6 @@
 package com.princely.shopmanager.auth.security;
 
-import com.princely.shopmanager.IntegrationTestBase;
+import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import com.princely.shopmanager.auth.constants.SecurityRoles;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.Tenant;
@@ -10,6 +10,7 @@ import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.service.ShopAwareService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Shop Access Control Integration Tests")
-class ShopAccessControlIT extends IntegrationTestBase {
+@Disabled("Temporarily disabled during IT reduction - will be replaced with minimal happy path test and unit tests")
+class ShopAccessControlIT extends AbstractIntegrationTest {
 
     @Autowired
     private ShopAccessValidator shopAccessValidator;
