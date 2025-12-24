@@ -9,7 +9,6 @@ import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.RollbackException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.hibernate.exception.ConstraintViolationException as HibernateConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -69,7 +68,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("SHOP_NOT_FOUND");
+        assertThat(response.getBody().code()).isEqualTo("SHOP_NOT_FOUND");
     }
 
     @Test
@@ -84,7 +83,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("CUSTOM_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("CUSTOM_ERROR");
     }
 
     // Access Denial Tests
@@ -100,7 +99,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("TENANT_ACCESS_DENIED");
+        assertThat(response.getBody().code()).isEqualTo("TENANT_ACCESS_DENIED");
     }
 
     @Test
@@ -115,7 +114,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("FORBIDDEN");
+        assertThat(response.getBody().code()).isEqualTo("FORBIDDEN");
     }
 
     // Validation Tests
@@ -137,10 +136,10 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("VALIDATION_ERROR");
-        assertThat(response.getBody().getFieldErrors()).hasSize(2);
-        assertThat(response.getBody().getFieldErrors()).containsKey("name");
-        assertThat(response.getBody().getFieldErrors()).containsKey("price");
+        assertThat(response.getBody().code()).isEqualTo("VALIDATION_ERROR");
+        assertThat(response.getBody().fieldErrors()).hasSize(2);
+        assertThat(response.getBody().fieldErrors()).containsKey("name");
+        assertThat(response.getBody().fieldErrors()).containsKey("price");
     }
 
     @Test
@@ -162,7 +161,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("CONSTRAINT_VIOLATION");
+        assertThat(response.getBody().code()).isEqualTo("CONSTRAINT_VIOLATION");
     }
 
     // Argument and Conversion Tests
@@ -178,8 +177,8 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INVALID_ARGUMENT");
-        assertThat(response.getBody().getMessage()).isEqualTo("Invalid product ID");
+        assertThat(response.getBody().code()).isEqualTo("INVALID_ARGUMENT");
+        assertThat(response.getBody().message()).isEqualTo("Invalid product ID");
     }
 
     @Test
@@ -197,8 +196,8 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INVALID_PARAMETER_FORMAT");
-        assertThat(response.getBody().getMessage()).contains("date format");
+        assertThat(response.getBody().code()).isEqualTo("INVALID_PARAMETER_FORMAT");
+        assertThat(response.getBody().message()).contains("date format");
     }
 
     @Test
@@ -215,7 +214,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INVALID_PARAMETER_FORMAT");
+        assertThat(response.getBody().code()).isEqualTo("INVALID_PARAMETER_FORMAT");
     }
 
     // State and Entity Tests
@@ -231,7 +230,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INVALID_STATE");
+        assertThat(response.getBody().code()).isEqualTo("INVALID_STATE");
     }
 
     @Test
@@ -246,7 +245,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("NOT_FOUND");
+        assertThat(response.getBody().code()).isEqualTo("NOT_FOUND");
     }
 
     @Test
@@ -261,7 +260,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("NOT_FOUND");
+        assertThat(response.getBody().code()).isEqualTo("NOT_FOUND");
     }
 
     @Test
@@ -276,7 +275,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("CONCURRENT_UPDATE");
+        assertThat(response.getBody().code()).isEqualTo("CONCURRENT_UPDATE");
     }
 
     // Database Constraint Tests
@@ -288,8 +287,8 @@ class GlobalExceptionHandlerTest {
             "duplicate key value violates unique constraint \"products_barcode_key\" " +
             "Detail: Key (barcode)=(ABC123) already exists."
         );
-        HibernateConstraintViolationException hibernateEx =
-            new HibernateConstraintViolationException("Constraint violation", sqlEx, "products_barcode_key");
+        org.hibernate.exception.ConstraintViolationException hibernateEx =
+            new org.hibernate.exception.ConstraintViolationException("Constraint violation", sqlEx, "products_barcode_key");
         DataIntegrityViolationException exception = new DataIntegrityViolationException("Data integrity", hibernateEx);
 
         // When
@@ -298,7 +297,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("DUPLICATE_ENTRY");
+        assertThat(response.getBody().code()).isEqualTo("DUPLICATE_ENTRY");
     }
 
     @Test
@@ -308,8 +307,8 @@ class GlobalExceptionHandlerTest {
         SQLException sqlEx = new SQLException(
             "null value in column \"name\" of relation \"products\" violates not-null constraint"
         );
-        HibernateConstraintViolationException hibernateEx =
-            new HibernateConstraintViolationException("Constraint violation", sqlEx, "products_name_notnull");
+        org.hibernate.exception.ConstraintViolationException hibernateEx =
+            new org.hibernate.exception.ConstraintViolationException("Constraint violation", sqlEx, "products_name_notnull");
         DataIntegrityViolationException exception = new DataIntegrityViolationException("Data integrity", hibernateEx);
 
         // When
@@ -318,7 +317,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("REQUIRED_FIELD_MISSING");
+        assertThat(response.getBody().code()).isEqualTo("REQUIRED_FIELD_MISSING");
     }
 
     @Test
@@ -329,8 +328,8 @@ class GlobalExceptionHandlerTest {
             "insert or update on table \"products\" violates foreign key constraint \"fk_category\" " +
             "Detail: Key (category_id)=(cat-999) is not present in table \"categories\"."
         );
-        HibernateConstraintViolationException hibernateEx =
-            new HibernateConstraintViolationException("Constraint violation", sqlEx, "fk_category");
+        org.hibernate.exception.ConstraintViolationException hibernateEx =
+            new org.hibernate.exception.ConstraintViolationException("Constraint violation", sqlEx, "fk_category");
         DataIntegrityViolationException exception = new DataIntegrityViolationException("Data integrity", hibernateEx);
 
         // When
@@ -339,7 +338,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INVALID_REFERENCE");
+        assertThat(response.getBody().code()).isEqualTo("INVALID_REFERENCE");
     }
 
     @Test
@@ -354,7 +353,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("DATA_INTEGRITY_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("DATA_INTEGRITY_ERROR");
     }
 
     // Database Access Tests
@@ -370,7 +369,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("DATABASE_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("DATABASE_ERROR");
     }
 
     // External Service Tests
@@ -386,7 +385,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("EXTERNAL_SERVICE_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("EXTERNAL_SERVICE_ERROR");
     }
 
     @Test
@@ -401,7 +400,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("REGISTRATION_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("REGISTRATION_ERROR");
     }
 
     // Transaction Tests
@@ -425,7 +424,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("CONSTRAINT_VIOLATION");
+        assertThat(response.getBody().code()).isEqualTo("CONSTRAINT_VIOLATION");
     }
 
     @Test
@@ -440,7 +439,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("TRANSACTION_ERROR");
+        assertThat(response.getBody().code()).isEqualTo("TRANSACTION_ERROR");
     }
 
     // Generic Exception Test
@@ -461,7 +460,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getCode()).isEqualTo("INTERNAL_ERROR");
-        assertThat(response.getBody().getMessage()).contains("unexpected error");
+        assertThat(response.getBody().code()).isEqualTo("INTERNAL_ERROR");
+        assertThat(response.getBody().message()).contains("unexpected error");
     }
 }
