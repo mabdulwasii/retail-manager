@@ -124,7 +124,7 @@ public class TestSecurityConfig {
                     // Create authorities from roles
                     List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                        .collect(Collectors.toList());
+                        .toList();
 
                     // Create authentication
                     UsernamePasswordAuthenticationToken authentication =

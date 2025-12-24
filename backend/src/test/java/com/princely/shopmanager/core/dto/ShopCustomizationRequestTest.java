@@ -388,7 +388,7 @@ class ShopCustomizationRequestTest {
             ShopCustomization entity = ShopCustomization.builder().build();
             request.applyTo(entity);
 
-            assertThat(entity.getBorderRadius()).isEqualTo(0);
+            assertThat(entity.getBorderRadius()).isZero();
         }
 
         @Test

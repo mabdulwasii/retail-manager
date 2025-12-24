@@ -153,7 +153,7 @@ class InvestmentProfitServiceTest {
 
         when(distributionRepository.existsByInvestmentAndPeriodStartAndPeriodEnd(testInvestment, periodStart, periodEnd))
             .thenReturn(false);
-        when(salesTransactionRepository.getTotalRevenueByShopAndPeriod(eq(testShop.getId()), eq(periodStart), eq(periodEnd)))
+        when(salesTransactionRepository.getTotalRevenueByShopAndPeriod(testShop.getId(), periodStart, periodEnd))
             .thenReturn(Optional.of(shopRevenue));
         when(distributionRepository.save(any(InvestorDistribution.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));

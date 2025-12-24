@@ -49,7 +49,7 @@ class ReceiptTest {
             .build();
 
         // Then
-        assertThat(newReceipt.getPrintedCount()).isEqualTo(0);
+        assertThat(newReceipt.getPrintedCount()).isZero();
     }
 
     @Test

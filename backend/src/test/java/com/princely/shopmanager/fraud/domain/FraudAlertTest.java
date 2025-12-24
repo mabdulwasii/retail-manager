@@ -586,8 +586,10 @@ class FraudAlertTest {
         // Then
         assertThat(alert.getEvidence())
             .hasSize(3)
-            .containsEntry("ip_address", "10.0.0.1")
-            .containsEntry("user_agent", "Mozilla/5.0")
-            .containsEntry("transaction_amount", "5000.00");
+            .containsOnly(
+                entry("ip_address", "10.0.0.1"),
+                entry("user_agent", "Mozilla/5.0"),
+                entry("transaction_amount", "5000.00")
+            );
     }
 }
