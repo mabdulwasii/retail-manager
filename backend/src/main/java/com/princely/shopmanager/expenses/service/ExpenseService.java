@@ -53,18 +53,24 @@ public class ExpenseService extends ShopAwareService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseCategoryRepository categoryRepository;
     private final AuditService auditService;
+    private final ExpenseFieldUpdater fieldUpdater;
+    private final ExpenseSpecificationBuilder specificationBuilder;
 
     public ExpenseService(
             ShopAccessValidator shopAccessValidator,
             com.princely.shopmanager.core.repository.ShopRepository shopRepository,
             ExpenseRepository expenseRepository,
             ExpenseCategoryRepository categoryRepository,
-            AuditService auditService
+            AuditService auditService,
+            ExpenseFieldUpdater fieldUpdater,
+            ExpenseSpecificationBuilder specificationBuilder
     ) {
         super(shopAccessValidator, shopRepository);
         this.expenseRepository = expenseRepository;
         this.categoryRepository = categoryRepository;
         this.auditService = auditService;
+        this.fieldUpdater = fieldUpdater;
+        this.specificationBuilder = specificationBuilder;
     }
 
     /**
@@ -109,7 +115,7 @@ public class ExpenseService extends ShopAwareService {
             .paymentMethod(request.paymentMethod())
             .vendorName(request.vendorName())
             .referenceNumber(request.referenceNumber())
-            .tags(request.tags() != null ? cleanTags(request.tags()) : new HashSet<>())
+            .tags(request.tags() != null ? fieldUpdater.cleanTags(request.tags()) : new HashSet<>())
             .notes(request.notes())
             .expenseCreatedBy(UUID.fromString(principal.getUserId()))
             .createdByName(principal.getFullName())
@@ -149,58 +155,11 @@ public class ExpenseService extends ShopAwareService {
             throw new BusinessRuleViolationException("Expense cannot be edited in current status: " + expense.getStatus());
         }
 
-        // Update fields if provided
-        if (request.title() != null) {
-            expense.setTitle(request.title().trim());
-        }
-
-        if (request.description() != null) {
-            expense.setDescription(request.description().trim());
-        }
-
-        if (request.categoryId() != null) {
-            ExpenseCategory category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_CATEGORY_NOT_FOUND, request.categoryId()));
-
-            // Validate category belongs to the same shop
-            if (!category.getShopId().equals(expense.getShopId())) {
-                throw new AccessDeniedException("You don't have permission to use this expense category");
-            }
-
-            if (Boolean.FALSE.equals(category.getIsActive())) {
-                throw new BusinessRuleViolationException("Cannot assign expense to inactive category");
-            }
-
-            expense.setCategoryId(request.categoryId());
-        }
-
-        if (request.amount() != null) {
-            expense.setAmount(request.amount());
-        }
-
-        if (request.expenseDate() != null) {
-            expense.setExpenseDate(request.expenseDate());
-        }
-
-        if (request.paymentMethod() != null) {
-            expense.setPaymentMethod(request.paymentMethod());
-        }
-
-        if (request.vendorName() != null) {
-            expense.setVendorName(request.vendorName());
-        }
-
-        if (request.referenceNumber() != null) {
-            expense.setReferenceNumber(request.referenceNumber());
-        }
-
-        if (request.tags() != null) {
-            expense.setTags(cleanTags(request.tags()));
-        }
-
-        if (request.notes() != null) {
-            expense.setNotes(request.notes());
-        }
+        // Delegate field updates to specialized service
+        fieldUpdater.updateBasicFields(expense, request);
+        fieldUpdater.updateAmountAndDate(expense, request);
+        fieldUpdater.updateCategory(expense, request.categoryId());
+        fieldUpdater.updateTags(expense, request.tags());
 
         // Handle status change or submission for approval
         if (Boolean.TRUE.equals(request.submitForApproval()) && expense.getStatus() == ExpenseStatus.DRAFT) {
@@ -387,60 +346,8 @@ public class ExpenseService extends ShopAwareService {
 
     // Note: validateShopAccess() is inherited from ShopAwareService parent class
 
-    private Set<String> cleanTags(Set<String> tags) {
-        return tags.stream()
-            .filter(Objects::nonNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .filter(tag -> !tag.isEmpty())
-            .collect(Collectors.toSet());
-    }
-
     private Specification<Expense> createExpenseSpecification(String shopId, ExpenseFilterCriteria criteria) {
-        return (root, query, cb) -> {
-            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-
-            predicates.add(cb.equal(root.get("shopId"), shopId));
-
-            if (criteria.getStartDate() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("expenseDate"), criteria.getStartDate()));
-            }
-
-            if (criteria.getEndDate() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("expenseDate"), criteria.getEndDate()));
-            }
-
-            if (criteria.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), criteria.getStatus()));
-            }
-
-            if (criteria.getCategoryId() != null) {
-                predicates.add(cb.equal(root.get("categoryId"), criteria.getCategoryId()));
-            }
-
-            if (criteria.getCreatedBy() != null) {
-                predicates.add(cb.equal(root.get("expenseCreatedBy"), criteria.getCreatedBy()));
-            }
-
-            if (criteria.getMinAmount() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("amount"), criteria.getMinAmount()));
-            }
-
-            if (criteria.getMaxAmount() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("amount"), criteria.getMaxAmount()));
-            }
-
-            if (criteria.getSearchQuery() != null && !criteria.getSearchQuery().trim().isEmpty()) {
-                String searchPattern = "%" + criteria.getSearchQuery().toLowerCase() + "%";
-                predicates.add(cb.or(
-                    cb.like(cb.lower(root.get("title")), searchPattern),
-                    cb.like(cb.lower(root.get("description")), searchPattern),
-                    cb.like(cb.lower(root.get("vendorName")), searchPattern)
-                ));
-            }
-
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        };
+        return specificationBuilder.buildSpecification(shopId, criteria);
     }
 
     private ExpenseResponse mapToResponseWithCategory(Expense expense) {

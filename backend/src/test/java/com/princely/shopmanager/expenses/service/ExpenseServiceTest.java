@@ -53,6 +53,12 @@ class ExpenseServiceTest {
     @Mock
     private com.princely.shopmanager.core.repository.ShopRepository shopRepository;
 
+    @Mock
+    private ExpenseFieldUpdater fieldUpdater;
+
+    @Mock
+    private ExpenseSpecificationBuilder specificationBuilder;
+
     @InjectMocks
     private ExpenseService expenseService;
 
@@ -79,6 +85,17 @@ class ExpenseServiceTest {
 
         // Mock shop access validator to allow access by default (no access restriction)
         lenient().when(shopAccessValidator.hasNoAccessToShop(anyString(), any(JwtPrincipal.class))).thenReturn(false);
+
+        // Mock field updater to clean tags (trim, lowercase, remove empty)
+        lenient().when(fieldUpdater.cleanTags(any())).thenAnswer(invocation -> {
+            Set<String> tags = invocation.getArgument(0);
+            return tags.stream()
+                .filter(tag -> tag != null)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(tag -> !tag.isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
+        });
 
         category = ExpenseCategory.builder()
             .id(categoryId)
