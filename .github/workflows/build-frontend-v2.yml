@@ -69,7 +69,7 @@ jobs:
         with:
           projectBaseDir: frontend
           args: >
-            -Dsonar.projectKey=mabdulwasii_retail-manager
+            -Dsonar.projectKey=princely-org_retail-manager_frontend
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
