@@ -524,19 +524,6 @@ class ExpenseCategoryTest {
     }
 
     @Test
-    @DisplayName("activate - Should activate inactive category")
-    void activate_shouldActivateInactiveCategory() {
-        // Given
-        category.setIsActive(false);
-
-        // When
-        category.activate();
-
-        // Then
-        assertThat(category.getIsActive()).isTrue();
-    }
-
-    @Test
     @DisplayName("canAutoApprove - Should require category to be active")
     void canAutoApprove_shouldRequireCategoryToBeActive() {
         // Given

@@ -531,8 +531,8 @@ class ExpenseStatusTest {
     void workflow_allEnumValuesExist() {
         ExpenseStatus[] allStatuses = ExpenseStatus.values();
 
-        assertThat(allStatuses).hasSize(5);
-        assertThat(allStatuses).contains(
+        assertThat(allStatuses).hasSize(5)
+                .contains(
             ExpenseStatus.DRAFT,
             ExpenseStatus.PENDING_APPROVAL,
             ExpenseStatus.APPROVED,

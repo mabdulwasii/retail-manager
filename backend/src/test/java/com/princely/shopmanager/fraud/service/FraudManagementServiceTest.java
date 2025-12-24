@@ -15,7 +15,7 @@ import com.princely.shopmanager.fraud.repository.FraudRuleRepository;
 import com.princely.shopmanager.fraud.repository.RiskAssessmentRepository;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.shared.service.AuditService;
-import jakarta.persistence.EntityNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +35,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -72,15 +74,14 @@ class FraudManagementServiceTest {
     private FraudManagementService fraudManagementService;
 
     private Shop testShop;
-    private Tenant testTenant;
     private Pageable pageable;
 
     @BeforeEach
     void setUp() {
-        testTenant = Tenant.builder()
-            .id("tenant-1")
-            .name("Test Tenant")
-            .build();
+        Tenant testTenant = Tenant.builder()
+                .id("tenant-1")
+                .name("Test Tenant")
+                .build();
 
         testShop = Shop.builder()
             .id("shop-1")
@@ -119,7 +120,7 @@ class FraudManagementServiceTest {
             // Then
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getAlertNumber()).isEqualTo("ALERT-001");
+            assertThat(result.getContent().getFirst().getAlertNumber()).isEqualTo("ALERT-001");
         }
     }
 
@@ -138,9 +139,9 @@ class FraudManagementServiceTest {
                 .thenReturn(tenantId);
 
             when(fraudAlertRepository.findByTenantIdAndStatusOrderByDetectionTimestampDesc(
-                eq(tenantId),
-                eq(FraudAlert.AlertStatus.ACTIVE),
-                eq(pageable)
+                tenantId,
+                FraudAlert.AlertStatus.ACTIVE,
+                pageable
             )).thenReturn(alertPage);
 
             // When
@@ -210,8 +211,8 @@ class FraudManagementServiceTest {
         RiskAssessment assessment = createTestAssessment();
 
         when(riskAssessmentRepository.findByRiskLevelInAndStatus(
-            eq(List.of(RiskAssessment.RiskLevel.HIGH)),
-            eq(RiskAssessment.AssessmentStatus.PENDING)
+            List.of(RiskAssessment.RiskLevel.HIGH),
+            RiskAssessment.AssessmentStatus.PENDING
         )).thenReturn(List.of(assessment));
 
         // When
@@ -513,7 +514,7 @@ class FraudManagementServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getRuleName()).isEqualTo("Rule 1");
+        assertThat(result.getContent().getFirst().getRuleName()).isEqualTo("Rule 1");
     }
 
     // Helper methods

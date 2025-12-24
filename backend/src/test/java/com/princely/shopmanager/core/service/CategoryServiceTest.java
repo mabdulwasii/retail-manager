@@ -10,7 +10,7 @@ import com.princely.shopmanager.core.repository.CategoryRepository;
 import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
-import jakarta.persistence.EntityNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,9 +22,13 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -257,8 +261,8 @@ class CategoryServiceTest {
         List<CategoryResponse> responses = categoryService.getCategoriesByShop("shop-1", false, testPrincipal);
 
         // Then
-        assertThat(responses).isNotNull();
-        assertThat(responses).hasSize(2);
+        assertThat(responses).isNotNull()
+                .hasSize(2);
         verify(categoryRepository).findByShopId("shop-1");
     }
 

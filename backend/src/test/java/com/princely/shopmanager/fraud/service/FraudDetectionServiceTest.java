@@ -63,14 +63,13 @@ class FraudDetectionServiceTest {
     private Shop testShop;
     private User testCashier;
     private SalesTransaction testTransaction;
-    private Tenant testTenant;
 
     @BeforeEach
     void setUp() {
-        testTenant = Tenant.builder()
-            .id("tenant-1")
-            .name("Test Tenant")
-            .build();
+        Tenant testTenant = Tenant.builder()
+                .id("tenant-1")
+                .name("Test Tenant")
+                .build();
 
         testShop = Shop.builder()
             .id("shop-1")
@@ -247,9 +246,9 @@ class FraudDetectionServiceTest {
         // Mock repository to return count > threshold
         LocalDateTime windowStart = testTransaction.getTransactionDate().minusMinutes(60);
         when(salesTransactionRepository.countTransactionsByShopAndPeriod(
-            eq("shop-1"),
-            eq(windowStart),
-            eq(testTransaction.getTransactionDate())
+            "shop-1",
+            windowStart,
+            testTransaction.getTransactionDate()
         )).thenReturn(15L); // More than threshold
 
         when(riskAssessmentRepository.save(any(RiskAssessment.class)))

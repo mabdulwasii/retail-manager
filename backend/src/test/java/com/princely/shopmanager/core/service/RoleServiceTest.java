@@ -159,8 +159,8 @@ class RoleServiceTest {
         Set<Role> result = roleService.getUserRoles(TEST_USER_ID);
 
         // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).containsAll(expectedRoles);
+        assertThat(result).hasSize(2)
+                .containsAll(expectedRoles);
     }
 
     @Test

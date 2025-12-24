@@ -54,8 +54,8 @@ class PermissionServiceTest {
         List<Permission> result = permissionService.getAllPermissions();
 
         // Then
-        assertThat(result).hasSize(3);
-        assertThat(result).containsAll(expectedPermissions);
+        assertThat(result).hasSize(3)
+                .containsAll(expectedPermissions);
         verify(permissionRepository).findAll();
     }
 
@@ -77,8 +77,9 @@ class PermissionServiceTest {
         Map<String, List<PermissionResponse>> result = permissionService.getPermissionsGroupedByResource();
 
         // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).containsKeys("PRODUCT", "SALES");
+        assertThat(result).hasSize(2)
+                .containsKeys("PRODUCT", "SALES");
+
         assertThat(result.get("PRODUCT")).hasSize(2);
         assertThat(result.get("SALES")).hasSize(2);
     }
@@ -156,8 +157,8 @@ class PermissionServiceTest {
         Set<Permission> result = permissionService.getPermissionsByRole(TEST_ROLE_ID);
 
         // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).containsAll(rolePermissions);
+        assertThat(result).hasSize(2)
+                .containsAll(rolePermissions);
     }
 
     @Test
@@ -264,8 +265,8 @@ class PermissionServiceTest {
         List<Permission> result = permissionService.getPermissionsByResource("product");
 
         // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).containsAll(productPermissions);
+        assertThat(result).hasSize(2)
+                .containsAll(productPermissions);
         verify(permissionRepository).findByResource("PRODUCT"); // Should uppercase
     }
 
@@ -330,8 +331,8 @@ class PermissionServiceTest {
         List<String> result = permissionService.getAllResources();
 
         // Then
-        assertThat(result).hasSize(3); // Distinct
-        assertThat(result).containsExactly("INVENTORY", "PRODUCT", "SALES"); // Sorted
+        assertThat(result).hasSize(3)
+                .containsExactly("INVENTORY", "PRODUCT", "SALES"); // Sorted
     }
 
     @Test

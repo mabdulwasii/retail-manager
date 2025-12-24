@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -90,7 +91,7 @@ class ExpenseServiceTest {
         lenient().when(fieldUpdater.cleanTags(any())).thenAnswer(invocation -> {
             Set<String> tags = invocation.getArgument(0);
             return tags.stream()
-                .filter(tag -> tag != null)
+                .filter(Objects::nonNull)
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .filter(tag -> !tag.isEmpty())

@@ -1,6 +1,7 @@
 package com.princely.shopmanager.fraud.controller;
 
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import static com.princely.shopmanager.test.TestConstants.*;
+import static com.princely.shopmanager.test.TestConstants.TEST_SHOP_001;
+import static com.princely.shopmanager.test.TestConstants.TEST_TENANT_001;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -223,46 +225,6 @@ class FraudDetectionControllerMinimalIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // @Test
-    // @DisplayName("POST /fraud/rules - Should create fraud rule")
-    void shouldCreateFraudRule() {
-        // Given - Requires FraudRuleRequest DTO
-        setTenantContext(TEST_TENANT_001);
-        // Placeholder: FraudRuleRequest creation requires complex setup
-
-        // When
-        // TODO: Implement when fraud rule test data is available
-
-        // Then
-        // TODO: Add assertions
-    }
-
-    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
-    @DisplayName("PUT /fraud/rules/{ruleId} - Should update fraud rule")
-    void shouldUpdateFraudRule() {
-        // Given - Requires existing fraud rule
-        setTenantContext(TEST_TENANT_001);
-
-        // TODO: Implement when fraud rule test data is available
-    }
-
-    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
-    @DisplayName("PATCH /fraud/rules/{ruleId} - Should partial update fraud rule")
-    void shouldPatchFraudRule() {
-        // Given - Requires existing fraud rule
-        setTenantContext(TEST_TENANT_001);
-
-        // TODO: Implement when fraud rule test data is available
-    }
-
-    @org.junit.jupiter.api.Disabled("Requires fraud rule test data not yet available in test-data.sql")
-    @DisplayName("DELETE /fraud/rules/{ruleId} - Should delete fraud rule")
-    void shouldDeleteFraudRule() {
-        // Given - Requires existing fraud rule
-        setTenantContext(TEST_TENANT_001);
-
-        // TODO: Implement when fraud rule test data is available
-    }
 
     // @Test
     // @DisplayName("GET /fraud/statistics - Should get fraud statistics")
