@@ -57,11 +57,11 @@ class FraudAlertCreatedEventTest {
         String result = event.toString();
 
         // Then
-        assertThat(result).contains("FraudAlertCreatedEvent");
-        assertThat(result).contains("alertNumber='ALT-12345'");
-        assertThat(result).contains("severity='HIGH'");
-        assertThat(result).contains("tenantId='tenant-1'");
-        assertThat(result).contains("shopId='shop-1'");
+        assertThat(result).contains("FraudAlertCreatedEvent")
+                .contains("alertNumber='ALT-12345'")
+                .contains("severity='HIGH'")
+                .contains("tenantId='tenant-1'")
+                .contains("shopId='shop-1'");
     }
 
     @Test

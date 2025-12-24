@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,11 +53,11 @@ class RiskAssessmentCreatedEventTest {
         String result = event.toString();
 
         // Then
-        assertThat(result).contains("RiskAssessmentCreatedEvent");
-        assertThat(result).contains("assessmentId='assessment-1'");
-        assertThat(result).contains("riskLevel='HIGH'");
-        assertThat(result).contains("tenantId='tenant-1'");
-        assertThat(result).contains("shopId='shop-1'");
+        assertThat(result).contains("RiskAssessmentCreatedEvent")
+                .contains("assessmentId='assessment-1'")
+                .contains("riskLevel='HIGH'")
+                .contains("tenantId='tenant-1'")
+                .contains("shopId='shop-1'");
     }
 
     @Test

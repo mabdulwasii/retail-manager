@@ -10,8 +10,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,8 +70,8 @@ class CustomJwtAuthenticationTokenTest {
         Object result = token.getPrincipal();
 
         // Then
-        assertThat(result).isInstanceOf(JwtPrincipal.class);
-        assertThat(result).isEqualTo(principal);
+        assertThat(result).isInstanceOf(JwtPrincipal.class)
+                .isEqualTo(principal);
     }
 
     @Test
@@ -97,8 +95,8 @@ class CustomJwtAuthenticationTokenTest {
         String name = token.getName();
 
         // Then
-        assertThat(name).isEqualTo("testuser");
-        assertThat(name).isEqualTo(principal.getPreferredUsername());
+        assertThat(name).isEqualTo("testuser")
+                .isEqualTo(principal.getPreferredUsername());
     }
 
     @Test

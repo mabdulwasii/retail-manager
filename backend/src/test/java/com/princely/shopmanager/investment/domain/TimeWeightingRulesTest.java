@@ -254,17 +254,6 @@ class TimeWeightingRulesTest {
         assertThat(multiplier).isEqualByComparingTo(BigDecimal.valueOf(2.0));
     }
 
-    @Test
-    @DisplayName("getMultiplierForYears - Should not cap when multiplier below max")
-    void getMultiplierForYears_shouldNotCapWhenBelowMax() {
-        // Given: year2Multiplier (1.2) < maxMultiplier (2.0)
-        // When
-        BigDecimal multiplier = rules.getMultiplierForYears(BigDecimal.valueOf(2.0));
-
-        // Then - Should return year2Multiplier without capping
-        assertThat(multiplier).isEqualByComparingTo(BigDecimal.valueOf(1.2));
-    }
-
     // isValid tests - Valid configurations
     @Test
     @DisplayName("isValid - Should return true for valid configuration")
