@@ -266,12 +266,8 @@ class ShopAccessValidatorTest {
             .build();
 
         // When/Then
-        boolean tenantAdminResult = validator.hasTenantWideAccess(tenantAdmin);
-
-        boolean managerResult = validator.hasTenantWideAccess(manager);
-
-        assertThat(tenantAdminResult).isTrue();
-        assertThat(managerResult).isFalse();
+        assertThat(validator.hasTenantWideAccess(tenantAdmin)).isTrue();
+        assertThat(validator.hasTenantWideAccess(manager)).isFalse();
     }
 
     @Test
