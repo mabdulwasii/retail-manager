@@ -166,9 +166,10 @@ class FraudManagementServiceTest {
         FraudAlertResponse result = fraudManagementService.getFraudAlertById("alert-1");
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo("alert-1");
-        assertThat(result.getAlertNumber()).isEqualTo("ALERT-001");
+        assertThat(result)
+            .isNotNull()
+            .extracting("id", "alertNumber")
+            .containsExactly("alert-1", "ALERT-001");
     }
 
     @Test
@@ -240,9 +241,10 @@ class FraudManagementServiceTest {
         RiskAssessmentResponse result = fraudManagementService.getRiskAssessmentById("assessment-1");
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo("assessment-1");
-        assertThat(result.getRiskLevel()).isEqualTo(RiskAssessment.RiskLevel.HIGH);
+        assertThat(result)
+            .isNotNull()
+            .extracting("id", "riskLevel")
+            .containsExactly("assessment-1", RiskAssessment.RiskLevel.HIGH);
     }
 
     @Test
@@ -274,9 +276,10 @@ class FraudManagementServiceTest {
         FraudRule result = fraudManagementService.createFraudRule(request);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getRuleName()).isEqualTo("Test Rule");
-        assertThat(result.getRuleType()).isEqualTo(FraudRule.FraudRuleType.HIGH_AMOUNT_TRANSACTION);
+        assertThat(result)
+            .isNotNull()
+            .extracting("ruleName", "ruleType")
+            .containsExactly("Test Rule", FraudRule.FraudRuleType.HIGH_AMOUNT_TRANSACTION);
         verify(auditService).logEntityCreation(eq("FraudRule"), anyString(), anyString());
     }
 
@@ -299,9 +302,12 @@ class FraudManagementServiceTest {
         FraudRule result = fraudManagementService.createFraudRule(request);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getShop()).isNull();
-        assertThat(result.isGlobal()).isTrue();
+        assertThat(result)
+            .isNotNull()
+            .satisfies(rule -> {
+                assertThat(rule.getShop()).isNull();
+                assertThat(rule.isGlobal()).isTrue();
+            });
     }
 
     @Test
@@ -353,8 +359,9 @@ class FraudManagementServiceTest {
         FraudRule result = fraudManagementService.updateFraudRule("rule-1", request);
 
         // Then
-        assertThat(result.getRuleName()).isEqualTo("Updated Rule");
-        assertThat(result.getRuleType()).isEqualTo(FraudRule.FraudRuleType.HIGH_FREQUENCY_TRANSACTIONS);
+        assertThat(result)
+            .extracting("ruleName", "ruleType")
+            .containsExactly("Updated Rule", FraudRule.FraudRuleType.HIGH_FREQUENCY_TRANSACTIONS);
         verify(auditService).logEntityModification(eq("FraudRule"), eq("rule-1"), anyString());
     }
 
@@ -421,8 +428,9 @@ class FraudManagementServiceTest {
 
         // Then
         verify(fraudAlertRepository).save(alert);
-        assertThat(alert.getStatus()).isEqualTo(FraudAlert.AlertStatus.FALSE_POSITIVE);
-        assertThat(alert.getFalsePositive()).isTrue();
+        assertThat(alert)
+            .extracting("status", "falsePositive")
+            .containsExactly(FraudAlert.AlertStatus.FALSE_POSITIVE, true);
         verify(auditService).logEntityModification(eq("FraudAlert"), eq("alert-1"), contains("false positive"));
     }
 
@@ -467,23 +475,26 @@ class FraudManagementServiceTest {
             Map<String, Object> stats = fraudManagementService.getFraudStatistics("shop-1", startDate, endDate);
 
             // Then
-            assertThat(stats).isNotNull();
-            assertThat(stats).containsKeys("alerts", "riskAssessments", "rules", "dateRange");
+            assertThat(stats)
+                .isNotNull()
+                .containsKeys("alerts", "riskAssessments", "rules", "dateRange");
 
             @SuppressWarnings("unchecked")
             Map<String, Object> alerts = (Map<String, Object>) stats.get("alerts");
-            assertThat(alerts.get("total")).isEqualTo(10L);
-            assertThat(alerts.get("highSeverity")).isEqualTo(5L);
-            assertThat(alerts.get("critical")).isEqualTo(2L);
+            assertThat(alerts)
+                .containsEntry("total", 10L)
+                .containsEntry("highSeverity", 5L)
+                .containsEntry("critical", 2L);
 
             @SuppressWarnings("unchecked")
             Map<String, Object> assessments = (Map<String, Object>) stats.get("riskAssessments");
-            assertThat(assessments.get("pending")).isEqualTo(8L);
-            assertThat(assessments.get("underReview")).isEqualTo(3L);
+            assertThat(assessments)
+                .containsEntry("pending", 8L)
+                .containsEntry("underReview", 3L);
 
             @SuppressWarnings("unchecked")
             Map<String, Object> rules = (Map<String, Object>) stats.get("rules");
-            assertThat(rules.get("total")).isEqualTo(15L);
+            assertThat(rules).containsEntry("total", 15L);
         }
     }
 
