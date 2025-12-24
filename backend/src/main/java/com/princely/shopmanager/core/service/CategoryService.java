@@ -32,16 +32,19 @@ public class CategoryService extends ShopAwareService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final CategoryHierarchyValidator hierarchyValidator;
 
     public CategoryService(
             ShopAccessValidator shopAccessValidator,
             ShopRepository shopRepository,
             CategoryRepository categoryRepository,
-            ProductRepository productRepository
+            ProductRepository productRepository,
+            CategoryHierarchyValidator hierarchyValidator
     ) {
         super(shopAccessValidator, shopRepository);
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.hierarchyValidator = hierarchyValidator;
     }
 
     /**
@@ -81,33 +84,18 @@ public class CategoryService extends ShopAwareService {
             throw new IllegalArgumentException("Category with name '" + request.getName() + "' already exists in this shop");
         }
 
-        // Validate and fetch parent category if provided
-        Category parent = null;
-        if (request.getParentId() != null && !request.getParentId().trim().isEmpty()) {
-            parent = categoryRepository.findById(request.getParentId())
-                .orElseThrow(() -> new IllegalArgumentException("Parent category not found with ID: " + request.getParentId()));
-
-            // Ensure parent belongs to same shop
-            if (!parent.getShop().getId().equals(request.getShopId())) {
-                throw new IllegalArgumentException("Parent category must belong to the same shop");
-            }
-
-            // Prevent circular references
-            if (wouldCreateCircularReference(request.getParentId(), null)) {
-                throw new IllegalArgumentException("Cannot set parent - would create circular reference");
-            }
-        }
-
-        // Build and save category
+        // Build category with basic fields
         Category category = Category.builder()
             .shop(shop)
             .name(request.getName())
             .description(request.getDescription())
-            .parent(parent)
             .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
             .isActive(Optional.ofNullable(request.getIsActive()).orElse(true))
             .imageUrl(request.getImageUrl())
             .build();
+
+        // Validate and set parent if provided (delegated to validator)
+        hierarchyValidator.validateAndSetParent(category, request.getParentId(), null);
 
         category = categoryRepository.save(category);
         log.info("Created category with ID: {}", category.getId());
@@ -180,13 +168,7 @@ public class CategoryService extends ShopAwareService {
 
         // Update fields if provided
         if (request.getName() != null) {
-            // Check for duplicate name (excluding current category)
-            categoryRepository.findByNameAndShop_Id(request.getName(), category.getShop().getId())
-                .ifPresent(existing -> {
-                    if (!existing.getId().equals(categoryId)) {
-                        throw new IllegalArgumentException("Category with name '" + request.getName() + "' already exists in this shop");
-                    }
-                });
+            hierarchyValidator.validateNameUniqueness(request.getName(), category.getShop().getId(), categoryId);
             category.setName(request.getName());
         }
 
@@ -194,27 +176,8 @@ public class CategoryService extends ShopAwareService {
             category.setDescription(request.getDescription());
         }
 
-        if (request.getParentId() != null) {
-            if (request.getParentId().trim().isEmpty()) {
-                // Empty string means remove parent (make it a root category)
-                category.setParent(null);
-            } else {
-                // Validate parent exists and belongs to same shop
-                Category parent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Parent category not found with ID: " + request.getParentId()));
-
-                if (!parent.getShop().getId().equals(category.getShop().getId())) {
-                    throw new IllegalArgumentException("Parent category must belong to the same shop");
-                }
-
-                // Prevent circular references
-                if (wouldCreateCircularReference(request.getParentId(), categoryId)) {
-                    throw new IllegalArgumentException("Cannot set parent - would create circular reference");
-                }
-
-                category.setParent(parent);
-            }
-        }
+        // Delegate parent validation and assignment to validator
+        hierarchyValidator.validateAndSetParent(category, request.getParentId(), categoryId);
 
         if (request.getDisplayOrder() != null) {
             category.setDisplayOrder(request.getDisplayOrder());
@@ -349,29 +312,5 @@ public class CategoryService extends ShopAwareService {
         }
 
         return String.join(" > ", path);
-    }
-
-    /**
-     * Check if setting a parent would create a circular reference.
-     */
-    private boolean wouldCreateCircularReference(String parentId, String categoryId) {
-        if (categoryId == null) {
-            return false; // New category, no circular reference possible
-        }
-
-        if (parentId.equals(categoryId)) {
-            return true; // Category cannot be its own parent
-        }
-
-        // Traverse up the parent chain to check for circular reference
-        Category current = categoryRepository.findById(parentId).orElse(null);
-        while (current != null) {
-            if (current.getId().equals(categoryId)) {
-                return true; // Found circular reference
-            }
-            current = current.getParent();
-        }
-
-        return false;
     }
 }

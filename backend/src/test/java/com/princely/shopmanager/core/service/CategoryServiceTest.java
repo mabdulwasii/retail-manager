@@ -43,6 +43,9 @@ class CategoryServiceTest {
     @Mock
     private ShopAccessValidator shopAccessValidator;
 
+    @Mock
+    private CategoryHierarchyValidator hierarchyValidator;
+
     private CategoryService categoryService;
 
     private Shop testShop;
@@ -56,7 +59,8 @@ class CategoryServiceTest {
             shopAccessValidator,
             shopRepository,
             categoryRepository,
-            productRepository
+            productRepository,
+            hierarchyValidator
         );
 
         testShop = new Shop();
@@ -141,9 +145,15 @@ class CategoryServiceTest {
         when(shopRepository.existsById("shop-1")).thenReturn(true);
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
         when(shopRepository.findById("shop-1")).thenReturn(Optional.of(testShop));
-        when(categoryRepository.findById("parent-cat-1")).thenReturn(Optional.of(parentCategory));
         when(categoryRepository.existsByNameAndShop_Id("Smartphones", "shop-1")).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(childCategory);
+
+        // Mock hierarchyValidator to set parent
+        doAnswer(invocation -> {
+            Category category = invocation.getArgument(0);
+            category.setParent(parentCategory);
+            return null;
+        }).when(hierarchyValidator).validateAndSetParent(any(), eq("parent-cat-1"), isNull());
 
         // When
         CategoryResponse response = categoryService.createCategory(request, testPrincipal);
@@ -151,7 +161,7 @@ class CategoryServiceTest {
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("Smartphones");
-        verify(categoryRepository).findById("parent-cat-1");
+        verify(hierarchyValidator).validateAndSetParent(any(), eq("parent-cat-1"), isNull());
     }
 
     @Test
@@ -276,7 +286,6 @@ class CategoryServiceTest {
 
         when(categoryRepository.findById("cat-1")).thenReturn(Optional.of(testCategory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
-        when(categoryRepository.findByNameAndShop_Id("Updated Electronics", "shop-1")).thenReturn(Optional.empty());
         when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
 
         // When
@@ -295,15 +304,12 @@ class CategoryServiceTest {
             .name("Duplicate Name")
             .build();
 
-        Category duplicateCategory = Category.builder()
-            .id("other-cat-id")
-            .name("Duplicate Name")
-            .shop(testShop)
-            .build();
-
         when(categoryRepository.findById("cat-1")).thenReturn(Optional.of(testCategory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
-        when(categoryRepository.findByNameAndShop_Id("Duplicate Name", "shop-1")).thenReturn(Optional.of(duplicateCategory));
+
+        // Mock hierarchyValidator to throw exception for duplicate name
+        doThrow(new IllegalArgumentException("Category with name 'Duplicate Name' already exists in this shop"))
+            .when(hierarchyValidator).validateNameUniqueness("Duplicate Name", "shop-1", "cat-1");
 
         // When/Then
         assertThatThrownBy(() -> categoryService.updateCategory("cat-1", request, testPrincipal))
