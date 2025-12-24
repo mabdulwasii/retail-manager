@@ -167,17 +167,13 @@ class ReceiptTest {
         receipt.incrementPrintCount();
         LocalDateTime firstPrintTime = receipt.getLastPrintedAt();
 
-        // Small delay to ensure different timestamps
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         receipt.incrementPrintCount();
         LocalDateTime secondPrintTime = receipt.getLastPrintedAt();
 
         // Then
+        // Both timestamps should be set (note: they may be equal due to fast execution)
+        assertThat(firstPrintTime).isNotNull();
+        assertThat(secondPrintTime).isNotNull();
         assertThat(secondPrintTime).isAfterOrEqualTo(firstPrintTime);
         assertThat(receipt.getPrintedCount()).isEqualTo(2);
     }
