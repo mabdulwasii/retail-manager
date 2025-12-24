@@ -1,0 +1,142 @@
+version: '3.8'
+
+# ============================================================================
+# Docker Compose Lite - Lightweight Standalone Deployment
+# ============================================================================
+# Memory footprint: ~1-1.5 GB (vs 2-3 GB for full cloud version)
+# Use case: Customer laptops, low-memory environments, offline stores
+# ============================================================================
+
+services:
+  # ==========================================================================
+  # H2 Database (embedded in backend, but exposed for management)
+  # ==========================================================================
+  # Note: H2 runs inside the backend container. This section is for reference.
+  # Data is persisted to ./data/h2 volume
+
+  # ==========================================================================
+  # Backend Service (Embedded Mode)
+  # ==========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.lite
+      args:
+        JAR_FILE: target/shop-manager-*-embedded.jar
+    container_name: shop-manager-backend-lite
+    ports:
+      - "${BACKEND_PORT:-8081}:8081"
+    environment:
+      # Application Mode
+      SPRING_PROFILES_ACTIVE: embedded
+
+      # Server Configuration
+      SERVER_PORT: 8081
+
+      # H2 Database (file-based)
+      SPRING_DATASOURCE_URL: jdbc:h2:file:/app/data/shopmanager;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: ${H2_PASSWORD:-}
+
+      # H2 Console (optional, for debugging)
+      SPRING_H2_CONSOLE_ENABLED: ${H2_CONSOLE_ENABLED:-false}
+      SPRING_H2_CONSOLE_PATH: /h2-console
+
+      # JWT Authentication
+      APPLICATION_JWT_SECRET: ${JWT_SECRET}
+      APPLICATION_JWT_EXPIRATION_MS: 86400000
+      APPLICATION_JWT_REFRESH_EXPIRATION_MS: 604800000
+
+      # File Storage
+      APPLICATION_STORAGE_TYPE: filesystem
+      APPLICATION_STORAGE_LOCATION: /app/data/uploads
+      APPLICATION_STORAGE_MAX_FILE_SIZE: 10485760
+
+      # Cloud Sync (optional)
+      APPLICATION_SYNC_ENABLED: ${CLOUD_SYNC_ENABLED:-false}
+      APPLICATION_SYNC_CLOUD_ENDPOINT: ${CLOUD_API_URL:-}
+      APPLICATION_SYNC_API_KEY: ${CLOUD_API_KEY:-}
+      APPLICATION_SYNC_STORE_ID: ${STORE_ID:-}
+      APPLICATION_SYNC_SCHEDULE_CRON: ${SYNC_CRON:-0 0 * * * ?}
+      APPLICATION_SYNC_PRIVACY_ANONYMIZE_PII: ${ANONYMIZE_PII:-false}
+
+      # JVM Memory Settings (optimized for low memory)
+      JAVA_OPTS: >-
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseStringDeduplication
+    volumes:
+      - h2_data:/app/data
+      - uploads_data:/app/data/uploads
+      - logs_data:/app/logs
+    networks:
+      - shop-network-lite
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Frontend Service (Static Build)
+  # ==========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.lite
+      args:
+        VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-8081}/api
+        VITE_APP_VERSION: ${APP_VERSION:-1.0.0}
+        VITE_APP_ENVIRONMENT: standalone
+    container_name: shop-manager-frontend-lite
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    environment:
+      VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-8081}/api
+      VITE_APP_VERSION: ${APP_VERSION:-1.0.0}
+      VITE_APP_ENVIRONMENT: standalone
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - shop-network-lite
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  shop-network-lite:
+    driver: bridge
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  h2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data/h2}
+  uploads_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/uploads
+  logs_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/logs

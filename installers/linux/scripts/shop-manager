@@ -1,0 +1,182 @@
+#!/bin/bash
+# ============================================================================
+# Shop Manager - Linux Launcher Script
+# ============================================================================
+# This script launches Shop Manager on Linux
+# ============================================================================
+
+# Determine installation type
+if [ -f "/opt/shop-manager/lib/shop-manager.jar" ]; then
+    # System installation (via .deb or .rpm)
+    APP_DIR="/opt/shop-manager"
+    DATA_DIR="/var/lib/shop-manager/data"
+    CONFIG_FILE="/etc/shop-manager/shop-manager.env"
+    LOG_FILE="/var/lib/shop-manager/data/logs/shop-manager.log"
+else
+    # User installation (AppImage or manual)
+    APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    DATA_DIR="$HOME/.shopmanager/data"
+    CONFIG_FILE="$HOME/.shopmanager/shop-manager.env"
+    LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"
+fi
+
+# Function to check Java installation
+check_java() {
+    if ! command -v java &> /dev/null; then
+        echo "ERROR: Java 21 or higher is required to run Shop Manager"
+        echo ""
+        echo "Install Java 21:"
+        echo "  Ubuntu/Debian: sudo apt-get install openjdk-21-jre"
+        echo "  RHEL/Fedora:   sudo yum install java-21-openjdk"
+        echo "  Or download from: https://adoptium.net/temurin/releases/?version=21"
+        exit 1
+    fi
+
+    # Check Java version
+    JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | cut -d'.' -f1)
+    if [ "$JAVA_VERSION" -lt 21 ]; then
+        echo "ERROR: Shop Manager requires Java 21 or higher"
+        echo "Current version: Java $JAVA_VERSION"
+        echo ""
+        echo "Please upgrade Java to version 21 or higher"
+        exit 1
+    fi
+}
+
+# Function to load environment variables
+load_env() {
+    # Create config directory if needed (for user installations)
+    if [[ "$CONFIG_FILE" == *"$HOME"* ]]; then
+        mkdir -p "$(dirname "$CONFIG_FILE")"
+
+        # Copy template if config doesn't exist
+        if [ ! -f "$CONFIG_FILE" ]; then
+            if [ -f "$APP_DIR/usr/share/shop-manager/config/.env.template" ]; then
+                cp "$APP_DIR/usr/share/shop-manager/config/.env.template" "$CONFIG_FILE"
+            elif [ -f "$APP_DIR/config/.env.template" ]; then
+                cp "$APP_DIR/config/.env.template" "$CONFIG_FILE"
+            fi
+
+            # Generate JWT secret
+            if [ -f "$CONFIG_FILE" ]; then
+                JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+                sed -i "s|JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET|JWT_SECRET=$JWT_SECRET|" "$CONFIG_FILE"
+                chmod 600 "$CONFIG_FILE"
+            fi
+        fi
+    fi
+
+    # Load environment variables
+    if [ -f "$CONFIG_FILE" ]; then
+        export $(grep -v '^#' "$CONFIG_FILE" | xargs)
+    fi
+
+    # Set defaults
+    export BACKEND_PORT=${BACKEND_PORT:-8081}
+    export JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
+    export SPRING_PROFILES_ACTIVE=embedded
+}
+
+# Function to create data directories
+create_data_dirs() {
+    mkdir -p "$DATA_DIR/h2"
+    mkdir -p "$DATA_DIR/uploads"
+    mkdir -p "$DATA_DIR/logs"
+    mkdir -p "$DATA_DIR/backups"
+}
+
+# Function to check if application is already running
+check_running() {
+    PID_FILE="$(dirname "$DATA_DIR")/shop-manager.pid"
+
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        if ps -p "$OLD_PID" > /dev/null 2>&1; then
+            echo "Shop Manager is already running (PID: $OLD_PID)"
+            echo "Access it at: http://localhost:$BACKEND_PORT"
+            exit 0
+        else
+            rm "$PID_FILE"
+        fi
+    fi
+}
+
+# Function to find JAR file
+find_jar() {
+    if [ -f "/opt/shop-manager/lib/shop-manager.jar" ]; then
+        echo "/opt/shop-manager/lib/shop-manager.jar"
+    elif [ -f "$APP_DIR/lib/shop-manager.jar" ]; then
+        echo "$APP_DIR/lib/shop-manager.jar"
+    elif [ -f "$APP_DIR/usr/lib/shop-manager/shop-manager.jar" ]; then
+        echo "$APP_DIR/usr/lib/shop-manager/shop-manager.jar"
+    else
+        echo "ERROR: Could not find shop-manager.jar"
+        exit 1
+    fi
+}
+
+# Function to start application
+start_application() {
+    JAR_FILE=$(find_jar)
+
+    # Change to data directory
+    cd "$DATA_DIR"
+
+    echo "Starting Shop Manager..."
+    echo "  Java Version: $(java -version 2>&1 | head -1)"
+    echo "  JAR File: $JAR_FILE"
+    echo "  Data Directory: $DATA_DIR"
+    echo "  Backend Port: $BACKEND_PORT"
+    echo ""
+
+    # Start application
+    java $JAVA_OPTS \
+        -Dspring.profiles.active=embedded \
+        -Dserver.port=$BACKEND_PORT \
+        -Dapplication.jwt.secret="$JWT_SECRET" \
+        -Dapplication.sync.enabled="${CLOUD_SYNC_ENABLED:-false}" \
+        -Dapplication.sync.cloud-endpoint="$CLOUD_API_URL" \
+        -Dapplication.sync.api-key="$CLOUD_API_KEY" \
+        -Dapplication.sync.store-id="$STORE_ID" \
+        -jar "$JAR_FILE" \
+        > "$LOG_FILE" 2>&1 &
+
+    # Save PID
+    echo $! > "$(dirname "$DATA_DIR")/shop-manager.pid"
+
+    echo "Shop Manager starting..."
+    echo "Waiting for startup..."
+    sleep 5
+
+    # Check if application started
+    if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+        echo ""
+        echo "✓ Shop Manager started successfully!"
+        echo ""
+        echo "Access the application at: http://localhost:$BACKEND_PORT"
+        echo "Logs: $LOG_FILE"
+        echo ""
+
+        # Try to open browser
+        if command -v xdg-open &> /dev/null; then
+            xdg-open "http://localhost:$BACKEND_PORT" &
+        fi
+    else
+        echo ""
+        echo "WARNING: Shop Manager may still be starting..."
+        echo "Check logs: tail -f $LOG_FILE"
+        echo ""
+    fi
+}
+
+# Main execution
+main() {
+    check_java
+    load_env
+    create_data_dirs
+    check_running
+    start_application
+}
+
+# Run main
+main
