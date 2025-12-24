@@ -24,10 +24,11 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Enable TestContainers reuse
+      - name: Configure TestContainers
         run: |
           mkdir -p ~/.testcontainers
-          echo "testcontainers.reuse.enable=true" > ~/.testcontainers.properties
+          echo "testcontainers.reuse.enable=true" > ~/.testcontainers/testcontainers.properties
+          echo "testcontainers.ryuk.disabled=false" >> ~/.testcontainers/testcontainers.properties
 
       - name: Run unit tests with coverage
         run: |
