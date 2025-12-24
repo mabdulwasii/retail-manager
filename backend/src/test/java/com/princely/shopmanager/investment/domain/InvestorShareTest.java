@@ -85,14 +85,15 @@ class InvestorShareTest {
     void shareStatus_allEnumValuesShouldExist() {
         InvestorShare.ShareStatus[] statuses = InvestorShare.ShareStatus.values();
 
-        assertThat(statuses).hasSize(5);
-        assertThat(statuses).contains(
-            InvestorShare.ShareStatus.PENDING,
-            InvestorShare.ShareStatus.CALCULATED,
-            InvestorShare.ShareStatus.DISTRIBUTED,
-            InvestorShare.ShareStatus.REINVESTED,
-            InvestorShare.ShareStatus.CANCELLED
-        );
+        assertThat(statuses)
+            .hasSize(5)
+            .contains(
+                InvestorShare.ShareStatus.PENDING,
+                InvestorShare.ShareStatus.CALCULATED,
+                InvestorShare.ShareStatus.DISTRIBUTED,
+                InvestorShare.ShareStatus.REINVESTED,
+                InvestorShare.ShareStatus.CANCELLED
+            );
     }
 
     @Test

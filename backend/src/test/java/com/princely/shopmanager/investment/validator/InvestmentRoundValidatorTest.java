@@ -246,8 +246,8 @@ class InvestmentRoundValidatorTest {
 
         assertThat(errors)
             .isNotEmpty()
-            .anyMatch(e -> e.contains("Tier 1 multiplier must be greater than 0"));
-        assertThat(errors).anyMatch(e -> e.contains("Tier 2 multiplier must be greater than 0"));
+            .anyMatch(e -> e.contains("Tier 1 multiplier must be greater than 0"))
+            .anyMatch(e -> e.contains("Tier 2 multiplier must be greater than 0"));
     }
 
     @Test
@@ -382,9 +382,9 @@ class InvestmentRoundValidatorTest {
 
         assertThat(errors)
             .isNotEmpty()
-            .anyMatch(e -> e.contains("Base multiplier must be greater than 0"));
-        assertThat(errors).anyMatch(e -> e.contains("Year 2 multiplier must be greater than 0"));
-        assertThat(errors).anyMatch(e -> e.contains("Maximum multiplier must be greater than 0"));
+            .anyMatch(e -> e.contains("Base multiplier must be greater than 0"))
+            .anyMatch(e -> e.contains("Year 2 multiplier must be greater than 0"))
+            .anyMatch(e -> e.contains("Maximum multiplier must be greater than 0"));
     }
 
     @Test
@@ -568,8 +568,8 @@ class InvestmentRoundValidatorTest {
 
         assertThat(errors)
             .isNotEmpty()
-            .anyMatch(e -> e.contains("Investor 1") && e.contains("amount must be greater than 0"));
-        assertThat(errors).anyMatch(e -> e.contains("Investor 2") && e.contains("amount must be greater than 0"));
+            .anyMatch(e -> e.contains("Investor 1") && e.contains("amount must be greater than 0"))
+            .anyMatch(e -> e.contains("Investor 2") && e.contains("amount must be greater than 0"));
     }
 
     @Test

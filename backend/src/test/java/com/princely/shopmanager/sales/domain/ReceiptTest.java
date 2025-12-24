@@ -243,13 +243,14 @@ class ReceiptTest {
     void receiptFormat_allEnumValuesShouldExist() {
         Receipt.ReceiptFormat[] formats = Receipt.ReceiptFormat.values();
 
-        assertThat(formats).hasSize(4);
-        assertThat(formats).contains(
-            Receipt.ReceiptFormat.TEXT,
-            Receipt.ReceiptFormat.PDF,
-            Receipt.ReceiptFormat.HTML,
-            Receipt.ReceiptFormat.JSON
-        );
+        assertThat(formats)
+            .hasSize(4)
+            .contains(
+                Receipt.ReceiptFormat.TEXT,
+                Receipt.ReceiptFormat.PDF,
+                Receipt.ReceiptFormat.HTML,
+                Receipt.ReceiptFormat.JSON
+            );
     }
 
     // ReceiptStatus enum tests
@@ -258,14 +259,15 @@ class ReceiptTest {
     void receiptStatus_allEnumValuesShouldExist() {
         Receipt.ReceiptStatus[] statuses = Receipt.ReceiptStatus.values();
 
-        assertThat(statuses).hasSize(5);
-        assertThat(statuses).contains(
-            Receipt.ReceiptStatus.GENERATED,
-            Receipt.ReceiptStatus.PRINTED,
-            Receipt.ReceiptStatus.EMAILED,
-            Receipt.ReceiptStatus.CANCELLED,
-            Receipt.ReceiptStatus.VOIDED
-        );
+        assertThat(statuses)
+            .hasSize(5)
+            .contains(
+                Receipt.ReceiptStatus.GENERATED,
+                Receipt.ReceiptStatus.PRINTED,
+                Receipt.ReceiptStatus.EMAILED,
+                Receipt.ReceiptStatus.CANCELLED,
+                Receipt.ReceiptStatus.VOIDED
+            );
     }
 
     // Email tracking tests

@@ -396,15 +396,16 @@ class SalesTransactionTest {
     void paymentMethod_allEnumValuesShouldExist() {
         SalesTransaction.PaymentMethod[] methods = SalesTransaction.PaymentMethod.values();
 
-        assertThat(methods).hasSize(6);
-        assertThat(methods).contains(
-            SalesTransaction.PaymentMethod.CASH,
-            SalesTransaction.PaymentMethod.CARD,
-            SalesTransaction.PaymentMethod.BANK_TRANSFER,
-            SalesTransaction.PaymentMethod.MOBILE_MONEY,
-            SalesTransaction.PaymentMethod.CREDIT,
-            SalesTransaction.PaymentMethod.MIXED
-        );
+        assertThat(methods)
+            .hasSize(6)
+            .contains(
+                SalesTransaction.PaymentMethod.CASH,
+                SalesTransaction.PaymentMethod.CARD,
+                SalesTransaction.PaymentMethod.BANK_TRANSFER,
+                SalesTransaction.PaymentMethod.MOBILE_MONEY,
+                SalesTransaction.PaymentMethod.CREDIT,
+                SalesTransaction.PaymentMethod.MIXED
+            );
     }
 
     // TransactionStatus enum tests
@@ -413,14 +414,15 @@ class SalesTransactionTest {
     void transactionStatus_allEnumValuesShouldExist() {
         SalesTransaction.TransactionStatus[] statuses = SalesTransaction.TransactionStatus.values();
 
-        assertThat(statuses).hasSize(5);
-        assertThat(statuses).contains(
-            SalesTransaction.TransactionStatus.PENDING,
-            SalesTransaction.TransactionStatus.COMPLETED,
-            SalesTransaction.TransactionStatus.CANCELLED,
-            SalesTransaction.TransactionStatus.REFUNDED,
-            SalesTransaction.TransactionStatus.PARTIALLY_REFUNDED
-        );
+        assertThat(statuses)
+            .hasSize(5)
+            .contains(
+                SalesTransaction.TransactionStatus.PENDING,
+                SalesTransaction.TransactionStatus.COMPLETED,
+                SalesTransaction.TransactionStatus.CANCELLED,
+                SalesTransaction.TransactionStatus.REFUNDED,
+                SalesTransaction.TransactionStatus.PARTIALLY_REFUNDED
+            );
     }
 
     // Edge cases

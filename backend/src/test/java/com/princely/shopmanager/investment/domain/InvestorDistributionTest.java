@@ -353,14 +353,15 @@ class InvestorDistributionTest {
     void distributionStatus_allEnumValuesShouldExist() {
         InvestorDistribution.DistributionStatus[] statuses = InvestorDistribution.DistributionStatus.values();
 
-        assertThat(statuses).hasSize(5);
-        assertThat(statuses).contains(
-            InvestorDistribution.DistributionStatus.CALCULATED,
-            InvestorDistribution.DistributionStatus.APPROVED,
-            InvestorDistribution.DistributionStatus.PAID,
-            InvestorDistribution.DistributionStatus.FAILED,
-            InvestorDistribution.DistributionStatus.CANCELLED
-        );
+        assertThat(statuses)
+            .hasSize(5)
+            .contains(
+                InvestorDistribution.DistributionStatus.CALCULATED,
+                InvestorDistribution.DistributionStatus.APPROVED,
+                InvestorDistribution.DistributionStatus.PAID,
+                InvestorDistribution.DistributionStatus.FAILED,
+                InvestorDistribution.DistributionStatus.CANCELLED
+            );
     }
 
     @Test

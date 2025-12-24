@@ -136,8 +136,9 @@ class BusinessExceptionTest {
         BusinessException exception = new BusinessException(errorCode);
 
         // Then
-        assertThat(exception).isInstanceOf(RuntimeException.class);
-        assertThat(exception).isInstanceOf(Exception.class);
+        assertThat(exception)
+            .isInstanceOf(RuntimeException.class)
+            .isInstanceOf(Exception.class);
     }
 
     @Test

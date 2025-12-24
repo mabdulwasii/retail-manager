@@ -399,13 +399,14 @@ class InvestmentRoundTest {
     void roundStatus_allEnumValuesShouldExist() {
         InvestmentRound.RoundStatus[] statuses = InvestmentRound.RoundStatus.values();
 
-        assertThat(statuses).hasSize(4);
-        assertThat(statuses).contains(
-            InvestmentRound.RoundStatus.OPEN,
-            InvestmentRound.RoundStatus.CLOSED,
-            InvestmentRound.RoundStatus.COMPLETED,
-            InvestmentRound.RoundStatus.CANCELLED
-        );
+        assertThat(statuses)
+            .hasSize(4)
+            .contains(
+                InvestmentRound.RoundStatus.OPEN,
+                InvestmentRound.RoundStatus.CLOSED,
+                InvestmentRound.RoundStatus.COMPLETED,
+                InvestmentRound.RoundStatus.CANCELLED
+            );
     }
 
     @Test

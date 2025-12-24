@@ -332,10 +332,11 @@ class InvestmentCreateRequestValidatorTest {
 
         Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v ->
-            v.getMessage().contains("must be greater than 0")
-        );
+        assertThat(violations)
+            .isNotEmpty()
+            .anyMatch(v ->
+                v.getMessage().contains("must be greater than 0")
+            );
     }
 
     @Test
