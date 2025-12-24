@@ -28,8 +28,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -56,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductService extends ShopAwareService {
 
     private static final String ENTITY_TYPE_PRODUCT = "Product";
-    private static final Random RANDOM = new Random();
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
