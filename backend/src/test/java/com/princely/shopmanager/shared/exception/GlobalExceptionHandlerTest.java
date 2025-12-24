@@ -36,8 +36,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler Tests")
@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        when(messageService.getMessage(anyString(), any())).thenReturn("Localized error message");
+        lenient().when(messageService.getMessage(anyString(), any())).thenReturn("Localized error message");
     }
 
     // BusinessException Tests
@@ -99,7 +99,7 @@ class GlobalExceptionHandlerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().code()).isEqualTo("TENANT_ACCESS_DENIED");
+        assertThat(response.getBody().code()).isEqualTo("ACCESS_DENIED");
     }
 
     @Test

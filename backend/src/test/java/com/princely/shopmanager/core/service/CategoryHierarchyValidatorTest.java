@@ -16,6 +16,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CategoryHierarchyValidator Tests")
@@ -171,8 +172,8 @@ class CategoryHierarchyValidatorTest {
             .build();
 
         // Try to set child as parent (circular reference)
-        when(categoryRepository.findById("cat-2")).thenReturn(Optional.of(childCategory));
-        when(categoryRepository.findById("cat-1")).thenReturn(Optional.of(rootCategory));
+        lenient().when(categoryRepository.findById("cat-2")).thenReturn(Optional.of(childCategory));
+        lenient().when(categoryRepository.findById("cat-1")).thenReturn(Optional.of(rootCategory));
 
         // When/Then
         assertThatThrownBy(() ->

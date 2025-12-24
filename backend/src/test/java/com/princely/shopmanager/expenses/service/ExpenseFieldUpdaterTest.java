@@ -18,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -418,7 +419,9 @@ class ExpenseFieldUpdaterTest {
     @DisplayName("cleanTags - Should remove null tags")
     void cleanTags_ShouldRemoveNullTags() {
         // Given
-        Set<String> tags = Set.of("tag1", "tag2");
+        Set<String> tags = new HashSet<>();
+        tags.add("tag1");
+        tags.add("tag2");
         tags.add(null);
 
         // When
