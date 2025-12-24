@@ -1,16 +1,11 @@
 package com.princely.shopmanager.sales.service;
 
 import com.princely.shopmanager.auth.context.TenantContext;
-import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.domain.User;
-import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
-import com.princely.shopmanager.core.service.ProductService;
 import com.princely.shopmanager.inventory.domain.Inventory;
-import com.princely.shopmanager.inventory.domain.InventoryHistory;
-import com.princely.shopmanager.inventory.repository.InventoryRepository;
 import com.princely.shopmanager.inventory.service.InventoryService;
 import com.princely.shopmanager.sales.domain.LineItem;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
@@ -32,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,38 +37,35 @@ import lombok.extern.slf4j.Slf4j;
 public class SalesTransactionService extends ShopAwareService {
 
     private final SalesTransactionRepository salesTransactionRepository;
-    private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
-    private final ProductService productService;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final ReceiptService receiptService;
+    private final InventoryAllocationService inventoryAllocationService;
+    private final SalesLineItemBuilder lineItemBuilder;
 
     public SalesTransactionService(
             ShopAccessValidator shopAccessValidator,
             ShopRepository shopRepository,
             SalesTransactionRepository salesTransactionRepository,
-            ProductRepository productRepository,
             UserRepository userRepository,
-            InventoryRepository inventoryRepository,
             InventoryService inventoryService,
-            ProductService productService,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
-            ReceiptService receiptService
+            ReceiptService receiptService,
+            InventoryAllocationService inventoryAllocationService,
+            SalesLineItemBuilder lineItemBuilder
     ) {
         super(shopAccessValidator, shopRepository);
         this.salesTransactionRepository = salesTransactionRepository;
-        this.productRepository = productRepository;
         this.userRepository = userRepository;
-        this.inventoryRepository = inventoryRepository;
         this.inventoryService = inventoryService;
-        this.productService = productService;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
         this.receiptService = receiptService;
+        this.inventoryAllocationService = inventoryAllocationService;
+        this.lineItemBuilder = lineItemBuilder;
     }
 
     /**
@@ -96,7 +86,7 @@ public class SalesTransactionService extends ShopAwareService {
     public SalesTransactionResponse createTransaction(SalesTransactionCreateRequest request, JwtPrincipal principal) {
         log.info("Creating sales transaction for shop: {}", request.getShopId());
 
-        // Validate shop access
+        // Validate shop access and get shop
         validateShopAccess(request.getShopId(), principal);
         Shop shop = shopRepository.findById(request.getShopId())
             .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + request.getShopId()));
@@ -109,30 +99,40 @@ public class SalesTransactionService extends ShopAwareService {
         // Generate transaction number
         String transactionNumber = generateTransactionNumber(shop.getId());
 
-        // Validate inventory availability for all products BEFORE creating transaction
-        List<InventoryAllocation> allocations = new ArrayList<>();
-        for (SalesTransactionCreateRequest.LineItemRequest lineItemRequest : request.getLineItems()) {
-            // Validate productId is not null or empty
-            if (lineItemRequest.getProductId() == null || lineItemRequest.getProductId().isBlank()) {
-                throw new IllegalArgumentException("Product ID is required for all line items");
-            }
-
-            Product product = productRepository.findById(lineItemRequest.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + lineItemRequest.getProductId()));
-
-            // Check if sufficient stock available
-            if (!productService.hasAvailableStock(product.getId(), lineItemRequest.getQuantity(), principal)) {
-                throw new IllegalStateException("Insufficient stock for product: " + product.getName() +
-                    ". Required: " + lineItemRequest.getQuantity());
-            }
-
-            // Allocate inventory using FEFO (First Expiry, First Out) strategy
-            List<Inventory> allocated = allocateInventory(shop.getId(), product.getId(), lineItemRequest.getQuantity());
-            allocations.add(new InventoryAllocation(product, lineItemRequest, allocated));
-        }
+        // Validate and allocate inventory (delegated to service)
+        List<InventoryAllocationService.InventoryAllocation> allocations =
+            inventoryAllocationService.validateAndAllocate(request.getLineItems(), shop.getId(), principal);
 
         // Build transaction
-        SalesTransaction transaction = SalesTransaction.builder()
+        SalesTransaction transaction = buildTransaction(request, shop, cashier, transactionNumber);
+
+        // Build and add line items (delegated to builder)
+        List<LineItem> lineItems = lineItemBuilder.buildFromAllocations(allocations);
+        lineItems.forEach(transaction::addLineItem);
+
+        transaction.recalculateTotals();
+        transaction = salesTransactionRepository.save(transaction);
+
+        // Deduct stock from allocated inventories
+        deductInventoryStock(allocations, transaction.getId(), principal);
+
+        // Audit the creation
+        auditService.logEntityCreation("SalesTransaction", transaction.getId(),
+            "Sales transaction created: " + transactionNumber + " - Total: " + transaction.getTotalAmount());
+
+        // Automatically generate receipt for the transaction
+        generateReceiptSafely(transactionNumber, transaction);
+
+        log.info("Successfully created sales transaction: {} with inventory deduction", transactionNumber);
+        return SalesTransactionResponse.fromEntity(transaction);
+    }
+
+    /**
+     * Builds a sales transaction entity from the request.
+     */
+    private SalesTransaction buildTransaction(SalesTransactionCreateRequest request, Shop shop,
+                                             User cashier, String transactionNumber) {
+        return SalesTransaction.builder()
             .transactionNumber(transactionNumber)
             .shop(shop)
             .cashier(cashier)
@@ -147,36 +147,17 @@ public class SalesTransactionService extends ShopAwareService {
             .transactionDate(LocalDateTime.now())
             .notes(request.getNotes())
             .build();
+    }
 
-        // Add line items with denormalized product info and inventory-based pricing
-        for (InventoryAllocation allocation : allocations) {
-            // Get selling price from first allocated inventory batch
-            BigDecimal sellingPrice = allocation.inventories.isEmpty() ?
-                allocation.request.getUnitPrice() :
-                allocation.inventories.get(0).getSellingPrice();
-
-            LineItem lineItem = LineItem.builder()
-                .product(allocation.product)
-                .productName(allocation.product.getName())
-                .productSku(allocation.product.getSku())
-                .productCategory(allocation.product.getCategory() != null ? allocation.product.getCategory().getName() : null)
-                .quantity(allocation.request.getQuantity())
-                .unitPrice(allocation.request.getUnitPrice() != null ? allocation.request.getUnitPrice() : sellingPrice)
-                .discountAmount(allocation.request.getDiscount() != null ? allocation.request.getDiscount() : BigDecimal.ZERO)
-                .build();
-            lineItem.calculateLineTotal();
-
-            transaction.addLineItem(lineItem);
-        }
-
-        transaction.recalculateTotals();
-        transaction = salesTransactionRepository.save(transaction);
-
-        // Deduct stock from allocated inventories
-        for (InventoryAllocation allocation : allocations) {
+    /**
+     * Deducts stock from allocated inventories.
+     */
+    private void deductInventoryStock(List<InventoryAllocationService.InventoryAllocation> allocations,
+                                     String transactionId, JwtPrincipal principal) {
+        for (InventoryAllocationService.InventoryAllocation allocation : allocations) {
             for (Inventory inventory : allocation.inventories) {
                 int quantityToDeduct = Math.min(allocation.remainingQuantity, inventory.getAvailableStock());
-                inventoryService.sellStock(inventory.getId(), quantityToDeduct, transaction.getId(), principal);
+                inventoryService.sellStock(inventory.getId(), quantityToDeduct, transactionId, principal);
                 allocation.remainingQuantity -= quantityToDeduct;
 
                 log.debug("Deducted {} units from inventory {} for product {}",
@@ -187,12 +168,12 @@ public class SalesTransactionService extends ShopAwareService {
                 }
             }
         }
+    }
 
-        // Audit the creation
-        auditService.logEntityCreation("SalesTransaction", transaction.getId(),
-            "Sales transaction created: " + transactionNumber + " - Total: " + transaction.getTotalAmount());
-
-        // Automatically generate receipt for the transaction
+    /**
+     * Generates receipt safely, logging errors without failing the transaction.
+     */
+    private void generateReceiptSafely(String transactionNumber, SalesTransaction transaction) {
         try {
             receiptService.generateReceipt(transaction);
             log.info("Receipt automatically generated for transaction: {}", transactionNumber);
@@ -200,74 +181,8 @@ public class SalesTransactionService extends ShopAwareService {
             log.error("Failed to auto-generate receipt for transaction: {}", transactionNumber, e);
             // Don't fail the transaction creation if receipt generation fails
         }
-
-        log.info("Successfully created sales transaction: {} with inventory deduction", transactionNumber);
-        return SalesTransactionResponse.fromEntity(transaction);
     }
 
-    /**
-     * Allocates inventory for a product using FEFO (First Expiry, First Out) strategy.
-     * Prioritizes batches that expire sooner to minimize waste.
-     *
-     * @param shopId Shop ID
-     * @param productId Product ID
-     * @param quantity Required quantity
-     * @return List of inventory records to use, sorted by priority
-     * @throws IllegalStateException if insufficient stock
-     */
-    private List<Inventory> allocateInventory(String shopId, String productId, int quantity) {
-        List<Inventory> availableInventories = inventoryRepository.findByProductId(productId).stream()
-            .filter(inv -> inv.getShop().getId().equals(shopId))
-            .filter(inv -> inv.getStatus() == Inventory.InventoryStatus.ACTIVE)
-            .filter(inv -> !inv.isExpired())
-            .filter(inv -> inv.getAvailableStock() > 0)
-            .sorted(Comparator
-                // First: prioritize expiring batches (FEFO)
-                .comparing((Inventory inv) -> inv.getExpiryDate() != null ? inv.getExpiryDate() : java.time.LocalDate.MAX)
-                // Second: older batches first (FIFO for same expiry)
-                .thenComparing(Inventory::getCreatedAt))
-            .toList();
-
-        int totalAvailable = availableInventories.stream()
-            .mapToInt(Inventory::getAvailableStock)
-            .sum();
-
-        if (totalAvailable < quantity) {
-            throw new IllegalStateException("Insufficient available stock. Required: " + quantity +
-                ", Available: " + totalAvailable);
-        }
-
-        // Return inventories that will be used (may be multiple batches)
-        List<Inventory> allocated = new ArrayList<>();
-        int remaining = quantity;
-        for (Inventory inv : availableInventories) {
-            allocated.add(inv);
-            remaining -= inv.getAvailableStock();
-            if (remaining <= 0) {
-                break;
-            }
-        }
-
-        return allocated;
-    }
-
-    /**
-     * Helper class to track inventory allocation for a line item
-     */
-    private static class InventoryAllocation {
-        final Product product;
-        final SalesTransactionCreateRequest.LineItemRequest request;
-        final List<Inventory> inventories;
-        int remainingQuantity;
-
-        InventoryAllocation(Product product, SalesTransactionCreateRequest.LineItemRequest request,
-                           List<Inventory> inventories) {
-            this.product = product;
-            this.request = request;
-            this.inventories = inventories;
-            this.remainingQuantity = request.getQuantity();
-        }
-    }
 
     @Transactional(readOnly = true)
     public SalesTransactionResponse getTransaction(String id, JwtPrincipal principal) {
