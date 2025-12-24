@@ -53,7 +53,6 @@ public class TestJwtSecurityConfig {
                 Map<String, Object> claims = objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {});
 
                 // Extract standard claims
-                String subject = (String) claims.get("sub");
                 Object iatObj = claims.getOrDefault("iat", System.currentTimeMillis() / 1000);
                 long iat = iatObj instanceof Number ? ((Number) iatObj).longValue() : Long.parseLong(iatObj.toString());
                 Instant issuedAt = Instant.ofEpochSecond(iat);

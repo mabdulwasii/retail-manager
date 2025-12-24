@@ -186,6 +186,9 @@ class TimeWeightingRulesTest {
     @Test
     @DisplayName("getMultiplierForYears - Should return year2Multiplier for 2.5 years")
     void getMultiplierForYears_shouldReturnYear2MultiplierFor2Point5Years() {
+        // Given: 2.5 years is between year2Threshold (2.0) and year3Threshold (3.0)
+        // Expected: Should use year2Multiplier (1.2), not interpolate
+
         // When
         BigDecimal multiplier = rules.getMultiplierForYears(BigDecimal.valueOf(2.5));
 
@@ -206,6 +209,9 @@ class TimeWeightingRulesTest {
     @Test
     @DisplayName("getMultiplierForYears - Should return year3Multiplier for 4.0 years")
     void getMultiplierForYears_shouldReturnYear3MultiplierFor4Years() {
+        // Given: 4.0 years exceeds year3Threshold (3.0)
+        // Expected: Should use year3Multiplier (1.5) for all years >= 3.0
+
         // When
         BigDecimal multiplier = rules.getMultiplierForYears(BigDecimal.valueOf(4.0));
 
@@ -216,6 +222,9 @@ class TimeWeightingRulesTest {
     @Test
     @DisplayName("getMultiplierForYears - Should return year3Multiplier for 10.0 years")
     void getMultiplierForYears_shouldReturnYear3MultiplierFor10Years() {
+        // Given: 10.0 years is far beyond year3Threshold (3.0)
+        // Expected: Should still use year3Multiplier (1.5) - no further increase
+
         // When
         BigDecimal multiplier = rules.getMultiplierForYears(BigDecimal.valueOf(10.0));
 

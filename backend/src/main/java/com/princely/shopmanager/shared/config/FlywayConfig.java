@@ -1,5 +1,6 @@
 package com.princely.shopmanager.shared.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import javax.sql.DataSource;
  * and before Spring Modulith event processing starts.
  * This uses @PostConstruct to run migrations as early as possible in the bean lifecycle.
  */
+@Slf4j
 @Configuration
 @Order(Integer.MIN_VALUE)
 public class FlywayConfig {
@@ -22,10 +24,10 @@ public class FlywayConfig {
 
     @PostConstruct
     public void runMigrations() {
-        System.out.println("🗃️  Starting Flyway migrations via @PostConstruct...");
+        log.info("🗃️  Starting Flyway migrations via @PostConstruct...");
 
         try {
-            System.out.println("📊 DataSource available, configuring Flyway...");
+            log.info("📊 DataSource available, configuring Flyway...");
 
             Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
@@ -35,11 +37,10 @@ public class FlywayConfig {
                     .load();
 
             int migrationsApplied = flyway.migrate().migrationsExecuted;
-            System.out.println("✅ Flyway migrations completed via @PostConstruct. Applied " + migrationsApplied + " migrations.");
+            log.info("✅ Flyway migrations completed via @PostConstruct. Applied {} migrations.", migrationsApplied);
 
         } catch (Exception e) {
-            System.err.println("❌ Flyway migration failed in @PostConstruct: " + e.getMessage());
-            e.printStackTrace();
+            log.error("❌ Flyway migration failed in @PostConstruct: {}", e.getMessage(), e);
             throw new RuntimeException("Database migration failed during @PostConstruct", e);
         }
     }

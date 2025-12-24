@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Test security configuration that disables OAuth2 JWT validation.

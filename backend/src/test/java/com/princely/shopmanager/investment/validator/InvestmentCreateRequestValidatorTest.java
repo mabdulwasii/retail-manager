@@ -366,7 +366,7 @@ class InvestmentCreateRequestValidatorTest {
             .maturityDate(null)
             .build();
 
-        Set<ConstraintViolation<InvestmentCreateRequest>> violations = validator.validate(request);
+        validator.validate(request);
 
         // Current implementation treats this as a warning, not a hard error
         // The validator returns true even with maturity date missing
@@ -417,8 +417,8 @@ class InvestmentCreateRequestValidatorTest {
     @DisplayName("Should return true for null request")
     void shouldReturnTrueForNullRequest() {
         // The validator's isValid returns true for null - lets @NotNull handle it
-        InvestmentCreateRequestValidator validator = new InvestmentCreateRequestValidator();
-        boolean result = validator.isValid(null, null);
+        InvestmentCreateRequestValidator nullValidator = new InvestmentCreateRequestValidator();
+        boolean result = nullValidator.isValid(null, null);
         assertThat(result).isTrue();
     }
 
