@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -36,7 +36,7 @@ public class CloudSyncService {
     private final CloudSyncConfigurationService cloudSyncConfigurationService;
     private final CloudSyncLogRepository syncLogRepository;
     private final SalesTransactionRepository salesTransactionRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestClient restClient;
 
     /**
      * Sync transactions to cloud for a specific tenant
@@ -118,38 +118,41 @@ public class CloudSyncService {
     }
 
     /**
-     * Send transactions to cloud endpoint
+     * Send transactions to cloud endpoint using RestClient
      */
     private int sendToCloud(com.princely.shopmanager.embedded.domain.CloudSyncConfig cloudConfig,
             List<TransactionSyncDto> transactions) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("X-API-Key", cloudConfig.getCloudApiKey());
-        headers.set("X-Cloud-Tenant-Id", cloudConfig.getCloudTenantId());
-
-        HttpEntity<List<TransactionSyncDto>> request = new HttpEntity<>(transactions, headers);
-
         String url = cloudConfig.getCloudApiUrl() + "/sync/transactions";
 
         try {
-            ResponseEntity<SyncResponse> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    SyncResponse.class
-            );
+            SyncResponse response = restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("X-API-Key", cloudConfig.getCloudApiKey())
+                    .header("X-Cloud-Tenant-Id", cloudConfig.getCloudTenantId())
+                    .body(transactions)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, resp) -> {
+                        log.error("HTTP 4xx error during sync: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
+                                "Cloud sync failed with client error: " + resp.getStatusCode());
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (request, resp) -> {
+                        log.error("HTTP 5xx error during sync: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
+                                "Cloud sync failed with server error: " + resp.getStatusCode());
+                    })
+                    .body(SyncResponse.class);
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return response.getBody().syncedCount();
+            if (response != null && response.syncedCount() > 0) {
+                return response.syncedCount();
             }
 
-            log.warn("Unexpected response from cloud: {}", response.getStatusCode());
+            log.warn("Cloud sync returned empty or zero response");
             return 0;
 
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("HTTP error during sync: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
-                    "Cloud sync failed with HTTP error: " + e.getStatusCode());
+        } catch (BusinessException e) {
+            throw e; // Re-throw BusinessException
         } catch (Exception e) {
             log.error("Unexpected error during sync: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,

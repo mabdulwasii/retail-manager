@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class CloudRegistrationService {
     private final ShopRepository shopRepository;
     private final CloudSyncConfigRepository cloudSyncConfigRepository;
     private final CloudSyncConfigurationService cloudSyncConfigurationService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestClient restClient;
 
     @Value("${application.cloud.registration-url:https://cloud.shopmanager.com/api}")
     private String cloudRegistrationUrl;
@@ -169,41 +169,39 @@ public class CloudRegistrationService {
     }
 
     /**
-     * Send registration request to cloud
+     * Send registration request to cloud using RestClient
      */
     private TenantRegistrationResponse sendRegistrationRequest(String cloudApiUrl,
             TenantRegistrationRequest request) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<TenantRegistrationRequest> httpRequest = new HttpEntity<>(request, headers);
         String url = cloudApiUrl + "/registration/tenants";
 
         try {
-            ResponseEntity<TenantRegistrationResponse> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    httpRequest,
-                    TenantRegistrationResponse.class
-            );
+            TenantRegistrationResponse response = restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (req, resp) -> {
+                        log.error("Cloud registration failed with client error: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
+                                "Cloud registration failed: " + resp.getStatusCode());
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (req, resp) -> {
+                        log.error("Cloud registration failed with server error: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
+                                "Cloud service unavailable");
+                    })
+                    .body(TenantRegistrationResponse.class);
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return response.getBody();
+            if (response != null) {
+                return response;
             }
 
             throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
-                    "Unexpected response from cloud: " + response.getStatusCode());
+                    "Unexpected null response from cloud");
 
-        } catch (HttpClientErrorException e) {
-            log.error("Cloud registration failed with client error: {} - {}",
-                    e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
-                    "Cloud registration failed: " + e.getStatusCode());
-        } catch (HttpServerErrorException e) {
-            log.error("Cloud registration failed with server error: {} - {}",
-                    e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
-                    "Cloud service unavailable");
+        } catch (BusinessException e) {
+            throw e; // Re-throw BusinessException
         } catch (Exception e) {
             log.error("Cloud registration failed: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
@@ -212,33 +210,32 @@ public class CloudRegistrationService {
     }
 
     /**
-     * Send shop link request to cloud
+     * Send shop link request to cloud using RestClient
      */
     private void sendShopLinkRequest(String cloudApiUrl, String apiKey, ShopLinkRequest request) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("X-API-Key", apiKey);
-
-        HttpEntity<ShopLinkRequest> httpRequest = new HttpEntity<>(request, headers);
         String url = cloudApiUrl + "/registration/shops";
 
         try {
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    httpRequest,
-                    Void.class
-            );
+            restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("X-API-Key", apiKey)
+                    .body(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (req, resp) -> {
+                        log.error("Shop link failed with client error: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
+                                "Shop link failed: " + resp.getStatusCode());
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (req, resp) -> {
+                        log.error("Shop link failed with server error: {}", resp.getStatusCode());
+                        throw new BusinessException(ErrorCode.CLOUD_SYNC_UNAVAILABLE,
+                                "Cloud service unavailable during shop link");
+                    })
+                    .toBodilessEntity();
 
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
-                        "Shop link failed: " + response.getStatusCode());
-            }
-
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Shop link failed: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
-                    "Shop link failed: " + e.getStatusCode());
+        } catch (BusinessException e) {
+            throw e; // Re-throw BusinessException
         } catch (Exception e) {
             log.error("Shop link failed: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.CLOUD_REGISTRATION_FAILED,
@@ -247,17 +244,17 @@ public class CloudRegistrationService {
     }
 
     /**
-     * Send unregister request to cloud
+     * Send unregister request to cloud using RestClient
      */
     private void sendUnregisterRequest(String cloudApiUrl, String apiKey, String cloudTenantId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-API-Key", apiKey);
-
-        HttpEntity<Void> httpRequest = new HttpEntity<>(headers);
         String url = cloudApiUrl + "/registration/tenants/" + cloudTenantId;
 
         try {
-            restTemplate.exchange(url, HttpMethod.DELETE, httpRequest, Void.class);
+            restClient.delete()
+                    .uri(url)
+                    .header("X-API-Key", apiKey)
+                    .retrieve()
+                    .toBodilessEntity();
         } catch (Exception e) {
             log.warn("Failed to unregister tenant from cloud: {}", e.getMessage());
             throw e;
