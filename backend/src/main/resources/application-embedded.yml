@@ -54,6 +54,15 @@ embedded:
     data-dir: ./data/postgres
     database: shopmanager
 
+# App Configuration
+app:
+  keycloak:
+    enabled: false
+
+  # Local JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET:changeThisToASecureRandomGeneratedSecretKeyForProductionUseAtLeast256BitsLong}
+
 # Application Configuration
 application:
   mode: embedded
@@ -62,12 +71,7 @@ application:
   keycloak:
     enabled: false
 
-# App Configuration
-app:
-  keycloak:
-    enabled: false
-
-  # Local JWT Configuration
+  # Embedded JWT Configuration
   jwt:
     secret: ${JWT_SECRET:changeThisToASecureRandomGeneratedSecretKeyForProductionUseAtLeast256BitsLong}
     expiration-ms: 86400000  # 24 hours
