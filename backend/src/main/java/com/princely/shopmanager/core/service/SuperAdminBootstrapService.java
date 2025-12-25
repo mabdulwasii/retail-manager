@@ -21,7 +21,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.princely.shopmanager.auth.constants.SecurityRoles.ROLE_SYSTEM_ADMIN;
+import static com.princely.shopmanager.auth.constants.SecurityRoles.SYSTEM_ADMIN;
 
 /**
  * Service responsible for bootstrapping super admin user on application startup
@@ -92,7 +92,7 @@ public class SuperAdminBootstrapService {
      * Check if any super admin user exists
      */
     private boolean hasSuperAdminUser() {
-        Optional<Role> superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN);
+        Optional<Role> superAdminRole = roleRepository.findByName(SYSTEM_ADMIN);
         if (superAdminRole.isEmpty()) {
             log.warn("SYSTEM_ADMIN role not found in database");
             return false;
@@ -108,7 +108,7 @@ public class SuperAdminBootstrapService {
      */
     private void createBootstrapSuperAdmin() {
         // Get or create SYSTEM_ADMIN role
-        Role superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN)
+        Role superAdminRole = roleRepository.findByName(SYSTEM_ADMIN)
             .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found. Please ensure database migrations have been applied."));
 
         // Generate password if not provided
@@ -182,7 +182,7 @@ public class SuperAdminBootstrapService {
      * Get current super admin count
      */
     public long getSuperAdminCount() {
-        Optional<Role> superAdminRole = roleRepository.findByName(ROLE_SYSTEM_ADMIN);
+        Optional<Role> superAdminRole = roleRepository.findByName(SYSTEM_ADMIN);
         if (superAdminRole.isEmpty()) {
             return 0;
         }
