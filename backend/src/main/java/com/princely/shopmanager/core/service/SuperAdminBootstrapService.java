@@ -1,7 +1,7 @@
 package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
-import com.princely.shopmanager.auth.service.KeycloakUserService;
+import com.princely.shopmanager.auth.service.UserManagementService;
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
 import com.princely.shopmanager.core.repository.RoleRepository;
@@ -33,7 +33,7 @@ public class SuperAdminBootstrapService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final KeycloakUserService keycloakUserService;
+    private final UserManagementService userManagementService;
     private final AuditService auditService;
 
     @Value("${app.bootstrap.superadmin.enabled:true}")
@@ -113,7 +113,7 @@ public class SuperAdminBootstrapService {
 
         // Generate password if not provided
         String finalPassword = superAdminPassword.isEmpty()
-            ? keycloakUserService.generatePassword()
+            ? userManagementService.generatePassword()
             : superAdminPassword;
 
         // Create user in Keycloak first
@@ -168,7 +168,7 @@ public class SuperAdminBootstrapService {
             password
         );
 
-        return keycloakUserService.createUser(keycloakRequest);
+        return userManagementService.createUser(keycloakRequest);
     }
 
     /**
