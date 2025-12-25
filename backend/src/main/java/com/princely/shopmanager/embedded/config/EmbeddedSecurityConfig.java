@@ -42,17 +42,23 @@ public class EmbeddedSecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+                // Public endpoints - Frontend static resources and auth
                 .requestMatchers(
+                    "/",
+                    "/index.html",
+                    "/assets/**",
                     "/api/auth/login",
                     "/api/auth/register",
                     "/api/auth/refresh",
                     "/actuator/health",
                     "/actuator/info",
-                    "/h2-console/**"
+                    "/h2-console/**",
+                    "/error"
                 ).permitAll()
-                // All other requests require authentication
-                .anyRequest().authenticated()
+                // All API requests require authentication
+                .requestMatchers("/api/**").authenticated()
+                // All other requests (SPA routes) are public
+                .anyRequest().permitAll()
             )
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider),

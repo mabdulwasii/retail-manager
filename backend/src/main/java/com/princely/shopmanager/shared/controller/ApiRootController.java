@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,10 +18,14 @@ import java.util.Map;
 /**
  * Root API controller providing basic API information and health status.
  * This controller resolves the 404 error when accessing the root path.
+ *
+ * <p>Only active in cloud/development profiles. For embedded profile, the root path
+ * serves the frontend static resources instead.
  */
 @RestController
 @RequestMapping("/")
 @RequiredArgsConstructor
+@Profile("!embedded")  // Disable in embedded mode to allow frontend at root
 @Tag(name = "API Root", description = "Root API endpoints and service information")
 public class ApiRootController {
 
