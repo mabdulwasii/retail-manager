@@ -58,7 +58,12 @@ embedded:
 application:
   mode: embedded
 
-  # Disable Keycloak for embedded mode
+  # Disable Keycloak for embedded mode (uses local JWT auth instead)
+  keycloak:
+    enabled: false
+
+# App Configuration
+app:
   keycloak:
     enabled: false
 
