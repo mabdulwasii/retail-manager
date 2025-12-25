@@ -5,6 +5,7 @@ import com.princely.shopmanager.auth.service.UserManagementService;
 import com.princely.shopmanager.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +17,13 @@ import java.util.UUID;
  *
  * <p>This implementation provides user management for standalone embedded
  * deployments without Keycloak. It uses local database for user storage.
+ *
+ * <p>Marked as @Primary to take precedence over mocked KeycloakUserService
+ * in integration tests when embedded profile is active.
  */
 @Service
 @Profile("embedded")
+@Primary
 @RequiredArgsConstructor
 @Slf4j
 public class EmbeddedUserManagementService implements UserManagementService {
