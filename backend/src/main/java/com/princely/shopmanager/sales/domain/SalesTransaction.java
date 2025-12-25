@@ -114,6 +114,24 @@ public class SalesTransaction extends BaseEntity implements ShopAware {
     @Column(name = "fraud_flags")
     private String fraudFlags;
 
+    // Cloud sync tracking fields (for embedded mode)
+    @Builder.Default
+    @Column(name = "synced_to_cloud")
+    private Boolean syncedToCloud = false;
+
+    @Builder.Default
+    @Column(name = "sync_attempts")
+    private Integer syncAttempts = 0;
+
+    @Column(name = "last_sync_attempt")
+    private LocalDateTime lastSyncAttempt;
+
+    @Column(name = "last_sync_error", columnDefinition = "TEXT")
+    private String lastSyncError;
+
+    @Column(name = "synced_at")
+    private LocalDateTime syncedAt;
+
     public enum PaymentMethod {
         CASH,
         CARD,

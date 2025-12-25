@@ -85,24 +85,60 @@ application:
     max-file-size: 10485760  # 10 MB
     allowed-extensions: jpg,jpeg,png,pdf,csv,xlsx
 
-  # Cloud Sync Configuration
-  sync:
-    enabled: ${CLOUD_SYNC_ENABLED:false}
-    cloud-endpoint: ${CLOUD_API_URL:}
-    api-key: ${CLOUD_API_KEY:}
-    store-id: ${STORE_ID:}
-    schedule:
-      cron: ${SYNC_CRON:0 0 * * * ?}  # Every hour
-      batch-size: 100
-      retry-max-attempts: 3
-      retry-backoff-ms: 60000  # 1 minute
-    privacy:
-      anonymize-pii: ${ANONYMIZE_PII:false}
-      fields-to-anonymize: customerName,customerPhone,customerEmail
-    resilience:
-      circuit-breaker-enabled: true
-      failure-threshold: 5
-      timeout-seconds: 30
+  # Cloud Sync & Registration Configuration
+  cloud:
+    # Cloud aggregator registration URL
+    registration-url: ${CLOUD_REGISTRATION_URL:https://cloud.shopmanager.com/api}
+
+    # Enforce cloud sync before transactions (recommended: true for production)
+    sync-required: ${CLOUD_SYNC_REQUIRED:false}
+
+    # Allow offline mode (transactions without cloud sync)
+    # Set to true for testing, false for production
+    allow-offline-mode: ${CLOUD_ALLOW_OFFLINE:true}
+
+    # Scheduled sync cron expression (default: hourly at minute 0)
+    sync-cron: ${CLOUD_SYNC_CRON:0 0 * * * ?}
+
+    # Batch size for syncing transactions (prevents overwhelming cloud API)
+    # After weeks offline, this limits each sync batch to max 1000 transactions
+    sync-batch-size: ${CLOUD_SYNC_BATCH_SIZE:1000}
+
+  # API Key Encryption
+  encryption:
+    secret: ${ENCRYPTION_SECRET:changeme-encryption-secret-key}
+    salt: ${ENCRYPTION_SALT:deadbeef}
+
+  # Bootstrap Configuration
+  bootstrap:
+    # Tenant Bootstrap
+    tenant:
+      enabled: ${BOOTSTRAP_TENANT_ENABLED:true}
+      name: ${DEFAULT_TENANT_NAME:Default Organization}
+      email: ${DEFAULT_TENANT_EMAIL:contact@shopmanager.local}
+      address: ${DEFAULT_TENANT_ADDRESS:123 Main Street}
+      city: ${DEFAULT_TENANT_CITY:Springfield}
+      country: ${DEFAULT_TENANT_COUNTRY:USA}
+
+    # Shop Bootstrap
+    shop:
+      enabled: ${BOOTSTRAP_SHOP_ENABLED:true}
+      name: ${DEFAULT_SHOP_NAME:Main Shop}
+      address: ${DEFAULT_SHOP_ADDRESS:123 Main Street}
+      city: ${DEFAULT_SHOP_CITY:Springfield}
+      country: ${DEFAULT_SHOP_COUNTRY:USA}
+      phone: ${DEFAULT_SHOP_PHONE:1-800-000-0000}
+      email: ${DEFAULT_SHOP_EMAIL:shop@shopmanager.local}
+
+    # Super Admin Bootstrap
+    superadmin:
+      enabled: ${BOOTSTRAP_SUPERADMIN_ENABLED:true}
+      username: ${SUPERADMIN_USERNAME:superadmin}
+      email: ${SUPERADMIN_EMAIL:superadmin@shopmanager.local}
+      firstname: ${SUPERADMIN_FIRSTNAME:Super}
+      lastname: ${SUPERADMIN_LASTNAME:Admin}
+      phonenumber: ${SUPERADMIN_PHONE:1-000-000-0000}
+      password: ${SUPERADMIN_PASSWORD:changeme}
 
 # Server Configuration
 server:

@@ -1,37 +1,44 @@
 package com.princely.shopmanager.embedded.sync.service;
 
-import com.princely.shopmanager.embedded.config.CloudSyncConfig;
+import com.princely.shopmanager.embedded.domain.CloudSyncConfig;
+import com.princely.shopmanager.embedded.service.CloudSyncConfigurationService;
 import com.princely.shopmanager.embedded.sync.dto.TransactionSyncDto;
 import com.princely.shopmanager.sales.domain.LineItem;
 import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Scheduler for automatic cloud sync
+ * Scheduler for automatic cloud sync.
+ * Syncs transactions for all active tenants on a schedule.
  */
 @Slf4j
 @Service
 @EnableScheduling
 @Profile("embedded")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "application.sync.enabled", havingValue = "true")
 public class CloudSyncScheduler {
 
-    private final CloudSyncConfig config;
+    private final CloudSyncConfigurationService cloudSyncConfigurationService;
     private final CloudSyncService cloudSyncService;
     private final SalesTransactionRepository salesTransactionRepository;
+
+    @Value("${application.cloud.sync-batch-size:1000}")
+    private int syncBatchSize;
 
     private LocalDateTime lastSyncTime = LocalDateTime.now().minusDays(1);
 
@@ -49,40 +56,31 @@ public class CloudSyncScheduler {
     }
 
     /**
-     * Scheduled sync job (runs based on cron expression in config)
+     * Scheduled sync job (runs hourly for all active tenants)
      */
-    @Scheduled(cron = "${application.sync.schedule.cron}")
+    @Scheduled(cron = "${application.cloud.sync-cron:0 0 * * * ?}")
     public void syncTransactionsToCloud() {
-        log.info("Starting scheduled cloud sync for store: {}", config.getStoreId());
+        log.info("Starting scheduled cloud sync for all active tenants");
 
         try {
-            // Fetch transactions since last sync
-            LocalDateTime syncCutoff = lastSyncTime;
-            List<SalesTransaction> transactions = fetchTransactionsSinceLastSync(syncCutoff);
+            // Get all active cloud sync configurations
+            List<CloudSyncConfig> activeConfigs = cloudSyncConfigurationService.getAllActiveConfigurations();
 
-            if (transactions.isEmpty()) {
-                log.info("No new transactions to sync");
+            if (activeConfigs.isEmpty()) {
+                log.info("No active cloud sync configurations found");
                 return;
             }
 
-            // Process in batches
-            int batchSize = config.getSchedule().getBatchSize();
-            for (int i = 0; i < transactions.size(); i += batchSize) {
-                int end = Math.min(i + batchSize, transactions.size());
-                List<SalesTransaction> batch = transactions.subList(i, end);
+            log.info("Found {} active tenant(s) for cloud sync", activeConfigs.size());
 
-                List<TransactionSyncDto> dtos = convertToSyncDtos(batch);
-                cloudSyncService.syncTransactions(dtos);
-
-                log.info("Synced batch {}/{} ({} transactions)",
-                        (i / batchSize) + 1,
-                        (transactions.size() + batchSize - 1) / batchSize,
-                        batch.size());
+            // Sync transactions for each tenant
+            for (CloudSyncConfig config : activeConfigs) {
+                syncTenantTransactions(config.getTenantId());
             }
 
             // Update last sync time
             lastSyncTime = LocalDateTime.now();
-            log.info("Completed cloud sync. Total transactions synced: {}", transactions.size());
+            log.info("Completed scheduled cloud sync for all tenants");
 
         } catch (Exception e) {
             log.error("Error during scheduled cloud sync: {}", e.getMessage(), e);
@@ -90,12 +88,78 @@ public class CloudSyncScheduler {
     }
 
     /**
-     * Fetch transactions since last sync
+     * Sync transactions for a specific tenant
      */
-    private List<SalesTransaction> fetchTransactionsSinceLastSync(LocalDateTime since) {
+    public void syncTenantTransactions(String tenantId) {
+        log.info("Starting cloud sync for tenant: {}", tenantId);
+
+        try {
+            // Fetch transactions since last sync
+            LocalDateTime syncCutoff = lastSyncTime;
+            List<SalesTransaction> transactions = fetchTransactionsByTenant(tenantId, syncCutoff);
+
+            if (transactions.isEmpty()) {
+                log.info("No new transactions to sync for tenant: {}", tenantId);
+                return;
+            }
+
+            log.info("Found {} transactions to sync for tenant: {}", transactions.size(), tenantId);
+
+            // Group transactions by shop
+            Map<String, List<SalesTransaction>> transactionsByShop = transactions.stream()
+                    .filter(txn -> txn.getShop() != null)
+                    .collect(Collectors.groupingBy(txn -> txn.getShop().getId()));
+
+            // Sync each shop's transactions with chunking
+            int totalSynced = 0;
+            for (Map.Entry<String, List<SalesTransaction>> entry : transactionsByShop.entrySet()) {
+                List<SalesTransaction> shopTransactions = entry.getValue();
+                List<TransactionSyncDto> allDtos = convertToSyncDtos(shopTransactions);
+
+                // Chunk into batches to prevent overwhelming cloud API
+                List<List<TransactionSyncDto>> batches = chunkTransactions(allDtos, syncBatchSize);
+
+                log.info("Syncing {} transactions in {} batch(es) for shop {} (tenant: {})",
+                        allDtos.size(), batches.size(), entry.getKey(), tenantId);
+
+                // Sync each batch
+                for (int i = 0; i < batches.size(); i++) {
+                    List<TransactionSyncDto> batch = batches.get(i);
+                    try {
+                        cloudSyncService.syncTransactions(tenantId, batch);
+                        totalSynced += batch.size();
+                        log.info("Synced batch {}/{} ({} transactions) for shop {} (tenant: {})",
+                                i + 1, batches.size(), batch.size(), entry.getKey(), tenantId);
+                    } catch (Exception e) {
+                        log.error("Failed to sync batch {}/{} for shop {} (tenant: {}): {}",
+                                i + 1, batches.size(), entry.getKey(), tenantId, e.getMessage(), e);
+                        // Continue with next batch even if this one fails
+                    }
+                }
+            }
+
+            log.info("Completed cloud sync for tenant: {}. Total transactions synced: {}/{}",
+                    tenantId, totalSynced, transactions.size());
+
+        } catch (Exception e) {
+            log.error("Error syncing tenant {}: {}", tenantId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Fetch UNSYNCED transactions for a specific tenant.
+     * This ensures offline resilience - transactions are synced even after weeks offline.
+     */
+    private List<SalesTransaction> fetchTransactionsByTenant(String tenantId, LocalDateTime since) {
         return salesTransactionRepository.findAll().stream()
-                .filter(txn -> txn.getCreatedAt() != null && txn.getCreatedAt().isAfter(since))
+                .filter(txn -> txn.getShop() != null)
+                .filter(txn -> txn.getShop().getTenant() != null)
+                .filter(txn -> txn.getShop().getTenant().getId().equals(tenantId))
                 .filter(txn -> txn.getStatus() == SalesTransaction.TransactionStatus.COMPLETED)
+                // CRITICAL: Only sync unsynced transactions (persistent tracking)
+                .filter(txn -> !Boolean.TRUE.equals(txn.getSyncedToCloud()))
+                // Optional: Limit retry attempts to avoid infinite loops
+                .filter(txn -> txn.getSyncAttempts() == null || txn.getSyncAttempts() < 10)
                 .toList();
     }
 
@@ -109,14 +173,15 @@ public class CloudSyncScheduler {
     }
 
     /**
-     * Convert single transaction to DTO
+     * Convert a single transaction to DTO
      */
     private TransactionSyncDto toSyncDto(SalesTransaction txn) {
         return TransactionSyncDto.builder()
                 .transactionId(txn.getId())
                 .transactionNumber(txn.getTransactionNumber())
-                .storeId(txn.getShop() != null ? txn.getShop().getId() : null)
-                .tenantId(txn.getShop().getTenant().getId())
+                .shopId(txn.getShop() != null ? txn.getShop().getId() : null)
+                .tenantId(txn.getShop() != null && txn.getShop().getTenant() != null
+                        ? txn.getShop().getTenant().getId() : null)
                 .transactionDate(txn.getTransactionDate())
                 .totalAmount(txn.getTotalAmount())
                 .taxAmount(txn.getTaxAmount())
@@ -134,10 +199,31 @@ public class CloudSyncScheduler {
     }
 
     /**
-     * Manual sync trigger (can be called via API)
+     * Manual sync trigger for all active tenants
      */
     public void triggerManualSync() {
-        log.info("Manual sync triggered for store: {}", config.getStoreId());
+        log.info("Manual sync triggered for all active tenants");
         syncTransactionsToCloud();
+    }
+
+    /**
+     * Manual sync trigger for a specific tenant
+     */
+    public void triggerManualSyncForTenant(String tenantId) {
+        log.info("Manual sync triggered for tenant: {}", tenantId);
+        syncTenantTransactions(tenantId);
+    }
+
+    /**
+     * Chunk a list of transactions into batches of specified size.
+     * This prevents overwhelming the cloud API with thousands of transactions at once.
+     */
+    private List<List<TransactionSyncDto>> chunkTransactions(List<TransactionSyncDto> transactions, int chunkSize) {
+        List<List<TransactionSyncDto>> chunks = new ArrayList<>();
+        for (int i = 0; i < transactions.size(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, transactions.size());
+            chunks.add(new ArrayList<>(transactions.subList(i, end)));
+        }
+        return chunks;
     }
 }
