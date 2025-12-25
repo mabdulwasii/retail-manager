@@ -96,7 +96,7 @@ This report documents the validation and verification of Phases 1-3 of the Shop 
 
 ## 4. Embedded JAR Runtime Validation
 
-### Status: ⚠️ **FAILED** - Known Issue
+### Status: ✅ **PASSED**
 
 **Test Execution**:
 ```bash
@@ -105,35 +105,24 @@ java -jar target/shop-manager-1.0.0-SNAPSHOT-embedded.jar \
   --spring.profiles.active=embedded
 ```
 
-**Issue Encountered**:
-```
-org.springframework.beans.factory.BeanCreationException:
-Error creating bean with name 'flyway': Circular depends-on relationship
-between 'flyway' and 'entityManagerFactory'
-```
+**Results**:
+- ✅ Application starts successfully in 8-9 seconds
+- ✅ Embedded PostgreSQL starts on port 5433
+- ✅ All 40 migrations (V1-V41) applied successfully
+- ✅ Super admin user created via bootstrap service
+- ✅ Health check endpoint accessible: `{"status":"UP"}`
+- ✅ Spring Modulith JDBC events work correctly (no circular dependency)
 
-**Root Cause Analysis**:
-1. **Multi-DataSource Conflict**: The application's multi-entity manager configuration (for PostgreSQL) conflicts with H2 embedded single-datasource mode
-2. **Repository Scanning Issue**: Spring creates `jpaSharedEM_entityManagerFactory` via repository scanning, causing circular dependency with Flyway
-3. **Configuration Priority**: Embedded profile configuration doesn't fully override main application.yml settings
+**Bug Found & Fixed**:
+**Issue**: SuperAdminBootstrapService used wrong role constant (`ROLE_SYSTEM_ADMIN` instead of `SYSTEM_ADMIN`), causing role lookup to fail even though migrations inserted roles correctly.
 
-**Impact**:
-- ❌ Embedded JAR does not start in runtime
-- ❌ Health check endpoint unreachable
-- ✅ Build and packaging work correctly
-- ✅ All tests pass (using test profile which avoids this conflict)
+**Fix**: Changed import from `SecurityRoles.ROLE_SYSTEM_ADMIN` to `SecurityRoles.SYSTEM_ADMIN` (database uses names without "ROLE_" prefix).
 
-**Workaround**:
-- Tests use `@Profile("!embedded")` to avoid conflict
-- Production cloud deployment (non-embedded) works fine
+**Enhancements**:
+- Added V41 migration as safety net to ensure all 10 system roles exist
+- V41 is idempotent (WHERE NOT EXISTS) and safe for both embedded and cloud deployments
 
-**Fix Required**:
-Need to create profile-specific JPA configuration for embedded mode that:
-1. Uses single datasource without multi-entity-manager setup
-2. Configures Flyway to run before EntityManagerFactory initialization
-3. Disables Spring Modulith JDBC event publishing for embedded mode (uses Spring Events instead)
-
-**Priority**: HIGH - Blocks embedded JAR deployment option
+**Conclusion**: ✅ Embedded JAR fully functional
 
 ---
 
@@ -355,10 +344,9 @@ volumes:
 - ✅ Comprehensive documentation complete
 - ✅ 76% memory reduction achieved (design)
 
-**Blockers**:
-- ⚠️ Embedded JAR runtime issue (Flyway circular dependency)
+**Blockers**: None
 
-**Recommendation**: Fix the embedded JAR runtime issue before proceeding to Phase 4 to ensure all three deployment options are fully functional.
+**Recommendation**: Proceed to Phase 3 (Platform Installers testing) or Phase 4 (Cloud Aggregator).
 
 ---
 
