@@ -221,11 +221,11 @@ public class AuditService {
     // Expense-specific audit methods
     @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseCreation(java.util.UUID expenseId, String shopId, java.util.UUID userId, java.math.BigDecimal amount) {
+    public void logExpenseCreation(java.util.UUID expenseId, String shopId, String userId, java.math.BigDecimal amount) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.FINANCIAL_TRANSACTION)
                 .actionType(AuditLog.ActionType.CREATE)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -245,11 +245,11 @@ public class AuditService {
 
     @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
+    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, String userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -268,11 +268,11 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseApproval(java.util.UUID expenseId, String shopId, java.util.UUID userId, boolean approved) {
+    public void logExpenseApproval(java.util.UUID expenseId, String shopId, String userId, boolean approved) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.BUSINESS_PROCESS)
                 .actionType(approved ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -291,11 +291,11 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
+    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, String userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
                 .entityType(ENTITY_TYPE_EXPENSE)

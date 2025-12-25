@@ -138,7 +138,7 @@ public class ExpenseController {
             @DateTimeFormat(pattern = "yyyy-MM-dd['T'HH:mm:ss[.SSS][.SS][.S]]") LocalDate endDate,
             @Parameter(description = "Status filter") @RequestParam(required = false) ExpenseStatus status,
             @Parameter(description = "Category ID filter") @RequestParam(required = false) UUID categoryId,
-            @Parameter(description = "Created by user filter") @RequestParam(required = false) UUID createdBy,
+            @Parameter(description = "Created by user filter") @RequestParam(required = false) String createdBy,
             @Parameter(description = "Minimum amount filter") @RequestParam(required = false) BigDecimal minAmount,
             @Parameter(description = "Maximum amount filter") @RequestParam(required = false) BigDecimal maxAmount,
             @Parameter(description = "Search query") @RequestParam(required = false) String search,
