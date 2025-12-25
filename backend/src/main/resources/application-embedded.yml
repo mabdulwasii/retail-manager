@@ -1,41 +1,24 @@
 spring:
-  profiles:
-    active: embedded
-
-  # Embedded H2 Database Configuration
-  datasource:
-    url: jdbc:h2:file:./data/shopmanager;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 20000
-      idle-timeout: 300000
-      max-lifetime: 1200000
-
-  # H2 Console (disabled by default for security)
-  h2:
-    console:
-      enabled: false
-      path: /h2-console
+  # Embedded PostgreSQL Configuration
+  # DataSource is auto-configured by EmbeddedPostgreSQLConfig
 
   # JPA Configuration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
     show-sql: false
+    defer-datasource-initialization: false
     properties:
       hibernate:
         format_sql: true
         use_sql_comments: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  # Flyway Configuration
+  # Flyway Configuration - ENABLED for embedded mode (PostgreSQL migrations work as-is)
   flyway:
     enabled: true
-    locations: classpath:db/migration,classpath:db/migration/h2
+    locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
 
@@ -57,9 +40,27 @@ spring:
   kafka:
     enabled: false
 
+  # Spring Modulith - JDBC events enabled (PostgreSQL supports it)
+  modulith:
+    events:
+      jdbc:
+        enabled: true
+    republish-outstanding-events-on-restart: true
+
+# Embedded PostgreSQL Configuration
+embedded:
+  postgres:
+    port: 5433
+    data-dir: ./data/postgres
+    database: shopmanager
+
 # Application Configuration
 application:
   mode: embedded
+
+  # Disable Keycloak for embedded mode
+  keycloak:
+    enabled: false
 
   # Local JWT Configuration
   jwt:

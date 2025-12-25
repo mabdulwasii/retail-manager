@@ -1,4 +1,4 @@
-package com.princely.shopmanager.shared.config;
+package com.princely.shopmanager.embedded.config;
 
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import org.springframework.context.annotation.Bean;
@@ -7,16 +7,29 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Optional;
 
 /**
- * JPA Configuration for auditing.
- * We don't use @EnableJpaRepositories - Spring Boot autoconfigures it.
+ * JPA configuration for embedded mode.
+ *
+ * <p>This configuration provides JPA auditing for embedded deployments.
+ * DataSource is automatically configured by {@link EmbeddedPostgreSQLConfig}.
+ * JPA repositories are auto-configured by Spring Boot.
+ *
+ * <p>Key differences from cloud mode:
+ * <ul>
+ *   <li>Single embedded PostgreSQL instance (managed by EmbeddedPostgreSQLConfig)</li>
+ *   <li>No multi-entity-manager setup</li>
+ *   <li>Same PostgreSQL dialect as production (easy migration path)</li>
+ *   <li>File-based persistence in ./data/postgres directory</li>
+ * </ul>
  */
 @Configuration
-@Profile("!embedded")
-public class JpaConfig {
+@Profile("embedded")
+@EnableTransactionManagement
+public class EmbeddedJpaConfig {
 
     @Bean
     public AuditorAware<String> auditorProvider() {
