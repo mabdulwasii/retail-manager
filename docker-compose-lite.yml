@@ -9,10 +9,25 @@ version: '3.8'
 
 services:
   # ==========================================================================
-  # H2 Database (embedded in backend, but exposed for management)
+  # PostgreSQL Database (Lightweight)
   # ==========================================================================
-  # Note: H2 runs inside the backend container. This section is for reference.
-  # Data is persisted to ./data/h2 volume
+  postgres:
+    image: postgres:16-alpine
+    container_name: shop-manager-postgres-lite
+    environment:
+      POSTGRES_DB: shopmanager
+      POSTGRES_USER: shopmanager
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopmanager}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shop-network-lite
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopmanager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   # ==========================================================================
   # Backend Service (Embedded Mode)
@@ -33,14 +48,14 @@ services:
       # Server Configuration
       SERVER_PORT: 8081
 
-      # H2 Database (file-based)
-      SPRING_DATASOURCE_URL: jdbc:h2:file:/app/data/shopmanager;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
-      SPRING_DATASOURCE_USERNAME: sa
-      SPRING_DATASOURCE_PASSWORD: ${H2_PASSWORD:-}
+      # Disable embedded PostgreSQL (use external container instead)
+      EMBEDDED_POSTGRES_ENABLED: false
 
-      # H2 Console (optional, for debugging)
-      SPRING_H2_CONSOLE_ENABLED: ${H2_CONSOLE_ENABLED:-false}
-      SPRING_H2_CONSOLE_PATH: /h2-console
+      # PostgreSQL Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopmanager
+      SPRING_DATASOURCE_USERNAME: shopmanager
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-shopmanager}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
 
       # JWT Authentication
       APPLICATION_JWT_SECRET: ${JWT_SECRET}
@@ -68,11 +83,13 @@ services:
         -XX:MaxGCPauseMillis=200
         -XX:+UseStringDeduplication
     volumes:
-      - h2_data:/app/data
       - uploads_data:/app/data/uploads
       - logs_data:/app/logs
     networks:
       - shop-network-lite
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -122,21 +139,9 @@ networks:
 # Volumes
 # ============================================================================
 volumes:
-  h2_data:
+  postgres_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_DIR:-./data/h2}
   uploads_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_DIR:-./data}/uploads
   logs_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_DIR:-./data}/logs

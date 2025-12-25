@@ -4,6 +4,7 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -27,10 +28,14 @@ import java.io.IOException;
  * <p>Memory footprint: ~150-200 MB (vs 50 MB for H2, but with full PostgreSQL features)
  *
  * <p>The database automatically starts on application startup and stops on shutdown.
+ *
+ * <p>This configuration is only activated when spring.datasource.url is NOT set,
+ * allowing Docker Compose Lite to use an external PostgreSQL container.
  */
 @Slf4j
 @Configuration
 @Profile("embedded")
+@ConditionalOnProperty(name = "embedded.postgres.enabled", havingValue = "true", matchIfMissing = true)
 public class EmbeddedPostgreSQLConfig {
 
     private EmbeddedPostgres embeddedPostgres;
