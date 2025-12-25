@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -21,14 +21,23 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
+import configService from '@/config/runtime-config'
 
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const { isAuthenticated, login, logout } = useAuth()
+  const isEmbedded = configService.isEmbeddedMode;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
 
   const handleLogin = () => {
-    login()
+    if (isEmbedded) {
+      // Redirect to embedded login page
+      navigate('/login');
+    } else {
+      // Keycloak login (redirect to Keycloak)
+      login();
+    }
   }
 
   const handleLogout = async () => {

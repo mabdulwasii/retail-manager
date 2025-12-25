@@ -1,5 +1,6 @@
 package com.princely.shopmanager.embedded.security;
 
+import com.princely.shopmanager.core.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,6 +16,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * JWT token provider for embedded mode.
@@ -115,5 +117,68 @@ public class JwtTokenProvider {
             log.error("JWT validation error: {}", e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Generate access token from User entity
+     */
+    public String generateAccessToken(User user) {
+        List<String> roles = user.getRoles().stream()
+                .map(role -> role.getName())
+                .collect(Collectors.toList());
+
+        return Jwts.builder()
+                .setSubject(user.getId())
+                .claim("username", user.getUsername())
+                .claim("email", user.getEmail())
+                .claim("roles", roles)
+                .claim("tenantId", user.getTenantId())
+                .claim("shopId", user.getShopId())
+                .setIssuer(issuer)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    /**
+     * Generate refresh token from User entity
+     */
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getId())
+                .claim("username", user.getUsername())
+                .setIssuer(issuer)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    /**
+     * Get user ID from token
+     */
+    public String getUserIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getSubject();
+    }
+
+    /**
+     * Get access token validity in milliseconds
+     */
+    public long getAccessTokenValidity() {
+        return jwtExpirationMs;
+    }
+
+    /**
+     * Get refresh token validity in milliseconds
+     */
+    public long getRefreshTokenValidity() {
+        return refreshExpirationMs;
     }
 }

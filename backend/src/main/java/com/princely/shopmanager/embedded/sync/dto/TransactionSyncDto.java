@@ -20,8 +20,8 @@ public class TransactionSyncDto {
 
     private String transactionId;
     private String transactionNumber;
-    private String storeId;
-    private String tenantId;
+    private String shopId; // Shop identifier (formerly storeId)
+    private String tenantId; // Tenant identifier (organization)
     private LocalDateTime transactionDate;
     private BigDecimal totalAmount;
     private BigDecimal taxAmount;

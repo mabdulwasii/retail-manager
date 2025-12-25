@@ -67,12 +67,24 @@ public enum ErrorCode {
 
     // User & Authentication errors (8000-8999)
     USER_NOT_FOUND("errors.user.not.found", HttpStatus.NOT_FOUND),
+    USER_INACTIVE("errors.user.inactive", HttpStatus.FORBIDDEN),
     INVALID_CREDENTIALS("errors.credentials.invalid", HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED("errors.token.expired", HttpStatus.UNAUTHORIZED),
+    TOKEN_INVALID("errors.token.invalid", HttpStatus.UNAUTHORIZED),
+    USERNAME_EXISTS("errors.username.exists", HttpStatus.CONFLICT),
+    EMAIL_EXISTS("errors.email.exists", HttpStatus.CONFLICT),
 
     // Business Rule Violations (9000-9999)
     BUSINESS_RULE_VIOLATION("errors.business.rule.violation", HttpStatus.CONFLICT),
-    INVALID_STATE_TRANSITION("errors.state.transition.invalid", HttpStatus.CONFLICT);
+    INVALID_STATE_TRANSITION("errors.state.transition.invalid", HttpStatus.CONFLICT),
+
+    // Cloud Sync errors (10000-10999)
+    CLOUD_SYNC_NOT_CONFIGURED("errors.cloud.sync.not.configured", HttpStatus.PRECONDITION_REQUIRED),
+    CLOUD_SYNC_UNAVAILABLE("errors.cloud.sync.unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+    CLOUD_SYNC_REQUIRED("errors.cloud.sync.required", HttpStatus.PRECONDITION_REQUIRED),
+    CLOUD_TENANT_NOT_FOUND("errors.cloud.tenant.not.found", HttpStatus.NOT_FOUND),
+    CLOUD_REGISTRATION_FAILED("errors.cloud.registration.failed", HttpStatus.BAD_GATEWAY),
+    CLOUD_INVALID_CREDENTIALS("errors.cloud.invalid.credentials", HttpStatus.UNAUTHORIZED);
 
     /**
      * -- GETTER --
