@@ -3,7 +3,7 @@
  * Provides authentication state and methods for embedded deployments.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import embeddedAuthService, { UserProfile } from "@/services/EmbeddedAuthService";
 import { setTokenProvider } from "@/lib/axios";
 
@@ -176,7 +176,7 @@ export const EmbeddedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return embeddedAuthService.getAccessToken();
   }, []);
 
-  const contextValue: AuthContextType = {
+  const contextValue: AuthContextType = useMemo(() => ({
     isAuthenticated,
     isInitialized,
     user,
@@ -191,7 +191,22 @@ export const EmbeddedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     hasAnyPermission,
     hasAllPermissions,
     getToken,
-  };
+  }), [
+    isAuthenticated,
+    isInitialized,
+    user,
+    login,
+    register,
+    logout,
+    refreshUserProfile,
+    hasRole,
+    hasAnyRole,
+    hasAllRoles,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    getToken,
+  ]);
 
   return (
     <EmbeddedAuthContext.Provider value={contextValue}>
