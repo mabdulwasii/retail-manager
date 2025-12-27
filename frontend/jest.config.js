@@ -29,7 +29,15 @@ export default {
   },
   globals: {
     'import.meta': {
-      env: {}
+      env: {
+        VITE_API_BASE_URL: 'http://localhost:8081/api',
+        VITE_KEYCLOAK_URL: 'http://localhost:8080',
+        VITE_KEYCLOAK_REALM: 'shop-manager',
+        VITE_KEYCLOAK_CLIENT_ID: 'shop-manager-frontend',
+        VITE_APP_VERSION: '1.0.0',
+        VITE_APP_ENV: 'test',
+        VITE_AUTH_MODE: 'embedded'
+      }
     }
   },
   transformIgnorePatterns: [

@@ -47,11 +47,10 @@ export const handlers = [
       );
     }
 
-    // Successful registration
+    // Successful registration - return tokens
     return HttpResponse.json({
-      id: '456',
-      username: body.username,
-      email: body.email,
+      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NTYiLCJuYW1lIjoidGVzdHVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlkIjoiNDU2IiwicGVybWlzc2lvbnMiOlsiUFJPRFVDVF9SRUFEIiwiUFJPRFVDVF9XUklURSJdfQ.abc123def456',
+      refreshToken: 'refresh-token-456',
     }, { status: 201 });
   }),
 

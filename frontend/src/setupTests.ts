@@ -8,36 +8,29 @@ import '@testing-library/jest-dom'
 import { cleanup } from '@testing-library/react'
 
 // Mock the runtime-config module to avoid import.meta issues
-jest.mock('@/config/runtime-config', () => ({
-  default: {
+jest.mock('@/config/runtime-config', () => {
+  const mockConfigService = {
     apiBaseUrl: 'http://localhost:8081/api',
     keycloakUrl: 'http://localhost:8080',
     keycloakRealm: 'shop-manager',
     keycloakClientId: 'shop-manager-frontend',
     appVersion: '1.0.0',
     appEnv: 'test',
+    authMode: 'embedded' as const,
+    isEmbeddedMode: true,
     keycloakConfig: {
       url: 'http://localhost:8080',
       realm: 'shop-manager',
       clientId: 'shop-manager-frontend'
     },
-    logConfig: jest.fn()
-  },
-  configService: {
-    apiBaseUrl: 'http://localhost:8081/api',
-    keycloakUrl: 'http://localhost:8080',
-    keycloakRealm: 'shop-manager',
-    keycloakClientId: 'shop-manager-frontend',
-    appVersion: '1.0.0',
-    appEnv: 'test',
-    keycloakConfig: {
-      url: 'http://localhost:8080',
-      realm: 'shop-manager',
-      clientId: 'shop-manager-frontend'
-    },
-    logConfig: jest.fn()
-  }
-}))
+    logConfig: () => {}  // Plain function instead of jest.fn() for hoisting compatibility
+  };
+
+  return {
+    default: mockConfigService,
+    configService: mockConfigService
+  };
+})
 
 // Global mock for ManualAuthContext - can be overridden in individual tests
 jest.mock('@/context/ManualAuthContext', () => {
@@ -121,7 +114,8 @@ globalThis.import = {
       VITE_KEYCLOAK_REALM: 'shop-manager',
       VITE_KEYCLOAK_CLIENT_ID: 'shop-manager-frontend',
       VITE_APP_VERSION: '1.0.0',
-      VITE_APP_ENV: 'test'
+      VITE_APP_ENV: 'test',
+      VITE_AUTH_MODE: 'embedded'
     }
   }
 } as any
@@ -199,24 +193,46 @@ Object.defineProperty(window, 'scrollTo', {
   value: jest.fn(),
 })
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
+// Mock localStorage with proper implementation
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 })
 
-// Mock sessionStorage
-const sessionStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
+// Mock sessionStorage with proper implementation
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
 })
