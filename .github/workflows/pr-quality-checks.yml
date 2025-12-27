@@ -53,7 +53,7 @@ jobs:
         run: |
           cd backend
           ./mvnw sonar:sonar \
-            -Dsonar.projectKey=mabdulwasii_retail-manager \
+            -Dsonar.projectKey=princely-org_retail-manager_backend \
             -Dsonar.moduleKey=backend \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
