@@ -1,14 +1,14 @@
 /**
  * Unit tests for EmbeddedAuthContext
  * Tests React context provider and authentication hooks
- * Uses MSW for API mocking to test actual service integration
+ * Uses axios-mock-adapter for API mocking (hybrid approach with MSW for fetch)
  */
 
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { EmbeddedAuthProvider, useEmbeddedAuth } from '../EmbeddedAuthContext';
-import { server } from '@/test/mocks/server';
-import { http, HttpResponse } from 'msw';
+import MockAdapter from 'axios-mock-adapter';
+import api from '@/lib/axios';
 import React from 'react';
 
 const API_BASE_URL = 'http://localhost:8081/api';
@@ -20,6 +20,8 @@ const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3OD
 const EXPIRED_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjF9.test';
 
 describe('EmbeddedAuthContext', () => {
+  let mock: MockAdapter;
+
   const mockUserProfile = {
     id: '123',
     username: 'testuser',
@@ -49,6 +51,49 @@ describe('EmbeddedAuthContext', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+
+    // Create new mock adapter for each test
+    mock = new MockAdapter(api);
+
+    // Default handlers
+    mock.onPost('/auth/login').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.username === 'wronguser' || body.password === 'wrongpass') {
+        return [401, { message: 'Invalid credentials' }];
+      }
+      return [200, {
+        accessToken: VALID_TOKEN,
+        refreshToken: 'refresh-token-123',
+      }];
+    });
+
+    mock.onPost('/auth/register').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.username === 'existinguser') {
+        return [409, { message: 'Username already exists' }];
+      }
+      return [200, {
+        accessToken: VALID_TOKEN,
+        refreshToken: 'refresh-token-123',
+      }];
+    });
+
+    mock.onPost('/auth/refresh').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.refreshToken === 'invalid-refresh-token') {
+        return [401, { message: 'Invalid refresh token' }];
+      }
+      return [200, {
+        accessToken: VALID_TOKEN,
+        refreshToken: 'new-refresh-token',
+      }];
+    });
+
+    mock.onGet('/users/profile').reply(200, mockUserProfile);
+  });
+
+  afterEach(() => {
+    mock.restore();
   });
 
   describe('Initialization', () => {
@@ -80,11 +125,8 @@ describe('EmbeddedAuthContext', () => {
     it('should logout if token exists but profile fetch fails', async () => {
       localStorage.setItem('embedded_access_token', VALID_TOKEN);
 
-      server.use(
-        http.get(`${API_BASE_URL}/users/profile`, () => {
-          return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        })
-      );
+      // Override default profile handler to return 401
+      mock.onGet('/users/profile').reply(401, { message: 'Unauthorized' });
 
       const { result } = renderHook(() => useEmbeddedAuth(), { wrapper });
 
@@ -144,23 +186,6 @@ describe('EmbeddedAuthContext', () => {
 
   describe('Registration', () => {
     it('should register successfully and update state', async () => {
-      server.use(
-        http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
-          const body = await request.json() as any;
-          return HttpResponse.json({
-            id: '456',
-            username: body.username,
-            email: body.email,
-          }, { status: 201 });
-        }),
-        http.post(`${API_BASE_URL}/auth/login`, () => {
-          return HttpResponse.json({
-            accessToken: VALID_TOKEN,
-            refreshToken: 'refresh-token-123',
-          });
-        })
-      );
-
       const { result } = renderHook(() => useEmbeddedAuth(), { wrapper });
 
       await waitFor(() => {
@@ -228,11 +253,9 @@ describe('EmbeddedAuthContext', () => {
       });
 
       const updatedProfile = { ...mockUserProfile, email: 'updated@example.com' };
-      server.use(
-        http.get(`${API_BASE_URL}/users/profile`, () => {
-          return HttpResponse.json(updatedProfile);
-        })
-      );
+
+      // Override default profile handler to return updated profile
+      mock.onGet('/users/profile').reply(200, updatedProfile);
 
       await act(async () => {
         await result.current.refreshUserProfile();
@@ -250,11 +273,8 @@ describe('EmbeddedAuthContext', () => {
         expect(result.current.isAuthenticated).toBe(true);
       });
 
-      server.use(
-        http.get(`${API_BASE_URL}/users/profile`, () => {
-          return HttpResponse.json({ message: 'Network error' }, { status: 500 });
-        })
-      );
+      // Override default profile handler to return 500 error
+      mock.onGet('/users/profile').reply(500, { message: 'Network error' });
 
       await act(async () => {
         await result.current.refreshUserProfile();
@@ -312,15 +332,19 @@ describe('EmbeddedAuthContext', () => {
         id: '123',
         username: 'testuser',
         email: 'test@example.com',
-        roles: ['USER'],
-        permissions: ['USER_READ', 'USER_WRITE'],
+        roles: [
+          {
+            id: '1',
+            name: 'USER',
+            description: 'User role',
+            isSystem: false,
+            permissions: ['USER_READ', 'USER_WRITE']
+          }
+        ],
       };
 
-      server.use(
-        http.get(`${API_BASE_URL}/users/profile`, () => {
-          return HttpResponse.json(userWithoutSystemAdmin);
-        })
-      );
+      // Override default profile handler to return user without SYSTEM_ADMIN
+      mock.onGet('/users/profile').reply(200, userWithoutSystemAdmin);
 
       localStorage.setItem('embedded_access_token', VALID_TOKEN);
 
@@ -412,6 +436,14 @@ describe('EmbeddedAuthContext', () => {
   });
 
   describe('Token Refresh Interval', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should set up token refresh interval when authenticated', async () => {
       localStorage.setItem('embedded_access_token', VALID_TOKEN);
 

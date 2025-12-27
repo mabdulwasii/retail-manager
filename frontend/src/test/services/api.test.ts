@@ -1,9 +1,54 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
-import { mockUserProfile, mockUserProfileInvestor } from '@/test/mocks/handlers/userHandlers'
+
+// Mock user profiles for testing
+const mockUserProfile = {
+  id: 'user-123',
+  username: 'john.doe',
+  email: 'john.doe@example.com',
+  roles: [
+    {
+      id: '1',
+      name: 'MANAGER',
+      description: 'Manager role',
+      isSystem: false,
+      permissions: ['PRODUCT_READ', 'PRODUCT_WRITE']
+    },
+    {
+      id: '2',
+      name: 'EMPLOYEE',
+      description: 'Employee role',
+      isSystem: false,
+      permissions: ['PRODUCT_READ']
+    }
+  ]
+};
+
+const mockUserProfileInvestor = {
+  id: '456',
+  username: 'investor',
+  email: 'investor@example.com',
+  isInvestor: true,
+  roles: [
+    {
+      id: '3',
+      name: 'INVESTOR',
+      description: 'Investor role',
+      isSystem: false,
+      permissions: ['INVESTMENT_READ']
+    },
+    {
+      id: '4',
+      name: 'TENANT_ADMIN',
+      description: 'Tenant Admin role',
+      isSystem: false,
+      permissions: ['TENANT_MANAGE']
+    }
+  ]
+};
 
 /**
  * API Service Tests
- * 
+ *
  * Note: These tests mock the API service directly rather than testing HTTP calls.
  * MSW v2 intercepts fetch requests, but axios in jsdom uses XHR adapter.
  * For actual HTTP interception testing, see component tests that use React Query hooks.
@@ -37,7 +82,8 @@ describe('API Service - User Profile', () => {
       expect(profile.id).toBe('user-123')
       expect(profile.username).toBe('john.doe')
       expect(profile.email).toBe('john.doe@example.com')
-      expect(profile.roles).toEqual(['MANAGER', 'EMPLOYEE'])
+      expect(profile.roles).toHaveLength(2)
+      expect(profile.roles.map((r: any) => r.name)).toEqual(['MANAGER', 'EMPLOYEE'])
       expect(mockGetUserProfile).toHaveBeenCalledTimes(1)
     })
 
@@ -64,8 +110,9 @@ describe('API Service - User Profile', () => {
 
       expect(profile).toEqual(mockUserProfileInvestor)
       expect(profile.isInvestor).toBe(true)
-      expect(profile.roles).toContain('INVESTOR')
-      expect(profile.roles).toContain('TENANT_ADMIN')
+      expect(profile.roles).toHaveLength(2)
+      expect(profile.roles.map((r: any) => r.name)).toContain('INVESTOR')
+      expect(profile.roles.map((r: any) => r.name)).toContain('TENANT_ADMIN')
       expect(mockGetUserProfile).toHaveBeenCalledTimes(1)
     })
   })

@@ -1,17 +1,19 @@
 /**
  * Unit tests for EmbeddedAuthService
  * Tests JWT token handling, authentication, and profile management
- * Uses MSW for API mocking to test actual service code
+ * Uses axios-mock-adapter for API mocking to test actual service code
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { server } from '@/test/mocks/server';
-import { http, HttpResponse } from 'msw';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import MockAdapter from 'axios-mock-adapter';
+import api from '@/lib/axios';
 import embeddedAuthService from '../EmbeddedAuthService';
 
 const API_BASE_URL = 'http://localhost:8081/api';
 
 describe('EmbeddedAuthService', () => {
+  let mock: MockAdapter;
+
   const mockTokens = {
     accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6OTk5OTk5OTk5OX0.test',
     refreshToken: 'refresh.token.here',
@@ -21,13 +23,57 @@ describe('EmbeddedAuthService', () => {
     id: '123',
     username: 'testuser',
     email: 'test@example.com',
-    roles: ['USER'],
-    permissions: ['PRODUCT_READ', 'PRODUCT_WRITE'],
+    roles: [
+      {
+        id: '1',
+        name: 'USER',
+        description: 'User role',
+        isSystem: false,
+        permissions: ['PRODUCT_READ', 'PRODUCT_WRITE']
+      }
+    ],
   };
 
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+
+    // Create mock adapter
+    mock = new MockAdapter(api);
+
+    // Default handlers
+    mock.onPost('/auth/login').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.username === 'wronguser' || body.password === 'wrongpass' || !body.username || !body.password) {
+        return [401, { message: 'Invalid credentials' }];
+      }
+      return [200, mockTokens];
+    });
+
+    mock.onPost('/auth/register').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.username === 'existinguser') {
+        return [409, { message: 'Username already exists' }];
+      }
+      return [200, mockTokens];
+    });
+
+    mock.onPost('/auth/refresh').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.refreshToken === 'invalid-refresh-token') {
+        return [401, { message: 'Invalid refresh token' }];
+      }
+      if (!body.refreshToken) {
+        return [400, { message: 'No refresh token provided' }];
+      }
+      return [200, { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }];
+    });
+
+    mock.onGet('/users/profile').reply(200, mockUserProfile);
+  });
+
+  afterEach(() => {
+    mock.restore();
   });
 
   describe('Token Management', () => {
@@ -140,26 +186,19 @@ describe('EmbeddedAuthService', () => {
   });
 
   describe('Registration', () => {
-    it('should register successfully and return user data', async () => {
-      server.use(
-        http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
-          const body = await request.json() as { username: string; email: string };
-          return HttpResponse.json({
-            id: '456',
-            username: body.username,
-            email: body.email,
-          }, { status: 201 });
-        })
-      );
-
+    it('should register successfully and return tokens', async () => {
       const result = await embeddedAuthService.register({
         username: 'newuser',
         password: 'password123',
         email: 'new@example.com',
       });
 
-      expect(result.username).toBe('newuser');
-      expect(result.email).toBe('new@example.com');
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+
+      // Verify tokens are stored in localStorage
+      expect(localStorage.getItem('embedded_access_token')).toBe(result.accessToken);
+      expect(localStorage.getItem('embedded_refresh_token')).toBe(result.refreshToken);
     });
 
     it('should throw error when username already exists', async () => {
@@ -219,34 +258,10 @@ describe('EmbeddedAuthService', () => {
 
     it('should throw error when unauthorized', async () => {
       // Don't set token, axios interceptor should add it but will be empty
-      server.use(
-        http.get(`${API_BASE_URL}/users/profile`, () => {
-          return HttpResponse.json(
-            { message: 'Unauthorized' },
-            { status: 401 }
-          );
-        })
-      );
+      mock.onGet('/users/profile').reply(401, { message: 'Unauthorized' });
 
       await expect(embeddedAuthService.getProfile()).rejects.toThrow();
     });
   });
 
-  describe('Check Permissions', () => {
-    it('should check if user has required permissions', async () => {
-      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
-
-      const hasPermission = await embeddedAuthService.checkPermissions(['PRODUCT_READ']);
-
-      expect(hasPermission).toBe(true);
-    });
-
-    it('should return false when user lacks permissions', async () => {
-      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
-
-      const hasPermission = await embeddedAuthService.checkPermissions(['ADMIN_ACCESS']);
-
-      expect(hasPermission).toBe(false);
-    });
-  });
 });

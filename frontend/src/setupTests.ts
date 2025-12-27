@@ -9,6 +9,7 @@ import { cleanup } from '@testing-library/react'
 
 // Mock the runtime-config module to avoid import.meta issues
 jest.mock('@/config/runtime-config', () => {
+  const mockLogConfig = jest.fn();
   const mockConfigService = {
     apiBaseUrl: 'http://localhost:8081/api',
     keycloakUrl: 'http://localhost:8080',
@@ -23,12 +24,13 @@ jest.mock('@/config/runtime-config', () => {
       realm: 'shop-manager',
       clientId: 'shop-manager-frontend'
     },
-    logConfig: () => {}  // Plain function instead of jest.fn() for hoisting compatibility
+    logConfig: mockLogConfig
   };
 
   return {
     default: mockConfigService,
-    configService: mockConfigService
+    configService: mockConfigService,
+    __esModule: true
   };
 })
 
@@ -153,8 +155,44 @@ global.Headers = Headers as any
 global.Request = Request as any
 global.Response = Response as any
 
-// Setup MSW (Mock Service Worker) for API mocking - MUST come after fetch globals
-import './mocks/server'
+// Add setImmediate and clearImmediate polyfills for jsdom
+if (typeof global.setImmediate === 'undefined') {
+  global.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
+    return setTimeout(callback, 0, ...args) as any;
+  };
+}
+if (typeof global.clearImmediate === 'undefined') {
+  global.clearImmediate = (handle: any) => {
+    return clearTimeout(handle);
+  };
+}
+
+// Polyfill setTimeout/setInterval unref for undici compatibility with jsdom
+const originalSetTimeout = global.setTimeout;
+const originalSetInterval = global.setInterval;
+
+global.setTimeout = ((callback: any, delay?: any, ...args: any[]) => {
+  const handle = originalSetTimeout(callback, delay, ...args);
+  // Add unref method that undici expects
+  if (handle && typeof handle === 'object') {
+    (handle as any).unref = () => handle;
+  }
+  return handle;
+}) as any;
+
+global.setInterval = ((callback: any, delay?: any, ...args: any[]) => {
+  const handle = originalSetInterval(callback, delay, ...args);
+  // Add unref method that undici expects
+  if (handle && typeof handle === 'object') {
+    (handle as any).unref = () => handle;
+  }
+  return handle;
+}) as any;
+
+// Setup MSW (Mock Service Worker) for API mocking
+// Note: MSW is kept for future fetch-based tests, but currently we use axios-mock-adapter
+// for axios requests due to compatibility issues with jest + jsdom + undici
+// import './mocks/server'
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {

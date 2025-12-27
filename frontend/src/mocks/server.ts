@@ -15,8 +15,11 @@ export const server = setupServer(...handlers)
 // Enable API mocking before tests run
 beforeAll(() => {
   server.listen({
-    onUnhandledRequest: 'warn' // Warn mode: helps debug missing handlers
+    onUnhandledRequest: (req) => {
+      console.log('[MSW] Unhandled request:', req.method, req.url);
+    }
   })
+  console.log('[MSW] Server started');
 })
 
 // Reset handlers after each test to ensure test isolation

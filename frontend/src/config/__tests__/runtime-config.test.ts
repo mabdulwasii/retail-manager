@@ -1,32 +1,11 @@
 /**
  * Unit tests for runtime-config service
  * Tests configuration loading and getter methods
- * Note: This test uses the mocked config service since import.meta.env can't be transpiled in Jest environment
+ * Note: This test uses the global mocked config service from setupTests.ts
  */
 
 import { describe, it, expect } from '@jest/globals';
-
-// Mock the runtime-config module for this test
-jest.mock('../runtime-config', () => ({
-  default: {
-    apiBaseUrl: 'http://localhost:8081/api',
-    keycloakUrl: 'http://localhost:8080',
-    keycloakRealm: 'shop-manager',
-    keycloakClientId: 'shop-manager-frontend',
-    appVersion: '1.0.0',
-    appEnv: 'test',
-    authMode: 'embedded',
-    isEmbeddedMode: true,
-    keycloakConfig: {
-      url: 'http://localhost:8080',
-      realm: 'shop-manager',
-      clientId: 'shop-manager-frontend'
-    },
-    logConfig: () => {}
-  }
-}));
-
-import configService from '../runtime-config';
+import configService from '@/config/runtime-config';
 
 describe('ConfigService', () => {
   describe('Configuration Access', () => {

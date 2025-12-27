@@ -1,13 +1,12 @@
 export default {
-  testEnvironment: 'jsdom',
+  testEnvironment: 'jest-fixed-jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleDirectories: ['node_modules', '<rootDir>'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
-    '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
-    '^@mswjs/interceptors/ClientRequest$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/interceptors/ClientRequest/index.js',
-    '^@mswjs/interceptors$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/index.js',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {

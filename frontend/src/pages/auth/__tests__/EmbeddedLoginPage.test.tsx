@@ -1,18 +1,34 @@
 /**
  * Unit tests for EmbeddedLoginPage
  * Tests login form rendering, submission, error handling, and navigation
- * Uses MSW for API mocking to test actual integration
+ * Uses axios-mock-adapter for API mocking to test actual integration
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { EmbeddedLoginPage } from '../EmbeddedLoginPage';
 import { EmbeddedAuthProvider } from '@/context/EmbeddedAuthContext';
-import { server } from '@/test/mocks/server';
-import { http, HttpResponse } from 'msw';
+import MockAdapter from 'axios-mock-adapter';
+import api from '@/lib/axios';
 
 const API_BASE_URL = 'http://localhost:8081/api';
+const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM';
+
+const mockUserProfile = {
+  id: '123',
+  username: 'testuser',
+  email: 'test@example.com',
+  roles: [
+    {
+      id: '1',
+      name: 'USER',
+      description: 'User role',
+      isSystem: false,
+      permissions: ['USER_READ', 'USER_WRITE']
+    }
+  ],
+};
 
 // Mock navigate
 const mockNavigate = jest.fn();
@@ -30,9 +46,35 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('EmbeddedLoginPage', () => {
+  let mock: MockAdapter;
+
   beforeEach(() => {
     mockNavigate.mockClear();
     localStorage.clear();
+
+    // Create mock adapter
+    mock = new MockAdapter(api);
+
+    // Default handlers
+    mock.onPost('/auth/login').reply((config) => {
+      const body = JSON.parse(config.data);
+      if (body.username === 'wronguser' || body.password === 'wrongpass') {
+        return [401, { message: 'Invalid credentials' }];
+      }
+      if (!body.username || !body.password) {
+        return [400, { message: 'Username and password are required' }];
+      }
+      return [200, {
+        accessToken: VALID_TOKEN,
+        refreshToken: 'refresh-token-123',
+      }];
+    });
+
+    mock.onGet('/users/profile').reply(200, mockUserProfile);
+  });
+
+  afterEach(() => {
+    mock.restore();
   });
 
   describe('Rendering', () => {
@@ -163,18 +205,20 @@ describe('EmbeddedLoginPage', () => {
     });
 
     it('should display error message when credentials are empty', async () => {
-      server.use(
-        http.post(`${API_BASE_URL}/auth/login`, () => {
-          return HttpResponse.json(
-            { message: 'Username and password are required' },
-            { status: 400 }
-          );
-        })
-      );
-
       render(<EmbeddedLoginPage />, { wrapper });
 
+      const usernameInput = screen.getByLabelText(/username/i);
+      const passwordInput = screen.getByLabelText(/password/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
+
+      // Fill with empty strings to bypass HTML5 validation
+      fireEvent.change(usernameInput, { target: { value: '' } });
+      fireEvent.change(passwordInput, { target: { value: '' } });
+
+      // Remove the required attribute to allow submission with empty values
+      usernameInput.removeAttribute('required');
+      passwordInput.removeAttribute('required');
+
       fireEvent.click(submitButton);
 
       // Wait for error to be displayed
