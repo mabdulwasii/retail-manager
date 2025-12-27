@@ -416,6 +416,22 @@ describe('UnifiedAuthContext', () => {
 
   describe('Edge Cases', () => {
     it('should handle undefined config values gracefully', () => {
+      const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
+      const { useAuth: useKeycloakAuth } = require('../ManualAuthContext');
+
+      // Reset mock return values
+      useEmbeddedAuth.mockReturnValue({
+        user: { username: 'embedded-user' },
+        isAuthenticated: true,
+        isInitialized: true,
+      });
+
+      useKeycloakAuth.mockReturnValue({
+        user: { username: 'keycloak-user' },
+        isAuthenticated: true,
+        isInitialized: true,
+      });
+
       (mockedConfigService as any).isEmbeddedMode = undefined;
       (mockedConfigService as any).authMode = undefined;
 
@@ -430,6 +446,22 @@ describe('UnifiedAuthContext', () => {
     });
 
     it('should handle rapid mode switches', () => {
+      const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
+      const { useAuth: useKeycloakAuth } = require('../ManualAuthContext');
+
+      // Reset mock return values
+      useEmbeddedAuth.mockReturnValue({
+        user: { username: 'embedded-user' },
+        isAuthenticated: true,
+        isInitialized: true,
+      });
+
+      useKeycloakAuth.mockReturnValue({
+        user: { username: 'keycloak-user' },
+        isAuthenticated: true,
+        isInitialized: true,
+      });
+
       mockedConfigService.isEmbeddedMode = false;
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (

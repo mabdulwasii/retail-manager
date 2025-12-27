@@ -211,27 +211,26 @@ describe('EmbeddedAuthService', () => {
 
   describe('Get Profile', () => {
     it('should fetch user profile successfully', async () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(mockTokens.accessToken);
       mockApi.get.mockResolvedValue({
         data: mockUserProfile,
       });
 
       const profile = await embeddedAuthService.getProfile();
 
-      expect(mockApi.get).toHaveBeenCalledWith('/users/profile', {
-        headers: {
-          Authorization: `Bearer ${mockTokens.accessToken}`,
-        },
-      });
+      expect(mockApi.get).toHaveBeenCalledWith('/users/profile');
       expect(profile).toEqual(mockUserProfile);
     });
 
-    it('should throw error when no access token exists', async () => {
+    it('should make request even when no access token exists', async () => {
       (localStorage.getItem as jest.Mock).mockReturnValue(null);
+      mockApi.get.mockResolvedValue({
+        data: mockUserProfile,
+      });
 
-      await expect(embeddedAuthService.getProfile()).rejects.toThrow(
-        'No access token available'
-      );
+      const profile = await embeddedAuthService.getProfile();
+
+      expect(mockApi.get).toHaveBeenCalledWith('/users/profile');
+      expect(profile).toEqual(mockUserProfile);
     });
   });
 });

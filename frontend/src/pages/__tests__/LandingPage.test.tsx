@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { LandingPage } from '../LandingPage'
+import { UnifiedAuthProvider } from '@/context/UnifiedAuthContext'
 
 // Mock the components that might not be available in test environment
 jest.mock('@/components/ui/button', () => ({
@@ -18,9 +19,11 @@ jest.mock('@/components/ui/card', () => ({
 }))
 
 const LandingPageWrapper: React.FC = () => (
-  <MemoryRouter>
-    <LandingPage />
-  </MemoryRouter>
+  <UnifiedAuthProvider>
+    <MemoryRouter>
+      <LandingPage />
+    </MemoryRouter>
+  </UnifiedAuthProvider>
 )
 
 describe('LandingPage', () => {

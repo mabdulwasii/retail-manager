@@ -332,6 +332,24 @@ describe('EmbeddedAuthContext', () => {
     });
 
     it('should check if user has specific permission', async () => {
+      // Use a different user profile without SYSTEM_ADMIN for this test
+      const userWithoutSystemAdmin = {
+        id: '123',
+        username: 'testuser',
+        email: 'test@example.com',
+        roles: [
+          {
+            id: '1',
+            name: 'ROLE_USER',
+            description: 'User role',
+            isSystem: false,
+            permissions: ['USER_READ', 'USER_WRITE'],
+          },
+        ],
+      };
+
+      mockedAuthService.getProfile.mockResolvedValue(userWithoutSystemAdmin);
+
       const { result } = renderHook(() => useEmbeddedAuth(), { wrapper });
 
       await waitFor(() => {
@@ -446,24 +464,34 @@ describe('EmbeddedAuthContext', () => {
       mockedAuthService.getProfile.mockResolvedValue(mockUserProfile);
       mockedAuthService.refreshToken.mockResolvedValue({
         accessToken: 'new.token',
+        refreshToken: 'new.refresh.token',
       });
 
-      renderHook(() => useEmbeddedAuth(), { wrapper });
+      const { result } = renderHook(() => useEmbeddedAuth(), { wrapper });
 
+      // Wait for authentication to complete
       await waitFor(() => {
-        expect(mockedAuthService.getProfile).toHaveBeenCalled();
+        expect(result.current.isAuthenticated).toBe(true);
       });
+
+      // Clear previous calls
+      jest.clearAllMocks();
 
       // Simulate token expiration
+      mockedAuthService.getAccessToken.mockReturnValue(mockTokens.accessToken);
       mockedAuthService.isTokenExpired.mockReturnValue(true);
+      mockedAuthService.getProfile.mockResolvedValue(mockUserProfile);
 
+      // Fast-forward and flush promises
       await act(async () => {
         jest.advanceTimersByTime(60000);
+        await Promise.resolve(); // Flush pending promises
       });
 
+      // Verify refresh was called
       await waitFor(() => {
         expect(mockedAuthService.refreshToken).toHaveBeenCalled();
-      });
+      }, { timeout: 1000 });
     });
 
     it('should logout on refresh failure', async () => {
