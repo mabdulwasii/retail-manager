@@ -1,23 +1,15 @@
 /**
  * Unit tests for EmbeddedAuthService
  * Tests JWT token handling, authentication, and profile management
+ * Uses MSW for API mocking to test actual service code
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-
-// Mock the API module before importing the service
-const mockApi = {
-  get: jest.fn(),
-  post: jest.fn(),
-};
-
-jest.mock('@/lib/axios', () => ({
-  __esModule: true,
-  default: mockApi,
-  setTokenProvider: jest.fn(),
-}));
-
+import { describe, it, expect, beforeEach } from '@jest/globals';
+import { server } from '@/test/mocks/server';
+import { http, HttpResponse } from 'msw';
 import embeddedAuthService from '../EmbeddedAuthService';
+
+const API_BASE_URL = 'http://localhost:8081/api';
 
 describe('EmbeddedAuthService', () => {
   const mockTokens = {
@@ -29,36 +21,25 @@ describe('EmbeddedAuthService', () => {
     id: '123',
     username: 'testuser',
     email: 'test@example.com',
-    roles: [
-      {
-        id: '1',
-        name: 'ROLE_USER',
-        description: 'User role',
-        isSystem: false,
-        permissions: ['USER_READ'],
-      },
-    ],
+    roles: ['USER'],
+    permissions: ['PRODUCT_READ', 'PRODUCT_WRITE'],
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
   });
 
   describe('Token Management', () => {
     it('should retrieve access token from localStorage', () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(mockTokens.accessToken);
+      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
 
       const token = embeddedAuthService.getAccessToken();
 
-      expect(localStorage.getItem).toHaveBeenCalledWith('embedded_access_token');
       expect(token).toBe(mockTokens.accessToken);
     });
 
     it('should return null when no access token exists', () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(null);
-
       const token = embeddedAuthService.getAccessToken();
 
       expect(token).toBeNull();
@@ -123,43 +104,53 @@ describe('EmbeddedAuthService', () => {
 
   describe('Login', () => {
     it('should login successfully and store tokens', async () => {
-      mockApi.post.mockResolvedValue({
-        data: mockTokens,
-      });
-
       const result = await embeddedAuthService.login({
         username: 'testuser',
         password: 'password123',
       });
 
-      expect(mockApi.post).toHaveBeenCalledWith('/auth/login', {
-        username: 'testuser',
-        password: 'password123',
-      });
-      expect(result).toEqual(mockTokens);
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'embedded_access_token',
-        mockTokens.accessToken
-      );
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+
+      // Verify tokens are stored in localStorage
+      const storedAccessToken = localStorage.getItem('embedded_access_token');
+      const storedRefreshToken = localStorage.getItem('embedded_refresh_token');
+
+      expect(storedAccessToken).toBe(result.accessToken);
+      expect(storedRefreshToken).toBe(result.refreshToken);
     });
 
-    it('should throw error on login failure', async () => {
-      mockApi.post.mockRejectedValue(new Error('Login failed'));
-
+    it('should throw error on login failure with invalid credentials', async () => {
       await expect(
         embeddedAuthService.login({
-          username: 'testuser',
-          password: 'wrong',
+          username: 'wronguser',
+          password: 'wrongpass',
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should throw error on login with empty credentials', async () => {
+      await expect(
+        embeddedAuthService.login({
+          username: '',
+          password: '',
         })
       ).rejects.toThrow();
     });
   });
 
   describe('Registration', () => {
-    it('should register successfully and store tokens', async () => {
-      mockApi.post.mockResolvedValue({
-        data: mockTokens,
-      });
+    it('should register successfully and return user data', async () => {
+      server.use(
+        http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
+          const body = await request.json() as { username: string; email: string };
+          return HttpResponse.json({
+            id: '456',
+            username: body.username,
+            email: body.email,
+          }, { status: 201 });
+        })
+      );
 
       const result = await embeddedAuthService.register({
         username: 'newuser',
@@ -167,70 +158,95 @@ describe('EmbeddedAuthService', () => {
         email: 'new@example.com',
       });
 
-      expect(mockApi.post).toHaveBeenCalledWith('/auth/register', {
-        username: 'newuser',
-        password: 'password123',
-        email: 'new@example.com',
-      });
-      expect(result).toEqual(mockTokens);
+      expect(result.username).toBe('newuser');
+      expect(result.email).toBe('new@example.com');
+    });
+
+    it('should throw error when username already exists', async () => {
+      await expect(
+        embeddedAuthService.register({
+          username: 'existinguser',
+          password: 'password123',
+          email: 'test@example.com',
+        })
+      ).rejects.toThrow();
     });
   });
 
   describe('Logout', () => {
     it('should clear tokens from localStorage', () => {
+      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
+      localStorage.setItem('embedded_refresh_token', mockTokens.refreshToken);
+
       embeddedAuthService.logout();
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith('embedded_access_token');
-      expect(localStorage.removeItem).toHaveBeenCalledWith('embedded_refresh_token');
+      expect(localStorage.getItem('embedded_access_token')).toBeNull();
+      expect(localStorage.getItem('embedded_refresh_token')).toBeNull();
     });
   });
 
   describe('Token Refresh', () => {
     it('should refresh access token using refresh token', async () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(mockTokens.refreshToken);
-      mockApi.post.mockResolvedValue({
-        data: { accessToken: 'new.access.token' },
-      });
+      localStorage.setItem('embedded_refresh_token', 'valid-refresh-token');
 
       const result = await embeddedAuthService.refreshToken();
 
-      expect(mockApi.post).toHaveBeenCalledWith('/auth/refresh', {
-        refreshToken: mockTokens.refreshToken,
-      });
-      expect(result).toEqual({ accessToken: 'new.access.token' });
+      expect(result.accessToken).toBe('new-access-token');
+      expect(result.refreshToken).toBe('new-refresh-token');
     });
 
     it('should throw error when no refresh token exists', async () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(null);
-
       await expect(embeddedAuthService.refreshToken()).rejects.toThrow(
         'No refresh token available'
       );
+    });
+
+    it('should throw error with invalid refresh token', async () => {
+      localStorage.setItem('embedded_refresh_token', 'invalid-refresh-token');
+
+      await expect(embeddedAuthService.refreshToken()).rejects.toThrow();
     });
   });
 
   describe('Get Profile', () => {
     it('should fetch user profile successfully', async () => {
-      mockApi.get.mockResolvedValue({
-        data: mockUserProfile,
-      });
+      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
 
       const profile = await embeddedAuthService.getProfile();
 
-      expect(mockApi.get).toHaveBeenCalledWith('/users/profile');
       expect(profile).toEqual(mockUserProfile);
     });
 
-    it('should make request even when no access token exists', async () => {
-      (localStorage.getItem as jest.Mock).mockReturnValue(null);
-      mockApi.get.mockResolvedValue({
-        data: mockUserProfile,
-      });
+    it('should throw error when unauthorized', async () => {
+      // Don't set token, axios interceptor should add it but will be empty
+      server.use(
+        http.get(`${API_BASE_URL}/users/profile`, () => {
+          return HttpResponse.json(
+            { message: 'Unauthorized' },
+            { status: 401 }
+          );
+        })
+      );
 
-      const profile = await embeddedAuthService.getProfile();
+      await expect(embeddedAuthService.getProfile()).rejects.toThrow();
+    });
+  });
 
-      expect(mockApi.get).toHaveBeenCalledWith('/users/profile');
-      expect(profile).toEqual(mockUserProfile);
+  describe('Check Permissions', () => {
+    it('should check if user has required permissions', async () => {
+      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
+
+      const hasPermission = await embeddedAuthService.checkPermissions(['PRODUCT_READ']);
+
+      expect(hasPermission).toBe(true);
+    });
+
+    it('should return false when user lacks permissions', async () => {
+      localStorage.setItem('embedded_access_token', mockTokens.accessToken);
+
+      const hasPermission = await embeddedAuthService.checkPermissions(['ADMIN_ACCESS']);
+
+      expect(hasPermission).toBe(false);
     });
   });
 });

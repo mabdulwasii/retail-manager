@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { beforeAll, afterEach, afterAll } from '@jest/globals'
-import { setupServer } from 'msw/node'
+import { server } from './mocks/server'
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver implements IntersectionObserver {
@@ -40,9 +40,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Setup MSW server
-export const server = setupServer()
-
-beforeAll(() => server.listen())
+// Setup MSW server lifecycle
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
