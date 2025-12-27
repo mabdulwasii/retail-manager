@@ -24,8 +24,22 @@ describe('EmbeddedAuthContext', () => {
     id: '123',
     username: 'testuser',
     email: 'test@example.com',
-    roles: ['USER', 'ADMIN'],
-    permissions: ['USER_READ', 'USER_WRITE', 'ADMIN_READ', 'SYSTEM_ADMIN'],
+    roles: [
+      {
+        id: '1',
+        name: 'USER',
+        description: 'User role',
+        isSystem: false,
+        permissions: ['USER_READ', 'USER_WRITE']
+      },
+      {
+        id: '2',
+        name: 'ADMIN',
+        description: 'Admin role',
+        isSystem: true,
+        permissions: ['ADMIN_READ', 'SYSTEM_ADMIN']
+      }
+    ]
   };
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -35,11 +49,6 @@ describe('EmbeddedAuthContext', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
   });
 
   describe('Initialization', () => {

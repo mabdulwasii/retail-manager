@@ -70,8 +70,22 @@ export const handlers = [
       id: '123',
       username: 'testuser',
       email: 'test@example.com',
-      roles: ['USER'],
-      permissions: ['PRODUCT_READ', 'PRODUCT_WRITE'],
+      roles: [
+        {
+          id: '1',
+          name: 'USER',
+          description: 'User role',
+          isSystem: false,
+          permissions: ['USER_READ', 'USER_WRITE']
+        },
+        {
+          id: '2',
+          name: 'ADMIN',
+          description: 'Admin role',
+          isSystem: true,
+          permissions: ['ADMIN_READ', 'SYSTEM_ADMIN']
+        }
+      ]
     });
   }),
 

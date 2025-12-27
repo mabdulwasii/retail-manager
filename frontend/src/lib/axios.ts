@@ -31,6 +31,7 @@ api.interceptors.request.use(
       token =
         localStorage.getItem("keycloak_token") ||
         localStorage.getItem("keycloak_access_token") ||
+        localStorage.getItem("embedded_access_token") ||
         undefined;
     }
 
