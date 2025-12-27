@@ -47,7 +47,7 @@ jobs:
       - name: SonarQube Scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.BACKEND_SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
           SONAR_ORGANIZATION: ${{ secrets.BACKEND_SONAR_ORGANIZATION }}
         run: |
@@ -57,7 +57,7 @@ jobs:
             -Dsonar.moduleKey=backend \
             -Dsonar.organization=${{ secrets.BACKEND_SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.token=${{ secrets.BACKEND_SONAR_TOKEN }} \
             -Dsonar.qualitygate.wait=true \
             -Dsonar.qualitygate.timeout=300
           echo "✅ SonarQube analysis completed"
