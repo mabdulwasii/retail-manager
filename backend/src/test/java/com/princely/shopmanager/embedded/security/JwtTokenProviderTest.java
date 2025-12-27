@@ -3,6 +3,8 @@ package com.princely.shopmanager.embedded.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("JWT Token Provider Tests")
+@Execution(ExecutionMode.SAME_THREAD) // JJWT ServiceLoader is not thread-safe
 class JwtTokenProviderTest {
 
     private JwtTokenProvider jwtTokenProvider;
