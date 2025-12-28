@@ -26,6 +26,8 @@ const API_BASE_URL = 'http://localhost:8081/api';
 
 // Test-only JWT tokens (NOT for production use)
 // These are mock tokens used exclusively for test environments
+// They contain no real secrets and are intentionally hardcoded for testing
+// NOSONAR - Test fixtures, not real credentials
 const TEST_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM';
 const TEST_REGISTER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NTYiLCJuYW1lIjoidGVzdHVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlkIjoiNDU2IiwicGVybWlzc2lvbnMiOlsiUFJPRFVDVF9SRUFEIiwiUFJPRFVDVF9XUklURSJdfQ.abc123def456';
 

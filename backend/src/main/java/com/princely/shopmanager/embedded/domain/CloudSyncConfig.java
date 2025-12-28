@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString
 @EqualsAndHashCode(callSuper = true)
+
 public class CloudSyncConfig extends BaseEntity {
 
     @Id

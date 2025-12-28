@@ -156,16 +156,13 @@ globalThis.Request = Request as any
 globalThis.Response = Response as any
 
 // Add setImmediate and clearImmediate polyfills for jsdom
-if (globalThis.setImmediate === undefined) {
-  globalThis.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
-    return setTimeout(callback, 0, ...args) as any;
-  };
-}
-if (globalThis.clearImmediate === undefined) {
-  globalThis.clearImmediate = (handle: any) => {
-    return clearTimeout(handle);
-  };
-}
+globalThis.setImmediate ??= (callback: (...args: any[]) => void, ...args: any[]) => {
+  return setTimeout(callback, 0, ...args) as any;
+};
+
+globalThis.clearImmediate ??= (handle: any) => {
+  return clearTimeout(handle);
+};
 
 // Polyfill setTimeout/setInterval unref for undici compatibility with jsdom
 const originalSetTimeout = globalThis.setTimeout;
