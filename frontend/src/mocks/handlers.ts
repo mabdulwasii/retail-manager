@@ -13,8 +13,7 @@ import {
   getMockFraudStatistics,
   getMockInventorySummary,
   getMockExpenseSummary,
-  getMockAlerts,
-  getMockShopOwner
+  getMockAlerts
 } from '@/testData'
 
 /**
@@ -24,6 +23,11 @@ import {
  */
 
 const API_BASE_URL = 'http://localhost:8081/api';
+
+// Test-only JWT tokens (NOT for production use)
+// These are mock tokens used exclusively for test environments
+const TEST_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM';
+const TEST_REGISTER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NTYiLCJuYW1lIjoidGVzdHVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlkIjoiNDU2IiwicGVybWlzc2lvbnMiOlsiUFJPRFVDVF9SRUFEIiwiUFJPRFVDVF9XUklURSJdfQ.abc123def456';
 
 export const handlers = [
   // ============================================================================
@@ -52,7 +56,7 @@ export const handlers = [
 
     // Successful login
     return HttpResponse.json({
-      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM',
+      accessToken: TEST_ACCESS_TOKEN,
       refreshToken: 'refresh-token-123',
     });
   }),
@@ -71,7 +75,7 @@ export const handlers = [
 
     // Successful registration - return tokens
     return HttpResponse.json({
-      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NTYiLCJuYW1lIjoidGVzdHVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlkIjoiNDU2IiwicGVybWlzc2lvbnMiOlsiUFJPRFVDVF9SRUFEIiwiUFJPRFVDVF9XUklURSJdfQ.abc123def456',
+      accessToken: TEST_REGISTER_TOKEN,
       refreshToken: 'refresh-token-456',
     }, { status: 201 });
   }),
@@ -81,7 +85,7 @@ export const handlers = [
     const authHeader = request.headers.get('Authorization');
 
     // Check for valid token
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return HttpResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -147,8 +151,8 @@ export const handlers = [
     }
 
     // Mock user has PRODUCT_READ and PRODUCT_WRITE
-    const userPermissions = ['PRODUCT_READ', 'PRODUCT_WRITE'];
-    const hasPermission = body.permissions.every(p => userPermissions.includes(p));
+    const userPermissions = new Set(['PRODUCT_READ', 'PRODUCT_WRITE']);
+    const hasPermission = body.permissions.every(p => userPermissions.has(p));
 
     return HttpResponse.json({ hasPermission });
   }),

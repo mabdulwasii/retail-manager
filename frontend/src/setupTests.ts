@@ -124,22 +124,22 @@ globalThis.import = {
 
 // Add TextEncoder and TextDecoder for MSW compatibility in Node.js environment
 import { TextEncoder, TextDecoder } from 'util'
-global.TextEncoder = TextEncoder as any
-global.TextDecoder = TextDecoder as any
+globalThis.TextEncoder = TextEncoder as any
+globalThis.TextDecoder = TextDecoder as any
 
 // Add ReadableStream for undici (fetch API dependency)
 import { ReadableStream, TransformStream, WritableStream } from 'stream/web'
-global.ReadableStream = ReadableStream as any
-global.TransformStream = TransformStream as any
-global.WritableStream = WritableStream as any
+globalThis.ReadableStream = ReadableStream as any
+globalThis.TransformStream = TransformStream as any
+globalThis.WritableStream = WritableStream as any
 
 // Add MessagePort and MessageChannel for undici
 import { MessageChannel, MessagePort } from 'worker_threads'
-global.MessageChannel = MessageChannel as any
-global.MessagePort = MessagePort as any
+globalThis.MessageChannel = MessageChannel as any
+globalThis.MessagePort = MessagePort as any
 
 // Mock BroadcastChannel for MSW WebSocket support
-global.BroadcastChannel = class BroadcastChannel {
+globalThis.BroadcastChannel = class BroadcastChannel {
   constructor(public name: string) {}
   postMessage() {}
   close() {}
@@ -150,28 +150,28 @@ global.BroadcastChannel = class BroadcastChannel {
 
 // Add fetch API globals for MSW v2 in Node.js environment
 import { fetch, Headers, Request, Response } from 'undici'
-global.fetch = fetch as any
-global.Headers = Headers as any
-global.Request = Request as any
-global.Response = Response as any
+globalThis.fetch = fetch as any
+globalThis.Headers = Headers as any
+globalThis.Request = Request as any
+globalThis.Response = Response as any
 
 // Add setImmediate and clearImmediate polyfills for jsdom
-if (typeof global.setImmediate === 'undefined') {
-  global.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
+if (globalThis.setImmediate === undefined) {
+  globalThis.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
     return setTimeout(callback, 0, ...args) as any;
   };
 }
-if (typeof global.clearImmediate === 'undefined') {
-  global.clearImmediate = (handle: any) => {
+if (globalThis.clearImmediate === undefined) {
+  globalThis.clearImmediate = (handle: any) => {
     return clearTimeout(handle);
   };
 }
 
 // Polyfill setTimeout/setInterval unref for undici compatibility with jsdom
-const originalSetTimeout = global.setTimeout;
-const originalSetInterval = global.setInterval;
+const originalSetTimeout = globalThis.setTimeout;
+const originalSetInterval = globalThis.setInterval;
 
-global.setTimeout = ((callback: any, delay?: any, ...args: any[]) => {
+globalThis.setTimeout = ((callback: any, delay?: any, ...args: any[]) => {
   const handle = originalSetTimeout(callback, delay, ...args);
   // Add unref method that undici expects
   if (handle && typeof handle === 'object') {
@@ -180,7 +180,7 @@ global.setTimeout = ((callback: any, delay?: any, ...args: any[]) => {
   return handle;
 }) as any;
 
-global.setInterval = ((callback: any, delay?: any, ...args: any[]) => {
+globalThis.setInterval = ((callback: any, delay?: any, ...args: any[]) => {
   const handle = originalSetInterval(callback, delay, ...args);
   // Add unref method that undici expects
   if (handle && typeof handle === 'object') {
@@ -195,7 +195,7 @@ global.setInterval = ((callback: any, delay?: any, ...args: any[]) => {
 // import './mocks/server'
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+globalThis.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}
@@ -203,7 +203,7 @@ global.IntersectionObserver = class IntersectionObserver {
 }
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   constructor() {}
   disconnect() {}
   observe() {}
