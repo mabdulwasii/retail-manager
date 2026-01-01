@@ -1,5 +1,6 @@
 package com.princely.shopmanager.embedded.security;
 
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,19 +38,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-                String username = jwtTokenProvider.getUsernameFromToken(jwt);
-                List<String> roles = jwtTokenProvider.getRolesFromToken(jwt);
+                JwtPrincipal principal = jwtTokenProvider.getPrincipalFromToken(jwt);
 
-                List<SimpleGrantedAuthority> authorities = roles.stream()
+                List<SimpleGrantedAuthority> authorities = principal.getRoles().stream()
                         .map(SimpleGrantedAuthority::new)
                         .toList();
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Set authentication for user: {}", username);
+                log.debug("Set authentication for user: {} (tenant: {}, shop: {})",
+                        principal.getUsername(), principal.getTenantId(), principal.getShopId());
             }
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage());

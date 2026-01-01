@@ -27,8 +27,10 @@ import lombok.RequiredArgsConstructor;
  * Replaces Keycloak with local JWT authentication.
  */
 @Configuration
-@Profile("embedded & !test")
-@ConditionalOnProperty(name = "application.mode", havingValue = "embedded")
+@Profile("embedded")
+@EnableWebSecurity
+@EnableMethodSecurity
+@ConditionalOnProperty(name = "application.mode", havingValue = "embedded", matchIfMissing = true)
 @RequiredArgsConstructor
 public class EmbeddedSecurityConfig {
 

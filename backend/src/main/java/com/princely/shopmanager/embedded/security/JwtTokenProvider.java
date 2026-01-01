@@ -2,6 +2,7 @@ package com.princely.shopmanager.embedded.security;
 
 import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -161,6 +163,34 @@ public class JwtTokenProvider {
      */
     public String getUserIdFromToken(String token) {
         return getUsernameFromToken(token);
+    }
+
+    /**
+     * Create JwtPrincipal from token.
+     * Extracts all claims and builds a JwtPrincipal object for use with @AuthenticationPrincipal.
+     */
+    @SuppressWarnings("unchecked")
+    public JwtPrincipal getPrincipalFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        List<String> roles = claims.get(CLAIM_ROLES, List.class);
+
+        return JwtPrincipal.builder()
+                .subject(claims.getSubject())
+                .userId(claims.getSubject()) // In embedded mode, subject is the user ID
+                .preferredUsername(claims.get("username", String.class))
+                .email(claims.get("email", String.class))
+                .tenantId(claims.get("tenantId", String.class))
+                .shopId(claims.get("shopId", String.class))
+                .roles(roles != null ? roles : List.of())
+                .issuer(claims.getIssuer())
+                .issuedAt(claims.getIssuedAt() != null ? claims.getIssuedAt().toInstant() : Instant.now())
+                .expiresAt(claims.getExpiration() != null ? claims.getExpiration().toInstant() : null)
+                .build();
     }
 
     /**
