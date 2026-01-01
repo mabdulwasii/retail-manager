@@ -23,7 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
@@ -42,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "application.encryption.secret=test-encryption-secret-key-32chars",
     "application.encryption.salt=0123456789abcdef"
 })
-@Transactional
 @DisplayName("Cloud Sync Controller - Integration Tests")
 class CloudSyncControllerIT {
 
@@ -73,6 +71,9 @@ class CloudSyncControllerIT {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private org.springframework.security.crypto.encrypt.TextEncryptor textEncryptor;
+
     private static final String CLOUD_SYNC_BASE_URL = "/api/cloud-sync";
 
     private Tenant testTenant;
@@ -82,16 +83,13 @@ class CloudSyncControllerIT {
 
     @BeforeEach
     void setUp() {
-        // Clean up
-        cloudSyncConfigRepository.deleteAll();
-        userRepository.deleteAll();
-        shopRepository.deleteAll();
-        tenantRepository.deleteAll();
+        // Use UUID to ensure unique identifiers across test runs
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
         // Create test tenant
         testTenant = new Tenant();
-        testTenant.setName("Test Tenant");
-        testTenant.setContactEmail("tenant@test.com");
+        testTenant.setName("Test Tenant " + uniqueSuffix);
+        testTenant.setContactEmail("tenant" + uniqueSuffix + "@test.com");
         testTenant.setPrimaryAddress("123 Test Street");
         testTenant.setCity("Test City");
         testTenant.setState("TS");
@@ -100,9 +98,9 @@ class CloudSyncControllerIT {
 
         // Create test shop
         testShop = new Shop();
-        testShop.setName("Test Shop");
+        testShop.setName("Test Shop " + uniqueSuffix);
         testShop.setTenant(testTenant);
-        testShop.setEmail("shop@test.com");
+        testShop.setEmail("shop" + uniqueSuffix + "@test.com");
         testShop.setAddress("456 Shop Street");
         testShop.setPhoneNumber("+1234567890");
         testShop = shopRepository.save(testShop);
@@ -112,9 +110,10 @@ class CloudSyncControllerIT {
                 .orElseThrow(() -> new IllegalStateException("TENANT_ADMIN role not found"));
 
         // Create admin user
+        String adminEmail = "admin" + uniqueSuffix + "@test.com";
         adminUser = User.builder()
-                .username("admin@test.com")
-                .email("admin@test.com")
+                .username(adminEmail)
+                .email(adminEmail)
                 .firstName("Admin")
                 .lastName("User")
                 .phoneNumber("+1234567890")
@@ -150,7 +149,7 @@ class CloudSyncControllerIT {
         CloudSyncConfig config = CloudSyncConfig.builder()
                 .tenantId(testTenant.getId())
                 .cloudTenantId("cloud-tenant-123")
-                .cloudApiKey("test-api-key")
+                .cloudApiKey(textEncryptor.encrypt("test-api-key"))
                 .cloudApiUrl("https://cloud.test.com")
                 .syncEnabled(true)
                 .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
@@ -195,7 +194,7 @@ class CloudSyncControllerIT {
         CloudSyncConfig config = CloudSyncConfig.builder()
                 .tenantId(testTenant.getId())
                 .cloudTenantId("cloud-tenant-123")
-                .cloudApiKey("test-api-key")
+                .cloudApiKey(textEncryptor.encrypt("test-api-key"))
                 .cloudApiUrl("https://cloud.test.com")
                 .syncEnabled(false)
                 .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
@@ -222,7 +221,7 @@ class CloudSyncControllerIT {
         CloudSyncConfig config = CloudSyncConfig.builder()
                 .tenantId(testTenant.getId())
                 .cloudTenantId("cloud-tenant-123")
-                .cloudApiKey("test-api-key")
+                .cloudApiKey(textEncryptor.encrypt("test-api-key"))
                 .cloudApiUrl("https://cloud-old.test.com")
                 .syncEnabled(true)
                 .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
@@ -242,8 +241,8 @@ class CloudSyncControllerIT {
     }
 
     @Test
-    @DisplayName("PUT /config - Should return 404 when config not found")
-    void shouldReturn404WhenUpdatingNonExistentConfig() throws Exception {
+    @DisplayName("PUT /config - Should return 428 when cloud sync not configured")
+    void shouldReturn428WhenUpdatingNonExistentConfig() throws Exception {
         CloudSyncController.CloudSyncUpdateRequest updateRequest =
                 new CloudSyncController.CloudSyncUpdateRequest("https://cloud.test.com");
 
@@ -251,7 +250,7 @@ class CloudSyncControllerIT {
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isPreconditionRequired());
     }
 
     // ============================================================================
@@ -265,7 +264,7 @@ class CloudSyncControllerIT {
         CloudSyncConfig config = CloudSyncConfig.builder()
                 .tenantId(testTenant.getId())
                 .cloudTenantId("cloud-tenant-123")
-                .cloudApiKey("test-api-key")
+                .cloudApiKey(textEncryptor.encrypt("test-api-key"))
                 .cloudApiUrl("https://cloud.test.com")
                 .syncEnabled(false)
                 .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
@@ -280,11 +279,11 @@ class CloudSyncControllerIT {
     }
 
     @Test
-    @DisplayName("POST /enable - Should return 404 when not configured")
-    void shouldReturn404WhenEnablingNonConfigured() throws Exception {
+    @DisplayName("POST /enable - Should return 428 when cloud sync not configured")
+    void shouldReturn428WhenEnablingNonConfigured() throws Exception {
         mockMvc.perform(post(CLOUD_SYNC_BASE_URL + "/enable")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isPreconditionRequired());
     }
 
     // ============================================================================
@@ -298,7 +297,7 @@ class CloudSyncControllerIT {
         CloudSyncConfig config = CloudSyncConfig.builder()
                 .tenantId(testTenant.getId())
                 .cloudTenantId("cloud-tenant-123")
-                .cloudApiKey("test-api-key")
+                .cloudApiKey(textEncryptor.encrypt("test-api-key"))
                 .cloudApiUrl("https://cloud.test.com")
                 .syncEnabled(true)
                 .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
