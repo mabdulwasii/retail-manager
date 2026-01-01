@@ -13,7 +13,6 @@ import com.princely.shopmanager.shared.service.AuditService;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,19 +68,17 @@ class SuperAdminBootstrapServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Create bootstrap service manually
+        // Create bootstrap service with all dependencies including optional ones
         bootstrapService = new SuperAdminBootstrapService(
                 userRepository,
                 roleRepository,
                 auditService,
                 tenantRepository,
                 shopRepository,
-                environment
+                environment,
+                userManagementService,
+                passwordEncoder
         );
-
-        // Inject optional dependencies using reflection
-        ReflectionTestUtils.setField(bootstrapService, "userManagementService", userManagementService);
-        ReflectionTestUtils.setField(bootstrapService, "passwordEncoder", passwordEncoder);
 
         // Set up test data
         superAdminRole = new Role();

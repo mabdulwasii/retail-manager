@@ -12,11 +12,11 @@ import com.princely.shopmanager.core.repository.TenantRepository;
 import com.princely.shopmanager.core.repository.UserRepository;
 import com.princely.shopmanager.shared.service.AuditService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
+import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,13 +44,8 @@ public class SuperAdminBootstrapService {
     private final TenantRepository tenantRepository;
     private final ShopRepository shopRepository;
     private final Environment environment;
-
-    // Optional dependencies (not available in embedded mode)
-    @Autowired(required = false)
-    private UserManagementService userManagementService;
-
-    @Autowired(required = false)
-    private PasswordEncoder passwordEncoder;
+    private final UserManagementService userManagementService;
+    private final PasswordEncoder passwordEncoder;
 
     public SuperAdminBootstrapService(
             UserRepository userRepository,
@@ -58,13 +53,17 @@ public class SuperAdminBootstrapService {
             AuditService auditService,
             TenantRepository tenantRepository,
             ShopRepository shopRepository,
-            Environment environment) {
+            Environment environment,
+            @Nullable UserManagementService userManagementService,
+            @Nullable PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
         this.tenantRepository = tenantRepository;
         this.shopRepository = shopRepository;
         this.environment = environment;
+        this.userManagementService = userManagementService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Value("${app.bootstrap.superadmin.enabled:true}")

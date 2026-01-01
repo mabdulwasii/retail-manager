@@ -41,7 +41,8 @@ public class CloudSyncConfigurationService {
      */
     @Transactional(readOnly = true)
     public CloudSyncConfig getConfigByTenantIdOrThrow(String tenantId) {
-        return getConfigByTenantId(tenantId)
+        return cloudSyncConfigRepository.findByTenantId(tenantId)
+                .map(this::decryptApiKey)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLOUD_SYNC_NOT_CONFIGURED));
     }
 

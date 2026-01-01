@@ -3,7 +3,6 @@ package com.princely.shopmanager.embedded.security;
 import com.princely.shopmanager.core.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,12 +53,12 @@ public class JwtTokenProvider {
                 .toList();
 
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("roles", roles)
-                .setIssuer(issuer)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .issuer(issuer)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -68,11 +67,11 @@ public class JwtTokenProvider {
      */
     public String generateRefreshToken(String username) {
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuer(issuer)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .subject(username)
+                .issuer(issuer)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -128,16 +127,16 @@ public class JwtTokenProvider {
                 .collect(Collectors.toList());
 
         return Jwts.builder()
-                .setSubject(user.getId())
+                .subject(user.getId())
                 .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
                 .claim("roles", roles)
                 .claim("tenantId", user.getTenantId())
                 .claim("shopId", user.getShopId())
-                .setIssuer(issuer)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .issuer(issuer)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -146,12 +145,12 @@ public class JwtTokenProvider {
      */
     public String generateRefreshToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getId())
+                .subject(user.getId())
                 .claim("username", user.getUsername())
-                .setIssuer(issuer)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .issuer(issuer)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
