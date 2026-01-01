@@ -86,6 +86,7 @@ public class EmbeddedAuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .phoneNumber("N/A") // Placeholder for embedded mode (can be updated later)
                 .status(User.UserStatus.ACTIVE)
                 .roles(new HashSet<>()) // Will be assigned default role later
                 .build();
