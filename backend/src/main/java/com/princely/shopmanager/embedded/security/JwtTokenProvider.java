@@ -1,5 +1,6 @@
 package com.princely.shopmanager.embedded.security;
 
+import com.princely.shopmanager.core.domain.Role;
 import com.princely.shopmanager.core.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -15,7 +16,6 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * JWT token provider for embedded mode.
@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 @Component
 @Profile("embedded")
 public class JwtTokenProvider {
+
+    private static final String CLAIM_ROLES = "roles";
 
     private final SecretKey secretKey;
     private final long jwtExpirationMs;
@@ -54,7 +56,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(username)
-                .claim("roles", roles)
+                .claim(CLAIM_ROLES, roles)
                 .issuer(issuer)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
@@ -99,7 +101,7 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return claims.get("roles", List.class);
+        return claims.get(CLAIM_ROLES, List.class);
     }
 
     /**
@@ -123,14 +125,14 @@ public class JwtTokenProvider {
      */
     public String generateAccessToken(User user) {
         List<String> roles = user.getRoles().stream()
-                .map(role -> role.getName())
-                .collect(Collectors.toList());
+                .map(Role::getName)
+                .toList();
 
         return Jwts.builder()
                 .subject(user.getId())
                 .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
-                .claim("roles", roles)
+                .claim(CLAIM_ROLES, roles)
                 .claim("tenantId", user.getTenantId())
                 .claim("shopId", user.getShopId())
                 .issuer(issuer)
@@ -155,16 +157,10 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Get user ID from token
+     * Get user ID from token (alias for getUsernameFromToken)
      */
     public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.getSubject();
+        return getUsernameFromToken(token);
     }
 
     /**

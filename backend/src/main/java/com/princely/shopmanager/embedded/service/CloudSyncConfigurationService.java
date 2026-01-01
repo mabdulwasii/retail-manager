@@ -38,8 +38,8 @@ public class CloudSyncConfigurationService {
 
     /**
      * Get cloud sync configuration or throw exception
+     * Note: Not @Transactional - participates in caller's transaction
      */
-    @Transactional(readOnly = true)
     public CloudSyncConfig getConfigByTenantIdOrThrow(String tenantId) {
         return cloudSyncConfigRepository.findByTenantId(tenantId)
                 .map(this::decryptApiKey)
