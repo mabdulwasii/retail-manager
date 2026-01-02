@@ -79,10 +79,9 @@ public class CloudSyncConfigurationService {
         }
 
         // Set status to CONFIGURED if credentials are provided
-        if (config.getCloudTenantId() != null && config.getCloudApiKey() != null) {
-            if (config.getSyncStatus() == CloudSyncConfig.SyncStatus.NOT_CONFIGURED) {
-                config.setSyncStatus(CloudSyncConfig.SyncStatus.CONFIGURED);
-            }
+        if (config.getCloudTenantId() != null && config.getCloudApiKey() != null
+                && config.getSyncStatus() == CloudSyncConfig.SyncStatus.NOT_CONFIGURED) {
+            config.setSyncStatus(CloudSyncConfig.SyncStatus.CONFIGURED);
         }
 
         CloudSyncConfig saved = cloudSyncConfigRepository.save(config);
