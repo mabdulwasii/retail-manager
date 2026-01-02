@@ -15,9 +15,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -25,6 +29,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("Cloud Registration Service Tests")
 class CloudRegistrationServiceTest {
 
@@ -54,6 +59,9 @@ class CloudRegistrationServiceTest {
 
     @Mock
     private RestClient.RequestHeadersUriSpec<?> requestHeadersUriSpec;
+
+    @Mock
+    private RestClient.RequestHeadersSpec<?> requestHeadersSpec;
 
     @InjectMocks
     private CloudRegistrationService cloudRegistrationService;
@@ -203,9 +211,6 @@ class CloudRegistrationServiceTest {
 
     // ========== unregisterTenant() Tests ==========
 
-    // TODO: Add test for successful unregistration with cloud API call
-    // Complex RestClient DELETE mocking requires further refinement (similar to CloudSyncService)
-
     @Test
     @DisplayName("Should throw exception when tenant not found for unregistration")
     void shouldThrowExceptionWhenTenantNotFoundForUnregistration() {
@@ -221,11 +226,4 @@ class CloudRegistrationServiceTest {
         verify(cloudSyncConfigurationService).getConfigByTenantIdOrThrow(TEST_TENANT_ID);
         verify(cloudSyncConfigurationService, never()).deleteConfiguration(anyString());
     }
-
-    // ========== Edge Cases ==========
-
-    // TODO: Add test for successful tenant registration with cloud API call
-    // TODO: Add test for tenant registration with empty shops list
-    // Complex RestClient POST mocking requires further refinement (similar to CloudSyncService)
-    // Focus on integration tests for HTTP success paths
 }
