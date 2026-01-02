@@ -17,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Cloud Sync Service Tests")
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CloudSyncServiceTest {
 
     @Mock
@@ -109,8 +112,129 @@ class CloudSyncServiceTest {
     // Successful Sync Tests
     // ============================================================================
 
-    // TODO: Fix RestClient mocking for successful sync tests
-    // Complex RestClient chain mocking requires further refinement
+    @Test
+    @DisplayName("Should successfully sync transactions and mark as synced")
+    void shouldSuccessfullySyncTransactions() {
+        // Given
+        when(cloudSyncConfigurationService.getConfigByTenantId(TEST_TENANT_ID))
+                .thenReturn(Optional.of(activeCloudConfig));
+
+        CloudSyncLog initialLog = CloudSyncLog.builder()
+                .id("log-success-1")
+                .storeId(TEST_SHOP_ID)
+                .syncBatchId("batch-success")
+                .syncType(CloudSyncLog.SyncType.SALES_TRANSACTIONS)
+                .status(CloudSyncLog.SyncStatus.IN_PROGRESS)
+                .syncStartTime(LocalDateTime.now())
+                .recordsProcessed(2)
+                .recordsSynced(0)
+                .recordsFailed(0)
+                .retryAttempt(0)
+                .build();
+
+        CloudSyncLog completedLog = CloudSyncLog.builder()
+                .id("log-success-1")
+                .storeId(TEST_SHOP_ID)
+                .syncBatchId("batch-success")
+                .syncType(CloudSyncLog.SyncType.SALES_TRANSACTIONS)
+                .status(CloudSyncLog.SyncStatus.COMPLETED)
+                .syncStartTime(initialLog.getSyncStartTime())
+                .syncEndTime(LocalDateTime.now())
+                .recordsProcessed(2)
+                .recordsSynced(2)
+                .recordsFailed(0)
+                .retryAttempt(0)
+                .durationMs(100L)
+                .build();
+
+        when(syncLogRepository.save(any(CloudSyncLog.class)))
+                .thenReturn(initialLog)
+                .thenReturn(completedLog);
+
+        // Mock successful RestClient chain
+        doReturn(requestBodyUriSpec).when(restClient).post();
+        doReturn(requestBodySpec).when(requestBodyUriSpec).uri(anyString());
+        doReturn(requestBodySpec).when(requestBodySpec).contentType(any());
+        doReturn(requestBodySpec).when(requestBodySpec).header(anyString(), anyString());
+        doReturn(requestBodySpec).when(requestBodySpec).body(anyList());
+        doReturn(responseSpec).when(requestBodySpec).retrieve();
+        doReturn(responseSpec).when(responseSpec).onStatus(any(), any());
+        doReturn(new CloudSyncService.SyncResponse(2, "Success"))
+                .when(responseSpec).body(eq(CloudSyncService.SyncResponse.class));
+
+        SalesTransaction txn1 = createSalesTransaction("txn-1");
+        SalesTransaction txn2 = createSalesTransaction("txn-2");
+        List<SalesTransaction> salesTransactions = List.of(txn1, txn2);
+        when(salesTransactionRepository.findAllById(anyList())).thenReturn(salesTransactions);
+        when(salesTransactionRepository.saveAll(anyList())).thenReturn(salesTransactions);
+
+        // When
+        CloudSyncLog result = cloudSyncService.syncTransactions(TEST_TENANT_ID, testTransactions);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(syncLogRepository, times(2)).save(any(CloudSyncLog.class));
+        verify(salesTransactionRepository).findAllById(anyList());
+        verify(salesTransactionRepository).saveAll(anyList());
+        verify(cloudSyncConfigurationService).markSyncSuccess(TEST_TENANT_ID);
+    }
+
+    @Test
+    @DisplayName("Should handle null response from cloud gracefully")
+    void shouldHandleNullCloudResponse() {
+        // Given
+        when(cloudSyncConfigurationService.getConfigByTenantId(TEST_TENANT_ID))
+                .thenReturn(Optional.of(activeCloudConfig));
+        when(syncLogRepository.save(any(CloudSyncLog.class))).thenReturn(testSyncLog);
+
+        // Mock RestClient returning null
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.contentType(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+        when(responseSpec.body(eq(CloudSyncService.SyncResponse.class))).thenReturn(null);
+
+        List<SalesTransaction> salesTransactions = List.of(createSalesTransaction("txn-1"));
+        when(salesTransactionRepository.findAllById(anyList())).thenReturn(salesTransactions);
+        when(salesTransactionRepository.saveAll(anyList())).thenReturn(salesTransactions);
+
+        // When
+        CloudSyncLog result = cloudSyncService.syncTransactions(TEST_TENANT_ID, testTransactions);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(syncLogRepository, times(2)).save(any(CloudSyncLog.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when cloud sync is not active")
+    void shouldThrowExceptionWhenCloudSyncNotActive() {
+        // Given
+        CloudSyncConfig inactiveConfig = CloudSyncConfig.builder()
+                .id("config-inactive")
+                .tenantId(TEST_TENANT_ID)
+                .cloudTenantId(TEST_CLOUD_TENANT_ID)
+                .cloudApiKey(TEST_API_KEY)
+                .cloudApiUrl(TEST_CLOUD_API_URL)
+                .syncEnabled(false)
+                .syncStatus(CloudSyncConfig.SyncStatus.CONFIGURED)
+                .build();
+
+        when(cloudSyncConfigurationService.getConfigByTenantId(TEST_TENANT_ID))
+                .thenReturn(Optional.of(inactiveConfig));
+
+        // When / Then
+        assertThatThrownBy(() -> cloudSyncService.syncTransactions(TEST_TENANT_ID, testTransactions))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CLOUD_SYNC_NOT_CONFIGURED);
+
+        verify(cloudSyncConfigurationService).getConfigByTenantId(TEST_TENANT_ID);
+        verifyNoInteractions(syncLogRepository);
+        verifyNoInteractions(salesTransactionRepository);
+    }
 
     @Test
     @DisplayName("Should return null when no transactions to sync")
