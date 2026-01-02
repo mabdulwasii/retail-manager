@@ -1,5 +1,6 @@
 package com.princely.shopmanager.embedded.security;
 
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -64,10 +66,22 @@ class JwtAuthenticationFilterTest {
         String authHeader = "Bearer " + VALID_TOKEN;
         List<String> roles = List.of("ROLE_USER", "ROLE_ADMIN");
 
+        JwtPrincipal principal = JwtPrincipal.builder()
+                .subject("user-123")
+                .userId("user-123")
+                .preferredUsername(TEST_USERNAME)
+                .email("test@example.com")
+                .tenantId("tenant-1")
+                .shopId("shop-1")
+                .roles(roles)
+                .issuer("test-issuer")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
         when(request.getHeader("Authorization")).thenReturn(authHeader);
         when(jwtTokenProvider.validateToken(VALID_TOKEN)).thenReturn(true);
-        when(jwtTokenProvider.getUsernameFromToken(VALID_TOKEN)).thenReturn(TEST_USERNAME);
-        when(jwtTokenProvider.getRolesFromToken(VALID_TOKEN)).thenReturn(roles);
+        when(jwtTokenProvider.getPrincipalFromToken(VALID_TOKEN)).thenReturn(principal);
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -75,15 +89,15 @@ class JwtAuthenticationFilterTest {
         // Then
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
-        assertThat(authentication.getPrincipal()).isEqualTo(TEST_USERNAME);
+        assertThat(authentication.getPrincipal()).isInstanceOf(JwtPrincipal.class);
+        assertThat(((JwtPrincipal) authentication.getPrincipal()).getUsername()).isEqualTo(TEST_USERNAME);
         assertThat(authentication.getAuthorities())
                 .hasSize(2)
                 .extracting("authority")
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
 
         verify(jwtTokenProvider).validateToken(VALID_TOKEN);
-        verify(jwtTokenProvider).getUsernameFromToken(VALID_TOKEN);
-        verify(jwtTokenProvider).getRolesFromToken(VALID_TOKEN);
+        verify(jwtTokenProvider).getPrincipalFromToken(VALID_TOKEN);
         verify(filterChain).doFilter(request, response);
     }
 
@@ -94,17 +108,31 @@ class JwtAuthenticationFilterTest {
         String authHeader = "Bearer " + VALID_TOKEN;
         List<String> roles = List.of("ROLE_MANAGER");
 
+        JwtPrincipal principal = JwtPrincipal.builder()
+                .subject("manager-123")
+                .userId("manager-123")
+                .preferredUsername("manager")
+                .email("manager@example.com")
+                .tenantId("tenant-1")
+                .shopId("shop-1")
+                .roles(roles)
+                .issuer("test-issuer")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
         when(request.getHeader("Authorization")).thenReturn(authHeader);
         when(jwtTokenProvider.validateToken(VALID_TOKEN)).thenReturn(true);
-        when(jwtTokenProvider.getUsernameFromToken(VALID_TOKEN)).thenReturn("manager");
-        when(jwtTokenProvider.getRolesFromToken(VALID_TOKEN)).thenReturn(roles);
+        when(jwtTokenProvider.getPrincipalFromToken(VALID_TOKEN)).thenReturn(principal);
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        assertThat(authentication.getPrincipal()).isEqualTo("manager");
+        assertThat(authentication).isNotNull();
+        assertThat(authentication.getPrincipal()).isInstanceOf(JwtPrincipal.class);
+        assertThat(((JwtPrincipal) authentication.getPrincipal()).getUsername()).isEqualTo("manager");
         assertThat(authentication.getAuthorities())
                 .hasSize(1)
                 .extracting("authority")
@@ -254,12 +282,24 @@ class JwtAuthenticationFilterTest {
         String authHeader = "Bearer   " + VALID_TOKEN + "   "; // Extra spaces
         List<String> roles = List.of("ROLE_USER");
 
+        JwtPrincipal principal = JwtPrincipal.builder()
+                .subject("user-123")
+                .userId("user-123")
+                .preferredUsername(TEST_USERNAME)
+                .email("test@example.com")
+                .tenantId("tenant-1")
+                .shopId("shop-1")
+                .roles(roles)
+                .issuer("test-issuer")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
         when(request.getHeader("Authorization")).thenReturn(authHeader);
         // The substring(7) will extract everything after "Bearer "
         String extractedToken = authHeader.substring(7);
         when(jwtTokenProvider.validateToken(extractedToken)).thenReturn(true);
-        when(jwtTokenProvider.getUsernameFromToken(extractedToken)).thenReturn(TEST_USERNAME);
-        when(jwtTokenProvider.getRolesFromToken(extractedToken)).thenReturn(roles);
+        when(jwtTokenProvider.getPrincipalFromToken(extractedToken)).thenReturn(principal);
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -267,7 +307,8 @@ class JwtAuthenticationFilterTest {
         // Then
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
-        assertThat(authentication.getPrincipal()).isEqualTo(TEST_USERNAME);
+        assertThat(authentication.getPrincipal()).isInstanceOf(JwtPrincipal.class);
+        assertThat(((JwtPrincipal) authentication.getPrincipal()).getUsername()).isEqualTo(TEST_USERNAME);
 
         verify(filterChain).doFilter(request, response);
     }
@@ -279,10 +320,22 @@ class JwtAuthenticationFilterTest {
         String authHeader = "Bearer " + VALID_TOKEN;
         List<String> emptyRoles = List.of();
 
+        JwtPrincipal principal = JwtPrincipal.builder()
+                .subject("user-123")
+                .userId("user-123")
+                .preferredUsername(TEST_USERNAME)
+                .email("test@example.com")
+                .tenantId("tenant-1")
+                .shopId("shop-1")
+                .roles(emptyRoles)
+                .issuer("test-issuer")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
         when(request.getHeader("Authorization")).thenReturn(authHeader);
         when(jwtTokenProvider.validateToken(VALID_TOKEN)).thenReturn(true);
-        when(jwtTokenProvider.getUsernameFromToken(VALID_TOKEN)).thenReturn(TEST_USERNAME);
-        when(jwtTokenProvider.getRolesFromToken(VALID_TOKEN)).thenReturn(emptyRoles);
+        when(jwtTokenProvider.getPrincipalFromToken(VALID_TOKEN)).thenReturn(principal);
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -290,7 +343,8 @@ class JwtAuthenticationFilterTest {
         // Then
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
-        assertThat(authentication.getPrincipal()).isEqualTo(TEST_USERNAME);
+        assertThat(authentication.getPrincipal()).isInstanceOf(JwtPrincipal.class);
+        assertThat(((JwtPrincipal) authentication.getPrincipal()).getUsername()).isEqualTo(TEST_USERNAME);
         assertThat(authentication.getAuthorities()).isEmpty();
 
         verify(filterChain).doFilter(request, response);
