@@ -29,6 +29,7 @@ import java.util.List;
 public class JwtTokenProvider {
 
     private static final String CLAIM_ROLES = "roles";
+    private static final String CLAIM_USERNAME = "username";
 
     private final SecretKey secretKey;
     private final long jwtExpirationMs;
@@ -132,7 +133,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(user.getId())
-                .claim("username", user.getUsername())
+                .claim(CLAIM_USERNAME, user.getUsername())
                 .claim("email", user.getEmail())
                 .claim(CLAIM_ROLES, roles)
                 .claim("tenantId", user.getTenantId())
@@ -150,7 +151,7 @@ public class JwtTokenProvider {
     public String generateRefreshToken(User user) {
         return Jwts.builder()
                 .subject(user.getId())
-                .claim("username", user.getUsername())
+                .claim(CLAIM_USERNAME, user.getUsername())
                 .issuer(issuer)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
@@ -182,7 +183,7 @@ public class JwtTokenProvider {
         return JwtPrincipal.builder()
                 .subject(claims.getSubject())
                 .userId(claims.getSubject()) // In embedded mode, subject is the user ID
-                .preferredUsername(claims.get("username", String.class))
+                .preferredUsername(claims.get(CLAIM_USERNAME, String.class))
                 .email(claims.get("email", String.class))
                 .tenantId(claims.get("tenantId", String.class))
                 .shopId(claims.get("shopId", String.class))
