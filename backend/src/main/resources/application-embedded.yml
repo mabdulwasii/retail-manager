@@ -76,7 +76,7 @@ application:
     secret: ${JWT_SECRET:changeThisToASecureRandomGeneratedSecretKeyForProductionUseAtLeast256BitsLong}
     expiration-ms: 86400000  # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
-    issuer: shop-manager-embedded
+    issuer: retailhq-embedded
 
   # Local Storage Configuration
   storage:
@@ -88,7 +88,7 @@ application:
   # Cloud Sync & Registration Configuration
   cloud:
     # Cloud aggregator registration URL
-    registration-url: ${CLOUD_REGISTRATION_URL:https://cloud.shopmanager.com/api}
+    registration-url: ${CLOUD_REGISTRATION_URL:https://api.retailhq.app}
 
     # Enforce cloud sync before transactions (recommended: true for production)
     sync-required: ${CLOUD_SYNC_REQUIRED:false}
@@ -115,7 +115,7 @@ application:
     tenant:
       enabled: ${BOOTSTRAP_TENANT_ENABLED:true}
       name: ${DEFAULT_TENANT_NAME:Default Organization}
-      email: ${DEFAULT_TENANT_EMAIL:contact@shopmanager.local}
+      email: ${DEFAULT_TENANT_EMAIL:contact@retailhq.local}
       address: ${DEFAULT_TENANT_ADDRESS:123 Main Street}
       city: ${DEFAULT_TENANT_CITY:Springfield}
       country: ${DEFAULT_TENANT_COUNTRY:USA}
@@ -128,13 +128,13 @@ application:
       city: ${DEFAULT_SHOP_CITY:Springfield}
       country: ${DEFAULT_SHOP_COUNTRY:USA}
       phone: ${DEFAULT_SHOP_PHONE:1-800-000-0000}
-      email: ${DEFAULT_SHOP_EMAIL:shop@shopmanager.local}
+      email: ${DEFAULT_SHOP_EMAIL:shop@retailhq.local}
 
     # Super Admin Bootstrap
     superadmin:
       enabled: ${BOOTSTRAP_SUPERADMIN_ENABLED:true}
       username: ${SUPERADMIN_USERNAME:superadmin}
-      email: ${SUPERADMIN_EMAIL:superadmin@shopmanager.local}
+      email: ${SUPERADMIN_EMAIL:superadmin@retailhq.local}
       firstname: ${SUPERADMIN_FIRSTNAME:Super}
       lastname: ${SUPERADMIN_LASTNAME:Admin}
       phonenumber: ${SUPERADMIN_PHONE:1-000-000-0000}
@@ -179,7 +179,10 @@ management:
 # Actuator Info
 info:
   app:
-    name: Shop Manager Embedded
+    name: RetailHQ Desktop
     version: ${APP_VERSION:1.0.0}
     environment: ${APP_ENVIRONMENT:embedded}
-    description: Standalone Shop Manager for local retail stores
+    description: RetailHQ - Your Retail Headquarters
+    vendor: RetailHQ.app
+    domain: retailhq.app
+    cloud-api: https://api.retailhq.app
