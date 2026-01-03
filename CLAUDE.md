@@ -132,8 +132,45 @@ backend/src/main/java/com/princely/shopmanager/
 ├── investment/   # Investment tracking, profit sharing
 ├── analytics/    # Analytics engine with caching
 ├── auth/         # Authentication, JWT principal
+├── aggregator/   # Cloud Aggregator API (tenant registration, shop tracking)
 └── shared/       # Cross-cutting concerns
 ```
+
+### Cloud Aggregator Module (RetailHQ Cloud)
+
+**Purpose**: Central registration and tracking service for local RetailHQ installations.
+
+**Deployment Model**: Dual deployment - Cloud PaaS (`api.retailhq.app`) + Local installations
+
+**Key Components**:
+- **CloudTenant**: Retail business registered in cloud (entity: `cloud_tenants`)
+- **CloudShop**: Physical store/location (entity: `cloud_shops`)
+- **CloudTenantService**: Tenant registration, API key management, shop linking
+- **AggregatorController**: Public REST API (`/api/registration/*`)
+
+**API Endpoints**:
+```
+POST   /api/registration/tenants        # Register tenant with shops (public)
+POST   /api/registration/shops          # Link additional shop (API key required)
+DELETE /api/registration/tenants/{id}   # Unregister tenant (API key required)
+GET    /api/registration/health         # Health check (public)
+```
+
+**Authentication**: API key with `rhq_` prefix, BCrypt hashing
+
+**Subscription Tiers**: FREE, BASIC, PREMIUM, ENTERPRISE
+
+**Status Management**: ACTIVE, SUSPENDED, INACTIVE
+
+**Tests**:
+- `CloudTenantServiceTest.java` - 16 unit tests (100% passing)
+- `AggregatorControllerIT.java` - 12 integration tests
+
+**Documentation**: [docs/CLOUD_AGGREGATOR_API.md](./docs/CLOUD_AGGREGATOR_API.md)
+
+**Frontend Integration**: Single unified frontend with cloud mode detection
+- Local mode: Shop operations
+- Cloud mode (`cloud.retailhq.app`): Multi-shop aggregation + analytics (planned)
 
 ### Product & Inventory Architecture (Two-Tier Model)
 
