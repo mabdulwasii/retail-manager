@@ -7,6 +7,7 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { EmbeddedLoginPage } from "@/pages/auth/EmbeddedLoginPage";
 import { CloudTenantRegisterPage } from "@/pages/cloud/CloudTenantRegisterPage";
 import { RegistrationSuccessPage } from "@/pages/cloud/RegistrationSuccessPage";
+import { CloudSetupWizardPage } from "@/pages/setup/CloudSetupWizardPage";
 import { Route, Routes } from "react-router-dom";
 import configService from "@/config/runtime-config";
 
@@ -28,6 +29,9 @@ function App() {
 
           {/* Embedded mode login page */}
           {isEmbedded && <Route path="/login" element={<EmbeddedLoginPage />} />}
+
+          {/* Setup wizard for embedded mode first-run */}
+          {isEmbedded && <Route path="/setup" element={<CloudSetupWizardPage />} />}
 
           {/* All authenticated routes - single wildcard to AuthenticatedApp */}
           <Route path="/*" element={<AuthenticatedApp />} />
