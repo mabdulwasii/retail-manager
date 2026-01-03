@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Cloud, Building2, Search, Filter, Eye, Ban, CheckCircle, RefreshCw } from 'lucide-react';
+import { Cloud, Building2, Search, Filter, Eye, Ban, CheckCircle, RefreshCw, Plus } from 'lucide-react';
 import { useCloudTenants, useSuspendTenant, useActivateTenant } from '@/hooks/useCloudTenants';
 import {
   CloudTenantStatus,
@@ -68,10 +68,18 @@ export const CloudTenantsPage: React.FC = () => {
             Manage registered retail businesses and their subscriptions
           </p>
         </div>
-        <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="default" asChild>
+            <Link to="/cloud/register">
+              <Plus className="h-4 w-4 mr-2" />
+              Register New Tenant
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
