@@ -10,6 +10,7 @@ interface RuntimeConfig {
   APP_VERSION: string;
   APP_ENV: string;
   AUTH_MODE?: 'keycloak' | 'embedded'; // cloud (keycloak) vs standalone (embedded JWT)
+  CLOUD_MODE?: boolean; // cloud portal vs local shop
 }
 
 declare global {
@@ -36,7 +37,8 @@ class ConfigService {
           KEYCLOAK_CLIENT_ID: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'shop-manager-frontend',
           APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
           APP_ENV: import.meta.env.VITE_APP_ENV || 'development',
-          AUTH_MODE: (import.meta.env.VITE_AUTH_MODE as 'keycloak' | 'embedded') || 'keycloak'
+          AUTH_MODE: (import.meta.env.VITE_AUTH_MODE as 'keycloak' | 'embedded') || 'keycloak',
+          CLOUD_MODE: import.meta.env.VITE_CLOUD_MODE === 'true' ? true : undefined
         };
       }
     }
@@ -75,6 +77,28 @@ class ConfigService {
     return this.authMode === 'embedded';
   }
 
+  /**
+   * Hybrid cloud mode detection
+   * Priority 1: Explicit environment variable (for development/testing)
+   * Priority 2: Hostname detection (for production auto-detection)
+   */
+  get isCloudMode(): boolean {
+    const config = this.getConfig();
+
+    // Priority 1: Explicit environment variable
+    if (config.CLOUD_MODE !== undefined) {
+      return config.CLOUD_MODE;
+    }
+
+    // Priority 2: Hostname detection (production auto-detection)
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      return hostname.includes('cloud.retailhq.app');
+    }
+
+    return false;
+  }
+
   get keycloakConfig() {
     const config = this.getConfig();
     return {
@@ -93,7 +117,9 @@ class ConfigService {
       keycloakClientId: this.keycloakClientId,
       appVersion: this.appVersion,
       appEnv: this.appEnv,
-      authMode: this.authMode
+      authMode: this.authMode,
+      isCloudMode: this.isCloudMode,
+      isEmbeddedMode: this.isEmbeddedMode
     });
   }
 }
