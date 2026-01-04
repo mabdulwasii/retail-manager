@@ -179,13 +179,27 @@ public class ShopService {
     @Transactional(readOnly = true)
     @Cacheable(key = "#shopId", condition = "#shopId != null")
     public ShopResponse getShop(String shopId) {
+        Shop shop = getShopEntity(shopId);
+        return ShopResponse.fromEntity(shop);
+    }
+
+    /**
+     * Retrieves a shop entity by ID with tenant access validation.
+     * This method returns the Shop entity (not DTO) for internal service use.
+     *
+     * @param shopId ID of shop to retrieve
+     * @return Shop entity if found and accessible
+     * @throws IllegalArgumentException if shop not found or access denied
+     */
+    @Transactional(readOnly = true)
+    public Shop getShopEntity(String shopId) {
         Shop shop = shopRepository.findById(shopId)
             .orElseThrow(() -> new IllegalArgumentException(ERROR_SHOP_NOT_FOUND + shopId));
 
         // Verify tenant access using centralized validator
         tenantSecurityValidator.validateShopAccess(shop);
 
-        return ShopResponse.fromEntity(shop);
+        return shop;
     }
 
     /**

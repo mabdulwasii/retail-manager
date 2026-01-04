@@ -2,11 +2,10 @@ package com.princely.shopmanager.shared.controller;
 
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.core.domain.Shop;
-import com.princely.shopmanager.core.repository.ShopRepository;
+import com.princely.shopmanager.core.service.ShopService;
 import com.princely.shopmanager.shared.domain.AuditLog;
 import com.princely.shopmanager.shared.dto.AuditLogFilterRequest;
 import com.princely.shopmanager.shared.dto.AuditLogResponse;
-import com.princely.shopmanager.shared.security.TenantSecurityValidator;
 import com.princely.shopmanager.shared.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,8 +52,7 @@ public class AuditLogController {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final AuditService auditService;
-    private final ShopRepository shopRepository;
-    private final TenantSecurityValidator tenantSecurityValidator;
+    private final ShopService shopService;
 
     /**
      * Get paginated audit logs with optional filtering
@@ -98,10 +96,8 @@ public class AuditLogController {
             size = MAX_PAGE_SIZE;
         }
 
-        // Get shop and validate access
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
+        // Get shop and validate access through service layer
+        Shop shop = shopService.getShopEntity(shopId);
 
         // Build filter request
         AuditLogFilterRequest filters = AuditLogFilterRequest.builder()
@@ -156,10 +152,8 @@ public class AuditLogController {
 
         log.info("Exporting audit logs for shop: {} by user: {}", shopId, principal.getUsername());
 
-        // Get shop and validate access
-        Shop shop = shopRepository.findById(shopId)
-            .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
-        tenantSecurityValidator.validateShopAccess(shop);
+        // Get shop and validate access through service layer
+        Shop shop = shopService.getShopEntity(shopId);
 
         // Build filter request
         AuditLogFilterRequest filters = AuditLogFilterRequest.builder()
