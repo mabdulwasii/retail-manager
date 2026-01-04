@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Audit Logs Page', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to audit logs page
-    await page.goto('/cloud/audit-logs');
+    await page.goto('/audit');
   });
 
   test('should load page with audit logs table', async ({ page }) => {

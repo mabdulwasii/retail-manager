@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Shop Management Page', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to shop management page
-    await page.goto('/cloud/shops');
+    await page.goto('/shops');
   });
 
   test('should load page with shops table', async ({ page }) => {
