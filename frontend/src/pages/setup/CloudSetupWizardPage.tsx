@@ -19,7 +19,7 @@ import { ShopLinkageSelector } from '@/components/setup/ShopLinkageSelector';
 import { useFirstRunDetection } from '@/hooks/useFirstRunDetection';
 import { useRegisterTenant } from '@/hooks/useCloudTenants';
 import { useQuery } from '@tanstack/react-query';
-import shopService from '@/services/shopService';
+import { shopService } from '@/services/shopService';
 
 /**
  * Cloud Setup Wizard Page
