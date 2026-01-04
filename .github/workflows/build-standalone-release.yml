@@ -415,6 +415,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PR with release labels, use timestamp-based version
+            VERSION=$(date +%Y%m%d.%H%M%S)
+            echo "version=1.0.${VERSION}" >> $GITHUB_OUTPUT
           else
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           fi
@@ -1040,8 +1044,8 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s/^version:.*/version: $VERSION/" helm-chart/shop-manager/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
           echo "Updated Chart.yaml:"
           cat helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
 
@@ -1113,8 +1117,8 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s/^version:.*/version: $VERSION/" helm-chart/shop-manager/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
 
       - name: Package Helm chart
         run: |
