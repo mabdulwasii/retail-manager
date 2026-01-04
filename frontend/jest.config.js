@@ -5,6 +5,7 @@ export default {
   },
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleDirectories: ['node_modules', '<rootDir>'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
