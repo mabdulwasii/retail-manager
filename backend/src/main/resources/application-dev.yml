@@ -13,6 +13,13 @@ spring:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/shop-manager}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8090/realms/shop-manager/protocol/openid-connect/certs}
+
   h2:
     console:
       enabled: ${H2_CONSOLE_ENABLED:true}
@@ -23,6 +30,13 @@ spring:
       enabled: ${DEVTOOLS_RESTART_ENABLED:true}
     livereload:
       enabled: ${DEVTOOLS_LIVERELOAD_ENABLED:true}
+keycloak:
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8090}
+  realm: ${KEYCLOAK_REALM:shop-manager}
+  admin:
+    username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:Adm1n!SecureP@ss2024}
+
 logging:
   level:
     root: ${LOGGING_LEVEL_ROOT:DEBUG}
@@ -45,5 +59,12 @@ app:
       allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
       allowed-headers: ${CORS_ALLOWED_HEADERS:*}
       allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+
+  keycloak:
+    enabled: false
+    realm: ${KEYCLOAK_REALM:shop-manager}
+    auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8090}
+    client-id: ${KEYCLOAK_CLIENT_ID:shop-manager-backend}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:}
 
 # Dev tools configuration
