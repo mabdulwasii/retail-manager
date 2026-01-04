@@ -2,11 +2,16 @@
 # This file contains settings specific to development environment
 
 spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5436/shopdb}
+    username: ${SPRING_DATASOURCE_USERNAME:shop}
+    password: ${SPRING_DATASOURCE_PASSWORD:P@ssw0rd!2024#Shop}
+
   jpa:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
 
   h2:
     console:
