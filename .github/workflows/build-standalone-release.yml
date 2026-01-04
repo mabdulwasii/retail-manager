@@ -409,14 +409,38 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history and tags for version calculation
 
       - name: Get version
         id: get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # For PR with release labels, calculate next semantic version
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            # Determine bump type from PR labels
+            if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:minor"* ]]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              # Default to patch for release:patch label
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+            echo "Calculated version: ${NEW_VERSION} from ${LATEST_TAG}"
           fi
 
       - name: Create Release
@@ -744,6 +768,7 @@ jobs:
           npm run build:mac
         env:
           DEBUG: electron-builder,electron-builder:*
+          TERM: xterm
 
       - name: List build artifacts
         run: |
@@ -835,6 +860,7 @@ jobs:
           npm run build:linux
         env:
           DEBUG: electron-builder
+          TERM: xterm
 
       - name: List build artifacts
         run: |
@@ -887,6 +913,9 @@ jobs:
         contains(github.event.pull_request.labels.*.name, 'release:major')))
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download embedded JAR artifact
         uses: actions/download-artifact@v4
         with:
@@ -1040,8 +1069,8 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s/^version:.*/version: $VERSION/" helm-chart/shop-manager/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
           echo "Updated Chart.yaml:"
           cat helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
 
@@ -1113,8 +1142,8 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s/^version:.*/version: $VERSION/" helm-chart/shop-manager/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
 
       - name: Package Helm chart
         run: |

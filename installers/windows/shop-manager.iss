@@ -47,8 +47,8 @@ PrivilegesRequiredOverridesAllowed=dialog
 
 ; UI
 WizardStyle=modern
-WizardImageFile=assets\wizard-image.bmp
-WizardSmallImageFile=assets\wizard-small.bmp
+; WizardImageFile=assets\wizard-image.bmp
+; WizardSmallImageFile=assets\wizard-small.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
