@@ -48,7 +48,7 @@ test.describe('Shop Management Page', () => {
     await page.waitForLoadState('networkidle');
 
     // Get total shops before search
-    const shopsCount = page.locator('text=/Shops \\((\\d+) of (\\d+)\\)/');
+    const shopsCount = page.locator('text=/Shops \\(\\d+ of \\d+\\)/');
     await expect(shopsCount).toBeVisible();
 
     // Perform search
@@ -232,7 +232,7 @@ test.describe('Shop Management Page', () => {
     await page.waitForLoadState('networkidle');
 
     // Check shop count display
-    const shopsCount = page.locator('text=/Shops \\((\\d+) of (\\d+)\\)/');
+    const shopsCount = page.locator('text=/Shops \\(\\d+ of \\d+\\)/');
     await expect(shopsCount).toBeVisible();
   });
 

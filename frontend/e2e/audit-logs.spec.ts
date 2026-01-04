@@ -285,7 +285,7 @@ test.describe('Audit Logs Page', () => {
     await page.waitForLoadState('networkidle');
 
     // Check activity log count display
-    const activityLogHeading = page.getByRole('heading', { name: /Activity Log \\(\\d+/ });
+    const activityLogHeading = page.getByRole('heading', { name: /Activity Log \(\d+/ });
     await expect(activityLogHeading).toBeVisible();
   });
 
