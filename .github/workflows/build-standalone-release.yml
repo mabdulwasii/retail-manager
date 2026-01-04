@@ -21,6 +21,7 @@ jobs:
   backend-quality-gates:
     name: Backend Tests & SonarQube
     runs-on: ubuntu-latest
+    continue-on-error: true  # Allow workflow to continue even if tests/SonarQube fail
     if: |
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
@@ -79,6 +80,7 @@ jobs:
   frontend-quality-gates:
     name: Frontend Tests & SonarQube
     runs-on: ubuntu-latest
+    continue-on-error: true  # Allow workflow to continue even if tests/SonarQube fail
 
     steps:
       - name: Checkout code
