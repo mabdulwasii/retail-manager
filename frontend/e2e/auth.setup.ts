@@ -30,7 +30,8 @@ setup('authenticate', async ({ request, baseURL }) => {
   const page = await context.newPage();
 
   // Navigate to the app and inject the token into localStorage
-  await page.goto('/');
+  // Using /dashboard instead of / to avoid landing page issues in tests
+  await page.goto('/dashboard');
 
   // Set the token in localStorage using the same key as EmbeddedAuthService
   await page.evaluate((token) => {
