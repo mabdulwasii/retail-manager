@@ -35,4 +35,12 @@ public interface CloudShopRepository extends JpaRepository<CloudShop, String> {
      * @return List of CloudShop
      */
     List<CloudShop> findByShopEmail(String shopEmail);
+
+    /**
+     * Find all shops for a cloud tenant (alternative method name).
+     *
+     * @param tenantId Cloud tenant ID
+     * @return List of CloudShop
+     */
+    List<CloudShop> findByCloudTenant_Id(String tenantId);
 }

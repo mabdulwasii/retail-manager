@@ -35,4 +35,12 @@ public interface CloudTenantRepository extends JpaRepository<CloudTenant, String
      * @return Optional CloudTenant
      */
     Optional<CloudTenant> findByApiKeyHash(String apiKeyHash);
+
+    /**
+     * Find all tenants by status.
+     *
+     * @param status Tenant status
+     * @return List of CloudTenant
+     */
+    java.util.List<CloudTenant> findByStatus(CloudTenant.Status status);
 }
