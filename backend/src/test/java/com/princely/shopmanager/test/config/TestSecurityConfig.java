@@ -21,6 +21,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -181,5 +183,19 @@ public class TestSecurityConfig {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setPermissionEvaluator(testPermissionEvaluator());
         return expressionHandler;
+    }
+
+    /**
+     * Provides a PasswordEncoder bean for test context.
+     * <p>
+     * This bean is required by CloudTenantService and other services that need password encoding.
+     * Uses BCryptPasswordEncoder for secure password hashing.
+     *
+     * @return PasswordEncoder instance
+     */
+    @Bean
+    @Primary
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
