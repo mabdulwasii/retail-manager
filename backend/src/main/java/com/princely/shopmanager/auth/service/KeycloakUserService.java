@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "app.keycloak", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
-public class KeycloakUserService {
+public class KeycloakUserService implements UserManagementService {
 
     // Error message constants
     private static final String ERROR_USER_NOT_FOUND = "User not found: ";

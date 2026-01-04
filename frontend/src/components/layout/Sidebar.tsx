@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/ManualAuthContext'
 import { useSidebar } from '@/context/SidebarContext'
 import { useTheme } from '@/context/ThemeContext'
+import configService from '@/config/runtime-config'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { CurrencySelector } from '@/components/ui/currency-selector'
@@ -24,6 +25,10 @@ import {
   Sun,
   Shield,
   Users,
+  Cloud,
+  Building2,
+  CreditCard,
+  Key,
 } from 'lucide-react'
 
 interface NavItem {
@@ -109,6 +114,34 @@ const navItems: NavItem[] = [
   },
 ]
 
+// Cloud-specific navigation items (only shown when isCloudMode = true)
+const cloudNavItems: NavItem[] = [
+  {
+    title: 'Cloud Tenants',
+    href: '/cloud/tenants',
+    icon: Building2,
+    permissions: [], // TODO: Add cloud-specific permissions in Phase 2
+  },
+  {
+    title: 'Cross-Shop Analytics',
+    href: '/cloud/analytics',
+    icon: Cloud,
+    permissions: [],
+  },
+  {
+    title: 'Subscriptions',
+    href: '/cloud/subscriptions',
+    icon: CreditCard,
+    permissions: [],
+  },
+  {
+    title: 'API Keys',
+    href: '/cloud/api-keys',
+    icon: Key,
+    permissions: [],
+  },
+]
+
 export const Sidebar: React.FC = () => {
   const location = useLocation()
   const { hasAnyPermission, hasPermission, user } = useAuth()
@@ -119,8 +152,13 @@ export const Sidebar: React.FC = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
+  const isCloudMode = configService.isCloudMode;
+
   const filteredNavItems = useMemo(() => {
-    return navItems.filter(item => {
+    // Combine local nav items with cloud nav items if in cloud mode
+    const allItems = isCloudMode ? [...navItems, ...cloudNavItems] : navItems;
+
+    return allItems.filter(item => {
       // If no permissions required, show to all authenticated users
       if (item.permissions.length === 0) return true
       // Check if user has at least one of the required permissions
@@ -130,7 +168,7 @@ export const Sidebar: React.FC = () => {
       if (item.title === 'Shops') {
         const canListShops = hasAnyPermission([Permission.SHOP_LIST, Permission.SHOP_LIST_ALL])
         const hasOnlyManagePermission = hasPermission(Permission.SHOP_MANAGE) && !canListShops
-        
+
         // If user only has SHOP_MANAGE (not SHOP_LIST/SHOP_LIST_ALL), link directly to their shop
         if (hasOnlyManagePermission && user?.shopId) {
           return {
@@ -142,7 +180,7 @@ export const Sidebar: React.FC = () => {
       }
       return item
     })
-  }, [hasAnyPermission, hasPermission, user?.shopId])
+  }, [hasAnyPermission, hasPermission, user?.shopId, isCloudMode])
 
   // Handle navigation on mobile - close sidebar after clicking a link
   const handleNavigation = () => {

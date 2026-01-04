@@ -43,6 +43,13 @@ import { EditShopPage } from "@/pages/shops/EditShopPage";
 import { ShopDetailPage } from "@/pages/shops/ShopDetailPage";
 import { ShopSettingsPage } from "@/pages/shops/ShopSettingsPage";
 import { ShopsPage } from "@/pages/shops/ShopsPage";
+import {
+  CloudTenantsPage,
+  CloudTenantDetailPage,
+  CrossShopAnalyticsPage,
+  SubscriptionsPage,
+  ApiKeysPage
+} from "@/pages/cloud";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
@@ -473,6 +480,48 @@ export const AuthenticatedApp: React.FC = () => {
             <ProtectedRoute permissions={[Permission.USER_UPDATE]}>
               <EditUserPage />
             </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      {/* Cloud Portal Routes (Phase 1: Empty states) */}
+      <Route
+        path="/cloud/tenants"
+        element={
+          <Layout>
+            <CloudTenantsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/tenants/:id"
+        element={
+          <Layout>
+            <CloudTenantDetailPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/analytics"
+        element={
+          <Layout>
+            <CrossShopAnalyticsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/subscriptions"
+        element={
+          <Layout>
+            <SubscriptionsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/api-keys"
+        element={
+          <Layout>
+            <ApiKeysPage />
           </Layout>
         }
       />

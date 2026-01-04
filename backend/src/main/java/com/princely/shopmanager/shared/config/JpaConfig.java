@@ -3,6 +3,7 @@ package com.princely.shopmanager.shared.config;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import java.util.Optional;
  * We don't use @EnableJpaRepositories - Spring Boot autoconfigures it.
  */
 @Configuration
+@Profile("!embedded")
 public class JpaConfig {
 
     @Bean

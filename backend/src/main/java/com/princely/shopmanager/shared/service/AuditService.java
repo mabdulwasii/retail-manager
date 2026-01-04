@@ -2,15 +2,21 @@ package com.princely.shopmanager.shared.service;
 
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.shared.domain.AuditLog;
+import com.princely.shopmanager.shared.dto.AuditLogFilterRequest;
 import com.princely.shopmanager.shared.repository.AuditLogRepository;
+import com.princely.shopmanager.shared.specification.AuditLogSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -221,11 +227,11 @@ public class AuditService {
     // Expense-specific audit methods
     @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseCreation(java.util.UUID expenseId, String shopId, java.util.UUID userId, java.math.BigDecimal amount) {
+    public void logExpenseCreation(java.util.UUID expenseId, String shopId, String userId, java.math.BigDecimal amount) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.FINANCIAL_TRANSACTION)
                 .actionType(AuditLog.ActionType.CREATE)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -245,11 +251,11 @@ public class AuditService {
 
     @Async("auditTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
+    public void logExpenseUpdate(java.util.UUID expenseId, String shopId, String userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.UPDATE)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -268,11 +274,11 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseApproval(java.util.UUID expenseId, String shopId, java.util.UUID userId, boolean approved) {
+    public void logExpenseApproval(java.util.UUID expenseId, String shopId, String userId, boolean approved) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.BUSINESS_PROCESS)
                 .actionType(approved ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -291,11 +297,11 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, java.util.UUID userId) {
+    public void logExpenseDeletion(java.util.UUID expenseId, String shopId, String userId) {
         try {
             AuditLog auditLog = AuditLog.builder()
                 .shop(null) // TODO: fetch Shop entity by shopId
-                .userId(userId.toString())
+                .userId(userId)
                 .category(AuditLog.AuditCategory.DATA_MODIFICATION)
                 .actionType(AuditLog.ActionType.DELETE)
                 .entityType(ENTITY_TYPE_EXPENSE)
@@ -333,5 +339,67 @@ public class AuditService {
         } catch (Exception e) {
             log.error("Failed to log event: {} - {}", eventType, description, e);
         }
+    }
+
+    /**
+     * Get audit logs for a shop with filters and pagination
+     */
+    @Transactional(readOnly = true)
+    public Page<AuditLog> getAuditLogs(Shop shop, AuditLogFilterRequest filters, Pageable pageable) {
+        log.debug("Fetching audit logs for shop: {} with filters", shop.getId());
+
+        Specification<AuditLog> spec = AuditLogSpecification.fromFilters(shop, filters);
+        return auditLogRepository.findAll(spec, pageable);
+    }
+
+    /**
+     * Export audit logs to CSV format
+     */
+    @Transactional(readOnly = true)
+    public String exportAuditLogsToCsv(Shop shop, AuditLogFilterRequest filters) {
+        log.debug("Exporting audit logs to CSV for shop: {}", shop.getId());
+
+        Specification<AuditLog> spec = AuditLogSpecification.fromFilters(shop, filters);
+        List<AuditLog> logs = auditLogRepository.findAll(spec);
+
+        StringBuilder csv = new StringBuilder();
+
+        // CSV header
+        csv.append("Timestamp,Action,Category,Entity Type,Entity ID,User,Username,Description,IP Address,Severity,Success,Error Message\n");
+
+        // CSV rows
+        for (AuditLog log : logs) {
+            csv.append(escapeCSV(log.getActionDate() != null ? log.getActionDate().toString() : "")).append(",");
+            csv.append(escapeCSV(log.getActionType() != null ? log.getActionType().name() : "")).append(",");
+            csv.append(escapeCSV(log.getCategory() != null ? log.getCategory().name() : "")).append(",");
+            csv.append(escapeCSV(log.getEntityType() != null ? log.getEntityType() : "")).append(",");
+            csv.append(escapeCSV(log.getEntityId() != null ? log.getEntityId() : "")).append(",");
+            csv.append(escapeCSV(log.getUserId() != null ? log.getUserId() : "")).append(",");
+            csv.append(escapeCSV(log.getUsername() != null ? log.getUsername() : "")).append(",");
+            csv.append(escapeCSV(log.getActionDescription() != null ? log.getActionDescription() : "")).append(",");
+            csv.append(escapeCSV(log.getIpAddress() != null ? log.getIpAddress() : "")).append(",");
+            csv.append(escapeCSV(log.getSeverity() != null ? log.getSeverity().name() : "")).append(",");
+            csv.append(log.isSuccess() ? "true" : "false").append(",");
+            csv.append(escapeCSV(log.getErrorMessage() != null ? log.getErrorMessage() : "")).append("\n");
+        }
+
+        log.info("Exported {} audit logs to CSV for shop: {}", logs.size(), shop.getId());
+        return csv.toString();
+    }
+
+    /**
+     * Escape CSV special characters
+     */
+    private String escapeCSV(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        // If the value contains comma, quote, or newline, wrap in quotes and escape existing quotes
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+
+        return value;
     }
 }

@@ -1,0 +1,50 @@
+# ============================================================================
+# Dockerfile.lite - Lightweight Backend Container for Embedded Mode
+# ============================================================================
+# This Dockerfile creates a minimal container for the embedded JAR
+# Memory footprint: ~512 MB - 1 GB
+# ============================================================================
+
+FROM eclipse-temurin:21-jre-alpine
+
+# Metadata
+LABEL maintainer="shop-manager-team"
+LABEL description="Shop Manager Backend - Lite Edition (Embedded Mode)"
+LABEL version="1.0.0"
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Create app directory and data directories
+RUN mkdir -p /app/data /app/data/uploads /app/logs
+
+# Create non-root user for security
+RUN addgroup -g 1000 shopmanager && \
+    adduser -D -u 1000 -G shopmanager shopmanager && \
+    chown -R shopmanager:shopmanager /app
+
+# Set working directory
+WORKDIR /app
+
+# Copy the embedded JAR
+ARG JAR_FILE=target/shop-manager-*-embedded.jar
+COPY ${JAR_FILE} app.jar
+
+# Change ownership
+RUN chown shopmanager:shopmanager app.jar
+
+# Switch to non-root user
+USER shopmanager
+
+# Expose port
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8081/actuator/health || exit 1
+
+# JVM options for low memory environments
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
+
+# Run the application
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

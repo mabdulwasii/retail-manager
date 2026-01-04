@@ -2,7 +2,7 @@ package com.princely.shopmanager.core.service;
 
 import com.princely.shopmanager.auth.dto.CreateKeycloakUserRequest;
 import com.princely.shopmanager.core.exception.TenantRegistrationException;
-import com.princely.shopmanager.auth.service.KeycloakUserService;
+import com.princely.shopmanager.auth.service.UserManagementService;
 import com.princely.shopmanager.core.domain.*;
 import com.princely.shopmanager.core.dto.registration.*;
 import com.princely.shopmanager.core.event.TenantRegistrationEvent;
@@ -37,7 +37,7 @@ public class TenantRegistrationService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final RoleRepository roleRepository;
-    private final KeycloakUserService keycloakUserService;
+    private final UserManagementService userManagementService;
     private final ApplicationEventPublisher eventPublisher;
     private final AuditService auditService;
 
@@ -53,7 +53,7 @@ public class TenantRegistrationService {
             validateRegistrationRequest(request);
 
             // Generate password for contact user
-            String generatedPassword = keycloakUserService.generatePassword();
+            String generatedPassword = userManagementService.generatePassword();
 
             // Create tenant entity (INACTIVE by default)
             Tenant tenant = createTenantEntity(request.getTenantInfo());
@@ -136,8 +136,8 @@ public class TenantRegistrationService {
                 contactUser.setStatus(User.UserStatus.ACTIVE);
                 userRepository.save(contactUser);
 
-                // Enable user in Keycloak
-                keycloakUserService.updateUserStatus(contactUser.getKeycloakId(), true);
+                // Enable user in authentication system
+                userManagementService.updateUserStatus(contactUser.getKeycloakId(), true);
             }
 
             // Activate specified shops
@@ -166,10 +166,10 @@ public class TenantRegistrationService {
             tenant.setStatus(Tenant.TenantStatus.TERMINATED);
             tenantRepository.save(tenant);
 
-            // Disable user in Keycloak
+            // Disable user in authentication system
             User contactUser = tenant.getContactUser();
             if (contactUser != null && contactUser.getKeycloakId() != null) {
-                keycloakUserService.updateUserStatus(contactUser.getKeycloakId(), false);
+                userManagementService.updateUserStatus(contactUser.getKeycloakId(), false);
             }
 
             // Create audit log for rejection
@@ -200,12 +200,12 @@ public class TenantRegistrationService {
             throw new TenantRegistrationException("Username already exists: " + request.getContactUser().username());
         }
 
-        // Check Keycloak for existing users
-        if (keycloakUserService.userExistsByEmail(request.getContactUser().email())) {
+        // Check authentication system for existing users
+        if (userManagementService.userExistsByEmail(request.getContactUser().email())) {
             throw new TenantRegistrationException("User already exists in authentication system: " + request.getContactUser().email());
         }
 
-        if (keycloakUserService.userExistsByUsername(request.getContactUser().username())) {
+        if (userManagementService.userExistsByUsername(request.getContactUser().username())) {
             throw new TenantRegistrationException("Username already exists in authentication system: " + request.getContactUser().username());
         }
 
@@ -286,7 +286,7 @@ public class TenantRegistrationService {
             password
         );
 
-        return keycloakUserService.createUser(keycloakRequest);
+        return userManagementService.createUser(keycloakRequest);
     }
 
     private void publishRegistrationEvent(Tenant tenant, User contactUser, List<String> shopIds,
@@ -374,7 +374,7 @@ public class TenantRegistrationService {
      */
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsernameIgnoreCase(username) &&
-               !keycloakUserService.userExistsByUsername(username);
+               !userManagementService.userExistsByUsername(username);
     }
 
     /**
@@ -382,7 +382,7 @@ public class TenantRegistrationService {
      */
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsByEmailIgnoreCase(email) &&
-               !keycloakUserService.userExistsByEmail(email);
+               !userManagementService.userExistsByEmail(email);
     }
 
     /**

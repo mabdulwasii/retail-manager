@@ -117,14 +117,14 @@ public class ExpenseService extends ShopAwareService {
             .referenceNumber(request.referenceNumber())
             .tags(request.tags() != null ? fieldUpdater.cleanTags(request.tags()) : new HashSet<>())
             .notes(request.notes())
-            .expenseCreatedBy(UUID.fromString(principal.getUserId()))
+            .expenseCreatedBy(principal.getUserId())
             .createdByName(principal.getFullName())
             .status(initialStatus);
 
         // Add approval details if auto-approved
         if (category.canAutoApprove(request.amount())) {
             expenseBuilder
-                .approvedBy(UUID.fromString(principal.getUserId()))
+                .approvedBy(principal.getUserId())
                 .approvedByName(principal.getFullName())
                 .approvalDate(LocalDate.now())
                 .approvalNotes("Auto-approved based on category settings");
@@ -135,7 +135,7 @@ public class ExpenseService extends ShopAwareService {
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseCreation(expense.getId(), shopId, UUID.fromString(principal.getUserId()), expense.getAmount());
+        auditService.logExpenseCreation(expense.getId(), shopId, principal.getUserId(), expense.getAmount());
 
         log.info("Expense created successfully: {}", expense.getId());
         return mapToResponse(expense, category);
@@ -169,7 +169,7 @@ public class ExpenseService extends ShopAwareService {
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseUpdate(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()));
+        auditService.logExpenseUpdate(expense.getId(), expense.getShopId(), principal.getUserId());
 
         log.info("Expense updated successfully: {}", expense.getId());
 
@@ -194,11 +194,11 @@ public class ExpenseService extends ShopAwareService {
             throw new BusinessRuleViolationException("Expense cannot be approved in current status: " + expense.getStatus());
         }
 
-        expense.approve(UUID.fromString(principal.getUserId()), principal.getFullName(), request.notes());
+        expense.approve(principal.getUserId(), principal.getFullName(), request.notes());
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()), true);
+        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), principal.getUserId(), true);
 
         log.info("Expense approved successfully: {}", expense.getId());
 
@@ -223,11 +223,11 @@ public class ExpenseService extends ShopAwareService {
             throw new BusinessRuleViolationException("Expense cannot be rejected in current status: " + expense.getStatus());
         }
 
-        expense.reject(UUID.fromString(principal.getUserId()), principal.getFullName(), request.notes());
+        expense.reject(principal.getUserId(), principal.getFullName(), request.notes());
         expense = expenseRepository.save(expense);
 
         // Audit log
-        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()), false);
+        auditService.logExpenseApproval(expense.getId(), expense.getShopId(), principal.getUserId(), false);
 
         log.info("Expense rejected successfully: {}", expense.getId());
 
@@ -284,7 +284,7 @@ public class ExpenseService extends ShopAwareService {
         expenseRepository.delete(expense);
 
         // Audit log
-        auditService.logExpenseDeletion(expense.getId(), expense.getShopId(), UUID.fromString(principal.getUserId()));
+        auditService.logExpenseDeletion(expense.getId(), expense.getShopId(), principal.getUserId());
 
         log.info("Expense deleted successfully: {}", expenseId);
     }

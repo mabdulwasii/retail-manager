@@ -36,8 +36,11 @@ public class User extends BaseEntity {
     @JsonIgnoreProperties({"tenant", "users"})
     private Shop shop;
 
-    @Column(name = "keycloak_id", unique = true, nullable = false)
+    @Column(name = "keycloak_id", unique = true)
     private String keycloakId;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @NotEmpty(message = "Username is required")
     @Column(unique = true, nullable = false)
@@ -88,5 +91,19 @@ public class User extends BaseEntity {
             return firstName + " " + lastName;
         }
         return username;
+    }
+
+    /**
+     * Get tenant ID (convenience method for JWT token generation)
+     */
+    public String getTenantId() {
+        return tenant != null ? tenant.getId() : null;
+    }
+
+    /**
+     * Get shop ID (convenience method for JWT token generation)
+     */
+    public String getShopId() {
+        return shop != null ? shop.getId() : null;
     }
 }

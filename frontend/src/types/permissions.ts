@@ -157,6 +157,7 @@ export enum Permission {
   // Audit Log Permissions
   AUDIT_LOG_VIEW = 'AUDIT_LOG_VIEW',
   AUDIT_LOG_LIST = 'AUDIT_LOG_LIST',
+  AUDIT_LOG_EXPORT = 'AUDIT_LOG_EXPORT',
   AUDIT_LOG_VIEW_SHOP = 'AUDIT_LOG_VIEW_SHOP',
   AUDIT_LOG_VIEW_TENANT = 'AUDIT_LOG_VIEW_TENANT',
 }
@@ -357,6 +358,7 @@ export const getPermissionDisplayName = (permission: string): string => {
     // Audit Log
     [Permission.AUDIT_LOG_VIEW]: 'View Audit Logs',
     [Permission.AUDIT_LOG_LIST]: 'List Audit Logs',
+    [Permission.AUDIT_LOG_EXPORT]: 'Export Audit Logs',
     [Permission.AUDIT_LOG_VIEW_SHOP]: 'View Shop Audit Logs',
     [Permission.AUDIT_LOG_VIEW_TENANT]: 'View Tenant Audit Logs',
   }

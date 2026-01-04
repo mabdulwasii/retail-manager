@@ -15,12 +15,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExpenseTest {
 
     private Expense expense;
-    private UUID testUserId;
+    private String testUserId;
     private UUID testCategoryId;
 
     @BeforeEach
     void setUp() {
-        testUserId = UUID.randomUUID();
+        testUserId = UUID.randomUUID().toString();
         testCategoryId = UUID.randomUUID();
 
         expense = Expense.builder()
@@ -261,7 +261,7 @@ class ExpenseTest {
     void approve_shouldChangeStatusAndSetApprovalDetails() {
         // Given
         expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
         String approverName = "John Approver";
         String notes = "Approved for purchase";
         LocalDate beforeApproval = LocalDate.now().minusDays(1);
@@ -283,7 +283,7 @@ class ExpenseTest {
     void approve_shouldThrowExceptionWhenNotPending() {
         // Given
         expense.setStatus(ExpenseStatus.DRAFT);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
@@ -296,7 +296,7 @@ class ExpenseTest {
     void approve_shouldThrowExceptionWhenAlreadyApproved() {
         // Given
         expense.setStatus(ExpenseStatus.APPROVED);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
@@ -310,7 +310,7 @@ class ExpenseTest {
     void reject_shouldChangeStatusAndSetRejectionDetails() {
         // Given
         expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
         String rejecterName = "Jane Rejecter";
         String notes = "Missing receipt";
         LocalDate beforeRejection = LocalDate.now().minusDays(1);
@@ -332,7 +332,7 @@ class ExpenseTest {
     void reject_shouldThrowExceptionWhenNotPending() {
         // Given
         expense.setStatus(ExpenseStatus.DRAFT);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.reject(rejecterId, "Jane", "Notes"))
@@ -345,7 +345,7 @@ class ExpenseTest {
     void reject_shouldThrowExceptionWhenPaid() {
         // Given
         expense.setStatus(ExpenseStatus.PAID);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.reject(rejecterId, "Jane", "Notes"))
@@ -512,7 +512,7 @@ class ExpenseTest {
     void completeWorkflow_draftToPendingToApprovedToPaid() {
         // Given
         expense.setStatus(ExpenseStatus.DRAFT);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
 
         // When & Then: DRAFT → PENDING_APPROVAL
         expense.submitForApproval();
@@ -536,7 +536,7 @@ class ExpenseTest {
     void completeWorkflow_draftToPendingToRejectedAndEditable() {
         // Given
         expense.setStatus(ExpenseStatus.DRAFT);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
 
         // When & Then: DRAFT → PENDING_APPROVAL
         expense.submitForApproval();
@@ -556,7 +556,7 @@ class ExpenseTest {
     void approve_shouldThrowExceptionWhenRejected() {
         // Given
         expense.setStatus(ExpenseStatus.REJECTED);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
@@ -569,7 +569,7 @@ class ExpenseTest {
     void approve_shouldThrowExceptionWhenPaid() {
         // Given
         expense.setStatus(ExpenseStatus.PAID);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.approve(approverId, "John", "Notes"))
@@ -582,7 +582,7 @@ class ExpenseTest {
     void reject_shouldThrowExceptionWhenApproved() {
         // Given
         expense.setStatus(ExpenseStatus.APPROVED);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
 
         // When / Then
         assertThatThrownBy(() -> expense.reject(rejecterId, "Jane", "Notes"))
@@ -641,7 +641,7 @@ class ExpenseTest {
         String referenceNumber = "REF-TEST-001";
         String receiptUrl = "http://example.com/receipt.pdf";
         String notes = "Test notes";
-        UUID creatorId = UUID.randomUUID();
+        String creatorId = UUID.randomUUID().toString();
         String creatorName = "Test Creator";
 
         // When
@@ -742,7 +742,7 @@ class ExpenseTest {
     void approve_shouldSetApprovalDateToCurrentDate() {
         // Given
         expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
-        UUID approverId = UUID.randomUUID();
+        String approverId = UUID.randomUUID().toString();
         LocalDate today = LocalDate.now();
 
         // When
@@ -757,7 +757,7 @@ class ExpenseTest {
     void reject_shouldSetRejectionDateToCurrentDate() {
         // Given
         expense.setStatus(ExpenseStatus.PENDING_APPROVAL);
-        UUID rejecterId = UUID.randomUUID();
+        String rejecterId = UUID.randomUUID().toString();
         LocalDate today = LocalDate.now();
 
         // When

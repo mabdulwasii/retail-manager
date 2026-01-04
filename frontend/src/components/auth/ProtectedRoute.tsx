@@ -1,5 +1,5 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useAuth } from "@/context/ManualAuthContext";
+import { useAuth } from "@/context/UnifiedAuthContext";
 import { Permission } from "@/types/permissions";
 import React from "react";
 import { Navigate } from "react-router-dom";

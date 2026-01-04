@@ -1,14 +1,21 @@
 import { AuthenticatedApp } from "@/components/AuthenticatedApp";
 import { DashboardRedirect } from "@/components/auth/DashboardRedirect";
-import { ManualAuthProvider } from "@/context/ManualAuthContext";
+import { UnifiedAuthProvider } from "@/context/UnifiedAuthContext";
 import { ShopProvider } from "@/context/ShopContext";
 import { LandingPage } from "@/pages/LandingPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { EmbeddedLoginPage } from "@/pages/auth/EmbeddedLoginPage";
+import { CloudTenantRegisterPage } from "@/pages/cloud/CloudTenantRegisterPage";
+import { RegistrationSuccessPage } from "@/pages/cloud/RegistrationSuccessPage";
+import { CloudSetupWizardPage } from "@/pages/setup/CloudSetupWizardPage";
 import { Route, Routes } from "react-router-dom";
+import configService from "@/config/runtime-config";
 
 function App() {
+  const isEmbedded = configService.isEmbeddedMode;
+
   return (
-    <ManualAuthProvider>
+    <UnifiedAuthProvider>
       <ShopProvider>
         <Routes>
           {/* Public Routes - No authentication required */}
@@ -16,11 +23,21 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/redirect" element={<DashboardRedirect />} />
 
+          {/* Cloud tenant registration - Public routes */}
+          <Route path="/cloud/register" element={<CloudTenantRegisterPage />} />
+          <Route path="/cloud/register/success" element={<RegistrationSuccessPage />} />
+
+          {/* Embedded mode login page */}
+          {isEmbedded && <Route path="/login" element={<EmbeddedLoginPage />} />}
+
+          {/* Setup wizard for embedded mode first-run */}
+          {isEmbedded && <Route path="/setup" element={<CloudSetupWizardPage />} />}
+
           {/* All authenticated routes - single wildcard to AuthenticatedApp */}
           <Route path="/*" element={<AuthenticatedApp />} />
         </Routes>
       </ShopProvider>
-    </ManualAuthProvider>
+    </UnifiedAuthProvider>
   );
 }
 

@@ -96,13 +96,13 @@ public class Expense extends BaseEntity implements ShopAware {
 
     @NotNull
     @Column(name = "expense_created_by", nullable = false)
-    private UUID expenseCreatedBy;
+    private String expenseCreatedBy;
 
     @Column(name = "created_by_name")
     private String createdByName;
 
     @Column(name = "approved_by")
-    private UUID approvedBy;
+    private String approvedBy;
 
     @Column(name = "approved_by_name")
     private String approvedByName;
@@ -134,7 +134,7 @@ public class Expense extends BaseEntity implements ShopAware {
         return status != ExpenseStatus.PENDING_APPROVAL;
     }
 
-    public void approve(UUID approvedBy, String approvedByName, String notes) {
+    public void approve(String approvedBy, String approvedByName, String notes) {
         if (cannotBeApproved()) {
             throw new IllegalStateException("Expense cannot be approved in current status: " + status);
         }
@@ -145,7 +145,7 @@ public class Expense extends BaseEntity implements ShopAware {
         this.approvalNotes = notes;
     }
 
-    public void reject(UUID rejectedBy, String rejectedByName, String notes) {
+    public void reject(String rejectedBy, String rejectedByName, String notes) {
         if (cannotBeApproved()) {
             throw new IllegalStateException("Expense cannot be rejected in current status: " + status);
         }

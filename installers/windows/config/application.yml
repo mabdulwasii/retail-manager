@@ -1,0 +1,88 @@
+# ============================================================================
+# Shop Manager - Windows Installation Spring Boot Configuration
+# ============================================================================
+# This file contains Spring Boot settings for the Windows installation
+# ============================================================================
+
+spring:
+  profiles:
+    active: embedded
+
+  datasource:
+    url: jdbc:h2:file:./data/h2/shopmanager;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ${H2_PASSWORD:}
+
+  h2:
+    console:
+      enabled: ${H2_CONSOLE_ENABLED:false}
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: false
+
+server:
+  port: ${BACKEND_PORT:8081}
+  compression:
+    enabled: true
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    com.princely.shopmanager: INFO
+  file:
+    name: ./data/logs/shop-manager.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 300MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+application:
+  mode: embedded
+
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000  # 24 hours
+    refresh-expiration-ms: 604800000  # 7 days
+    issuer: shop-manager-embedded
+
+  storage:
+    type: filesystem
+    location: ${STORAGE_PATH:./data/uploads}
+    max-file-size: 10MB
+
+  sync:
+    enabled: ${CLOUD_SYNC_ENABLED:false}
+    cloud-endpoint: ${CLOUD_API_URL:}
+    api-key: ${CLOUD_API_KEY:}
+    store-id: ${STORE_ID:}
+    schedule:
+      cron: ${SYNC_CRON:0 0 * * * ?}
+      batch-size: 100
+      max-retries: 3
+      retry-delay-ms: 5000
+    privacy:
+      anonymize-pii: ${ANONYMIZE_PII:false}

@@ -8,36 +8,31 @@ import '@testing-library/jest-dom'
 import { cleanup } from '@testing-library/react'
 
 // Mock the runtime-config module to avoid import.meta issues
-jest.mock('@/config/runtime-config', () => ({
-  default: {
+jest.mock('@/config/runtime-config', () => {
+  const mockLogConfig = jest.fn();
+  const mockConfigService = {
     apiBaseUrl: 'http://localhost:8081/api',
     keycloakUrl: 'http://localhost:8080',
     keycloakRealm: 'shop-manager',
     keycloakClientId: 'shop-manager-frontend',
     appVersion: '1.0.0',
     appEnv: 'test',
+    authMode: 'embedded' as const,
+    isEmbeddedMode: true,
     keycloakConfig: {
       url: 'http://localhost:8080',
       realm: 'shop-manager',
       clientId: 'shop-manager-frontend'
     },
-    logConfig: jest.fn()
-  },
-  configService: {
-    apiBaseUrl: 'http://localhost:8081/api',
-    keycloakUrl: 'http://localhost:8080',
-    keycloakRealm: 'shop-manager',
-    keycloakClientId: 'shop-manager-frontend',
-    appVersion: '1.0.0',
-    appEnv: 'test',
-    keycloakConfig: {
-      url: 'http://localhost:8080',
-      realm: 'shop-manager',
-      clientId: 'shop-manager-frontend'
-    },
-    logConfig: jest.fn()
-  }
-}))
+    logConfig: mockLogConfig
+  };
+
+  return {
+    default: mockConfigService,
+    configService: mockConfigService,
+    __esModule: true
+  };
+})
 
 // Global mock for ManualAuthContext - can be overridden in individual tests
 jest.mock('@/context/ManualAuthContext', () => {
@@ -121,29 +116,30 @@ globalThis.import = {
       VITE_KEYCLOAK_REALM: 'shop-manager',
       VITE_KEYCLOAK_CLIENT_ID: 'shop-manager-frontend',
       VITE_APP_VERSION: '1.0.0',
-      VITE_APP_ENV: 'test'
+      VITE_APP_ENV: 'test',
+      VITE_AUTH_MODE: 'embedded'
     }
   }
 } as any
 
 // Add TextEncoder and TextDecoder for MSW compatibility in Node.js environment
 import { TextEncoder, TextDecoder } from 'util'
-global.TextEncoder = TextEncoder as any
-global.TextDecoder = TextDecoder as any
+globalThis.TextEncoder = TextEncoder as any
+globalThis.TextDecoder = TextDecoder as any
 
 // Add ReadableStream for undici (fetch API dependency)
 import { ReadableStream, TransformStream, WritableStream } from 'stream/web'
-global.ReadableStream = ReadableStream as any
-global.TransformStream = TransformStream as any
-global.WritableStream = WritableStream as any
+globalThis.ReadableStream = ReadableStream as any
+globalThis.TransformStream = TransformStream as any
+globalThis.WritableStream = WritableStream as any
 
 // Add MessagePort and MessageChannel for undici
 import { MessageChannel, MessagePort } from 'worker_threads'
-global.MessageChannel = MessageChannel as any
-global.MessagePort = MessagePort as any
+globalThis.MessageChannel = MessageChannel as any
+globalThis.MessagePort = MessagePort as any
 
 // Mock BroadcastChannel for MSW WebSocket support
-global.BroadcastChannel = class BroadcastChannel {
+globalThis.BroadcastChannel = class BroadcastChannel {
   constructor(public name: string) {}
   postMessage() {}
   close() {}
@@ -154,16 +150,49 @@ global.BroadcastChannel = class BroadcastChannel {
 
 // Add fetch API globals for MSW v2 in Node.js environment
 import { fetch, Headers, Request, Response } from 'undici'
-global.fetch = fetch as any
-global.Headers = Headers as any
-global.Request = Request as any
-global.Response = Response as any
+globalThis.fetch = fetch as any
+globalThis.Headers = Headers as any
+globalThis.Request = Request as any
+globalThis.Response = Response as any
 
-// Setup MSW (Mock Service Worker) for API mocking - MUST come after fetch globals
-import './mocks/server'
+// Add setImmediate and clearImmediate polyfills for jsdom
+globalThis.setImmediate ??= (callback: (...args: any[]) => void, ...args: any[]) => {
+  return setTimeout(callback, 0, ...args) as any;
+};
+
+globalThis.clearImmediate ??= (handle: any) => {
+  return clearTimeout(handle);
+};
+
+// Polyfill setTimeout/setInterval unref for undici compatibility with jsdom
+const originalSetTimeout = globalThis.setTimeout;
+const originalSetInterval = globalThis.setInterval;
+
+globalThis.setTimeout = ((callback: any, delay?: any, ...args: any[]) => {
+  const handle = originalSetTimeout(callback, delay, ...args);
+  // Add unref method that undici expects
+  if (handle && typeof handle === 'object') {
+    (handle as any).unref = () => handle;
+  }
+  return handle;
+}) as any;
+
+globalThis.setInterval = ((callback: any, delay?: any, ...args: any[]) => {
+  const handle = originalSetInterval(callback, delay, ...args);
+  // Add unref method that undici expects
+  if (handle && typeof handle === 'object') {
+    (handle as any).unref = () => handle;
+  }
+  return handle;
+}) as any;
+
+// Setup MSW (Mock Service Worker) for API mocking
+// Note: MSW is kept for future fetch-based tests, but currently we use axios-mock-adapter
+// for axios requests due to compatibility issues with jest + jsdom + undici
+// import './mocks/server'
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+globalThis.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}
@@ -171,7 +200,7 @@ global.IntersectionObserver = class IntersectionObserver {
 }
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   constructor() {}
   disconnect() {}
   observe() {}
@@ -199,24 +228,46 @@ Object.defineProperty(window, 'scrollTo', {
   value: jest.fn(),
 })
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
+// Mock localStorage with proper implementation
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 })
 
-// Mock sessionStorage
-const sessionStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
+// Mock sessionStorage with proper implementation
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
 })

@@ -3,7 +3,71 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, beforeEach } from '@jest/globals'
 import { ProfilePage } from '@/pages/ProfilePage'
-import { mockData } from '@/test/mocks/data'
+
+// Mock data for testing
+const mockData = {
+  users: {
+    profile: {
+      id: 'user-123',
+      username: 'john.doe',
+      email: 'john.doe@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      phoneNumber: '+1234567890',
+      tenantId: 'tenant-123',
+      shopId: 'shop-456',
+      status: 'ACTIVE',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-15T00:00:00Z',
+      roles: [
+        {
+          id: '1',
+          name: 'MANAGER',
+          description: 'Manager role',
+          isSystem: false,
+          permissions: ['USER_READ', 'USER_WRITE']
+        },
+        {
+          id: '2',
+          name: 'EMPLOYEE',
+          description: 'Employee role',
+          isSystem: false,
+          permissions: ['USER_READ']
+        }
+      ]
+    },
+    investor: {
+      id: 'investor-456',
+      username: 'investor',
+      email: 'investor@example.com',
+      firstName: 'Investor',
+      lastName: 'User',
+      phoneNumber: '+9876543210',
+      tenantId: 'tenant-789',
+      shopId: 'shop-999',
+      status: 'ACTIVE',
+      isInvestor: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-15T00:00:00Z',
+      roles: [
+        {
+          id: '3',
+          name: 'INVESTOR',
+          description: 'Investor role',
+          isSystem: false,
+          permissions: ['INVESTMENT_READ']
+        },
+        {
+          id: '4',
+          name: 'TENANT_ADMIN',
+          description: 'Tenant Admin role',
+          isSystem: false,
+          permissions: ['TENANT_MANAGE', 'USER_MANAGE']
+        }
+      ]
+    }
+  }
+};
 
 // Mock the API service
 jest.mock('@/services/api')
@@ -117,11 +181,19 @@ describe('ProfilePage', () => {
         expect(screen.getByText('Profile')).toBeInTheDocument()
       })
 
-      // Check personal information
-      expect(screen.getByText('John')).toBeInTheDocument()
-      expect(screen.getByText('Doe')).toBeInTheDocument()
-      expect(screen.getByText('john.doe')).toBeInTheDocument()
-      expect(screen.getByText('john.doe@example.com')).toBeInTheDocument()
+      // Check personal information - use getAllByText for text that may appear multiple times
+      const johnElements = screen.getAllByText('John')
+      expect(johnElements.length).toBeGreaterThan(0)
+
+      const doeElements = screen.getAllByText('Doe')
+      expect(doeElements.length).toBeGreaterThan(0)
+
+      const usernameElements = screen.getAllByText('john.doe')
+      expect(usernameElements.length).toBeGreaterThan(0)
+
+      const emailElements = screen.getAllByText('john.doe@example.com')
+      expect(emailElements.length).toBeGreaterThan(0)
+
       expect(screen.getByText('+1234567890')).toBeInTheDocument()
 
       // Check roles - use queryAllByText for roles that might not render exactly

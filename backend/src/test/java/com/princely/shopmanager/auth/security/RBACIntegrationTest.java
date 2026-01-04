@@ -260,7 +260,42 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
         endpoint("DELETE", "/api/fraud/rules/{ruleId}", "FRAUD_DETECT", "OWNER", "MANAGER"),
         endpoint("GET", "/api/fraud/statistics", "FRAUD_LIST", "OWNER", "MANAGER"),
         endpoint("PUT", "/api/fraud/rules/{ruleId}/status", "FRAUD_DETECT", "OWNER", "MANAGER"),
-        endpoint("PATCH", "/api/fraud/rules/{ruleId}/status", "FRAUD_DETECT", "OWNER", "MANAGER")
+        endpoint("PATCH", "/api/fraud/rules/{ruleId}/status", "FRAUD_DETECT", "OWNER", "MANAGER"),
+
+        // ========================================
+        // CLOUD AGGREGATOR - API KEYS ENDPOINTS (4 total)
+        // ========================================
+        endpoint("POST", "/api/cloud/tenants/{tenantId}/api-keys/{keyId}/regenerate", "TENANT_MANAGE", "TENANT_ADMIN"),
+        endpoint("PATCH", "/api/cloud/tenants/{tenantId}/api-keys/{keyId}", "TENANT_MANAGE", "TENANT_ADMIN"),
+        endpoint("DELETE", "/api/cloud/tenants/{tenantId}/api-keys/{keyId}", "TENANT_MANAGE", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/api-keys/{keyId}/usage", "TENANT_READ", "TENANT_ADMIN"),
+
+        // ========================================
+        // CLOUD AGGREGATOR - BILLING/INVOICES ENDPOINTS (3 total)
+        // ========================================
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/billing/invoices/{invoiceId}/pdf", "TENANT_READ", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/billing/invoices", "TENANT_READ", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/billing/invoices/{invoiceId}", "TENANT_READ", "TENANT_ADMIN"),
+
+        // ========================================
+        // CLOUD AGGREGATOR - ANALYTICS ENDPOINTS (2 total)
+        // ========================================
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics/platform", "ANALYTICS_VIEW_TENANT", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics/sync-status", "ANALYTICS_VIEW_TENANT", "TENANT_ADMIN"),
+
+        // ========================================
+        // CLOUD AGGREGATOR - SUBSCRIPTION ENDPOINTS (2 total)
+        // ========================================
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/subscription/usage", "TENANT_READ", "TENANT_ADMIN"),
+        endpoint("PUT", "/api/cloud/tenants/{tenantId}/subscription/tier", "TENANT_UPDATE", "TENANT_ADMIN"),
+
+        // ========================================
+        // REGISTRATION SERVICE ENDPOINTS (4 total)
+        // ========================================
+        endpoint("POST", "/api/registration/shops", "PUBLIC", "ANONYMOUS"),
+        endpoint("GET", "/api/registration/health", "PUBLIC", "ANONYMOUS"),
+        endpoint("POST", "/api/registration/tenants", "PUBLIC", "ANONYMOUS"),
+        endpoint("DELETE", "/api/registration/tenants/{cloudTenantId}", "TENANT_DELETE", "SYSTEM_ADMIN")
     );
 
     /**

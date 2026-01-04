@@ -1,8 +1,8 @@
-# Retail Manager
+# RetailHQ
 
-**🏪 Modular Retail Management Platform**
+**🏪 Cloud-Native Retail Management Platform**
 
-A comprehensive multi-tenant retail management system built with Spring Boot and React, featuring investment tracking, sales analytics, and Keycloak authentication.
+A comprehensive multi-tenant retail management system built with Spring Boot and React, featuring investment tracking, sales analytics, and cloud aggregation. Deploy as a **Cloud PaaS** (`api.retailhq.app`) or **Local Installation** (embedded JAR, Docker Lite, platform installers).
 
 ## 🚀 Quick Start
 
@@ -44,17 +44,92 @@ Use any of these pre-configured accounts:
 
 > **📖 Complete testing guide**: See [TESTING-GUIDE.md](./TESTING-GUIDE.md) for detailed authentication testing and all credentials.
 
+## 🌐 Deployment Models
+
+RetailHQ supports **dual deployment** to meet different business needs:
+
+### 1. Cloud PaaS (api.retailhq.app)
+**Central aggregator for multi-shop analytics and management**
+
+- **Purpose**: Cloud-hosted service for retail businesses managing multiple locations
+- **Features**:
+  - Central tenant registration and shop linking
+  - Cross-shop analytics and reporting
+  - Subscription management (FREE, BASIC, PREMIUM, ENTERPRISE)
+  - API key-based authentication for local shops
+- **Deployment**: Oracle Cloud Infrastructure (OCI) Always Free tier
+- **Domains**:
+  - `api.retailhq.app` - Cloud API backend
+  - `cloud.retailhq.app` - Cloud portal frontend
+- **Documentation**: [Oracle Cloud Deployment Guide](./docs/ORACLE_CLOUD_DEPLOYMENT.md), [Cloud Aggregator API](./docs/CLOUD_AGGREGATOR_API.md)
+
+### 2. Local Installations
+**Standalone retail management for individual shops**
+
+RetailHQ can be deployed locally for shops that want full control and data privacy:
+
+#### a) **Embedded JAR** (Recommended for single shops)
+- Single executable JAR with embedded PostgreSQL
+- Windows/macOS/Linux support
+- Zero external dependencies
+- **Documentation**: [Embedded Deployment Guide](./docs/EMBEDDED_DEPLOYMENT.md)
+
+#### b) **Docker Compose Lite**
+- Lightweight Docker deployment
+- Minimal resource footprint
+- Quick setup for small businesses
+- **Documentation**: [Docker Lite Deployment Guide](./docs/DOCKER_LITE_DEPLOYMENT.md)
+
+#### c) **Platform Installers**
+- Native installers: `.exe` (Windows), `.dmg` (macOS), `.deb`/`.rpm` (Linux)
+- One-click installation experience
+- Automatic updates and system integration
+
+#### d) **Kubernetes/Helm** (Enterprise)
+- Full Kubernetes deployment with Helm charts
+- High availability, auto-scaling, monitoring
+- Multi-tenant enterprise deployments
+- **Documentation**: [Kubernetes Deployment Guide](./KUBERNETES_DEPLOYMENT.md)
+
+### Cloud Sync (Optional)
+Local installations can optionally sync data to the cloud aggregator for analytics:
+- One-way sync: Local → Cloud (no cloud data stored locally)
+- Configurable sync intervals
+- API key authentication
+- **Documentation**: [Cloud Sync Setup](./docs/CLOUD_SYNC_SETUP.md)
+
 ## 📚 Documentation
 
+### Cloud Deployment
 | Document | Purpose |
 |----------|---------|
-| **[CUSTOMER_INSTALL.md](./CUSTOMER_INSTALL.md)** | 🚀 Simple Kubernetes installation via Helm (5 minutes, no repo clone) |
+| **[docs/ORACLE_CLOUD_DEPLOYMENT.md](./docs/ORACLE_CLOUD_DEPLOYMENT.md)** | ☁️ Oracle Cloud Infrastructure deployment (OCI Always Free tier) |
+| **[docs/CLOUD_PORTAL_GUIDE.md](./docs/CLOUD_PORTAL_GUIDE.md)** | 🌐 Cloud Portal user guide (tenant settings, shops, audit logs, API keys) |
+| **[docs/CLOUD_API_REFERENCE.md](./docs/CLOUD_API_REFERENCE.md)** | 📖 Complete API reference for all 17 cloud endpoints |
+| **[docs/CLOUD_AGGREGATOR_API.md](./docs/CLOUD_AGGREGATOR_API.md)** | 🔌 Cloud Aggregator API reference and frontend integration |
+| **[docs/CLOUD_SYNC_SETUP.md](./docs/CLOUD_SYNC_SETUP.md)** | 🔄 Configure local-to-cloud data synchronization |
+
+### Local Deployment
+| Document | Purpose |
+|----------|---------|
+| **[docs/EMBEDDED_DEPLOYMENT.md](./docs/EMBEDDED_DEPLOYMENT.md)** | 📦 Standalone embedded JAR deployment (zero dependencies) |
+| **[docs/DOCKER_LITE_DEPLOYMENT.md](./docs/DOCKER_LITE_DEPLOYMENT.md)** | 🐳 Lightweight Docker Compose deployment |
 | **[KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md)** | ☸️ Complete Kubernetes deployment guide (Helm, SSL, Production) |
+| **[CUSTOMER_INSTALL.md](./CUSTOMER_INSTALL.md)** | 🚀 Simple Kubernetes installation via Helm (5 minutes, no repo clone) |
+
+### Development & Testing
+| Document | Purpose |
+|----------|---------|
 | **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)** | 🐳 Docker Compose, Kubernetes, and local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
+| **[frontend/E2E_TESTING_GUIDE.md](./frontend/E2E_TESTING_GUIDE.md)** | 🧪 E2E testing with Playwright and k6 load testing |
+| **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
+
+### Feature Guides
+| Document | Purpose |
+|----------|---------|
 | **[docs/PRODUCT_INVENTORY_GUIDE.md](./docs/PRODUCT_INVENTORY_GUIDE.md)** | 📦 Product & Inventory management (Two-Tier Model, FEFO) |
 | **[docs/SHOP_ACCESS_CONTROL.md](./docs/SHOP_ACCESS_CONTROL.md)** | 🔒 Shop-level access control implementation guide |
-| **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
 
 ## 🏗️ Architecture
 
@@ -66,6 +141,7 @@ Use any of these pre-configured accounts:
 - **🛒 Sales**: Transactions with automatic inventory deduction
 - **💰 Investment**: Investment tracking and profit sharing
 - **📊 Analytics**: Real-time analytics with caching
+- **☁️ Aggregator**: Cloud tenant registration, shop tracking, cross-shop analytics (Cloud PaaS only)
 - **🔐 Auth**: Keycloak SSO integration
 - **🔍 Shared**: Logging, auditing, utilities
 
@@ -155,12 +231,14 @@ docker-compose build
 **✅ Production Ready** - Complete authentication system deployed
 
 ### Latest Updates (January 2025)
+- **Cloud Aggregator API**: Tenant registration, shop linking, API key auth (Migration V46) ✅
+- **Cloud Deployment**: Oracle Cloud deployment guide with OCI Always Free tier ✅
 - **Product & Inventory Refactoring**: Two-tier model with FEFO sales (Migration V10)
 - **Authentication**: Full Keycloak SSO integration working
 - **Frontend**: React app with TypeScript compilation resolved
 - **Backend**: Spring Modulith with event store configured
-- **Database**: All migrations applied (V10 latest)
-- **Testing**: Comprehensive test users and documentation
+- **Database**: All migrations applied (V46 latest)
+- **Testing**: 1220/1225 tests passing (99.6%), comprehensive coverage
 
 ### Coverage & Quality
 - **Code Coverage**: 90%+ target with JaCoCo

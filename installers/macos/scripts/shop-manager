@@ -1,0 +1,123 @@
+#!/bin/bash
+# ============================================================================
+# Shop Manager - macOS Launcher Script
+# ============================================================================
+# This script launches Shop Manager on macOS
+# ============================================================================
+
+# Get the directory where the app bundle is located
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../Resources" && pwd)"
+
+# Function to check Java installation
+check_java() {
+    if ! command -v java &> /dev/null; then
+        osascript -e 'display dialog "Java 21 or higher is required to run Shop Manager.\n\nPlease download and install Java from:\nhttps://adoptium.net/temurin/releases/?version=21" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Java Required"'
+        exit 1
+    fi
+
+    # Check Java version
+    JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | cut -d'.' -f1)
+    if [ "$JAVA_VERSION" -lt 21 ]; then
+        osascript -e 'display dialog "Shop Manager requires Java 21 or higher.\n\nCurrent version: Java '"$JAVA_VERSION"'\n\nPlease download and install Java 21 from:\nhttps://adoptium.net/temurin/releases/?version=21" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Java Update Required"'
+        exit 1
+    fi
+}
+
+# Function to load environment variables
+load_env() {
+    ENV_FILE="$HOME/.shopmanager/.env"
+
+    # Create config directory if it doesn't exist
+    mkdir -p "$HOME/.shopmanager"
+
+    # Copy template if .env doesn't exist
+    if [ ! -f "$ENV_FILE" ]; then
+        cp "$APP_DIR/config/.env.template" "$ENV_FILE"
+
+        # Generate JWT secret
+        JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+        sed -i '' "s|JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET|JWT_SECRET=$JWT_SECRET|" "$ENV_FILE"
+
+        # Set permissions
+        chmod 600 "$ENV_FILE"
+    fi
+
+    # Load environment variables
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+
+    # Set defaults
+    export BACKEND_PORT=${BACKEND_PORT:-8081}
+    export JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
+    export SPRING_PROFILES_ACTIVE=embedded
+}
+
+# Function to create data directories
+create_data_dirs() {
+    mkdir -p "$HOME/.shopmanager/data/h2"
+    mkdir -p "$HOME/.shopmanager/data/uploads"
+    mkdir -p "$HOME/.shopmanager/data/logs"
+    mkdir -p "$HOME/.shopmanager/data/backups"
+}
+
+# Function to check if application is already running
+check_running() {
+    PID_FILE="$HOME/.shopmanager/shop-manager.pid"
+
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        if ps -p "$OLD_PID" > /dev/null 2>&1; then
+            osascript -e 'display dialog "Shop Manager is already running.\n\nAccess it at: http://localhost:'"$BACKEND_PORT"'" buttons {"OK"} default button "OK" with icon note with title "Shop Manager"'
+            exit 0
+        else
+            rm "$PID_FILE"
+        fi
+    fi
+}
+
+# Function to start application
+start_application() {
+    # Change to user's data directory
+    cd "$HOME/.shopmanager/data"
+
+    # Start application in background
+    java $JAVA_OPTS \
+        -Dspring.profiles.active=embedded \
+        -Dserver.port=$BACKEND_PORT \
+        -Dapplication.jwt.secret="$JWT_SECRET" \
+        -Dapplication.sync.enabled="${CLOUD_SYNC_ENABLED:-false}" \
+        -Dapplication.sync.cloud-endpoint="$CLOUD_API_URL" \
+        -Dapplication.sync.api-key="$CLOUD_API_KEY" \
+        -Dapplication.sync.store-id="$STORE_ID" \
+        -Dspring.config.additional-location="file:$APP_DIR/config/application.yml" \
+        -jar "$APP_DIR/shop-manager.jar" \
+        > "$HOME/.shopmanager/data/logs/shop-manager.log" 2>&1 &
+
+    # Save PID
+    echo $! > "$HOME/.shopmanager/shop-manager.pid"
+
+    # Wait for startup
+    sleep 5
+
+    # Check if application started
+    if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+        # Open browser
+        open "http://localhost:$BACKEND_PORT"
+
+        osascript -e 'display notification "Shop Manager started successfully" with title "Shop Manager" sound name "Glass"'
+    else
+        osascript -e 'display dialog "Shop Manager failed to start.\n\nCheck logs at:\n'"$HOME/.shopmanager/data/logs/shop-manager.log"'" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
+        exit 1
+    fi
+}
+
+# Main execution
+main() {
+    check_java
+    load_env
+    create_data_dirs
+    check_running
+    start_application
+}
+
+# Run main
+main

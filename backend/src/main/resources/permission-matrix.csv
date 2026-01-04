@@ -87,8 +87,8 @@ RETURN,RETURN_LIST,List product returns,✓,✓,✓,✓,✓,,RETURN_LIST
 RETURN,RETURN_UPDATE,Update return information,✓,✓,✓,✓,,,RETURN_UPDATE
 RETURN,RETURN_DELETE,Delete return records,✓,✓,✓,,,, RETURN_DELETE
 RETURN,RETURN_APPROVE,Approve product returns,✓,✓,✓,✓,,,RETURN_APPROVE
-AUDIT_LOG,AUDIT_LOG_VIEW_SHOP,View shop-level audit logs,✓,✓,✓,✓,,,AUDIT_LOG_VIEW_SHOP
-AUDIT_LOG,AUDIT_LOG_VIEW_TENANT,View tenant-level audit logs,✓,✓,✓,,,, AUDIT_LOG_VIEW_TENANT
+AUDIT_LOG,AUDIT_LOG_LIST,List and filter audit logs,✓,✓,✓,✓,,,AUDIT_LOG_LIST
+AUDIT_LOG,AUDIT_LOG_EXPORT,Export audit logs to CSV,✓,✓,✓,,,, AUDIT_LOG_EXPORT
 ANALYTICS,ANALYTICS_SALES_VIEW,View sales and revenue analytics,✓,✓,✓,✓,,,ANALYTICS_SALES_VIEW
 ANALYTICS,ANALYTICS_INVESTMENT_VIEW,View investment ROI analytics,✓,✓,✓,✓,,✓,ANALYTICS_INVESTMENT_VIEW
 ANALYTICS,ANALYTICS_MANAGE,Manage analytics cache and exports,✓,✓,✓,,,,ANALYTICS_MANAGE

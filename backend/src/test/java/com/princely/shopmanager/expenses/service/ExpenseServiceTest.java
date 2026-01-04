@@ -153,11 +153,11 @@ class ExpenseServiceTest {
             assertThat(response.title()).isEqualTo("Test Expense");
             assertThat(response.amount()).isEqualTo(BigDecimal.valueOf(500));
             assertThat(response.status()).isEqualTo(ExpenseStatus.APPROVED); // Auto-approved
-            assertThat(response.createdBy()).isEqualTo(UUID.fromString(userId));
+            assertThat(response.createdBy()).isEqualTo(userId);
             assertThat(response.createdByName()).isEqualTo("Test User");
 
             verify(expenseRepository).save(any(Expense.class));
-            verify(auditService).logExpenseCreation(any(UUID.class), eq(shopId), eq(UUID.fromString(userId)), eq(BigDecimal.valueOf(500)));
+            verify(auditService).logExpenseCreation(any(UUID.class), eq(shopId), eq(userId), eq(BigDecimal.valueOf(500)));
         }
     }
 
@@ -346,7 +346,7 @@ class ExpenseServiceTest {
             .referenceNumber(createRequest.referenceNumber())
             .tags(createRequest.tags() != null ? createRequest.tags() : new HashSet<>())
             .notes(createRequest.notes())
-            .expenseCreatedBy(UUID.fromString(userId))
+            .expenseCreatedBy(userId)
             .createdByName("Test User")
             .status(ExpenseStatus.APPROVED) // Will be set to APPROVED after auto-approval process
             .build();

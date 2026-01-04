@@ -1,13 +1,12 @@
 export default {
-  testEnvironment: 'jsdom',
+  testEnvironment: 'jest-fixed-jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleDirectories: ['node_modules', '<rootDir>'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
-    '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
-    '^@mswjs/interceptors/ClientRequest$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/interceptors/ClientRequest/index.js',
-    '^@mswjs/interceptors$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/index.js',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
@@ -29,7 +28,15 @@ export default {
   },
   globals: {
     'import.meta': {
-      env: {}
+      env: {
+        VITE_API_BASE_URL: 'http://localhost:8081/api',
+        VITE_KEYCLOAK_URL: 'http://localhost:8080',
+        VITE_KEYCLOAK_REALM: 'shop-manager',
+        VITE_KEYCLOAK_CLIENT_ID: 'shop-manager-frontend',
+        VITE_APP_VERSION: '1.0.0',
+        VITE_APP_ENV: 'test',
+        VITE_AUTH_MODE: 'embedded'
+      }
     }
   },
   transformIgnorePatterns: [

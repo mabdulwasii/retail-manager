@@ -18,7 +18,7 @@ public class ExpenseFilterCriteria {
     private LocalDate endDate;
     private ExpenseStatus status;
     private UUID categoryId;
-    private UUID createdBy;
+    private String createdBy;
     private BigDecimal minAmount;
     private BigDecimal maxAmount;
     private String searchQuery;
