@@ -24,16 +24,14 @@ import java.util.List;
 @RequestMapping("/api/cloud/tenants/{tenantId}/analytics")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Analytics", description = "Aggregated analytics and reporting")
-public class AnalyticsController {
+@Tag(name = "Cloud Analytics", description = "Aggregated analytics and reporting")
+public class CloudAnalyticsController {
 
     private final CloudAnalyticsService analyticsService;
 
     /**
      * Get tenant-level analytics aggregated across all shops.
-     *
      * GET /api/cloud/tenants/{tenantId}/analytics
-     *
      * @param tenantId Tenant ID
      * @param periodStart Period start date (optional, defaults to 30 days ago)
      * @param periodEnd Period end date (optional, defaults to now)
@@ -67,9 +65,7 @@ public class AnalyticsController {
 
     /**
      * Get sync status for all shops under a tenant.
-     *
      * GET /api/cloud/tenants/{tenantId}/analytics/sync-status
-     *
      * @param tenantId Tenant ID
      * @return List of shop sync statuses
      */
@@ -87,10 +83,8 @@ public class AnalyticsController {
     }
 
     /**
-     * Get platform-wide overview (admin endpoint).
-     *
+     * Get a platform-wide overview (admin endpoint).
      * GET /api/cloud/analytics/platform
-     *
      * @return Platform overview
      */
     @GetMapping("/platform")
