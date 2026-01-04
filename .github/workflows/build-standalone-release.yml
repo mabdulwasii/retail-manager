@@ -400,6 +400,40 @@ jobs:
             - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
             - **Docker Compose (Offline)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}-full.zip`
 
+            ### 🐳 Docker Images (Docker Hub)
+            Multi-platform Docker images (amd64, arm64) are available on Docker Hub:
+
+            **Backend**:
+            ```bash
+            docker pull princely/shop-manager:backend-v${{ steps.get_version.outputs.version }}
+            docker pull princely/shop-manager:backend-latest
+            ```
+
+            **Frontend**:
+            ```bash
+            docker pull princely/shop-manager:frontend-v${{ steps.get_version.outputs.version }}
+            docker pull princely/shop-manager:frontend-latest
+            ```
+
+            ### ⎈ Helm Chart (Kubernetes)
+            Deploy to Kubernetes using our Helm chart:
+
+            **From Docker Hub OCI Registry** (recommended):
+            ```bash
+            helm install retail oci://registry-1.docker.io/princely/shop-manager \
+              --version ${{ steps.get_version.outputs.version }} \
+              -n gomco --create-namespace
+            ```
+
+            **From GitHub Pages**:
+            ```bash
+            helm repo add shopmanager https://${{ github.repository_owner }}.github.io/shop-manager
+            helm repo update
+            helm install retail shopmanager/shop-manager \
+              --version ${{ steps.get_version.outputs.version }} \
+              -n gomco --create-namespace
+            ```
+
             ---
 
             ## ⚠️ **IMPORTANT: macOS Users - Read This First!**
