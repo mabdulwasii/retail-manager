@@ -104,6 +104,8 @@ Local installations can optionally sync data to the cloud aggregator for analyti
 | Document | Purpose |
 |----------|---------|
 | **[docs/ORACLE_CLOUD_DEPLOYMENT.md](./docs/ORACLE_CLOUD_DEPLOYMENT.md)** | ☁️ Oracle Cloud Infrastructure deployment (OCI Always Free tier) |
+| **[docs/CLOUD_PORTAL_GUIDE.md](./docs/CLOUD_PORTAL_GUIDE.md)** | 🌐 Cloud Portal user guide (tenant settings, shops, audit logs, API keys) |
+| **[docs/CLOUD_API_REFERENCE.md](./docs/CLOUD_API_REFERENCE.md)** | 📖 Complete API reference for all 17 cloud endpoints |
 | **[docs/CLOUD_AGGREGATOR_API.md](./docs/CLOUD_AGGREGATOR_API.md)** | 🔌 Cloud Aggregator API reference and frontend integration |
 | **[docs/CLOUD_SYNC_SETUP.md](./docs/CLOUD_SYNC_SETUP.md)** | 🔄 Configure local-to-cloud data synchronization |
 
@@ -120,6 +122,7 @@ Local installations can optionally sync data to the cloud aggregator for analyti
 |----------|---------|
 | **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)** | 🐳 Docker Compose, Kubernetes, and local development setup |
 | **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** | 🔐 Complete authentication testing with all credentials |
+| **[frontend/E2E_TESTING_GUIDE.md](./frontend/E2E_TESTING_GUIDE.md)** | 🧪 E2E testing with Playwright and k6 load testing |
 | **[CLAUDE.md](./CLAUDE.md)** | 🛠️ Development guidelines and project architecture |
 
 ### Feature Guides
