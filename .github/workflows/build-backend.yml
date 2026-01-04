@@ -27,7 +27,7 @@ jobs:
     name: Build Backend Docker Image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:

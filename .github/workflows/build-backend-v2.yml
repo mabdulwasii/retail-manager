@@ -131,7 +131,7 @@ jobs:
     needs: [generate-docs, test-and-analyze]  # Waits for docs and quality gates
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:

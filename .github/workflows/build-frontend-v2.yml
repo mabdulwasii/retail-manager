@@ -89,7 +89,7 @@ jobs:
     needs: test-and-analyze  # Waits for quality gates
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
