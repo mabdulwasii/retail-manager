@@ -856,11 +856,18 @@ jobs:
       - name: Fix app-builder binary permissions
         run: |
           # Find and fix all app-builder binaries (handles both direct and nested locations)
-          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec chmod +x {} \;
+          echo "Fixing app-builder binary permissions..."
+          find standalone/electron-app/node_modules -type f -name "app-builder" -exec chmod +x {} \;
+
+          # Also fix app-builder in app-builder-bin package specifically
+          if [ -f standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder ]; then
+            chmod +x standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder
+            echo "✓ Fixed app-builder-bin/linux/x64/app-builder"
+          fi
 
           # Verify the binary
           echo "Checking for app-builder binaries:"
-          find standalone/electron-app/node_modules -type f -name "app-builder" -path "*/linux/x64/*" -exec echo {} \; -exec file {} \;
+          find standalone/electron-app/node_modules -type f -name "app-builder" -exec echo {} \; -exec file {} \; -exec ls -la {} \;
 
       - name: Update version
         run: |
@@ -1010,6 +1017,14 @@ jobs:
           # Strip any 'v' or 'backend-v' prefix to get clean SemVer
           VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           echo "Uploading to release: v$VERSION"
+
+          # Verify release exists (may be draft)
+          if ! gh release view "v$VERSION" &>/dev/null; then
+            echo "❌ Release v$VERSION not found. Skipping upload."
+            echo "Note: This may happen if the create-release job failed."
+            exit 1
+          fi
+          echo "✓ Release v$VERSION found"
 
           # Upload Docker Lite
           for file in artifacts/docker-lite/*; do
