@@ -1073,10 +1073,14 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
-          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Clean version: $VERSION"
+          # More precise sed - only match version field in metadata section (first ~10 lines)
+          sed -i "1,10 s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "1,15 s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
           echo "Updated Chart.yaml:"
-          cat helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
+          head -20 helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
 
       - name: Lint Helm chart
         run: |
@@ -1146,8 +1150,14 @@ jobs:
       - name: Update Chart.yaml version
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
-          sed -i "s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
-          sed -i "s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Clean version: $VERSION"
+          # More precise sed - only match version field in metadata section (first ~10 lines)
+          sed -i "1,10 s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
+          sed -i "1,15 s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
+          echo "Updated Chart.yaml:"
+          head -20 helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
 
       - name: Package Helm chart
         run: |
