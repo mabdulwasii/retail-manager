@@ -1,8 +1,8 @@
 package com.princely.shopmanager.aggregator.controller;
 
-import com.princely.shopmanager.aggregator.dto.SyncStatusDto;
-import com.princely.shopmanager.aggregator.dto.TenantAnalyticsDto;
+import com.princely.shopmanager.aggregator.dto.*;
 import com.princely.shopmanager.aggregator.service.CloudAnalyticsService;
+import com.princely.shopmanager.aggregator.service.CrossShopAnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Analytics Controller.
@@ -30,6 +32,7 @@ import java.util.List;
 public class CloudAnalyticsController {
 
     private final CloudAnalyticsService analyticsService;
+    private final CrossShopAnalyticsService crossShopAnalyticsService;
 
     // ==================== Tenant-specific analytics endpoints ====================
 
@@ -104,7 +107,7 @@ public class CloudAnalyticsController {
     @GetMapping("/api/cloud/analytics/revenue")
     @Operation(summary = "Get revenue analytics",
             description = "Get revenue analytics aggregated across selected shops")
-    public ResponseEntity<?> getRevenueAnalytics(
+    public ResponseEntity<RevenueAnalyticsDto> getRevenueAnalytics(
             @RequestParam String tenantId,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -113,11 +116,14 @@ public class CloudAnalyticsController {
 
         log.info("Getting revenue analytics for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
 
-        // TODO: Implement revenue analytics
-        return ResponseEntity.ok(java.util.Map.of(
-            "message", "Revenue analytics endpoint - To be implemented",
-            "tenantId", tenantId
-        ));
+        List<String> shopIdList = shopIds != null
+                ? Arrays.stream(shopIds.split(",")).collect(Collectors.toList())
+                : null;
+
+        RevenueAnalyticsDto analytics = crossShopAnalyticsService.getRevenueAnalytics(
+                tenantId, startDate, endDate, shopIdList);
+
+        return ResponseEntity.ok(analytics);
     }
 
     /**
@@ -127,7 +133,7 @@ public class CloudAnalyticsController {
     @GetMapping("/api/cloud/analytics/sales")
     @Operation(summary = "Get sales metrics",
             description = "Get sales metrics aggregated across selected shops")
-    public ResponseEntity<?> getSalesMetrics(
+    public ResponseEntity<SalesMetricsDto> getSalesMetrics(
             @RequestParam String tenantId,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -136,11 +142,14 @@ public class CloudAnalyticsController {
 
         log.info("Getting sales metrics for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
 
-        // TODO: Implement sales metrics
-        return ResponseEntity.ok(java.util.Map.of(
-            "message", "Sales metrics endpoint - To be implemented",
-            "tenantId", tenantId
-        ));
+        List<String> shopIdList = shopIds != null
+                ? Arrays.stream(shopIds.split(",")).collect(Collectors.toList())
+                : null;
+
+        SalesMetricsDto metrics = crossShopAnalyticsService.getSalesMetrics(
+                tenantId, startDate, endDate, shopIdList);
+
+        return ResponseEntity.ok(metrics);
     }
 
     /**
@@ -150,7 +159,7 @@ public class CloudAnalyticsController {
     @GetMapping("/api/cloud/analytics/top-products")
     @Operation(summary = "Get top products",
             description = "Get top selling products aggregated across selected shops")
-    public ResponseEntity<?> getTopProducts(
+    public ResponseEntity<TopProductsAnalyticsDto> getTopProducts(
             @RequestParam String tenantId,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -160,11 +169,14 @@ public class CloudAnalyticsController {
 
         log.info("Getting top {} products for tenant: {} (period: {}, shops: {})", limit, tenantId, period, shopIds);
 
-        // TODO: Implement top products analytics
-        return ResponseEntity.ok(java.util.Map.of(
-            "message", "Top products endpoint - To be implemented",
-            "tenantId", tenantId
-        ));
+        List<String> shopIdList = shopIds != null
+                ? Arrays.stream(shopIds.split(",")).collect(Collectors.toList())
+                : null;
+
+        TopProductsAnalyticsDto analytics = crossShopAnalyticsService.getTopProducts(
+                tenantId, startDate, endDate, shopIdList, limit);
+
+        return ResponseEntity.ok(analytics);
     }
 
     /**
@@ -174,7 +186,7 @@ public class CloudAnalyticsController {
     @GetMapping("/api/cloud/analytics/shop-performance")
     @Operation(summary = "Get shop performance",
             description = "Get performance comparison across all shops in a tenant")
-    public ResponseEntity<?> getShopPerformanceComparison(
+    public ResponseEntity<ShopPerformanceAnalyticsDto> getShopPerformanceComparison(
             @RequestParam String tenantId,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -182,11 +194,10 @@ public class CloudAnalyticsController {
 
         log.info("Getting shop performance for tenant: {} (period: {})", tenantId, period);
 
-        // TODO: Implement shop performance comparison
-        return ResponseEntity.ok(java.util.Map.of(
-            "message", "Shop performance endpoint - To be implemented",
-            "tenantId", tenantId
-        ));
+        ShopPerformanceAnalyticsDto analytics = crossShopAnalyticsService.getShopPerformance(
+                tenantId, startDate, endDate);
+
+        return ResponseEntity.ok(analytics);
     }
 
     /**
@@ -205,8 +216,12 @@ public class CloudAnalyticsController {
 
         log.info("Exporting analytics to CSV for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
 
-        // TODO: Implement CSV export
-        String csv = "Analytics Export\nTenant ID," + tenantId + "\n\nThis export functionality is to be implemented.";
+        List<String> shopIdList = shopIds != null
+                ? Arrays.stream(shopIds.split(",")).collect(Collectors.toList())
+                : null;
+
+        String csv = crossShopAnalyticsService.exportAnalyticsToCSV(
+                tenantId, startDate, endDate, shopIdList);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv"));
