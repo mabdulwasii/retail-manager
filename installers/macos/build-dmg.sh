@@ -229,6 +229,11 @@ create_dmg_with_hdiutil() {
         exit 1
     fi
 
+    if [ -z "$MOUNT_DIR" ]; then
+        print_error "Failed to mount DMG"
+        exit 1
+    fi
+
     print_success "Mounted DMG: $MOUNT_DIR"
 
     # Create symbolic link to Applications
