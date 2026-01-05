@@ -1100,6 +1100,8 @@ jobs:
       - name: Push chart to Docker Hub OCI
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           CHART_PACKAGE="shop-manager-${VERSION}.tgz"
           echo "Pushing $CHART_PACKAGE to oci://registry-1.docker.io/princely"
           helm push $CHART_PACKAGE oci://registry-1.docker.io/princely
@@ -1108,6 +1110,8 @@ jobs:
       - name: Verify chart availability
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           echo "Verifying chart at oci://registry-1.docker.io/princely/shop-manager:$VERSION"
           helm show chart oci://registry-1.docker.io/princely/shop-manager --version $VERSION
 
