@@ -278,10 +278,16 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
         endpoint("GET", "/api/cloud/tenants/{tenantId}/billing/invoices/{invoiceId}", "TENANT_READ", "TENANT_ADMIN"),
 
         // ========================================
-        // CLOUD AGGREGATOR - ANALYTICS ENDPOINTS (2 total)
+        // CLOUD AGGREGATOR - ANALYTICS ENDPOINTS (9 total)
         // ========================================
-        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics/platform", "ANALYTICS_VIEW_TENANT", "TENANT_ADMIN"),
-        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics/sync-status", "ANALYTICS_VIEW_TENANT", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics", "CLOUD_ANALYTICS_REVENUE_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/tenants/{tenantId}/analytics/sync-status", "CLOUD_ANALYTICS_REVENUE_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/platform", "CLOUD_ANALYTICS_PLATFORM_VIEW", "SYSTEM_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/revenue", "CLOUD_ANALYTICS_REVENUE_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/sales", "CLOUD_ANALYTICS_SALES_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/top-products", "CLOUD_ANALYTICS_PRODUCTS_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/shop-performance", "CLOUD_ANALYTICS_PERFORMANCE_VIEW", "TENANT_ADMIN"),
+        endpoint("GET", "/api/cloud/analytics/export/csv", "CLOUD_ANALYTICS_EXPORT", "TENANT_ADMIN"),
 
         // ========================================
         // CLOUD AGGREGATOR - SUBSCRIPTION ENDPOINTS (2 total)
