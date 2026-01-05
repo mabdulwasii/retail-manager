@@ -945,35 +945,45 @@ jobs:
     permissions:
       contents: write
     if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
+      always() &&
+      needs.create-release.result == 'success' &&
+      (needs.build-docker-lite.result == 'success' ||
+       needs.build-windows-installer.result == 'success' ||
+       needs.build-macos-installer.result == 'success' ||
+       needs.build-linux-packages-native.result == 'success') &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+       github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == true &&
+        (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+         contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+         contains(github.event.pull_request.labels.*.name, 'release:major'))))
 
     steps:
       - name: Download Docker Lite artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: docker-lite
           path: ./artifacts/docker-lite
 
       - name: Download Windows installer artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: windows-installer
           path: ./artifacts/windows
 
       - name: Download macOS installer artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: macos-installer
           path: ./artifacts/macos
 
       - name: Download Linux packages artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: linux-packages
           path: ./artifacts/linux
@@ -1100,6 +1110,8 @@ jobs:
       - name: Push chart to Docker Hub OCI
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           CHART_PACKAGE="shop-manager-${VERSION}.tgz"
           echo "Pushing $CHART_PACKAGE to oci://registry-1.docker.io/princely"
           helm push $CHART_PACKAGE oci://registry-1.docker.io/princely
@@ -1108,6 +1120,8 @@ jobs:
       - name: Verify chart availability
         run: |
           VERSION=${{ needs.create-release.outputs.version }}
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           echo "Verifying chart at oci://registry-1.docker.io/princely/shop-manager:$VERSION"
           helm show chart oci://registry-1.docker.io/princely/shop-manager --version $VERSION
 
