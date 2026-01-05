@@ -219,11 +219,13 @@ create_dmg_with_hdiutil() {
     print_success "Created temporary DMG"
 
     # Mount temporary DMG
-    MOUNT_DIR=$(hdiutil attach -readwrite -noverify -noautoopen "$TEMP_DMG" | \
-        egrep '^/dev/' | sed 1q | awk '{print $3}')
+    # Parse output to get mount point (last column)
+    MOUNT_OUTPUT=$(hdiutil attach -readwrite -noverify -noautoopen "$TEMP_DMG")
+    MOUNT_DIR=$(echo "$MOUNT_OUTPUT" | egrep '^/dev/' | sed 1q | awk '{print $NF}')
 
     if [ -z "$MOUNT_DIR" ]; then
-        print_error "Failed to mount DMG"
+        print_error "Failed to mount DMG or parse mount directory"
+        print_error "hdiutil output: $MOUNT_OUTPUT"
         exit 1
     fi
 
