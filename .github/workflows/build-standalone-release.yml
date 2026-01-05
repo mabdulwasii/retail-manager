@@ -3,8 +3,8 @@ name: Build Standalone Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger on version tags like v1.0.0
-  workflow_dispatch:  # Allow manual trigger
+      - 'v*.*.*'
+  workflow_dispatch:
     inputs:
       version:
         description: 'Release version (e.g., 1.0.0)'
@@ -15,130 +15,10 @@ on:
     branches: [main]
 
 jobs:
-  # ============================================================================
-  # Job 1: Backend Quality Gates
-  # ============================================================================
-  backend-quality-gates:
-    name: Backend Tests & SonarQube
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Allow workflow to continue even if tests/SonarQube fail
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for SonarQube
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-
-      - name: Run unit tests with coverage
-        run: |
-          cd backend
-          chmod +x ./mvnw
-          ./mvnw clean test jacoco:report -B
-          echo "✅ Unit tests completed"
-
-      - name: Run integration tests with coverage
-        run: |
-          cd backend
-          ./mvnw verify -Pintegration-tests jacoco:report -B
-          echo "✅ Integration tests completed"
-          echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
-
-      - name: SonarQube Scan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.BACKEND_SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-          SONAR_ORGANIZATION: ${{ secrets.BACKEND_SONAR_ORGANIZATION }}
-        run: |
-          cd backend
-          ./mvnw sonar:sonar \
-            -Dsonar.projectKey=pribcely-organization_backend-retail-app \
-            -Dsonar.moduleKey=backend \
-            -Dsonar.organization=${{ secrets.BACKEND_SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.BACKEND_SONAR_TOKEN }} \
-            -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
-          echo "✅ Backend quality gates passed"
-
-  # ============================================================================
-  # Job 2: Frontend Quality Gates
-  # ============================================================================
-  frontend-quality-gates:
-    name: Frontend Tests & SonarQube
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Allow workflow to continue even if tests/SonarQube fail
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for SonarQube
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
-          echo "✅ Dependencies installed"
-
-      - name: Run linting
-        run: |
-          cd frontend
-          # Temporarily allow warnings - lint errors to be fixed in separate PR
-          npm run lint || echo "⚠️ Lint warnings present but not blocking build"
-          echo "✅ Linting completed"
-
-      - name: Run tests with coverage
-        run: |
-          cd frontend
-          npm run test:coverage
-          echo "✅ Tests completed with coverage"
-
-      - name: SonarQube Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_FRONTEND_TOKEN }}
-        with:
-          projectBaseDir: frontend
-          args: >
-            -Dsonar.projectKey=princely-org_retail-manager_frontend
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=300
-
-      - name: Quality gates passed
-        run: echo "✅ Frontend quality gates passed"
-
-  # ============================================================================
-  # Job 3: Build Embedded JAR
-  # ============================================================================
+  # Build embedded JAR (no quality checks to save GitHub Actions minutes)
   build-embedded-jar:
     name: Build Embedded JAR
     runs-on: ubuntu-latest
-    needs: [backend-quality-gates, frontend-quality-gates]
     if: |
       startsWith(github.ref, 'refs/tags/v') ||
       github.event_name == 'workflow_dispatch' ||
@@ -166,17 +46,6 @@ jobs:
           ./mvnw clean package -Pembedded -DskipTests
           echo "✅ Embedded JAR built successfully"
 
-      - name: Verify JAR file
-        run: |
-          cd backend/target
-          if [ -f shop-manager-*-embedded.jar ]; then
-            echo "✅ Embedded JAR found"
-            ls -lh shop-manager-*-embedded.jar
-          else
-            echo "❌ Embedded JAR not found"
-            exit 1
-          fi
-
       - name: Upload embedded JAR artifact
         uses: actions/upload-artifact@v4
         with:
@@ -184,13 +53,11 @@ jobs:
           path: backend/target/shop-manager-*-embedded.jar
           retention-days: 7
 
-  # ============================================================================
-  # Job 4: Build Docker Compose Lite
-  # ============================================================================
-  build-docker-lite:
-    name: Build Docker Compose Lite
+  # Create GitHub Release
+  create-release:
+    name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [backend-quality-gates, frontend-quality-gates, build-embedded-jar]
+    needs: [build-embedded-jar]
     permissions:
       contents: write
     if: |
@@ -202,6 +69,81 @@ jobs:
         contains(github.event.pull_request.labels.*.name, 'release:minor') ||
         contains(github.event.pull_request.labels.*.name, 'release:major')))
 
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
+              MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+            elif [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:minor"* ]]; then
+              MINOR=$((MINOR + 1)); PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Shop Manager v${{ steps.get_version.outputs.version }}
+          draft: true
+          prerelease: false
+          body: |
+            # Shop Manager v${{ steps.get_version.outputs.version }}
+
+            ## 📦 Downloads
+
+            **Windows (64-bit)**:
+            - `Shop Manager-Setup-${{ steps.get_version.outputs.version }}-Windows-x64.exe`
+
+            **macOS (Intel & Apple Silicon)**:
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.dmg` - Intel
+            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.dmg` - Apple Silicon
+
+            **Docker Compose Lite (All Platforms)**:
+            - `shop-manager-docker-lite-YYYYMMDD.tar.gz` - Lightweight Docker images with compose file
+
+            **Embedded JAR**:
+            - `shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar` - Standalone JAR with embedded PostgreSQL
+
+  # Build Docker Compose Lite Package
+  build-docker-compose-lite:
+    name: Build Docker Compose Lite
+    runs-on: ubuntu-latest
+    needs: [create-release, build-embedded-jar]
+    permissions:
+      contents: write
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
 
     steps:
       - name: Checkout code
@@ -241,20 +183,22 @@ jobs:
           cp -r ../../../docs .
           tar -czf shop-manager-docker-lite-$(date +%Y%m%d).tar.gz *
 
-      - name: Upload Docker Lite artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-lite
-          path: build/installers/docker-lite/*.tar.gz
-          retention-days: 7
+      - name: Upload Docker Lite package
+        run: |
+          cd build/installers/docker-lite
+          for file in *.tar.gz; do
+            if [ -f "$file" ]; then
+              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ============================================================================
-  # Job 5: Build Windows Native Installer
-  # ============================================================================
+  # Build Windows Native Installer (Inno Setup)
   build-windows-installer:
     name: Build Windows Native Installer (Inno Setup)
     runs-on: windows-latest
-    needs: [backend-quality-gates, frontend-quality-gates, build-embedded-jar]
+    needs: [create-release, build-embedded-jar]
     permissions:
       contents: write
     if: |
@@ -265,7 +209,6 @@ jobs:
        (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
         contains(github.event.pull_request.labels.*.name, 'release:minor') ||
         contains(github.event.pull_request.labels.*.name, 'release:major')))
-
 
     steps:
       - name: Checkout code
@@ -287,19 +230,21 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installers\windows\shop-manager.iss
 
       - name: Upload Windows installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-installer
-          path: build/installers/windows/*.exe
-          retention-days: 7
+        run: |
+          cd build/installers/windows
+          for exe in *.exe; do
+            if [ -f "$exe" ]; then
+              gh release upload v${{ needs.create-release.outputs.version }} "$exe" --clobber
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ============================================================================
-  # Job 6: Build macOS Native Installer
-  # ============================================================================
+  # Build macOS Native Installer (DMG)
   build-macos-installer:
     name: Build macOS Native Installer (DMG)
     runs-on: macos-latest
-    needs: [backend-quality-gates, frontend-quality-gates, build-embedded-jar]
+    needs: [create-release, build-embedded-jar]
     permissions:
       contents: write
     if: |
@@ -310,7 +255,6 @@ jobs:
        (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
         contains(github.event.pull_request.labels.*.name, 'release:minor') ||
         contains(github.event.pull_request.labels.*.name, 'release:major')))
-
 
     steps:
       - name: Checkout code
@@ -335,595 +279,17 @@ jobs:
           TERM: xterm
 
       - name: Upload macOS DMG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-installer
-          path: build/installers/macos/*.dmg
-          retention-days: 7
-
-  # ============================================================================
-  # Job 7: Build Linux Native Packages
-  # ============================================================================
-  build-linux-packages-native:
-    name: Build Linux Native Packages (.deb, .rpm)
-    runs-on: ubuntu-latest
-    needs: [backend-quality-gates, frontend-quality-gates, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download embedded JAR
-        uses: actions/download-artifact@v4
-        with:
-          name: embedded-jar
-          path: backend/target/
-
-      - name: Install build tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y dpkg rpm
-
-      - name: Build Linux packages
-        run: |
-          cd installers/linux
-          chmod +x build-packages.sh
-          ./build-packages.sh
-        env:
-          TERM: xterm
-
-      - name: Upload Linux packages artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-packages
-          path: build/installers/linux/*
-          retention-days: 7
-
-  # ============================================================================
-  # Job 8: Create GitHub Release
-  # ============================================================================
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history and tags for version calculation
-
-      - name: Get version
-        id: get_version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          else
-            # For PR with release labels, calculate next semantic version
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
-            VERSION=${LATEST_TAG#v}
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-            # Determine bump type from PR labels
-            if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-            elif [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:minor"* ]]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-            else
-              # Default to patch for release:patch label
-              PATCH=$((PATCH + 1))
-            fi
-
-            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-            echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-            echo "Calculated version: ${NEW_VERSION} from ${LATEST_TAG}"
-          fi
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          release_name: Shop Manager v${{ steps.get_version.outputs.version }}
-          draft: true
-          prerelease: false
-          body: |
-            # Shop Manager v${{ steps.get_version.outputs.version }}
-
-            ## 📦 Downloads
-
-            Choose the package that best fits your needs:
-
-            ### For Non-Technical Users (Recommended)
-
-            **Windows (64-bit)**:
-            - `Shop Manager-Setup-${{ steps.get_version.outputs.version }}-Windows-x64.exe` - Windows 10/11 installer
-
-            **macOS (Intel & Apple Silicon)**:
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.dmg` - macOS Intel installer
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.dmg` - macOS Apple Silicon (M1/M2/M3) installer
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.zip` - macOS Intel portable
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.zip` - macOS Apple Silicon portable
-
-            **Linux (64-bit)**:
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.AppImage` - Universal Linux (recommended)
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.deb` - Debian/Ubuntu package
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-Linux-x64.rpm` - Fedora/RHEL/CentOS package
-
-            ### For Technical Users / Developers
-            - **Embedded JAR (All Platforms)**: `shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar` - Standalone JAR with H2 database
-            - **Docker Compose (Online)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}.zip`
-            - **Docker Compose (Offline)**: `shop-manager-standalone-v${{ steps.get_version.outputs.version }}-full.zip`
-
-            ### 🐳 Docker Images (Docker Hub)
-            Multi-platform Docker images (amd64, arm64) are available on Docker Hub:
-
-            **Backend**:
-            ```bash
-            docker pull princely/shop-manager:backend-v${{ steps.get_version.outputs.version }}
-            docker pull princely/shop-manager:backend-latest
-            ```
-
-            **Frontend**:
-            ```bash
-            docker pull princely/shop-manager:frontend-v${{ steps.get_version.outputs.version }}
-            docker pull princely/shop-manager:frontend-latest
-            ```
-
-            ### ⎈ Helm Chart (Kubernetes)
-            Deploy to Kubernetes using our Helm chart:
-
-            **From Docker Hub OCI Registry** (recommended):
-            ```bash
-            helm install retail oci://registry-1.docker.io/princely/shop-manager \
-              --version ${{ steps.get_version.outputs.version }} \
-              -n gomco --create-namespace
-            ```
-
-            **From GitHub Pages**:
-            ```bash
-            helm repo add shopmanager https://${{ github.repository_owner }}.github.io/shop-manager
-            helm repo update
-            helm install retail shopmanager/shop-manager \
-              --version ${{ steps.get_version.outputs.version }} \
-              -n gomco --create-namespace
-            ```
-
-            ---
-
-            ## ⚠️ **IMPORTANT: macOS Users - Read This First!**
-
-            If you downloaded a **macOS version** (.dmg or .zip), you **will** see this error when trying to open the app:
-
-            > **"Shop Manager.app is damaged and can't be opened. You should move it to the Trash"**
-
-            ### 🔍 This is NOT actually damaged!
-
-            This is a **macOS Gatekeeper security feature** that blocks unsigned applications. Shop Manager is safe but not code-signed by Apple (requires $99/year Apple Developer Program).
-
-            ### ✅ Quick Fix (Choose One Method):
-
-            **Method 1: Terminal Command (Fastest - Recommended)**
-
-            After installing Shop Manager to Applications, open Terminal and run:
-
-            ```bash
-            xattr -cr /Applications/Shop\ Manager.app
-            ```
-
-            Then open Shop Manager normally from Applications or Launchpad.
-
-            **Method 2: Right-Click Open (No Terminal Needed)**
-
-            1. Open **Finder** → **Applications**
-            2. **Right-click** (or Control-click) on **Shop Manager.app**
-            3. Select **"Open"** from the menu
-            4. Click **"Open"** in the security dialog
-            5. App will launch and be permanently allowed
-
-            **Method 3: System Settings (macOS 13+)**
-
-            1. Try to open Shop Manager (it will be blocked)
-            2. Go to **System Settings** → **Privacy & Security**
-            3. Scroll to Security section
-            4. Click **"Open Anyway"** next to the Shop Manager message
-            5. Confirm by clicking **"Open"**
-
-            📖 **Need Help?** See our detailed guide with screenshots: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md#fixing-damaged-app-error)
-
-            ---
-
-            ## 🚀 Quick Start
-
-            ### Installation Guides
-            - **Windows**: [Windows Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/WINDOWS_INSTALLATION_GUIDE.md)
-            - **macOS**: [macOS Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/MACOS_INSTALLATION_GUIDE.md)
-            - **Linux/Docker Compose**: [Standalone Distribution Guide](https://github.com/${{ github.repository }}/blob/main/standalone/README.md)
-
-            ## ✨ What's New
-
-            - [Changelog will be added here]
-
-            ## 📋 System Requirements
-
-            - **OS**: Windows 10+, macOS 11+, Ubuntu 20.04+
-            - **RAM**: 8 GB minimum
-            - **Disk**: 20 GB free space
-            - **Docker**: Required (Desktop or Engine)
-
-            ## 📞 Support
-
-            - [Documentation](https://github.com/${{ github.repository }}/tree/main/standalone/docs)
-            - [Issues](https://github.com/${{ github.repository }}/issues)
-
-  build-docker-compose-package:
-    name: Build Docker Compose Package
-    runs-on: ubuntu-latest
-    needs: [create-release, backend-quality-gates, frontend-quality-gates, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: |
-          cd standalone
-          pip install -r requirements.txt
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker images
-        run: |
-          docker compose build
-
-      - name: Create lightweight package
-        run: |
-          cd standalone/scripts
-          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --skip-electron
-
-      - name: Create full package (with images)
-        run: |
-          cd standalone/scripts
-          ./create-distribution.sh --version ${{ needs.create-release.outputs.version }} --include-images --skip-electron
-
-      - name: Upload Docker Compose packages
-        run: |
-          cd standalone/scripts/dist
-
-          # Upload all ZIP packages
-          for zip in *.zip; do
-            if [ -f "$zip" ]; then
-              echo "Uploading $zip"
-              gh release upload v${{ needs.create-release.outputs.version }} "$zip" --clobber
-            fi
-          done
-
-          # Upload checksums
-          for checksum in *.sha256 *.md5; do
-            if [ -f "$checksum" ]; then
-              echo "Uploading $checksum"
-              gh release upload v${{ needs.create-release.outputs.version }} "$checksum" --clobber
-            fi
-          done
-
-          # Upload release notes
-          for notes in RELEASE_NOTES_*.md; do
-            if [ -f "$notes" ]; then
-              echo "Uploading $notes"
-              gh release upload v${{ needs.create-release.outputs.version }} "$notes" --clobber
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-windows:
-    name: Build Windows Installer
-    runs-on: windows-latest
-    needs: [create-release, backend-quality-gates, frontend-quality-gates, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: standalone/electron-app/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd standalone/electron-app
-          npm ci
-
-      - name: Update version
-        shell: bash
-        run: |
-          cd standalone/electron-app
-          VERSION="${{ needs.create-release.outputs.version }}"
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Clean version for npm: $VERSION"
-          npm version $VERSION --no-git-tag-version
-
-      - name: Build Windows installer
-        run: |
-          cd standalone/electron-app
-          npm run build:win
-
-      - name: List build artifacts
-        run: |
-          echo "Contents of dist directory:"
-          dir standalone\electron-app\dist\
-
-      - name: Upload Windows artifacts
-        shell: bash
-        run: |
-          cd standalone/electron-app/dist
-
-          # Upload all EXE files
-          for exe in *.exe; do
-            if [ -f "$exe" ]; then
-              echo "Uploading $exe"
-              gh release upload v${{ needs.create-release.outputs.version }} "$exe" --clobber
-            fi
-          done
-
-          # Upload blockmap files
-          for blockmap in *.blockmap; do
-            if [ -f "$blockmap" ]; then
-              echo "Uploading $blockmap"
-              gh release upload v${{ needs.create-release.outputs.version }} "$blockmap" --clobber
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-macos:
-    name: Build macOS Installer
-    runs-on: macos-latest
-    needs: [create-release, backend-quality-gates, frontend-quality-gates, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          cd standalone/electron-app
-          rm -rf node_modules package-lock.json
-          npm install
-
-      - name: Update version
-        run: |
-          cd standalone/electron-app
-          VERSION="${{ needs.create-release.outputs.version }}"
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Clean version for npm: $VERSION"
-          npm version $VERSION --no-git-tag-version
-
-      - name: Build macOS installer
-        run: |
-          cd standalone/electron-app
-          npm run build:mac
-        env:
-          DEBUG: electron-builder,electron-builder:*
-          TERM: xterm
-
-      - name: List build artifacts
-        run: |
-          echo "Contents of dist directory:"
-          ls -lh standalone/electron-app/dist/
-
-      - name: Upload macOS artifacts
-        run: |
-          cd standalone/electron-app/dist
-
-          # Upload all DMG files
+          cd build/installers/macos
           for dmg in *.dmg; do
             if [ -f "$dmg" ]; then
-              echo "Uploading $dmg"
               gh release upload v${{ needs.create-release.outputs.version }} "$dmg" --clobber
             fi
           done
-
-          # Upload all ZIP files
-          for zip in *.zip; do
-            if [ -f "$zip" ]; then
-              echo "Uploading $zip"
-              gh release upload v${{ needs.create-release.outputs.version }} "$zip" --clobber
-            fi
-          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-linux:
-    name: Build Linux Packages
-    runs-on: ubuntu-latest
-    needs: [create-release, backend-quality-gates, frontend-quality-gates, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: standalone/electron-app/package-lock.json
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libfuse2 \
-            libgbm1 \
-            libasound2t64 \
-            file \
-            rpm \
-            libarchive-tools \
-            build-essential \
-            icnsutils \
-            graphicsmagick \
-            libpng-dev
-
-      - name: Install dependencies
-        run: |
-          cd standalone/electron-app
-          npm ci
-
-      - name: Fix app-builder binary permissions
-        run: |
-          # Find and fix all app-builder binaries (handles both direct and nested locations)
-          echo "Fixing app-builder binary permissions..."
-          find standalone/electron-app/node_modules -type f -name "app-builder" -exec chmod +x {} \;
-
-          # Also fix app-builder in app-builder-bin package specifically
-          if [ -f standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder ]; then
-            chmod +x standalone/electron-app/node_modules/app-builder-bin/linux/x64/app-builder
-            echo "✓ Fixed app-builder-bin/linux/x64/app-builder"
-          fi
-
-          # Verify the binary
-          echo "Checking for app-builder binaries:"
-          find standalone/electron-app/node_modules -type f -name "app-builder" -exec echo {} \; -exec file {} \; -exec ls -la {} \;
-
-      - name: Update version
-        run: |
-          cd standalone/electron-app
-          VERSION="${{ needs.create-release.outputs.version }}"
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Clean version for npm: $VERSION"
-          npm version $VERSION --no-git-tag-version
-
-      - name: Build Linux packages
-        run: |
-          cd standalone/electron-app
-          npm run build:linux
-        env:
-          DEBUG: electron-builder
-          TERM: xterm
-
-      - name: List build artifacts
-        run: |
-          echo "Contents of dist directory:"
-          ls -lh standalone/electron-app/dist/
-
-      - name: Upload Linux artifacts
-        run: |
-          cd standalone/electron-app/dist
-
-          # Upload AppImage files
-          for appimage in *.AppImage; do
-            if [ -f "$appimage" ]; then
-              echo "Uploading $appimage"
-              gh release upload v${{ needs.create-release.outputs.version }} "$appimage" --clobber
-            fi
-          done
-
-          # Upload DEB packages
-          for deb in *.deb; do
-            if [ -f "$deb" ]; then
-              echo "Uploading $deb"
-              gh release upload v${{ needs.create-release.outputs.version }} "$deb" --clobber
-            fi
-          done
-
-          # Upload RPM packages
-          for rpm in *.rpm; do
-            if [ -f "$rpm" ]; then
-              echo "Uploading $rpm"
-              gh release upload v${{ needs.create-release.outputs.version }} "$rpm" --clobber
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  # Upload Embedded JAR
   upload-embedded-jar:
     name: Upload Embedded JAR to Release
     runs-on: ubuntu-latest
@@ -954,124 +320,19 @@ jobs:
           cd artifacts
           for jar in *.jar; do
             if [ -f "$jar" ]; then
-              echo "Uploading $jar"
               gh release upload v${{ needs.create-release.outputs.version }} "$jar" --clobber
             fi
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  upload-native-installers:
-    name: Upload Native Installers to Release
-    runs-on: ubuntu-latest
-    needs: [create-release, build-docker-lite, build-windows-installer, build-macos-installer, build-linux-packages-native]
-    permissions:
-      contents: write
-    if: |
-      always() &&
-      needs.create-release.result == 'success' &&
-      (needs.build-docker-lite.result == 'success' ||
-       needs.build-windows-installer.result == 'success' ||
-       needs.build-macos-installer.result == 'success' ||
-       needs.build-linux-packages-native.result == 'success') &&
-      (startsWith(github.ref, 'refs/tags/v') ||
-       github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'pull_request' &&
-        github.event.pull_request.merged == true &&
-        (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-         contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-         contains(github.event.pull_request.labels.*.name, 'release:major'))))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download Docker Lite artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: docker-lite
-          path: ./artifacts/docker-lite
-
-      - name: Download Windows installer artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: windows-installer
-          path: ./artifacts/windows
-
-      - name: Download macOS installer artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: macos-installer
-          path: ./artifacts/macos
-
-      - name: Download Linux packages artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: linux-packages
-          path: ./artifacts/linux
-
-      - name: Upload all native installers to release
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Uploading to release: v$VERSION"
-
-          # Verify release exists (including draft releases)
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "✓ Release v$VERSION found"
-          elif gh release list | grep -q "v$VERSION"; then
-            echo "✓ Draft release v$VERSION found"
-          else
-            echo "❌ Release v$VERSION not found (checked both published and draft releases)"
-            echo "Note: This may happen if the create-release job failed."
-            echo "Available releases:"
-            gh release list | head -5
-            exit 1
-          fi
-
-          # Upload Docker Lite
-          for file in artifacts/docker-lite/*; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
-            fi
-          done
-
-          # Upload Windows installer
-          for file in artifacts/windows/*; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
-            fi
-          done
-
-          # Upload macOS DMG
-          for file in artifacts/macos/*; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
-            fi
-          done
-
-          # Upload Linux packages
-          for file in artifacts/linux/*; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  # Publish Release
   publish-release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [create-release, build-docker-compose-package, build-windows, build-macos, build-linux, upload-embedded-jar, upload-native-installers, publish-helm-oci, publish-helm-pages]
+    needs: [create-release, build-docker-compose-lite, build-windows-installer, build-macos-installer, upload-embedded-jar]
+    permissions:
+      contents: write
     if: |
       startsWith(github.ref, 'refs/tags/v') ||
       github.event_name == 'workflow_dispatch' ||
@@ -1086,181 +347,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Publish release
-        run: |
-          gh release edit v${{ needs.create-release.outputs.version }} --draft=false
+        run: gh release edit v${{ needs.create-release.outputs.version }} --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify success
-        run: |
-          echo "✅ Release v${{ needs.create-release.outputs.version }} published successfully!"
-          echo "Download URL: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}"
-
-  # ============================================================================
-  # Helm Chart Publishing - OCI Registry (Docker Hub)
-  # ============================================================================
-  publish-helm-oci:
-    name: Publish Helm Chart to OCI
-    runs-on: ubuntu-latest
-    needs: [create-release]
-    permissions:
-      contents: read
-      packages: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
-      - name: Update Chart.yaml version
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Clean version: $VERSION"
-          # More precise sed - only match version field in metadata section (first ~10 lines)
-          sed -i "1,10 s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
-          sed -i "1,15 s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
-          echo "Updated Chart.yaml:"
-          head -20 helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
-
-      - name: Lint Helm chart
-        run: |
-          helm lint helm-chart/shop-manager
-
-      - name: Package Helm chart
-        run: |
-          helm package helm-chart/shop-manager
-          ls -lh *.tgz
-
-      - name: Login to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login registry-1.docker.io \
-            --username princely \
-            --password-stdin
-
-      - name: Push chart to Docker Hub OCI
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          CHART_PACKAGE="shop-manager-${VERSION}.tgz"
-          echo "Pushing $CHART_PACKAGE to oci://registry-1.docker.io/princely"
-          helm push $CHART_PACKAGE oci://registry-1.docker.io/princely
-          echo "✅ Chart published to OCI registry!"
-
-      - name: Verify chart availability
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Verifying chart at oci://registry-1.docker.io/princely/shop-manager:$VERSION"
-          helm show chart oci://registry-1.docker.io/princely/shop-manager --version $VERSION
-
-  # ============================================================================
-  # Helm Chart Publishing - GitHub Pages
-  # ============================================================================
-  publish-helm-pages:
-    name: Publish Helm Chart to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: [create-release, publish-helm-oci]
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
-      - name: Update Chart.yaml version
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          echo "Clean version: $VERSION"
-          # More precise sed - only match version field in metadata section (first ~10 lines)
-          sed -i "1,10 s|^version:.*|version: $VERSION|" helm-chart/shop-manager/Chart.yaml
-          sed -i "1,15 s|^appVersion:.*|appVersion: \"$VERSION\"|" helm-chart/shop-manager/Chart.yaml
-          echo "Updated Chart.yaml:"
-          head -20 helm-chart/shop-manager/Chart.yaml | grep -E "^version:|^appVersion:"
-
-      - name: Package Helm chart
-        run: |
-          mkdir -p .helm-repo
-          helm package helm-chart/shop-manager -d .helm-repo
-          ls -lh .helm-repo/
-
-      - name: Save packaged chart
-        run: |
-          cp -r .helm-repo /tmp/helm-repo-backup
-          git checkout -- helm-chart/shop-manager/Chart.yaml
-
-      - name: Checkout gh-pages branch
-        run: |
-          if git ls-remote --heads origin gh-pages | grep gh-pages; then
-            git fetch origin gh-pages
-            git checkout gh-pages
-          else
-            git checkout --orphan gh-pages
-            git rm -rf .
-            echo "# Shop Manager Helm Repository" > README.md
-            git add README.md
-            git commit -m "Initial gh-pages commit"
-          fi
-
-      - name: Copy chart package to gh-pages
-        run: |
-          cp /tmp/helm-repo-backup/*.tgz .
-          ls -lh *.tgz
-
-      - name: Update Helm repository index
-        run: |
-          helm repo index . --url https://${{ github.repository_owner }}.github.io/shop-manager
-          echo "Generated index.yaml:"
-          cat index.yaml
-
-      - name: Commit and push to gh-pages
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          git add *.tgz index.yaml
-          git commit -m "Publish Helm chart version $VERSION" || echo "No changes to commit"
-          git push origin gh-pages
-
-      - name: Summary
-        run: |
-          VERSION=${{ needs.create-release.outputs.version }}
-          echo "✅ Helm chart published to GitHub Pages!"
-          echo "Repository URL: https://${{ github.repository_owner }}.github.io/shop-manager"

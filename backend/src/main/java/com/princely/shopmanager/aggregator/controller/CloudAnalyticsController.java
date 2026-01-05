@@ -3,6 +3,7 @@ package com.princely.shopmanager.aggregator.controller;
 import com.princely.shopmanager.aggregator.dto.*;
 import com.princely.shopmanager.aggregator.service.CloudAnalyticsService;
 import com.princely.shopmanager.aggregator.service.CrossShopAnalyticsService;
+import com.princely.shopmanager.shared.constants.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,6 +14,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -41,6 +43,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/tenants/{tenantId}/analytics
      */
     @GetMapping("/api/cloud/tenants/{tenantId}/analytics")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_REVENUE_VIEW)")
     @Operation(summary = "Get tenant analytics",
             description = "Get aggregated analytics across all shops for a tenant")
     @ApiResponses(value = {
@@ -70,6 +73,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/tenants/{tenantId}/analytics/sync-status
      */
     @GetMapping("/api/cloud/tenants/{tenantId}/analytics/sync-status")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_REVENUE_VIEW)")
     @Operation(summary = "Get shop sync status",
             description = "Get sync status for all shops under a tenant")
     @ApiResponses(value = {
@@ -87,6 +91,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/platform
      */
     @GetMapping("/api/cloud/analytics/platform")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_PLATFORM_VIEW)")
     @Operation(summary = "Get platform overview",
             description = "Get platform-wide statistics (admin only)")
     @ApiResponses(value = {
@@ -105,6 +110,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/revenue
      */
     @GetMapping("/api/cloud/analytics/revenue")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_REVENUE_VIEW)")
     @Operation(summary = "Get revenue analytics",
             description = "Get revenue analytics aggregated across selected shops")
     public ResponseEntity<RevenueAnalyticsDto> getRevenueAnalytics(
@@ -131,6 +137,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/sales
      */
     @GetMapping("/api/cloud/analytics/sales")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_SALES_VIEW)")
     @Operation(summary = "Get sales metrics",
             description = "Get sales metrics aggregated across selected shops")
     public ResponseEntity<SalesMetricsDto> getSalesMetrics(
@@ -157,6 +164,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/top-products
      */
     @GetMapping("/api/cloud/analytics/top-products")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_PRODUCTS_VIEW)")
     @Operation(summary = "Get top products",
             description = "Get top selling products aggregated across selected shops")
     public ResponseEntity<TopProductsAnalyticsDto> getTopProducts(
@@ -184,6 +192,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/shop-performance
      */
     @GetMapping("/api/cloud/analytics/shop-performance")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_PERFORMANCE_VIEW)")
     @Operation(summary = "Get shop performance",
             description = "Get performance comparison across all shops in a tenant")
     public ResponseEntity<ShopPerformanceAnalyticsDto> getShopPerformanceComparison(
@@ -205,6 +214,7 @@ public class CloudAnalyticsController {
      * GET /api/cloud/analytics/export/csv
      */
     @GetMapping("/api/cloud/analytics/export/csv")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).CLOUD_ANALYTICS_EXPORT)")
     @Operation(summary = "Export analytics to CSV",
             description = "Export analytics data to CSV format")
     public ResponseEntity<String> exportAnalyticsToCSV(

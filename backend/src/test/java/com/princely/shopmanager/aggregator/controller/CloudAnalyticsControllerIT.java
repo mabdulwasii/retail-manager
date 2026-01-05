@@ -324,22 +324,21 @@ class CloudAnalyticsControllerIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    // TODO: Enable this test once CloudAnalyticsController endpoints have @PreAuthorize annotations
-    // @Test
-    // @DisplayName("GET /api/cloud/analytics/revenue - without permission should fail")
-    // void getRevenueAnalytics_WithoutPermission_Fail() {
-    //     // Given
-    //     setTenantContext(testTenant.getId());
-    //
-    //     // When - no permissions passed
-    //     ResponseEntity<String> response = performAuthenticatedGet(
-    //             "/cloud/analytics/revenue?tenantId=" + testTenant.getId(),
-    //             "employee@test.com",
-    //             String.class
-    //             // No permissions - should result in 403
-    //     );
-    //
-    //     // Then
-    //     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    // }
+    @Test
+    @DisplayName("GET /api/cloud/analytics/revenue - without permission should fail")
+    void getRevenueAnalytics_WithoutPermission_Fail() {
+        // Given
+        setTenantContext(testTenant.getId());
+
+        // When - no permissions passed
+        ResponseEntity<String> response = performAuthenticatedGet(
+                "/cloud/analytics/revenue?tenantId=" + testTenant.getId(),
+                "employee@test.com",
+                String.class
+                // No permissions - should result in 403
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
 }
