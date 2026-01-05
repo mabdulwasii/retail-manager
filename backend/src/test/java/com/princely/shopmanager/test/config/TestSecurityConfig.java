@@ -123,10 +123,23 @@ public class TestSecurityConfig {
                         .build();
 
                     // Create authorities from roles
-                    // Note: roles in test headers are actually permission strings (e.g., "AUDIT_LOG_LIST")
-                    // They should NOT have "ROLE_" prefix added
+                    // Support both role names (MANAGER, OWNER) and permission strings (AUDIT_LOG_LIST)
+                    // - Role names get ROLE_ prefix for hasRole() checks
+                    // - Permission strings stay as-is for hasAuthority() checks
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
+                        .flatMap(role -> {
+                            // Check if it's a role name vs permission
+                            if (isRoleName(role)) {
+                                // Add both ROLE_* and plain for maximum compatibility
+                                return List.of(
+                                    new SimpleGrantedAuthority("ROLE_" + role),
+                                    new SimpleGrantedAuthority(role)
+                                ).stream();
+                            } else {
+                                // Permission string - use as-is
+                                return List.of(new SimpleGrantedAuthority(role)).stream();
+                            }
+                        })
                         .toList();
 
                     // Create authentication
@@ -147,6 +160,12 @@ public class TestSecurityConfig {
                     // Clear tenant context after request
                     TenantContext.clear();
                 }
+            }
+
+            private boolean isRoleName(String value) {
+                // Role names: MANAGER, OWNER, EMPLOYEE, SYSTEM_ADMIN, TENANT_ADMIN, INVESTOR
+                // Permission names: AUDIT_LOG_LIST, PRODUCT_CREATE, etc
+                return value.matches("^(SYSTEM_ADMIN|TENANT_ADMIN|OWNER|MANAGER|EMPLOYEE|INVESTOR)$");
             }
         };
     }
