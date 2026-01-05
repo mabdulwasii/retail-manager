@@ -694,6 +694,7 @@ jobs:
           npm ci
 
       - name: Update version
+        shell: bash
         run: |
           cd standalone/electron-app
           VERSION="${{ needs.create-release.outputs.version }}"

@@ -217,7 +217,7 @@ var
   EnvFile: String;
   EnvContent: TArrayOfString;
   ResultCode: Integer;
-  JwtSecret: String;
+  JwtSecret: AnsiString;
   TempFile: String;
 begin
   if CurStep = ssPostInstall then
