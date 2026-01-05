@@ -10,9 +10,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,7 +24,6 @@ import java.util.List;
  * Provides aggregated analytics and reporting for cloud tenants.
  */
 @RestController
-@RequestMapping("/api/cloud/tenants/{tenantId}/analytics")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Cloud Analytics", description = "Aggregated analytics and reporting")
@@ -29,15 +31,13 @@ public class CloudAnalyticsController {
 
     private final CloudAnalyticsService analyticsService;
 
+    // ==================== Tenant-specific analytics endpoints ====================
+
     /**
      * Get tenant-level analytics aggregated across all shops.
      * GET /api/cloud/tenants/{tenantId}/analytics
-     * @param tenantId Tenant ID
-     * @param periodStart Period start date (optional, defaults to 30 days ago)
-     * @param periodEnd Period end date (optional, defaults to now)
-     * @return Aggregated analytics
      */
-    @GetMapping
+    @GetMapping("/api/cloud/tenants/{tenantId}/analytics")
     @Operation(summary = "Get tenant analytics",
             description = "Get aggregated analytics across all shops for a tenant")
     @ApiResponses(value = {
@@ -51,7 +51,6 @@ public class CloudAnalyticsController {
 
         log.info("Getting analytics for tenant: {}", tenantId);
 
-        // Default to last 30 days if not specified
         if (periodStart == null) {
             periodStart = LocalDateTime.now().minusDays(30);
         }
@@ -66,10 +65,8 @@ public class CloudAnalyticsController {
     /**
      * Get sync status for all shops under a tenant.
      * GET /api/cloud/tenants/{tenantId}/analytics/sync-status
-     * @param tenantId Tenant ID
-     * @return List of shop sync statuses
      */
-    @GetMapping("/sync-status")
+    @GetMapping("/api/cloud/tenants/{tenantId}/analytics/sync-status")
     @Operation(summary = "Get shop sync status",
             description = "Get sync status for all shops under a tenant")
     @ApiResponses(value = {
@@ -85,9 +82,8 @@ public class CloudAnalyticsController {
     /**
      * Get a platform-wide overview (admin endpoint).
      * GET /api/cloud/analytics/platform
-     * @return Platform overview
      */
-    @GetMapping("/platform")
+    @GetMapping("/api/cloud/analytics/platform")
     @Operation(summary = "Get platform overview",
             description = "Get platform-wide statistics (admin only)")
     @ApiResponses(value = {
@@ -97,5 +93,127 @@ public class CloudAnalyticsController {
         log.info("Getting platform overview");
         CloudAnalyticsService.PlatformOverviewDto overview = analyticsService.getPlatformOverview();
         return ResponseEntity.ok(overview);
+    }
+
+    // ==================== Cross-shop analytics endpoints (for frontend) ====================
+
+    /**
+     * Get revenue analytics for a tenant across selected shops.
+     * GET /api/cloud/analytics/revenue
+     */
+    @GetMapping("/api/cloud/analytics/revenue")
+    @Operation(summary = "Get revenue analytics",
+            description = "Get revenue analytics aggregated across selected shops")
+    public ResponseEntity<?> getRevenueAnalytics(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String shopIds) {
+
+        log.info("Getting revenue analytics for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
+
+        // TODO: Implement revenue analytics
+        return ResponseEntity.ok(java.util.Map.of(
+            "message", "Revenue analytics endpoint - To be implemented",
+            "tenantId", tenantId
+        ));
+    }
+
+    /**
+     * Get sales metrics for a tenant across selected shops.
+     * GET /api/cloud/analytics/sales
+     */
+    @GetMapping("/api/cloud/analytics/sales")
+    @Operation(summary = "Get sales metrics",
+            description = "Get sales metrics aggregated across selected shops")
+    public ResponseEntity<?> getSalesMetrics(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String shopIds) {
+
+        log.info("Getting sales metrics for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
+
+        // TODO: Implement sales metrics
+        return ResponseEntity.ok(java.util.Map.of(
+            "message", "Sales metrics endpoint - To be implemented",
+            "tenantId", tenantId
+        ));
+    }
+
+    /**
+     * Get top selling products for a tenant across selected shops.
+     * GET /api/cloud/analytics/top-products
+     */
+    @GetMapping("/api/cloud/analytics/top-products")
+    @Operation(summary = "Get top products",
+            description = "Get top selling products aggregated across selected shops")
+    public ResponseEntity<?> getTopProducts(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String shopIds,
+            @RequestParam(required = false, defaultValue = "10") Integer limit) {
+
+        log.info("Getting top {} products for tenant: {} (period: {}, shops: {})", limit, tenantId, period, shopIds);
+
+        // TODO: Implement top products analytics
+        return ResponseEntity.ok(java.util.Map.of(
+            "message", "Top products endpoint - To be implemented",
+            "tenantId", tenantId
+        ));
+    }
+
+    /**
+     * Get shop performance comparison for a tenant.
+     * GET /api/cloud/analytics/shop-performance
+     */
+    @GetMapping("/api/cloud/analytics/shop-performance")
+    @Operation(summary = "Get shop performance",
+            description = "Get performance comparison across all shops in a tenant")
+    public ResponseEntity<?> getShopPerformanceComparison(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        log.info("Getting shop performance for tenant: {} (period: {})", tenantId, period);
+
+        // TODO: Implement shop performance comparison
+        return ResponseEntity.ok(java.util.Map.of(
+            "message", "Shop performance endpoint - To be implemented",
+            "tenantId", tenantId
+        ));
+    }
+
+    /**
+     * Export analytics data to CSV.
+     * GET /api/cloud/analytics/export/csv
+     */
+    @GetMapping("/api/cloud/analytics/export/csv")
+    @Operation(summary = "Export analytics to CSV",
+            description = "Export analytics data to CSV format")
+    public ResponseEntity<String> exportAnalyticsToCSV(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String shopIds) {
+
+        log.info("Exporting analytics to CSV for tenant: {} (period: {}, shops: {})", tenantId, period, shopIds);
+
+        // TODO: Implement CSV export
+        String csv = "Analytics Export\nTenant ID," + tenantId + "\n\nThis export functionality is to be implemented.";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "analytics-export.csv");
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(csv);
     }
 }

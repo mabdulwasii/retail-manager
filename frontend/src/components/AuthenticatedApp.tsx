@@ -48,7 +48,10 @@ import {
   CloudTenantDetailPage,
   CrossShopAnalyticsPage,
   SubscriptionsPage,
-  ApiKeysPage
+  ApiKeysPage,
+  ShopManagementPage,
+  TenantSettingsPage,
+  AuditLogsPage
 } from "@/pages/cloud";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
@@ -522,6 +525,30 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ApiKeysPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/shops"
+        element={
+          <Layout>
+            <ShopManagementPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/settings"
+        element={
+          <Layout>
+            <TenantSettingsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cloud/audit-logs"
+        element={
+          <Layout>
+            <AuditLogsPage />
           </Layout>
         }
       />
