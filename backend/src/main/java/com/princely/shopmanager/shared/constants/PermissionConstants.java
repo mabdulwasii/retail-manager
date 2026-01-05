@@ -178,6 +178,16 @@ public final class PermissionConstants {
     public static final String ANALYTICS_MANAGE = "ANALYTICS_MANAGE";
 
     // ==========================================
+    // CLOUD ANALYTICS PERMISSIONS (Cross-shop aggregation)
+    // ==========================================
+    public static final String CLOUD_ANALYTICS_REVENUE_VIEW = "CLOUD_ANALYTICS_REVENUE_VIEW";
+    public static final String CLOUD_ANALYTICS_SALES_VIEW = "CLOUD_ANALYTICS_SALES_VIEW";
+    public static final String CLOUD_ANALYTICS_PRODUCTS_VIEW = "CLOUD_ANALYTICS_PRODUCTS_VIEW";
+    public static final String CLOUD_ANALYTICS_PERFORMANCE_VIEW = "CLOUD_ANALYTICS_PERFORMANCE_VIEW";
+    public static final String CLOUD_ANALYTICS_EXPORT = "CLOUD_ANALYTICS_EXPORT";
+    public static final String CLOUD_ANALYTICS_PLATFORM_VIEW = "CLOUD_ANALYTICS_PLATFORM_VIEW";
+
+    // ==========================================
     // FRAUD PERMISSIONS
     // ==========================================
     public static final String FRAUD_VIEW = "FRAUD_VIEW";
