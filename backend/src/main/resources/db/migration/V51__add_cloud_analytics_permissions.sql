@@ -2,14 +2,14 @@
 -- Adds CLOUD_ANALYTICS permissions for revenue, sales, products, performance, export, and platform overview
 
 -- Insert new cloud analytics permissions
-INSERT INTO permissions (name, description, created_at, updated_at)
+INSERT INTO permissions (id, name, description, resource, action, created_at, updated_at, version)
 VALUES
-    ('CLOUD_ANALYTICS_REVENUE_VIEW', 'View cross-shop revenue analytics', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('CLOUD_ANALYTICS_SALES_VIEW', 'View cross-shop sales metrics', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('CLOUD_ANALYTICS_PRODUCTS_VIEW', 'View cross-shop top products', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('CLOUD_ANALYTICS_PERFORMANCE_VIEW', 'View shop performance comparison', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('CLOUD_ANALYTICS_EXPORT', 'Export analytics to CSV', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('CLOUD_ANALYTICS_PLATFORM_VIEW', 'View platform-wide overview (admin only)', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_REVENUE_VIEW', 'View cross-shop revenue analytics', 'CLOUD_ANALYTICS', 'REVENUE_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_SALES_VIEW', 'View cross-shop sales metrics', 'CLOUD_ANALYTICS', 'SALES_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_PRODUCTS_VIEW', 'View cross-shop top products', 'CLOUD_ANALYTICS', 'PRODUCTS_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_PERFORMANCE_VIEW', 'View shop performance comparison', 'CLOUD_ANALYTICS', 'PERFORMANCE_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_EXPORT', 'Export analytics to CSV', 'CLOUD_ANALYTICS', 'EXPORT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    (gen_random_uuid()::text, 'CLOUD_ANALYTICS_PLATFORM_VIEW', 'View platform-wide overview (admin only)', 'CLOUD_ANALYTICS', 'PLATFORM_VIEW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (name) DO NOTHING;
 
 -- Assign cloud analytics permissions to roles based on permission-matrix.csv
