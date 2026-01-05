@@ -128,6 +128,7 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     needs: [backend-quality, frontend-quality]
+    if: false  # Temporarily disabled to save GitHub Actions minutes
 
     steps:
       - name: Checkout code
@@ -221,7 +222,7 @@ jobs:
     name: Load Tests (k6)
     runs-on: ubuntu-latest
     needs: [backend-quality]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false  # Temporarily disabled to save GitHub Actions minutes
 
     steps:
       - name: Checkout code
