@@ -1038,7 +1038,7 @@ jobs:
           for file in artifacts/docker-lite/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
             fi
           done
 
@@ -1046,7 +1046,7 @@ jobs:
           for file in artifacts/windows/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
             fi
           done
 
@@ -1054,7 +1054,7 @@ jobs:
           for file in artifacts/macos/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
             fi
           done
 
@@ -1062,7 +1062,7 @@ jobs:
           for file in artifacts/linux/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload "v$VERSION" "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber --repo ${{ github.repository }}
             fi
           done
         env:

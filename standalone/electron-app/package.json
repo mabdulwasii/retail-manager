@@ -170,7 +170,7 @@
           ]
         }
       ],
-      "icon": "build/icons",
+      "icon": "build/icon-1024.png",
       "category": "Office",
       "synopsis": "Retail Management Platform",
       "description": "Complete retail management solution with inventory, sales, and analytics",
