@@ -194,9 +194,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Build Windows Installer
-  build-windows:
-    name: Build Windows Installer
+  # Build Windows Native Installer (Inno Setup)
+  build-windows-installer:
+    name: Build Windows Native Installer (Inno Setup)
     runs-on: windows-latest
     needs: [create-release, build-embedded-jar]
     permissions:
@@ -214,35 +214,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Download embedded JAR
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: standalone/electron-app/package-lock.json
+          name: embedded-jar
+          path: backend/target/
 
-      - name: Install dependencies
+      - name: Install Inno Setup
         run: |
-          cd standalone/electron-app
-          npm ci
-
-      - name: Update version
-        shell: bash
-        run: |
-          cd standalone/electron-app
-          VERSION="${{ needs.create-release.outputs.version }}"
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          npm version $VERSION --no-git-tag-version
+          choco install innosetup -y
 
       - name: Build Windows installer
+        shell: powershell
         run: |
-          cd standalone/electron-app
-          npm run build:win
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installers\windows\shop-manager.iss
 
-      - name: Upload Windows artifacts
-        shell: bash
+      - name: Upload Windows installer artifact
         run: |
-          cd standalone/electron-app/dist
+          cd build/installers/windows
           for exe in *.exe; do
             if [ -f "$exe" ]; then
               gh release upload v${{ needs.create-release.outputs.version }} "$exe" --clobber
@@ -251,9 +240,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Build macOS Installer
-  build-macos:
-    name: Build macOS Installer
+  # Build macOS Native Installer (DMG)
+  build-macos-installer:
+    name: Build macOS Native Installer (DMG)
     runs-on: macos-latest
     needs: [create-release, build-embedded-jar]
     permissions:
@@ -271,32 +260,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Download embedded JAR
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
+          name: embedded-jar
+          path: backend/target/
 
-      - name: Install dependencies
+      - name: Install create-dmg
         run: |
-          cd standalone/electron-app
-          npm ci
+          brew install create-dmg
 
-      - name: Update version
+      - name: Build macOS DMG
         run: |
-          cd standalone/electron-app
-          VERSION="${{ needs.create-release.outputs.version }}"
-          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
-          npm version $VERSION --no-git-tag-version
+          cd installers/macos
+          chmod +x build-dmg.sh
+          ./build-dmg.sh
+        env:
+          TERM: xterm
 
-      - name: Build macOS installer
+      - name: Upload macOS DMG artifact
         run: |
-          cd standalone/electron-app
-          npm run build:mac
-
-      - name: Upload macOS artifacts
-        run: |
-          cd standalone/electron-app/dist
-          for dmg in *.dmg *.zip; do
+          cd build/installers/macos
+          for dmg in *.dmg; do
             if [ -f "$dmg" ]; then
               gh release upload v${{ needs.create-release.outputs.version }} "$dmg" --clobber
             fi
@@ -345,7 +330,7 @@ jobs:
   publish-release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [create-release, build-docker-compose-lite, build-windows, build-macos, upload-embedded-jar]
+    needs: [create-release, build-docker-compose-lite, build-windows-installer, build-macos-installer, upload-embedded-jar]
     permissions:
       contents: write
     if: |
