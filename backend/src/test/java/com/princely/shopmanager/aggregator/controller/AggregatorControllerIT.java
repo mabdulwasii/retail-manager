@@ -9,16 +9,18 @@ import com.princely.shopmanager.aggregator.dto.TenantRegistrationRequest;
 import com.princely.shopmanager.aggregator.dto.TenantRegistrationResponse;
 import com.princely.shopmanager.aggregator.repository.CloudShopRepository;
 import com.princely.shopmanager.aggregator.repository.CloudTenantRepository;
-import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,9 +36,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests cloud aggregator API endpoints for tenant registration and management.
  * These endpoints are PUBLIC (no JWT required) and use API key authentication.
  */
+@SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
 @DisplayName("Cloud Aggregator API - Integration Tests")
-class AggregatorControllerIT extends AbstractIntegrationTest {
+class AggregatorControllerIT {
 
     @Autowired
     private MockMvc mockMvc;
