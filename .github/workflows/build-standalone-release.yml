@@ -127,7 +127,7 @@ jobs:
             - `shop-manager-docker-lite-YYYYMMDD.tar.gz` - Lightweight Docker images with compose file
 
             **Embedded JAR**:
-            - `shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar` - Standalone JAR with H2 database
+            - `shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar` - Standalone JAR with embedded PostgreSQL
 
   # Build Docker Compose Lite Package
   build-docker-compose-lite:
