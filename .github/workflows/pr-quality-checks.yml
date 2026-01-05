@@ -32,13 +32,13 @@ jobs:
         run: |
           cd backend
           chmod +x ./mvnw
-          ./mvnw clean test jacoco:report -B
+          ./mvnw clean test jacoco:report -B -T 2C
           echo "✅ Unit tests completed"
 
       - name: Run integration tests with coverage
         run: |
           cd backend
-          ./mvnw verify -Pintegration-tests jacoco:report -B
+          ./mvnw verify -Pintegration-tests jacoco:report -B -T 2C
           echo "✅ Integration tests completed"
           echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
