@@ -35,13 +35,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for AggregatorController.
  * Tests cloud aggregator API endpoints for tenant registration and management.
  * These endpoints are PUBLIC (no JWT required) and use API key authentication.
- *
- * TODO: These tests are currently disabled due to Keycloak mock conflicts from AbstractIntegrationTest.
- * Since cloud aggregator endpoints use API key authentication (not Keycloak JWT), they don't need
- * the Keycloak mocks. Need to create a separate base test class without Keycloak mocks but with TestContainers.
- * All tests pass manually when mocks are properly isolated.
+*
+ * TODO: Re-enable when test infrastructure supports API key auth without Keycloak mocks
+ * Current blocker: @MockBean conflicts between test base classes. Need dedicated test profile
+ * or custom test slice annotation that excludes Keycloak beans for API key endpoints.
  */
-@Disabled("Temporarily disabled due to test infrastructure conflict - see TODO above")
+@Disabled("Test infrastructure work needed - see TODO")
 @AutoConfigureMockMvc
 @DisplayName("Cloud Aggregator API - Integration Tests")
 class AggregatorControllerIT extends AbstractIntegrationTest {
