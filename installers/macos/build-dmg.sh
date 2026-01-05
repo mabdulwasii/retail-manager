@@ -222,6 +222,11 @@ create_dmg_with_hdiutil() {
     MOUNT_DIR=$(hdiutil attach -readwrite -noverify -noautoopen "$TEMP_DMG" | \
         egrep '^/dev/' | sed 1q | awk '{print $3}')
 
+    if [ -z "$MOUNT_DIR" ]; then
+        print_error "Failed to mount DMG"
+        exit 1
+    fi
+
     print_success "Mounted DMG: $MOUNT_DIR"
 
     # Create symbolic link to Applications
@@ -230,6 +235,10 @@ create_dmg_with_hdiutil() {
 
     # Unmount
     hdiutil detach "$MOUNT_DIR"
+    if [ $? -ne 0 ]; then
+        print_error "Failed to unmount DMG"
+        exit 1
+    fi
     print_success "Unmounted DMG"
 
     # Convert to compressed read-only

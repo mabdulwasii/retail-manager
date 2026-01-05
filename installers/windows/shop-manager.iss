@@ -76,10 +76,10 @@ Source: "config\application.yml"; DestDir: "{app}\config"; Flags: ignoreversion 
 Source: "..\..\docs\EMBEDDED_DEPLOYMENT.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\..\docs\CLOUD_SYNC_SETUP.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\..\README.md"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "..\..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Assets
-Source: "assets\shop-manager.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+; Source: "assets\shop-manager.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 
 [Dirs]
 Name: "{app}\data"; Permissions: users-modify
