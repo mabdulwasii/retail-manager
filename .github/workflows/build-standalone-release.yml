@@ -696,7 +696,11 @@ jobs:
       - name: Update version
         run: |
           cd standalone/electron-app
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+          VERSION="${{ needs.create-release.outputs.version }}"
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Clean version for npm: $VERSION"
+          npm version $VERSION --no-git-tag-version
 
       - name: Build Windows installer
         run: |
@@ -764,7 +768,11 @@ jobs:
       - name: Update version
         run: |
           cd standalone/electron-app
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+          VERSION="${{ needs.create-release.outputs.version }}"
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Clean version for npm: $VERSION"
+          npm version $VERSION --no-git-tag-version
 
       - name: Build macOS installer
         run: |
@@ -856,7 +864,11 @@ jobs:
       - name: Update version
         run: |
           cd standalone/electron-app
-          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+          VERSION="${{ needs.create-release.outputs.version }}"
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Clean version for npm: $VERSION"
+          npm version $VERSION --no-git-tag-version
 
       - name: Build Linux packages
         run: |
@@ -960,6 +972,9 @@ jobs:
          contains(github.event.pull_request.labels.*.name, 'release:major'))))
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Docker Lite artifact
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -990,11 +1005,16 @@ jobs:
 
       - name: Upload all native installers to release
         run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          # Strip any 'v' or 'backend-v' prefix to get clean SemVer
+          VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
+          echo "Uploading to release: v$VERSION"
+
           # Upload Docker Lite
           for file in artifacts/docker-lite/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber
             fi
           done
 
@@ -1002,7 +1022,7 @@ jobs:
           for file in artifacts/windows/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber
             fi
           done
 
@@ -1010,7 +1030,7 @@ jobs:
           for file in artifacts/macos/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber
             fi
           done
 
@@ -1018,7 +1038,7 @@ jobs:
           for file in artifacts/linux/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file"
-              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+              gh release upload "v$VERSION" "$file" --clobber
             fi
           done
         env:

@@ -222,6 +222,9 @@ public abstract class AbstractIntegrationTest {
         // Clear tenant context before each test
         TenantContext.clear();
 
+        // Reset mock to avoid "UnfinishedStubbing" errors
+        org.mockito.Mockito.reset(keycloakUserService);
+
         // Mock user creation - return random UUID
         when(keycloakUserService.createUser(any(CreateKeycloakUserRequest.class)))
                 .thenAnswer(invocation -> UUID.randomUUID().toString());
