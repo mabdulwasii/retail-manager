@@ -846,7 +846,10 @@ jobs:
             file \
             rpm \
             libarchive-tools \
-            build-essential
+            build-essential \
+            icnsutils \
+            graphicsmagick \
+            libpng-dev
 
       - name: Install dependencies
         run: |
@@ -1018,13 +1021,18 @@ jobs:
           VERSION=$(echo "$VERSION" | sed 's/^backend-v//; s/^v//')
           echo "Uploading to release: v$VERSION"
 
-          # Verify release exists (may be draft)
-          if ! gh release view "v$VERSION" &>/dev/null; then
-            echo "❌ Release v$VERSION not found. Skipping upload."
+          # Verify release exists (including draft releases)
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "✓ Release v$VERSION found"
+          elif gh release list | grep -q "v$VERSION"; then
+            echo "✓ Draft release v$VERSION found"
+          else
+            echo "❌ Release v$VERSION not found (checked both published and draft releases)"
             echo "Note: This may happen if the create-release job failed."
+            echo "Available releases:"
+            gh release list | head -5
             exit 1
           fi
-          echo "✓ Release v$VERSION found"
 
           # Upload Docker Lite
           for file in artifacts/docker-lite/*; do
