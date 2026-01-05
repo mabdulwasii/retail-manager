@@ -219,9 +219,9 @@ create_dmg_with_hdiutil() {
     print_success "Created temporary DMG"
 
     # Mount temporary DMG
-    # Parse output to get mount point (last column)
+    # Parse output to get mount point - look for line with /Volumes/ path
     MOUNT_OUTPUT=$(hdiutil attach -readwrite -noverify -noautoopen "$TEMP_DMG")
-    MOUNT_DIR=$(echo "$MOUNT_OUTPUT" | egrep '^/dev/' | sed 1q | awk '{print $NF}')
+    MOUNT_DIR=$(echo "$MOUNT_OUTPUT" | grep "/Volumes/" | awk '{for(i=3;i<=NF;i++) printf "%s%s", $i, (i<NF ? " " : "\n")}')
 
     if [ -z "$MOUNT_DIR" ]; then
         print_error "Failed to mount DMG or parse mount directory"

@@ -9,6 +9,7 @@ import com.princely.shopmanager.aggregator.dto.TenantRegistrationRequest;
 import com.princely.shopmanager.aggregator.dto.TenantRegistrationResponse;
 import com.princely.shopmanager.aggregator.repository.CloudShopRepository;
 import com.princely.shopmanager.aggregator.repository.CloudTenantRepository;
+import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +59,16 @@ class AggregatorControllerIT extends AbstractIntegrationTest {
 
     private CloudTenant existingCloudTenant;
     private String apiKeyHash;
+
+    /**
+     * Override parent's Keycloak mock setup - not needed for public cloud aggregator API.
+     * These endpoints use API key authentication, not Keycloak JWT.
+     */
+    @BeforeEach
+    void setupKeycloakMocks() {
+        // Intentionally empty - public endpoints don't need Keycloak mocks
+        TenantContext.clear();  // Still clear tenant context
+    }
 
     @BeforeEach
     void setUp() {

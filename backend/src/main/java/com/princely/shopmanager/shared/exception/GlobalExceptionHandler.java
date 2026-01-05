@@ -163,7 +163,20 @@ public class GlobalExceptionHandler {
 
         // If ErrorCode is present, use it to get localized message and HTTP status
         if (e.getErrorCode() != null) {
-            message = messageService.getMessage(e.getErrorCode().getMessageKey(), e.getMessageParams());
+            // Check if a custom message was passed as the first String parameter
+            // This handles cases like: new BusinessException(ErrorCode.X, "Custom error message")
+            if (e.getMessageParams() != null && e.getMessageParams().length > 0
+                && e.getMessageParams()[0] instanceof String) {
+                String firstParam = (String) e.getMessageParams()[0];
+                // If it looks like a custom message (not a short code), use it directly
+                if (firstParam.contains(" ") || firstParam.length() > 30) {
+                    message = firstParam;
+                } else {
+                    message = messageService.getMessage(e.getErrorCode().getMessageKey(), e.getMessageParams());
+                }
+            } else {
+                message = messageService.getMessage(e.getErrorCode().getMessageKey(), e.getMessageParams());
+            }
             status = e.getErrorCode().getHttpStatus();
             logger.warn("Business exception occurred: {} - {}", e.getCode(), message);
         } else {
@@ -373,6 +386,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("TRANSACTION_ERROR",
                 "Transaction failed due to validation or constraint violation. Please check your input data."));
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestHeader(
+            org.springframework.web.bind.MissingRequestHeaderException e) {
+        // Special handling for missing X-API-Key header in cloud aggregator API
+        if ("X-API-Key".equals(e.getHeaderName())) {
+            logger.warn("Missing API key in request");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("UNAUTHORIZED", "API key is required"));
+        }
+
+        logger.warn("Missing required header: {}", e.getHeaderName());
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("BAD_REQUEST",
+                "Missing required header: " + e.getHeaderName()));
     }
 
     @ExceptionHandler(Exception.class)
