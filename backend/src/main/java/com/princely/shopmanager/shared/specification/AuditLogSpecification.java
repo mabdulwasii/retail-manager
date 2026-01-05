@@ -23,8 +23,12 @@ public class AuditLogSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Always filter by shop
-            predicates.add(criteriaBuilder.equal(root.get("shop"), shop));
+            // Always filter by shop (handle null shop case)
+            if (shop != null) {
+                predicates.add(criteriaBuilder.equal(root.get("shop"), shop));
+            } else {
+                predicates.add(criteriaBuilder.isNull(root.get("shop")));
+            }
 
             // Action type filter
             if (filters.getActionType() != null && !filters.getActionType().isEmpty()) {

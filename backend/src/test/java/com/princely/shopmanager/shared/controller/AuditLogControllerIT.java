@@ -25,10 +25,10 @@ class AuditLogControllerIT extends AbstractIntegrationTest {
 
         // When
         ResponseEntity<String> response = performAuthenticatedGet(
-            "/api/shops/" + TEST_SHOP_001 + "/audit-logs",
+            "/shops/" + TEST_SHOP_001 + "/audit-logs",
             "admin@testretail.com",
             String.class,
-            "SYSTEM_ADMIN"
+            "AUDIT_LOG_LIST"
         );
 
         // Then
@@ -43,10 +43,10 @@ class AuditLogControllerIT extends AbstractIntegrationTest {
 
         // When
         ResponseEntity<String> response = performAuthenticatedGet(
-            "/api/shops/" + TEST_SHOP_001 + "/audit-logs?actionType=CREATE",
+            "/shops/" + TEST_SHOP_001 + "/audit-logs?actionType=CREATE",
             "admin@testretail.com",
             String.class,
-            "SYSTEM_ADMIN"
+            "AUDIT_LOG_LIST"
         );
 
         // Then
@@ -61,10 +61,10 @@ class AuditLogControllerIT extends AbstractIntegrationTest {
 
         // When
         ResponseEntity<String> response = performAuthenticatedGet(
-            "/api/shops/" + TEST_SHOP_001 + "/audit-logs/export",
+            "/shops/" + TEST_SHOP_001 + "/audit-logs/export",
             "admin@testretail.com",
             String.class,
-            "SYSTEM_ADMIN"
+            "AUDIT_LOG_EXPORT"
         );
 
         // Then
@@ -73,17 +73,17 @@ class AuditLogControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /audit-logs/export - Should return 403 for EMPLOYEE role")
+    @DisplayName("GET /audit-logs/export - Should return 403 for user without permission")
     void shouldReturnForbiddenForEmployeeExport() {
         // Given
         setTenantContext(TEST_TENANT_001);
 
-        // When
+        // When - employee has no AUDIT_LOG_EXPORT permission
         ResponseEntity<String> response = performAuthenticatedGet(
-            "/api/shops/" + TEST_SHOP_001 + "/audit-logs/export",
+            "/shops/" + TEST_SHOP_001 + "/audit-logs/export",
             "employee@testretail.com",
-            String.class,
-            "EMPLOYEE"
+            String.class
+            // No permissions passed - should result in 403
         );
 
         // Then

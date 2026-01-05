@@ -123,8 +123,10 @@ public class TestSecurityConfig {
                         .build();
 
                     // Create authorities from roles
+                    // Note: roles in test headers are actually permission strings (e.g., "AUDIT_LOG_LIST")
+                    // They should NOT have "ROLE_" prefix added
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .map(SimpleGrantedAuthority::new)
                         .toList();
 
                     // Create authentication
