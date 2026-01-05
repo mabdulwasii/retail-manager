@@ -29,7 +29,7 @@ DisableProgramGroupPage=yes
 ; Output
 OutputDir=..\..\build\installers\windows
 OutputBaseFilename=shop-manager-{#MyAppVersion}-windows-x64-setup
-SetupIconFile=assets\shop-manager.ico
+; SetupIconFile=assets\shop-manager.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 ; Compression
