@@ -331,6 +331,8 @@ jobs:
           cd installers/macos
           chmod +x build-dmg.sh
           ./build-dmg.sh
+        env:
+          TERM: xterm
 
       - name: Upload macOS DMG artifact
         uses: actions/upload-artifact@v4
@@ -378,6 +380,8 @@ jobs:
           cd installers/linux
           chmod +x build-packages.sh
           ./build-packages.sh
+        env:
+          TERM: xterm
 
       - name: Upload Linux packages artifact
         uses: actions/upload-artifact@v4
