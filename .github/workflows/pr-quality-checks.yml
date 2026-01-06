@@ -3,6 +3,8 @@ name: PR Quality Checks
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   backend-quality:
