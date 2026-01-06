@@ -489,7 +489,7 @@ jobs:
   publish-release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [create-release, build-docker-compose-lite, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar]
+    needs: [create-release, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar]
     permissions:
       contents: write
     if: |
