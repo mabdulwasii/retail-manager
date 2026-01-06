@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+          https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+  <!--
+    Maven Settings for GitHub Actions
+
+    Purpose: Provide fallback mirrors for Maven Central to handle 403 errors
+    Strategy: 3-layer fallback (Spring → JBoss → Central)
+  -->
+
+  <mirrors>
+    <!-- Mirror 1: Spring Repository -->
+    <mirror>
+      <id>spring-release</id>
+      <name>Spring Release Repository</name>
+      <url>https://repo.spring.io/release</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+
+    <!-- Mirror 2: JBoss Nexus -->
+    <!-- Commented out to avoid conflicts, uncomment if Spring fails -->
+    <!--
+    <mirror>
+      <id>jboss-public</id>
+      <name>JBoss Public Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+    -->
+  </mirrors>
+
+  <profiles>
+    <!-- GitHub Actions optimized profile -->
+    <profile>
+      <id>github-actions</id>
+      <properties>
+        <!-- HTTP retry configuration -->
+        <maven.wagon.http.retryHandler.count>3</maven.wagon.http.retryHandler.count>
+        <maven.wagon.http.retryHandler.requestSentEnabled>true</maven.wagon.http.retryHandler.requestSentEnabled>
+
+        <!-- Connection pooling -->
+        <maven.wagon.httpconnectionManager.ttlSeconds>120</maven.wagon.httpconnectionManager.ttlSeconds>
+        <maven.wagon.http.pool>true</maven.wagon.http.pool>
+
+        <!-- Timeout configuration (in milliseconds) -->
+        <maven.wagon.http.connectionTimeout>10000</maven.wagon.http.connectionTimeout>
+        <maven.wagon.http.readTimeout>60000</maven.wagon.http.readTimeout>
+      </properties>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>github-actions</activeProfile>
+  </activeProfiles>
+</settings>

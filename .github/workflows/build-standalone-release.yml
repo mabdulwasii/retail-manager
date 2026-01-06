@@ -39,6 +39,14 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Get version
         id: get_version
         run: |
@@ -69,8 +77,19 @@ jobs:
           # Retry logic for Maven Central intermittent 403 errors
           for i in {1..3}; do
             echo "Build attempt $i of 3..."
-            if mvn clean package -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}; then
+            if mvn clean package -s ../.github/maven-settings.xml -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}; then
               echo "✅ Embedded JAR built successfully"
+              # Verify JAR exists with correct name
+              JAR_FILE="target/shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar"
+              if [ -f "$JAR_FILE" ]; then
+                echo "✅ Verified JAR: $JAR_FILE"
+                ls -lh "$JAR_FILE"
+              else
+                echo "❌ Expected JAR not found: $JAR_FILE"
+                echo "Files in target:"
+                ls -lh target/*.jar || echo "No JAR files found"
+                exit 1
+              fi
               break
             else
               if [ $i -lt 3 ]; then
