@@ -7,47 +7,35 @@
   <!--
     Maven Settings for GitHub Actions
 
-    Purpose: Provide fallback mirrors for Maven Central to handle 403 errors
-    Strategy: 3-layer fallback (Spring → JBoss → Central)
+    Purpose: Configure Maven Central with aggressive retry to handle 403 errors
+    Strategy: No mirrors (avoid auth issues), rely on Maven Central with retry
   -->
 
-  <mirrors>
-    <!-- Mirror 1: Spring Repository -->
-    <mirror>
-      <id>spring-release</id>
-      <name>Spring Release Repository</name>
-      <url>https://repo.spring.io/release</url>
-      <mirrorOf>central</mirrorOf>
-    </mirror>
-
-    <!-- Mirror 2: JBoss Nexus -->
-    <!-- Commented out to avoid conflicts, uncomment if Spring fails -->
-    <!--
-    <mirror>
-      <id>jboss-public</id>
-      <name>JBoss Public Repository</name>
-      <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
-      <mirrorOf>central</mirrorOf>
-    </mirror>
-    -->
-  </mirrors>
+  <!-- No mirrors configured - using Maven Central directly with retry -->
 
   <profiles>
     <!-- GitHub Actions optimized profile -->
     <profile>
       <id>github-actions</id>
       <properties>
-        <!-- HTTP retry configuration -->
-        <maven.wagon.http.retryHandler.count>3</maven.wagon.http.retryHandler.count>
+        <!-- HTTP retry configuration (aggressive) -->
+        <maven.wagon.http.retryHandler.count>5</maven.wagon.http.retryHandler.count>
         <maven.wagon.http.retryHandler.requestSentEnabled>true</maven.wagon.http.retryHandler.requestSentEnabled>
+        <maven.wagon.http.retryHandler.nonRetryableClasses></maven.wagon.http.retryHandler.nonRetryableClasses>
 
         <!-- Connection pooling -->
         <maven.wagon.httpconnectionManager.ttlSeconds>120</maven.wagon.httpconnectionManager.ttlSeconds>
+        <maven.wagon.httpconnectionManager.maxPerRoute>20</maven.wagon.httpconnectionManager.maxPerRoute>
+        <maven.wagon.httpconnectionManager.maxTotal>40</maven.wagon.httpconnectionManager.maxTotal>
         <maven.wagon.http.pool>true</maven.wagon.http.pool>
 
         <!-- Timeout configuration (in milliseconds) -->
-        <maven.wagon.http.connectionTimeout>10000</maven.wagon.http.connectionTimeout>
-        <maven.wagon.http.readTimeout>60000</maven.wagon.http.readTimeout>
+        <maven.wagon.http.connectionTimeout>30000</maven.wagon.http.connectionTimeout>
+        <maven.wagon.http.readTimeout>180000</maven.wagon.http.readTimeout>
+
+        <!-- SSL/TLS -->
+        <maven.wagon.http.ssl.insecure>false</maven.wagon.http.ssl.insecure>
+        <maven.wagon.http.ssl.allowall>false</maven.wagon.http.ssl.allowall>
       </properties>
     </profile>
   </profiles>
