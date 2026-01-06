@@ -132,20 +132,40 @@ if "%JAVA%"=="java" (
     set "JAVAW=!JAVA_DIR!\javaw.exe"
 )
 
-REM Verify javaw exists
-if not exist "%JAVAW%" (
-    echo.
-    echo ========================================
-    echo ERROR: javaw.exe not found
-    echo ========================================
-    echo.
-    echo Expected location: %JAVAW%
-    echo Java location: %JAVA%
-    echo.
-    echo Please ensure Java is properly installed.
-    echo.
-    pause
-    exit /b 1
+REM Verify javaw exists (check PATH or file path depending on JAVAW value)
+echo %JAVAW% | findstr /C:"\" >nul
+if %ERRORLEVEL% EQU 0 (
+    REM JAVAW contains path separator - verify file exists
+    if not exist "%JAVAW%" (
+        echo.
+        echo ========================================
+        echo ERROR: javaw.exe not found
+        echo ========================================
+        echo.
+        echo Expected location: %JAVAW%
+        echo Java location: %JAVA%
+        echo.
+        echo Please ensure Java is properly installed.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    REM JAVAW is just a command name - verify it's in PATH
+    where %JAVAW% >nul 2>nul
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo ========================================
+        echo ERROR: javaw not found in PATH
+        echo ========================================
+        echo.
+        echo Java command: %JAVA%
+        echo.
+        echo Please ensure Java is properly installed with javaw.exe.
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 REM Launch application (no console window)
