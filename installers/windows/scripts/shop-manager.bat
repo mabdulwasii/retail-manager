@@ -76,19 +76,45 @@ if not exist "%APP_DIR%\data\logs" mkdir "%APP_DIR%\data\logs"
 REM Set Spring profile
 set SPRING_PROFILES_ACTIVE=embedded
 
-REM Find the JAR file (supports any version)
+REM Find the JAR file (picks highest version if multiple exist)
 set "JAR_FILE="
-for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do (
-    set "JAR_FILE=%%f"
-    goto :jar_found
+set "JAR_COUNT=0"
+
+REM Count JAR files and find the latest version (sort descending)
+for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
+    if not defined JAR_FILE (
+        set "JAR_FILE=%APP_DIR%\lib\%%f"
+    )
+    set /a JAR_COUNT+=1
 )
 
-:jar_found
 if not defined JAR_FILE (
-    echo ERROR: Shop Manager JAR file not found in %APP_DIR%\lib
-    echo Expected: shop-manager-*-embedded.jar
+    echo.
+    echo ========================================
+    echo ERROR: Shop Manager JAR file not found
+    echo ========================================
+    echo.
+    echo Expected location: %APP_DIR%\lib
+    echo Expected pattern: shop-manager-*-embedded.jar
+    echo.
     pause
     exit /b 1
+)
+
+REM Warn if multiple JARs found
+if %JAR_COUNT% GTR 1 (
+    echo.
+    echo ========================================
+    echo WARNING: Multiple JAR files detected
+    echo ========================================
+    echo.
+    echo Found %JAR_COUNT% JAR files in %APP_DIR%\lib
+    echo Using latest version: %JAR_FILE%
+    echo.
+    echo This may indicate an incomplete upgrade.
+    echo Consider reinstalling Shop Manager.
+    echo.
+    timeout /t 5 /nobreak
 )
 
 echo Starting Shop Manager from: %JAR_FILE%

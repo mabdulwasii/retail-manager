@@ -98,20 +98,44 @@ echo        Data Directory: %APP_DIR%\data
 echo        Cloud Sync: %CLOUD_SYNC_ENABLED%
 echo.
 
-REM Find the JAR file (supports any version)
+REM Find the JAR file (picks highest version if multiple exist)
 set "JAR_FILE="
-for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do (
-    set "JAR_FILE=%%f"
-    goto :jar_found_console
+set "JAR_COUNT=0"
+
+REM Count JAR files and find the latest version (sort descending)
+for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
+    if not defined JAR_FILE (
+        set "JAR_FILE=%APP_DIR%\lib\%%f"
+    )
+    set /a JAR_COUNT+=1
 )
 
-:jar_found_console
 if not defined JAR_FILE (
-    echo [ERROR] Shop Manager JAR file not found in %APP_DIR%\lib
-    echo [ERROR] Expected: shop-manager-*-embedded.jar
+    echo.
+    echo ========================================================================
+    echo [ERROR] Shop Manager JAR file not found
+    echo ========================================================================
+    echo.
+    echo [ERROR] Expected location: %APP_DIR%\lib
+    echo [ERROR] Expected pattern: shop-manager-*-embedded.jar
     echo.
     pause
     exit /b 1
+)
+
+REM Warn if multiple JARs found
+if %JAR_COUNT% GTR 1 (
+    echo.
+    echo ========================================================================
+    echo [WARNING] Multiple JAR files detected
+    echo ========================================================================
+    echo.
+    echo [WARN] Found %JAR_COUNT% JAR files in %APP_DIR%\lib
+    echo [WARN] Using latest version: %JAR_FILE%
+    echo.
+    echo [WARN] This may indicate an incomplete upgrade.
+    echo [WARN] Consider reinstalling Shop Manager.
+    echo.
 )
 
 echo [INFO] JAR File: %JAR_FILE%
