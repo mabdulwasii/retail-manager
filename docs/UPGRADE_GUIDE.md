@@ -100,16 +100,16 @@ pkill -f shop-manager
 
 ### macOS
 
-1. **Stop Shop Manager**:
-   ```bash
-   # Quit the application via menu or:
-   killall "Shop Manager"
-   ```
-
-2. **Install new version**:
+1. **Install new version**:
    - Open `shop-manager-X.X.X-macos-x64.dmg`
    - Drag `Shop Manager.app` to Applications
    - **Replace** when prompted
+
+2. **Handle running instances**:
+   - If Shop Manager is already running, the launcher will offer options:
+     - **Access Current**: Opens browser to existing instance
+     - **Restart**: Stops old instance and starts new one (recommended for upgrades)
+     - **Cancel**: Exit without action
 
 3. **Data preservation**:
    - Your data is in `~/Library/Application Support/ShopManager/`

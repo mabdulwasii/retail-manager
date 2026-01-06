@@ -77,9 +77,14 @@ REM Set Spring profile
 set SPRING_PROFILES_ACTIVE=embedded
 
 REM Find the JAR file (supports any version)
-for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do set "JAR_FILE=%%f"
+set "JAR_FILE="
+for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do (
+    set "JAR_FILE=%%f"
+    goto :jar_found
+)
 
-if not exist "%JAR_FILE%" (
+:jar_found
+if not defined JAR_FILE (
     echo ERROR: Shop Manager JAR file not found in %APP_DIR%\lib
     echo Expected: shop-manager-*-embedded.jar
     pause
@@ -92,7 +97,9 @@ REM Determine javaw path (for windowless execution)
 if "%JAVA%"=="java" (
     set "JAVAW=javaw"
 ) else (
-    set "JAVAW=%JAVA:java.exe=javaw.exe%"
+    REM Get the directory containing java.exe
+    for %%i in ("%JAVA%") do set "JAVA_DIR=%%~dpi"
+    set "JAVAW=%JAVA_DIR%javaw.exe"
 )
 
 REM Launch application (no console window)
