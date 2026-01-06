@@ -1,6 +1,43 @@
 # Shop Manager - Platform Installers
 
-This directory contains all platform-specific installer configurations and build scripts for Shop Manager standalone deployment.
+This directory contains all platform-specific installer configurations and build scripts for Shop Manager **Embedded Mode** (standalone deployment).
+
+## 🔑 Quick Start - Default Credentials
+
+After installation, login with:
+
+**Username:** `superadmin`
+**Email:** `superadmin@retailhq.local`
+**Password:** `changeme`
+
+⚠️ **IMPORTANT**: Change this password immediately after first login!
+
+**Default URLs:**
+- **Frontend:** http://localhost:3001
+- **Backend API:** http://localhost:8081
+- **With mDNS:** http://shopmanager.local (no port needed)
+
+---
+
+## Installation Modes Explained
+
+Shop Manager supports two deployment modes:
+
+### 1. **Embedded Mode** (These Installers) ✅
+- **What it is**: Standalone, all-in-one native application
+- **Components**: Embedded PostgreSQL + Local JWT authentication
+- **Best for**: Single shop, offline-capable, simple deployment
+- **No Docker required**: Runs as native .exe (Windows) or .app (macOS)
+- **Size**: ~120-130 MB per installer
+
+### 2. **Cloud Mode** (Separate Installation)
+- **What it is**: Full-featured deployment with enterprise SSO
+- **Components**: PostgreSQL + Keycloak + Kafka + MinIO (Docker Compose)
+- **Best for**: Multi-shop, centralized authentication, cloud deployment
+- **Requires Docker**: Uses Docker Compose
+- **See**: `DEPLOYMENT_GUIDE.md` for Docker deployment
+
+---
 
 ## Directory Structure
 

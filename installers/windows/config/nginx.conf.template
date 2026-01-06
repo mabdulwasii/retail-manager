@@ -1,0 +1,79 @@
+# ============================================================================
+# Shop Manager - nginx Reverse Proxy Configuration (Windows)
+# ============================================================================
+# This configuration enables professional URLs without port numbers:
+#   http://shopmanager.local     → Frontend (port 3001)
+#   http://api.shopmanager.local → Backend API (port 8081)
+# ============================================================================
+
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+
+    # Logging
+    access_log logs/access.log;
+    error_log logs/error.log;
+
+    # Performance
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss;
+
+    # Frontend (React App)
+    server {
+        listen 80;
+        server_name {{SHOP_HOSTNAME}};
+
+        location / {
+            proxy_pass http://localhost:3001;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    # Backend API
+    server {
+        listen 80;
+        server_name api.{{SHOP_HOSTNAME}};
+
+        location / {
+            proxy_pass http://localhost:8081;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Increase timeouts for long-running API calls
+            proxy_read_timeout 300;
+            proxy_connect_timeout 300;
+            proxy_send_timeout 300;
+        }
+
+        # Health check endpoint
+        location /actuator/health {
+            proxy_pass http://localhost:8081/actuator/health;
+            access_log off;
+        }
+    }
+}

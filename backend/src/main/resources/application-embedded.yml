@@ -109,6 +109,23 @@ application:
     secret: ${ENCRYPTION_SECRET:changeme-encryption-secret-key}
     salt: ${ENCRYPTION_SALT:deadbeef}
 
+  # mDNS Configuration (Local Network Discovery)
+  mdns:
+    # Enable mDNS service publishing for .local domain resolution
+    enabled: ${MDNS_ENABLED:true}
+
+    # Hostname for mDNS (must end with .local for mDNS to work)
+    # Examples: shopmanager.local, myshop.local, downtown-store.local
+    hostname: ${SHOP_HOSTNAME:shopmanager.local}
+
+    # Service name displayed in network discovery
+    service-name: ${SHOP_NAME:Shop Manager}
+
+  # Frontend Configuration
+  frontend:
+    # Frontend port (used by mDNS publisher)
+    port: ${FRONTEND_PORT:3001}
+
   # Bootstrap Configuration
   bootstrap:
     # Tenant Bootstrap
