@@ -24,6 +24,14 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Configure TestContainers
         run: |
           mkdir -p ~/.testcontainers
@@ -33,14 +41,13 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           cd backend
-          chmod +x ./mvnw
-          ./mvnw clean test jacoco:report -B -T 2C
+          mvn clean test jacoco:report -s ../.github/maven-settings.xml -B -T 2C
           echo "✅ Unit tests completed"
 
       - name: Run integration tests with coverage
         run: |
           cd backend
-          ./mvnw verify -Pintegration-tests jacoco:report -B -T 2C
+          mvn verify -Pintegration-tests jacoco:report -s ../.github/maven-settings.xml -B -T 2C
           echo "✅ Integration tests completed"
           echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
@@ -52,7 +59,7 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.BACKEND_SONAR_ORGANIZATION }}
         run: |
           cd backend
-          ./mvnw sonar:sonar \
+          mvn sonar:sonar -s ../.github/maven-settings.xml \
             -Dsonar.projectKey=pribcely-organization_backend-retail-app \
             -Dsonar.moduleKey=backend \
             -Dsonar.organization=${{ secrets.BACKEND_SONAR_ORGANIZATION }} \
