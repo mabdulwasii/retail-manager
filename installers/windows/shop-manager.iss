@@ -15,7 +15,7 @@
 #define MyAppName "Shop Manager"
 #define MyAppPublisher "Princely Software"
 #define MyAppURL "https://github.com/yourorg/shop-manager"
-#define MyAppExeName "shop-manager.exe"
+#define MyAppExeName "shop-manager.bat"
 #define JarFileName "shop-manager-" + JarVersion + "-embedded.jar"
 
 [Setup]
