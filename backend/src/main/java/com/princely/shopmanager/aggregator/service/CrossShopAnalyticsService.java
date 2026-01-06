@@ -142,7 +142,7 @@ public class CrossShopAnalyticsService {
         }
 
         // Get total sales count
-        Long totalSales = getTotalTransactionCount(targetShopIds, startDateTime, endDateTime);
+        long totalSales = getTotalTransactionCount(targetShopIds, startDateTime, endDateTime);
 
         // Get total revenue
         BigDecimal totalRevenue = getTotalRevenue(targetShopIds, startDateTime, endDateTime);
