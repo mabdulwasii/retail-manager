@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Navbar } from './Navbar'
 import { Sidebar } from './Sidebar'
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext'
+import { UpdateNotificationBanner } from '../notifications/UpdateNotificationBanner'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -27,8 +28,10 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
 
       <div className="sticky top-0 z-40">
         <Navbar />
+        {/* Update notification banner appears below navbar */}
+        <UpdateNotificationBanner className="mx-6 mt-2" />
       </div>
-      
+
       <div className="flex flex-1 overflow-hidden">
         {/* Overlay for mobile when sidebar is open */}
         {isOpen && (

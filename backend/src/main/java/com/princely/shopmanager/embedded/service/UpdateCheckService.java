@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 public class UpdateCheckService {
 
+    private static final String LOG_SEPARATOR = "========================================";
+
     @Value("${application.version:1.0.0}")
     private String currentVersion;
 
@@ -96,14 +98,14 @@ public class UpdateCheckService {
             cachedResponse.set(response);
 
             if (updateAvailable) {
-                log.info("========================================");
+                log.info(LOG_SEPARATOR);
                 log.info("UPDATE AVAILABLE");
-                log.info("========================================");
+                log.info(LOG_SEPARATOR);
                 log.info("Current Version: {}", currentVersion);
                 log.info("Latest Version: {}", versionInfo.getVersion());
                 log.info("Release Date: {}", versionInfo.getReleaseDate());
                 log.info("Release Notes: {}", versionInfo.getReleaseNotes());
-                log.info("========================================");
+                log.info(LOG_SEPARATOR);
             } else {
                 log.info("No update available. Current version {} is up to date.", currentVersion);
             }

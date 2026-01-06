@@ -32,10 +32,12 @@ class UpdateCheckServiceTest {
     private RestClient.Builder restClientBuilder;
 
     @Mock
-    private RestClient.RequestHeadersUriSpec<?> requestHeadersUriSpec;
+    @SuppressWarnings("rawtypes")
+    private RestClient.RequestHeadersUriSpec requestHeadersUriSpec;
 
     @Mock
-    private RestClient.RequestHeadersSpec<?> requestHeadersSpec;
+    @SuppressWarnings("rawtypes")
+    private RestClient.RequestHeadersSpec requestHeadersSpec;
 
     @Mock
     private RestClient.ResponseSpec responseSpec;
