@@ -108,6 +108,11 @@ jobs:
             fi
           done
 
+      - name: List JAR files before upload
+        run: |
+          echo "JAR files to upload:"
+          ls -lh backend/target/*.jar
+
       - name: Upload embedded JAR artifact
         uses: actions/upload-artifact@v4
         with:
@@ -285,6 +290,18 @@ jobs:
           name: embedded-jar
           path: backend/target/
 
+      - name: Verify JAR exists
+        shell: bash
+        run: |
+          echo "Checking for JAR file..."
+          ls -lh backend/target/
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ ERROR: Embedded JAR not found in backend/target/"
+            exit 1
+          fi
+          echo "✅ Found JAR: $JAR_FILE"
+
       - name: Install Inno Setup
         run: |
           choco install innosetup -y
@@ -331,6 +348,17 @@ jobs:
         with:
           name: embedded-jar
           path: backend/target/
+
+      - name: Verify JAR exists
+        run: |
+          echo "Checking for JAR file..."
+          ls -lh backend/target/
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ ERROR: Embedded JAR not found in backend/target/"
+            exit 1
+          fi
+          echo "✅ Found JAR: $JAR_FILE"
 
       - name: Install create-dmg
         run: |
@@ -383,6 +411,17 @@ jobs:
           name: embedded-jar
           path: backend/target/
 
+      - name: Verify JAR exists
+        run: |
+          echo "Checking for JAR file..."
+          ls -lh backend/target/
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ ERROR: Embedded JAR not found in backend/target/"
+            exit 1
+          fi
+          echo "✅ Found JAR: $JAR_FILE"
+
       - name: Install build tools
         run: |
           sudo apt-get update
@@ -394,6 +433,7 @@ jobs:
           chmod +x build-packages.sh
           ./build-packages.sh
         env:
+          TERM: xterm
           APP_VERSION: ${{ needs.create-release.outputs.version }}
           JAR_VERSION: ${{ needs.create-release.outputs.version }}
 
