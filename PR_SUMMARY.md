@@ -9,11 +9,11 @@
 
 ## 🎯 Overview
 
-This PR implements dynamic artifact versioning, adds Linux installer support, adds cloud sync configuration to installers, comprehensive documentation, and fixes Maven Central 403/401 errors.
+This PR implements dynamic artifact versioning, adds Linux installer support, adds cloud sync configuration to installers, implements backend update notification system, comprehensive documentation, and fixes Maven Central 403/401 errors.
 
 ---
 
-## 📦 What's Included (6 Commits)
+## 📦 What's Included (9 Commits)
 
 ### 1. Maven Retry Logic + Linux Installer + Cloud Sync Preparation
 **Commit**: `06c05d6`
@@ -174,19 +174,113 @@ This PR implements dynamic artifact versioning, adds Linux installer support, ad
 
 ---
 
+### 7. Enhance Maven Reliability with Google CDN Mirror and IPv4
+**Commit**: `443c9ca`
+
+**Changes**:
+- Added Google CDN mirror (`maven-central.storage-download.googleapis.com`) to Maven settings
+- Official CDN-backed mirror for better reliability on GitHub Actions
+- Added `-Djava.net.preferIPv4Stack=true` to all Maven commands
+- Prevents random TLS/connection issues on dual-stack runners
+
+**Benefits**:
+- Faster dependency downloads via CDN
+- Reduced build failures from network issues
+- Better reliability on GitHub Actions infrastructure
+
+**Files Modified**:
+- `.github/maven-settings.xml` (added Google CDN mirror)
+- `.github/workflows/build-standalone-release.yml` (added IPv4 flag)
+- `.github/workflows/pr-quality-checks.yml` (added IPv4 flag to all Maven commands)
+
+---
+
+### 8. Fix Maven Parent POM Resolution
+**Commit**: (included in commit 9)
+
+**Problem**: Maven 403 errors during parent POM resolution
+- Maven settings weren't applied early enough in resolution phase
+- Parent POM `spring-boot-starter-parent:3.5.6` failed to download
+
+**Solution**: Copy maven-settings.xml to ~/.m2/settings.xml
+- Makes Google CDN mirror the default for all Maven operations
+- Ensures settings apply from the very first dependency resolution
+
+**Files Modified**:
+- `.github/workflows/build-standalone-release.yml`
+- `.github/workflows/pr-quality-checks.yml`
+
+---
+
+### 9. Implement Phase 4 - Update Notification System (Backend)
+**Commit**: `51ab100`
+
+**Backend Components**:
+- **UpdateCheckResponse DTO** - response structure for update checks
+- **VersionInfo DTO** - version information from cloud API
+- **UpdateCheckService** - scheduled update checks every 24 hours
+  - Semantic version comparison (MAJOR.MINOR.PATCH)
+  - Cached update status in memory (AtomicReference)
+  - Configurable via `application.update-check` properties
+- **UpdateController** - REST API for manual checks
+  - `POST /api/updates/check` - trigger manual check (requires auth)
+  - `GET /api/updates/status` - get cached status
+  - Role-based access control (SYSTEM_ADMIN, TENANT_ADMIN, OWNER, MANAGER)
+
+**Cloud API Enhancement**:
+- **AggregatorController.getLatestVersion()** endpoint
+  - `GET /api/registration/latest-version`
+  - Returns version, download URLs for all platforms, release notes URL
+  - Version injected from Maven `-Drevision` parameter
+
+**Configuration**:
+- `application-embedded.yml` - update check properties
+  - `application.update-check.enabled` (default: true)
+  - `application.update-check.cron` (default: 0 0 */24 * * ?)
+  - `application.cloud-api-url`, `application.version`, `application.github-releases-url`
+- All installer `.env.template` files - environment variables
+  - `UPDATE_CHECK_ENABLED`, `UPDATE_CHECK_CRON`
+  - `CLOUD_API_URL`, `GITHUB_RELEASES_URL`
+
+**Documentation**:
+- `UPDATE_NOTIFICATION_SETUP.md` - updated to reflect implementation
+  - Backend marked as ✅ IMPLEMENTED
+  - Frontend marked as ⏳ PENDING (future PR)
+  - Complete API documentation with examples
+  - Configuration guide
+
+**Frontend**: Deferred to future PR (UpdateNotificationBanner component, useUpdateCheck hook)
+
+**Files Added**:
+- `UpdateCheckResponse.java`, `VersionInfo.java`
+- `UpdateCheckService.java`, `UpdateController.java`
+
+**Files Modified**:
+- `AggregatorController.java` (latest-version endpoint)
+- `application-embedded.yml` (update-check config)
+- `build-standalone-release.yml`, `pr-quality-checks.yml` (Maven setup)
+- All `.env.template` files (Windows, macOS, Linux)
+- `UPDATE_NOTIFICATION_SETUP.md`
+
+---
+
 ## 📊 Summary Statistics
 
-**Files Changed**: 13 files
-**New Files**: 4
-**Lines Added**: ~2,000+
-**Documentation**: 3 new comprehensive guides
+**Files Changed**: 17 files
+**New Files**: 7 (4 backend Java classes + 3 docs)
+**Lines Added**: ~2,500+
+**Documentation**: 3 comprehensive guides (all updated)
+**Commits**: 9 total
 
 ---
 
 ## ✅ What Works Now
 
 ### Maven Build Reliability
-- ✅ Aggressive retry (5 attempts) for Maven Central
+- ✅ Google CDN mirror for Maven Central (official, CDN-backed)
+- ✅ IPv4 preference to prevent TLS issues
+- ✅ Default settings.xml configuration (~/.m2/settings.xml)
+- ✅ Aggressive retry (5 attempts) for fallback
 - ✅ Extended timeouts (30s connection, 180s read)
 - ✅ Enhanced connection pooling
 - ✅ Dependency caching across workflows
@@ -213,21 +307,19 @@ This PR implements dynamic artifact versioning, adds Linux installer support, ad
 ### Documentation
 - ✅ Complete installer feature guide
 - ✅ Complete cloud sync architecture
+- ✅ Complete update notification architecture
 - ✅ Troubleshooting guides
 - ✅ Platform-specific instructions
 
----
-
-## ⏭️ Phase 4: Update Notifications (Deferred)
-
-**Status**: Fully documented in `docs/UPDATE_NOTIFICATION_SETUP.md`
-**Estimated Effort**: 7-11 hours
-**Recommendation**: Implement in separate PR after this one merges
-
-**Required Components**:
-- Backend: `UpdateCheckService`, `UpdateController`, cloud API endpoint
-- Frontend: `UpdateNotificationBanner`, `useUpdateCheck` hook
-- Configuration: Update check properties
+### Update Notification System
+- ✅ Backend implementation (UpdateCheckService, UpdateController)
+- ✅ Cloud API endpoint (/api/registration/latest-version)
+- ✅ Scheduled checks (every 24 hours, configurable)
+- ✅ Manual check API
+- ✅ Semantic version comparison
+- ✅ Cached update status
+- ✅ Configuration in all installers
+- ⏳ Frontend UI (deferred to future PR)
 
 ---
 
@@ -299,11 +391,12 @@ This PR implements dynamic artifact versioning, adds Linux installer support, ad
 
 ## ✨ Highlights
 
-1. **Resilient Maven Builds**: 5 retry attempts with extended timeouts
+1. **Resilient Maven Builds**: Google CDN mirror + IPv4 + retry (5 attempts)
 2. **Complete Linux Support**: .deb, .rpm, AppImage generation
 3. **User-Friendly Cloud Sync**: Windows wizard with 3 clear options
-4. **Comprehensive Docs**: 3 detailed guides (60+ pages total)
-5. **Correct Versioning**: All artifacts properly versioned
+4. **Update Notification System**: Backend fully implemented, scheduled checks
+5. **Comprehensive Docs**: 3 detailed guides (70+ pages total)
+6. **Correct Versioning**: All artifacts properly versioned
 
 ---
 
