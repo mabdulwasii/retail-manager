@@ -17,6 +17,22 @@ After installation, login with:
 - **Backend API:** http://localhost:8081
 - **With mDNS:** http://shopmanager.local (no port needed)
 
+### 🌐 Cloud Sync
+
+Embedded installations can optionally sync to cloud aggregator for multi-shop analytics:
+
+**Setup During Installation** (Windows):
+- Option 1: Standalone (no cloud sync)
+- Option 2: Register new account (auto-generate API key)
+- Option 3: Use existing API key
+
+**Setup After Installation** (All Platforms):
+- Navigate to Settings → Cloud Sync
+- Enable/disable, register account, test connection
+- Manual sync trigger
+
+**See**: [docs/CLOUD_SYNC_ARCHITECTURE.md](../docs/CLOUD_SYNC_ARCHITECTURE.md) for full details.
+
 ---
 
 ## Installation Modes Explained
@@ -150,6 +166,8 @@ Outputs:
 
 - ✅ Automatic Java version detection
 - ✅ JWT secret auto-generation
+- ✅ **Cloud sync configuration wizard**
+- ✅ Hostname and mDNS setup wizard
 - ✅ Desktop icon and Start Menu shortcuts
 - ✅ Windows Service installation option
 - ✅ Uninstaller included
@@ -214,10 +232,11 @@ Download options:
 
 Comprehensive installation guides available:
 
+- **Installer Features**: [docs/INSTALLER_FEATURES.md](../docs/INSTALLER_FEATURES.md)
+- **Cloud Sync Architecture**: [docs/CLOUD_SYNC_ARCHITECTURE.md](../docs/CLOUD_SYNC_ARCHITECTURE.md)
 - **Platform Installers**: [docs/PLATFORM_INSTALLERS.md](../docs/PLATFORM_INSTALLERS.md)
 - **Embedded Deployment**: [docs/EMBEDDED_DEPLOYMENT.md](../docs/EMBEDDED_DEPLOYMENT.md)
 - **Docker Lite**: [docs/DOCKER_LITE_DEPLOYMENT.md](../docs/DOCKER_LITE_DEPLOYMENT.md)
-- **Cloud Sync**: [docs/CLOUD_SYNC_SETUP.md](../docs/CLOUD_SYNC_SETUP.md)
 
 Platform-specific guides:
 - **Windows**: [installers/windows/README.md](./windows/README.md)
