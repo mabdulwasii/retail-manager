@@ -1,5 +1,7 @@
 package com.princely.shopmanager.auth.config;
 
+import com.princely.shopmanager.auth.security.CustomAccessDeniedHandler;
+import com.princely.shopmanager.auth.security.CustomAuthenticationEntryPoint;
 import com.princely.shopmanager.auth.security.JwtAuthConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,8 @@ public class SecurityConfig {
 
     private final JwtAuthConverter jwtAuthConverter;
     private final AppSecurityConfig appSecurityConfig;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,7 +49,12 @@ public class SecurityConfig {
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
-                    .jwtAuthenticationConverter(jwtAuthConverter)));
+                    .jwtAuthenticationConverter(jwtAuthConverter))
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler(customAccessDeniedHandler))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler(customAccessDeniedHandler));
 
         return http.build();
     }
