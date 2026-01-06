@@ -3,9 +3,12 @@ package com.princely.shopmanager.embedded.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.convert.DataSizeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.util.unit.DataSize;
+import org.springframework.util.unit.DataUnit;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +31,8 @@ public class EmbeddedStorageConfig {
     private String storageLocation;
 
     @Value("${application.storage.max-file-size}")
-    private long maxFileSize;
+    @DataSizeUnit(DataUnit.BYTES)
+    private DataSize maxFileSize;
 
     @Value("${application.storage.allowed-extensions}")
     private String allowedExtensions;
@@ -44,7 +48,7 @@ public class EmbeddedStorageConfig {
 
         List<String> extensions = Arrays.asList(allowedExtensions.split(","));
 
-        return new FileSystemStorageService(storagePath, maxFileSize, extensions);
+        return new FileSystemStorageService(storagePath, maxFileSize.toBytes(), extensions);
     }
 
     /**
