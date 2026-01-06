@@ -4,6 +4,7 @@ import com.princely.shopmanager.aggregator.dto.ShopLinkRequest;
 import com.princely.shopmanager.aggregator.dto.TenantRegistrationRequest;
 import com.princely.shopmanager.aggregator.dto.TenantRegistrationResponse;
 import com.princely.shopmanager.aggregator.service.CloudTenantService;
+import com.princely.shopmanager.embedded.dto.VersionInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,9 +13,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * Cloud Aggregator API Controller.
@@ -30,6 +34,12 @@ import org.springframework.web.bind.annotation.*;
 public class AggregatorController {
 
     private final CloudTenantService cloudTenantService;
+
+    @Value("${application.version:1.0.0}")
+    private String latestVersion;
+
+    @Value("${application.github-releases-url:https://github.com/mabdulwasii/retail-manager/releases}")
+    private String githubReleasesUrl;
 
     /**
      * Register a new tenant from local embedded installation.
@@ -134,5 +144,40 @@ public class AggregatorController {
     @ApiResponse(responseCode = "200", description = "Cloud aggregator API is operational")
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("Cloud aggregator API is operational");
+    }
+
+    /**
+     * Get latest available version of Shop Manager.
+     * Used by embedded installations to check for updates.
+     *
+     * GET /api/registration/latest-version
+     *
+     * @return VersionInfo with latest version details
+     */
+    @GetMapping("/latest-version")
+    @Operation(summary = "Get latest version",
+            description = "Get the latest available version of Shop Manager. " +
+                    "Used by embedded installations to check for updates.")
+    @ApiResponse(responseCode = "200", description = "Latest version information")
+    public ResponseEntity<VersionInfo> getLatestVersion() {
+        log.debug("Latest version requested");
+
+        String releaseTag = "v" + latestVersion;
+        String releaseUrl = githubReleasesUrl + "/tag/" + releaseTag;
+
+        VersionInfo versionInfo = VersionInfo.builder()
+                .version(latestVersion)
+                .releaseDate(java.time.LocalDate.now().toString())
+                .downloadUrls(Map.of(
+                        "windows", githubReleasesUrl + "/download/" + releaseTag + "/shop-manager-" + latestVersion + "-windows-x64-setup.exe",
+                        "macos", githubReleasesUrl + "/download/" + releaseTag + "/shop-manager-" + latestVersion + "-macos-x64.dmg",
+                        "linux_deb", githubReleasesUrl + "/download/" + releaseTag + "/shop-manager_" + latestVersion + "_all.deb",
+                        "linux_rpm", githubReleasesUrl + "/download/" + releaseTag + "/shop-manager-" + latestVersion + "-1.x86_64.rpm",
+                        "linux_appimage", githubReleasesUrl + "/download/" + releaseTag + "/shop-manager-" + latestVersion + "-x86_64.AppImage"
+                ))
+                .releaseNotes(releaseUrl)
+                .build();
+
+        return ResponseEntity.ok(versionInfo);
     }
 }

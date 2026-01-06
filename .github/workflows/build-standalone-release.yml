@@ -39,6 +39,20 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Configure Maven settings
+        run: |
+          mkdir -p ~/.m2
+          cp .github/maven-settings.xml ~/.m2/settings.xml
+          echo "✅ Maven settings configured with Google CDN mirror"
+
       - name: Get version
         id: get_version
         run: |
@@ -66,8 +80,33 @@ jobs:
       - name: Build embedded JAR
         run: |
           cd backend
-          mvn clean package -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}
-          echo "✅ Embedded JAR built successfully"
+          # Retry logic for Maven Central intermittent 403 errors
+          for i in {1..3}; do
+            echo "Build attempt $i of 3..."
+            if mvn clean package -s ../.github/maven-settings.xml -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }} -Djava.net.preferIPv4Stack=true; then
+              echo "✅ Embedded JAR built successfully"
+              # Verify JAR exists with correct name
+              JAR_FILE="target/shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar"
+              if [ -f "$JAR_FILE" ]; then
+                echo "✅ Verified JAR: $JAR_FILE"
+                ls -lh "$JAR_FILE"
+              else
+                echo "❌ Expected JAR not found: $JAR_FILE"
+                echo "Files in target:"
+                ls -lh target/*.jar || echo "No JAR files found"
+                exit 1
+              fi
+              break
+            else
+              if [ $i -lt 3 ]; then
+                echo "Build failed, retrying in 30 seconds..."
+                sleep 30
+              else
+                echo "❌ Build failed after 3 attempts"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Upload embedded JAR artifact
         uses: actions/upload-artifact@v4
@@ -318,6 +357,57 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Build Linux Packages (.deb, .rpm, AppImage)
+  build-linux-packages-native:
+    name: Build Linux Packages (Native)
+    runs-on: ubuntu-latest
+    needs: [create-release, build-embedded-jar]
+    permissions:
+      contents: write
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download embedded JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: embedded-jar
+          path: backend/target/
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg rpm
+
+      - name: Build Linux packages
+        run: |
+          cd installers/linux
+          chmod +x build-packages.sh
+          ./build-packages.sh
+        env:
+          APP_VERSION: ${{ needs.create-release.outputs.version }}
+          JAR_VERSION: ${{ needs.create-release.outputs.version }}
+
+      - name: Upload Linux packages
+        run: |
+          cd build/installers/linux
+          for pkg in *.deb *.rpm *.tar.gz; do
+            if [ -f "$pkg" ]; then
+              gh release upload v${{ needs.create-release.outputs.version }} "$pkg" --clobber
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Upload Embedded JAR
   upload-embedded-jar:
     name: Upload Embedded JAR to Release
@@ -359,7 +449,7 @@ jobs:
   publish-release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [create-release, build-docker-compose-lite, build-windows-installer, build-macos-installer, upload-embedded-jar]
+    needs: [create-release, build-docker-compose-lite, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar]
     permissions:
       contents: write
     if: |

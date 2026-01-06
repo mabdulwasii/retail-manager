@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+          https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+  <!--
+    Maven Settings for GitHub Actions
+
+    Purpose: Configure Maven Central with CDN mirror and aggressive retry to handle 403 errors
+    Strategy: Use Google CDN mirror (official, reliable) + aggressive retry as fallback
+  -->
+
+  <mirrors>
+    <!-- Google CDN mirror - official, CDN-backed, more reliable on GitHub Actions -->
+    <mirror>
+      <id>central-google</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven-central.storage-download.googleapis.com/maven2</url>
+    </mirror>
+  </mirrors>
+
+  <profiles>
+    <!-- GitHub Actions optimized profile -->
+    <profile>
+      <id>github-actions</id>
+      <properties>
+        <!-- HTTP retry configuration (aggressive) -->
+        <maven.wagon.http.retryHandler.count>5</maven.wagon.http.retryHandler.count>
+        <maven.wagon.http.retryHandler.requestSentEnabled>true</maven.wagon.http.retryHandler.requestSentEnabled>
+        <maven.wagon.http.retryHandler.nonRetryableClasses></maven.wagon.http.retryHandler.nonRetryableClasses>
+
+        <!-- Connection pooling -->
+        <maven.wagon.httpconnectionManager.ttlSeconds>120</maven.wagon.httpconnectionManager.ttlSeconds>
+        <maven.wagon.httpconnectionManager.maxPerRoute>20</maven.wagon.httpconnectionManager.maxPerRoute>
+        <maven.wagon.httpconnectionManager.maxTotal>40</maven.wagon.httpconnectionManager.maxTotal>
+        <maven.wagon.http.pool>true</maven.wagon.http.pool>
+
+        <!-- Timeout configuration (in milliseconds) -->
+        <maven.wagon.http.connectionTimeout>30000</maven.wagon.http.connectionTimeout>
+        <maven.wagon.http.readTimeout>180000</maven.wagon.http.readTimeout>
+
+        <!-- SSL/TLS -->
+        <maven.wagon.http.ssl.insecure>false</maven.wagon.http.ssl.insecure>
+        <maven.wagon.http.ssl.allowall>false</maven.wagon.http.ssl.allowall>
+      </properties>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>github-actions</activeProfile>
+  </activeProfiles>
+</settings>

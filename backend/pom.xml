@@ -706,6 +706,7 @@
                 <spring.profiles.active>embedded</spring.profiles.active>
             </properties>
             <build>
+                <finalName>${project.artifactId}-${revision}</finalName>
                 <plugins>
                     <!-- Copy frontend static files to backend resources -->
                     <plugin>

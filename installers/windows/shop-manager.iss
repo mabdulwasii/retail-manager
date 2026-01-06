@@ -130,6 +130,8 @@ Filename: "{app}\uninstall-service.bat"; RunOnceId: "StopService"; Flags: runhid
 var
   JavaVersionPage: TInputOptionWizardPage;
   EnvConfigPage: TInputQueryWizardPage;
+  CloudSyncPage: TInputOptionWizardPage;
+  CloudApiKeyPage: TInputQueryWizardPage;
   JavaFound: Boolean;
   JavaVersion: String;
   JavaPath: String;
@@ -205,6 +207,41 @@ begin
 
   EnvConfigPage.Add('Generate JWT Secret automatically', True);
   EnvConfigPage.Values[4] := 'Yes';
+
+  // Cloud Sync configuration page
+  CloudSyncPage := CreateInputOptionPage(EnvConfigPage.ID,
+    'Cloud Sync Configuration',
+    'Optional: Connect to cloud aggregator for multi-shop analytics',
+    'Cloud sync allows you to aggregate data from multiple shops. You can configure this later in the application settings.',
+    True, False);
+
+  CloudSyncPage.Add('Do not enable cloud sync (run standalone)');
+  CloudSyncPage.Add('Register new cloud account (auto-generate API key)');
+  CloudSyncPage.Add('Use existing API key (link to existing cloud account)');
+  CloudSyncPage.Values[0] := True;  // Default to standalone
+
+  // Cloud API Key page (shown only if "Use existing API key" is selected)
+  CloudApiKeyPage := CreateInputQueryPage(CloudSyncPage.ID,
+    'Cloud API Key',
+    'Enter your existing cloud API key',
+    'If you already have a cloud account, enter your API key below. You can find this in your cloud account settings.');
+
+  CloudApiKeyPage.Add('API Key (format: rhq_...):', False);
+  CloudApiKeyPage.Values[0] := '';
+
+  CloudApiKeyPage.Add('Cloud API URL (optional, leave blank for default):', False);
+  CloudApiKeyPage.Values[1] := 'https://api.retailhq.app';
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+
+  // Skip CloudApiKeyPage unless "Use existing API key" is selected
+  if PageID = CloudApiKeyPage.ID then
+  begin
+    Result := not CloudSyncPage.Values[2];  // Show only if option 2 (existing API key) is selected
+  end;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -221,6 +258,22 @@ begin
       ShellExec('open', 'https://adoptium.net/temurin/releases/?version=21', '', '', SW_SHOW, ewNoWait, ErrorCode);
       Result := False;
       MsgBox('Please download and install Java 21, then restart this installer.', mbInformation, MB_OK);
+    end;
+  end;
+
+  // Validate API key format if using existing key
+  if CurPageID = CloudApiKeyPage.ID then
+  begin
+    if CloudApiKeyPage.Values[0] <> '' then
+    begin
+      if Pos('rhq_', CloudApiKeyPage.Values[0]) <> 1 then
+      begin
+        MsgBox('Invalid API key format. API keys must start with "rhq_".', mbError, MB_OK);
+        Result := False;
+      end;
+    end else begin
+      MsgBox('Please enter an API key or go back and select a different option.', mbError, MB_OK);
+      Result := False;
     end;
   end;
 end;
@@ -263,6 +316,28 @@ begin
           DeleteFile(TempFile);
         end;
       end;
+
+      // Configure cloud sync based on user selection
+      if CloudSyncPage.Values[1] then
+      begin
+        // Option 1: Register new account (will be handled by application on first run)
+        StringChangeEx(EnvContent[33], 'CLOUD_SYNC_REQUIRED=false', 'CLOUD_SYNC_REQUIRED=true', True);
+        StringChangeEx(EnvContent[34], 'CLOUD_API_KEY=', 'CLOUD_API_KEY=AUTO_REGISTER', True);
+      end
+      else if CloudSyncPage.Values[2] then
+      begin
+        // Option 2: Use existing API key
+        StringChangeEx(EnvContent[33], 'CLOUD_SYNC_REQUIRED=false', 'CLOUD_SYNC_REQUIRED=true', True);
+        StringChangeEx(EnvContent[34], 'CLOUD_API_KEY=', 'CLOUD_API_KEY=' + CloudApiKeyPage.Values[0], True);
+
+        // Update cloud API URL if provided
+        if CloudApiKeyPage.Values[1] <> '' then
+        begin
+          StringChangeEx(EnvContent[32], 'CLOUD_REGISTRATION_URL=https://api.retailhq.app',
+            'CLOUD_REGISTRATION_URL=' + CloudApiKeyPage.Values[1], True);
+        end;
+      end;
+      // Option 0: Standalone mode (no changes needed, defaults are fine)
 
       SaveStringsToFile(EnvFile, EnvContent, False);
     end;
