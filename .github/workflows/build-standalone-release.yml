@@ -125,10 +125,15 @@ jobs:
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
             echo "📋 Manual trigger - Version: $VERSION"
-          else
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             # Extract version from tag (refs/tags/v1.2.3 → 1.2.3)
             VERSION="${GITHUB_REF#refs/tags/v}"
             echo "🏷️  Tag trigger - Version: $VERSION"
+          else
+            echo "❌ Error: Unable to determine version"
+            echo "GITHUB_REF=$GITHUB_REF"
+            echo "Event: ${{ github.event_name }}"
+            exit 1
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
