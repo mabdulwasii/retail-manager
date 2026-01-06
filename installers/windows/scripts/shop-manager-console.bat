@@ -99,9 +99,14 @@ echo        Cloud Sync: %CLOUD_SYNC_ENABLED%
 echo.
 
 REM Find the JAR file (supports any version)
-for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do set "JAR_FILE=%%f"
+set "JAR_FILE="
+for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do (
+    set "JAR_FILE=%%f"
+    goto :jar_found_console
+)
 
-if not exist "%JAR_FILE%" (
+:jar_found_console
+if not defined JAR_FILE (
     echo [ERROR] Shop Manager JAR file not found in %APP_DIR%\lib
     echo [ERROR] Expected: shop-manager-*-embedded.jar
     echo.
