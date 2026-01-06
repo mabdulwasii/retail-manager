@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
@@ -35,10 +36,10 @@ class UpdateControllerTest {
     void setUp() {
         testPrincipal = JwtPrincipal.builder()
                 .userId("user-123")
-                .username("admin")
+                .preferredUsername("admin")
                 .tenantId("tenant-456")
                 .shopId("shop-789")
-                .authorities(java.util.Set.of("SYSTEM_ADMIN"))
+                .roles(List.of("SYSTEM_ADMIN"))
                 .build();
     }
 
@@ -195,10 +196,10 @@ class UpdateControllerTest {
         // Arrange - TENANT_ADMIN role
         JwtPrincipal tenantAdmin = JwtPrincipal.builder()
                 .userId("user-456")
-                .username("tenant-admin")
+                .preferredUsername("tenant-admin")
                 .tenantId("tenant-456")
                 .shopId("shop-789")
-                .authorities(java.util.Set.of("TENANT_ADMIN"))
+                .roles(List.of("TENANT_ADMIN"))
                 .build();
 
         UpdateCheckResponse response = UpdateCheckResponse.builder()
