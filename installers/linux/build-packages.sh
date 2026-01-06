@@ -16,10 +16,11 @@ NC='\033[0m'
 
 # Configuration
 APP_NAME="shop-manager"
-APP_VERSION="1.0.0"
+APP_VERSION="${APP_VERSION:-1.0.0}"
+JAR_VERSION="${JAR_VERSION:-1.0.0-SNAPSHOT}"
 APP_DESCRIPTION="Retail Management Platform"
 MAINTAINER="Princely Software <support@shopmanager.com>"
-JAR_FILE="../../backend/target/shop-manager-1.0.0-SNAPSHOT-embedded.jar"
+JAR_FILE="../../backend/target/shop-manager-${JAR_VERSION}-embedded.jar"
 OUTPUT_DIR="../../build/installers/linux"
 
 # Functions
