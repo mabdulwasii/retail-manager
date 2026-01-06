@@ -66,9 +66,29 @@ check_running() {
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if ps -p "$OLD_PID" > /dev/null 2>&1; then
-            osascript -e 'display dialog "Shop Manager is already running.\n\nAccess it at: http://localhost:'"$BACKEND_PORT"'" buttons {"OK"} default button "OK" with icon note with title "Shop Manager"'
-            exit 0
+            # Ask user if they want to restart
+            RESPONSE=$(osascript -e 'display dialog "Shop Manager is already running at:\nhttp://localhost:'"$BACKEND_PORT"'\n\nDo you want to restart it?" buttons {"Cancel", "Access Current", "Restart"} default button "Access Current" with icon note with title "Shop Manager"' 2>&1)
+
+            if [[ "$RESPONSE" == *"Restart"* ]]; then
+                # Stop the existing instance
+                kill "$OLD_PID" 2>/dev/null
+                sleep 2
+                # Force kill if still running
+                if ps -p "$OLD_PID" > /dev/null 2>&1; then
+                    kill -9 "$OLD_PID" 2>/dev/null
+                    sleep 1
+                fi
+                rm "$PID_FILE"
+            elif [[ "$RESPONSE" == *"Access Current"* ]]; then
+                # Open browser to existing instance
+                open "http://localhost:$BACKEND_PORT"
+                exit 0
+            else
+                # User cancelled
+                exit 0
+            fi
         else
+            # Stale PID file
             rm "$PID_FILE"
         fi
     fi
