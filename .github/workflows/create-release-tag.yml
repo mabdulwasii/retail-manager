@@ -5,6 +5,9 @@ on:
     types: [closed]
     branches: [main]
 
+permissions:
+  contents: write  # Required to create and push tags
+
 jobs:
   create-tag:
     name: Calculate Version and Create Tag
@@ -21,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history and tags
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true  # Keep credentials for push
 
       - name: Calculate next version
         id: version
