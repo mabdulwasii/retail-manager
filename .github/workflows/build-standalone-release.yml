@@ -274,20 +274,20 @@ jobs:
       - name: Build backend lite image
         run: |
           cd backend
-          docker build -f Dockerfile.lite -t shop-manager-backend-lite:${{ needs.create-release.outputs.version }} .
-          docker tag shop-manager-backend-lite:${{ needs.create-release.outputs.version }} shop-manager-backend-lite:latest
+          docker build -f Dockerfile.lite -t shop-manager-backend-lite:${{ steps.get_version.outputs.version }} .
+          docker tag shop-manager-backend-lite:${{ steps.get_version.outputs.version }} shop-manager-backend-lite:latest
 
       - name: Build frontend lite image
         run: |
           cd frontend
-          docker build -f Dockerfile.lite -t shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} .
-          docker tag shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} shop-manager-frontend-lite:latest
+          docker build -f Dockerfile.lite -t shop-manager-frontend-lite:${{ steps.get_version.outputs.version }} .
+          docker tag shop-manager-frontend-lite:${{ steps.get_version.outputs.version }} shop-manager-frontend-lite:latest
 
       - name: Save Docker images
         run: |
           mkdir -p build/installers/docker-lite
-          docker save shop-manager-backend-lite:${{ needs.create-release.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-backend-lite-${{ needs.create-release.outputs.version }}.tar.gz
-          docker save shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-frontend-lite-${{ needs.create-release.outputs.version }}.tar.gz
+          docker save shop-manager-backend-lite:${{ steps.get_version.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-backend-lite-${{ steps.get_version.outputs.version }}.tar.gz
+          docker save shop-manager-frontend-lite:${{ steps.get_version.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-frontend-lite-${{ steps.get_version.outputs.version }}.tar.gz
 
       - name: Create Docker Lite package
         run: |
@@ -296,14 +296,14 @@ jobs:
           cp ../../../.env.lite.template .
           cp ../../../lite-init.sh .
           cp -r ../../../docs .
-          tar -czf shop-manager-docker-lite-${{ needs.create-release.outputs.version }}.tar.gz *
+          tar -czf shop-manager-docker-lite-${{ steps.get_version.outputs.version }}.tar.gz *
 
       - name: Upload Docker Lite package
         run: |
           cd build/installers/docker-lite
           for file in *.tar.gz; do
             if [ -f "$file" ]; then
-              gh release upload v${{ needs.create-release.outputs.version }} "$file" --clobber
+              gh release upload v${{ steps.get_version.outputs.version }} "$file" --clobber
             fi
           done
         env:

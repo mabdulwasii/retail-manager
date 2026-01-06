@@ -42,7 +42,8 @@ class ArchitectureTest {
                 "org.springframework..",
                 "org.keycloak..",
                 "org.slf4j..",
-                "lombok.."
+                "lombok..",
+                "com.fasterxml.jackson.."
             );
 
     @ArchTest
