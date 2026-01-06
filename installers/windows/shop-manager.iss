@@ -278,6 +278,26 @@ begin
   end;
 end;
 
+// Stop running Shop Manager processes before installation
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+
+  // Try to stop Shop Manager service if it's running
+  if Exec('cmd.exe', '/c net stop "Shop Manager" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Sleep(2000); // Wait for service to stop
+  end;
+
+  // Kill any running java processes with shop-manager JAR
+  Exec('cmd.exe', '/c taskkill /F /FI "WINDOWTITLE eq Shop Manager*" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('cmd.exe', '/c taskkill /F /FI "IMAGENAME eq javaw.exe" /FI "MEMUSAGE gt 50000" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Sleep(1000); // Wait for processes to terminate
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   EnvFile: String;
