@@ -14,10 +14,47 @@ set "APP_DIR=%APP_DIR:~0,-1%"
 REM Check Java installation
 where java >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo Java is not installed or not in PATH
-    echo Please install Java 21 or higher from https://adoptium.net
+    REM Try to find Java in common installation locations
+    set "JAVA_CMD="
+
+    REM Check Program Files
+    for /d %%d in ("%ProgramFiles%\Java\jdk-*", "%ProgramFiles%\Eclipse Adoptium\jdk-*", "%ProgramFiles%\Temurin\jdk-*") do (
+        if exist "%%d\bin\java.exe" (
+            set "JAVA_CMD=%%d\bin\java.exe"
+            goto :java_found
+        )
+    )
+
+    REM Check Program Files (x86)
+    for /d %%d in ("%ProgramFiles(x86)%\Java\jdk-*", "%ProgramFiles(x86)%\Eclipse Adoptium\jdk-*") do (
+        if exist "%%d\bin\java.exe" (
+            set "JAVA_CMD=%%d\bin\java.exe"
+            goto :java_found
+        )
+    )
+
+    REM Java not found anywhere
+    echo.
+    echo ========================================
+    echo ERROR: Java not found
+    echo ========================================
+    echo.
+    echo Java 21 or higher is required to run Shop Manager.
+    echo.
+    echo Please install Java from:
+    echo https://adoptium.net/temurin/releases/?version=21
+    echo.
+    echo After installation, either:
+    echo 1. Add Java to your PATH environment variable
+    echo 2. Or run this installer again
+    echo.
     pause
     exit /b 1
+
+    :java_found
+    set "JAVA=!JAVA_CMD!"
+) else (
+    set "JAVA=java"
 )
 
 REM Load environment variables
@@ -51,8 +88,15 @@ if not exist "%JAR_FILE%" (
 
 echo Starting Shop Manager from: %JAR_FILE%
 
+REM Determine javaw path (for windowless execution)
+if "%JAVA%"=="java" (
+    set "JAVAW=javaw"
+) else (
+    set "JAVAW=%JAVA:java.exe=javaw.exe%"
+)
+
 REM Launch application (no console window)
-start "Shop Manager" /B javaw %JAVA_OPTS% ^
+start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^

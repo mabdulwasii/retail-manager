@@ -19,16 +19,53 @@ echo.
 REM Check Java installation
 where java >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Java is not installed or not in PATH
-    echo [ERROR] Please install Java 21 or higher from https://adoptium.net
+    echo [WARN] Java not found in PATH, searching common locations...
+    set "JAVA_CMD="
+
+    REM Check Program Files
+    for /d %%d in ("%ProgramFiles%\Java\jdk-*", "%ProgramFiles%\Eclipse Adoptium\jdk-*", "%ProgramFiles%\Temurin\jdk-*") do (
+        if exist "%%d\bin\java.exe" (
+            set "JAVA_CMD=%%d\bin\java.exe"
+            goto :java_found_console
+        )
+    )
+
+    REM Check Program Files (x86)
+    for /d %%d in ("%ProgramFiles(x86)%\Java\jdk-*", "%ProgramFiles(x86)%\Eclipse Adoptium\jdk-*") do (
+        if exist "%%d\bin\java.exe" (
+            set "JAVA_CMD=%%d\bin\java.exe"
+            goto :java_found_console
+        )
+    )
+
+    REM Java not found
+    echo.
+    echo [ERROR] ========================================
+    echo [ERROR] Java not found
+    echo [ERROR] ========================================
+    echo.
+    echo [ERROR] Java 21 or higher is required to run Shop Manager.
+    echo.
+    echo [INFO] Please install Java from:
+    echo [INFO] https://adoptium.net/temurin/releases/?version=21
+    echo.
+    echo [INFO] After installation:
+    echo [INFO] 1. Add Java to your PATH environment variable
+    echo [INFO] 2. Or run this launcher again
     echo.
     pause
     exit /b 1
+
+    :java_found_console
+    set "JAVA=!JAVA_CMD!"
+    echo [INFO] Found Java at: !JAVA!
+) else (
+    set "JAVA=java"
 )
 
 REM Display Java version
 echo [INFO] Checking Java version...
-java -version 2>&1 | findstr "version"
+"%JAVA%" -version 2>&1 | findstr "version"
 echo.
 
 REM Load environment variables
@@ -79,7 +116,7 @@ echo ========================================================================
 echo.
 
 REM Launch application with console output
-java %JAVA_OPTS% ^
+"%JAVA%" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
