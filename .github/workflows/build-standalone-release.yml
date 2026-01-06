@@ -217,6 +217,51 @@ jobs:
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag (PR trigger only)
+        if: github.event_name == 'pull_request'
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create annotated tag
+          git tag -a "$TAG" -m "Release $TAG"
+
+          # Push tag
+          git push origin "$TAG"
+
+          echo "✅ Created and pushed tag: $TAG"
+
+      - name: Create GitHub Release
+        id: create_release
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          TAG="v$VERSION"
+
+          # Create draft release
+          gh release create "$TAG" \
+            --draft \
+            --title "Shop Manager v$VERSION" \
+            --notes "Release v$VERSION
+
+          Built from commit: ${{ github.sha }}
+
+          ## Downloads
+          - Windows Installer (.exe)
+          - macOS Installer (.dmg)
+          - Linux Packages (.deb, .rpm, AppImage)
+          - Embedded JAR
+          - Docker Compose Lite
+
+          See full changelog and installation instructions in the documentation."
+
+          echo "✅ Created draft release: $TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
