@@ -267,6 +267,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Clean target directory
+        run: |
+          echo "Cleaning backend/target directory..."
+          rm -rf backend/target/*.jar || true
+          mkdir -p backend/target
+          echo "✅ Target directory cleaned"
+
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
@@ -334,6 +341,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean target directory
+        shell: bash
+        run: |
+          echo "Cleaning backend/target directory..."
+          rm -rf backend/target/*.jar || true
+          mkdir -p backend/target
+          echo "✅ Target directory cleaned"
+
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
@@ -345,11 +360,17 @@ jobs:
         run: |
           echo "Checking for JAR file..."
           ls -lh backend/target/
-          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
-          if [ -z "$JAR_FILE" ]; then
+          JAR_COUNT=$(find backend/target -name "shop-manager-*-embedded.jar" | wc -l)
+          if [ "$JAR_COUNT" -eq 0 ]; then
             echo "❌ ERROR: Embedded JAR not found in backend/target/"
             exit 1
+          elif [ "$JAR_COUNT" -gt 1 ]; then
+            echo "⚠️  WARNING: Multiple JAR files found!"
+            find backend/target -name "shop-manager-*-embedded.jar"
+            echo "❌ ERROR: Only one JAR file should be present"
+            exit 1
           fi
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
           echo "✅ Found JAR: $JAR_FILE"
 
       - name: Install Inno Setup
@@ -393,6 +414,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean target directory
+        run: |
+          echo "Cleaning backend/target directory..."
+          rm -rf backend/target/*.jar || true
+          mkdir -p backend/target
+          echo "✅ Target directory cleaned"
+
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
@@ -403,11 +431,17 @@ jobs:
         run: |
           echo "Checking for JAR file..."
           ls -lh backend/target/
-          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
-          if [ -z "$JAR_FILE" ]; then
+          JAR_COUNT=$(find backend/target -name "shop-manager-*-embedded.jar" | wc -l)
+          if [ "$JAR_COUNT" -eq 0 ]; then
             echo "❌ ERROR: Embedded JAR not found in backend/target/"
             exit 1
+          elif [ "$JAR_COUNT" -gt 1 ]; then
+            echo "⚠️  WARNING: Multiple JAR files found!"
+            find backend/target -name "shop-manager-*-embedded.jar"
+            echo "❌ ERROR: Only one JAR file should be present"
+            exit 1
           fi
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
           echo "✅ Found JAR: $JAR_FILE"
 
       - name: Install create-dmg
@@ -455,6 +489,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean target directory
+        run: |
+          echo "Cleaning backend/target directory..."
+          rm -rf backend/target/*.jar || true
+          mkdir -p backend/target
+          echo "✅ Target directory cleaned"
+
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
@@ -465,11 +506,17 @@ jobs:
         run: |
           echo "Checking for JAR file..."
           ls -lh backend/target/
-          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
-          if [ -z "$JAR_FILE" ]; then
+          JAR_COUNT=$(find backend/target -name "shop-manager-*-embedded.jar" | wc -l)
+          if [ "$JAR_COUNT" -eq 0 ]; then
             echo "❌ ERROR: Embedded JAR not found in backend/target/"
             exit 1
+          elif [ "$JAR_COUNT" -gt 1 ]; then
+            echo "⚠️  WARNING: Multiple JAR files found!"
+            find backend/target -name "shop-manager-*-embedded.jar"
+            echo "❌ ERROR: Only one JAR file should be present"
+            exit 1
           fi
+          JAR_FILE=$(find backend/target -name "shop-manager-*-embedded.jar" | head -1)
           echo "✅ Found JAR: $JAR_FILE"
 
       - name: Install build tools
@@ -517,6 +564,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Clean artifacts directory
+        run: |
+          echo "Cleaning artifacts directory..."
+          rm -rf ./artifacts/*.jar || true
+          mkdir -p ./artifacts
+          echo "✅ Artifacts directory cleaned"
 
       - name: Download embedded JAR artifact
         uses: actions/download-artifact@v4

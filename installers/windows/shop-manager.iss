@@ -283,6 +283,8 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
   UserProfile: String;
+  AppPath: String;
+  FindRec: TFindRec;
 begin
   Result := '';
 
@@ -308,6 +310,25 @@ begin
   Exec('cmd.exe', '/c taskkill /F /FI "WINDOWTITLE eq *postgres*" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Sleep(1000); // Wait for PostgreSQL to terminate
+
+  // Clean up old JAR files from previous installations
+  AppPath := ExpandConstant('{app}');
+  if DirExists(AppPath + '\lib') then
+  begin
+    Log('Cleaning old JAR files from: ' + AppPath + '\lib');
+    if FindFirst(AppPath + '\lib\shop-manager-*-embedded.jar', FindRec) then
+    begin
+      try
+        repeat
+          Log('Deleting old JAR: ' + FindRec.Name);
+          DeleteFile(AppPath + '\lib\' + FindRec.Name);
+        until not FindNext(FindRec);
+      finally
+        FindClose(FindRec);
+      end;
+      Log('Old JAR files cleaned up');
+    end;
+  end;
 
   // Clean up PID and lock files
   UserProfile := GetEnv('USERPROFILE');

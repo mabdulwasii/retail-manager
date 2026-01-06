@@ -122,12 +122,22 @@ check_ports() {
 
 # Function to start application
 start_application() {
-    # Find the JAR file (supports any version)
-    JAR_FILE=$(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | head -1)
+    # Find all JAR files and pick the highest version
+    JAR_FILES=($(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r))
+    JAR_COUNT=${#JAR_FILES[@]}
 
-    if [ -z "$JAR_FILE" ]; then
+    if [ "$JAR_COUNT" -eq 0 ]; then
         osascript -e 'display dialog "Shop Manager JAR file not found in:\n'"$APP_DIR"'\n\nExpected: shop-manager-*-embedded.jar" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
         exit 1
+    fi
+
+    # Use the first (highest version) JAR
+    JAR_FILE="${JAR_FILES[0]}"
+
+    # Warn if multiple JARs found
+    if [ "$JAR_COUNT" -gt 1 ]; then
+        osascript -e 'display dialog "Warning: Found '"$JAR_COUNT"' JAR files.\n\nUsing latest:\n'"$(basename "$JAR_FILE")"'\n\nThis may indicate an incomplete upgrade.\nConsider reinstalling Shop Manager." buttons {"Continue"} default button "Continue" with icon caution with title "Shop Manager - Multiple Versions"' &
+        # Don't wait for user to dismiss - continue launching
     fi
 
     LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"
