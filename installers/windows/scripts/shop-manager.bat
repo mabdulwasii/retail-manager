@@ -39,6 +39,18 @@ if not exist "%APP_DIR%\data\logs" mkdir "%APP_DIR%\data\logs"
 REM Set Spring profile
 set SPRING_PROFILES_ACTIVE=embedded
 
+REM Find the JAR file (supports any version)
+for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do set "JAR_FILE=%%f"
+
+if not exist "%JAR_FILE%" (
+    echo ERROR: Shop Manager JAR file not found in %APP_DIR%\lib
+    echo Expected: shop-manager-*-embedded.jar
+    pause
+    exit /b 1
+)
+
+echo Starting Shop Manager from: %JAR_FILE%
+
 REM Launch application (no console window)
 start "Shop Manager" /B javaw %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
@@ -48,7 +60,7 @@ start "Shop Manager" /B javaw %JAVA_OPTS% ^
     -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
     -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
     -Dapplication.sync.store-id=%STORE_ID% ^
-    -jar "%APP_DIR%\lib\shop-manager-1.0.0-SNAPSHOT-embedded.jar"
+    -jar "%JAR_FILE%"
 
 REM Wait a moment and check if application started
 timeout /t 5 /nobreak >nul

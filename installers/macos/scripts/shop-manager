@@ -76,6 +76,16 @@ check_running() {
 
 # Function to start application
 start_application() {
+    # Find the JAR file (supports any version)
+    JAR_FILE=$(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | head -1)
+
+    if [ -z "$JAR_FILE" ]; then
+        osascript -e 'display dialog "Shop Manager JAR file not found in:\n'"$APP_DIR"'\n\nExpected: shop-manager-*-embedded.jar" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
+        exit 1
+    fi
+
+    echo "Starting Shop Manager from: $JAR_FILE" >> "$HOME/.shopmanager/data/logs/shop-manager.log"
+
     # Change to user's data directory
     cd "$HOME/.shopmanager/data"
 
@@ -89,7 +99,7 @@ start_application() {
         -Dapplication.sync.api-key="$CLOUD_API_KEY" \
         -Dapplication.sync.store-id="$STORE_ID" \
         -Dspring.config.additional-location="file:$APP_DIR/config/application.yml" \
-        -jar "$APP_DIR/shop-manager.jar" \
+        -jar "$JAR_FILE" \
         > "$HOME/.shopmanager/data/logs/shop-manager.log" 2>&1 &
 
     # Save PID

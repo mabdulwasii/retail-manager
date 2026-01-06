@@ -61,6 +61,18 @@ echo        Data Directory: %APP_DIR%\data
 echo        Cloud Sync: %CLOUD_SYNC_ENABLED%
 echo.
 
+REM Find the JAR file (supports any version)
+for %%f in ("%APP_DIR%\lib\shop-manager-*-embedded.jar") do set "JAR_FILE=%%f"
+
+if not exist "%JAR_FILE%" (
+    echo [ERROR] Shop Manager JAR file not found in %APP_DIR%\lib
+    echo [ERROR] Expected: shop-manager-*-embedded.jar
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [INFO] JAR File: %JAR_FILE%
 echo [INFO] Starting Shop Manager...
 echo [INFO] Press Ctrl+C to stop
 echo ========================================================================
@@ -75,7 +87,7 @@ java %JAVA_OPTS% ^
     -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
     -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
     -Dapplication.sync.store-id=%STORE_ID% ^
-    -jar "%APP_DIR%\lib\shop-manager-1.0.0-SNAPSHOT-embedded.jar"
+    -jar "%JAR_FILE%"
 
 echo.
 echo ========================================================================
