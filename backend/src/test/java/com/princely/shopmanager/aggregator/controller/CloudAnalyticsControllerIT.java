@@ -13,6 +13,7 @@ import com.princely.shopmanager.sales.domain.SalesTransaction;
 import com.princely.shopmanager.sales.repository.SalesTransactionRepository;
 import com.princely.shopmanager.test.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
