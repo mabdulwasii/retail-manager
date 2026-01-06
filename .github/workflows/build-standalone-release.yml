@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*.*.*'  # Project-wide releases only (e.g., v0.1.27)
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -11,11 +14,81 @@ on:
         required: true
         default: '1.0.0'
 
+permissions:
+  contents: write  # Required for creating releases and tags
+
 jobs:
-  # Build embedded JAR (no quality checks to save GitHub Actions minutes)
+  # Step 1: Calculate version and create tag (only for PR merges)
+  calculate-version:
+    name: Calculate Version from PR
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+       contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+       contains(github.event.pull_request.labels.*.name, 'release:major'))
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_release: ${{ steps.check_tag.outputs.should_create }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Calculate next version
+        id: version
+        run: |
+          LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
+          VERSION=${LATEST_TAG#v}
+
+          echo "📌 Latest tag: $LATEST_TAG"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+          if [[ "$LABELS" == *"release:major"* ]]; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif [[ "$LABELS" == *"release:minor"* ]]; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "✅ New version: $NEW_VERSION"
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "⚠️  Tag $TAG already exists, skipping release"
+            echo "should_create=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Tag $TAG does not exist, will create release"
+            echo "should_create=true" >> $GITHUB_OUTPUT
+          fi
+
+  # Step 2: Build embedded JAR
   build-embedded-jar:
     name: Build Embedded JAR
     runs-on: ubuntu-latest
+    needs: [calculate-version]
+    if: |
+      always() &&
+      (needs.calculate-version.result == 'success' ||
+       needs.calculate-version.result == 'skipped') &&
+      (needs.calculate-version.outputs.should_release != 'false')
 
     steps:
       - name: Checkout code
@@ -45,8 +118,11 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          # Version always comes from tag or manual input
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Version comes from: calculate-version job, tag, or manual input
+          if [ "${{ needs.calculate-version.outputs.version }}" != "" ]; then
+            VERSION="${{ needs.calculate-version.outputs.version }}"
+            echo "📋 PR trigger - Version: $VERSION"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
             echo "📋 Manual trigger - Version: $VERSION"
           else
@@ -104,7 +180,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-embedded-jar]
+    needs: [calculate-version, build-embedded-jar]
     permissions:
       contents: write
     if: |
@@ -128,85 +204,19 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          # Version from calculate-version job, tag, or manual input
+          if [ "${{ needs.calculate-version.outputs.version }}" != "" ]; then
+            VERSION="${{ needs.calculate-version.outputs.version }}"
+            echo "📋 PR trigger - Version: $VERSION"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "📋 Manual trigger - Version: $VERSION"
           else
-            # Get latest project-wide tag (v*.*.*) excluding module-specific tags (vbackend-v*, vfrontend-v*)
-            LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
-            VERSION=${LATEST_TAG#v}
-
-            echo "Latest tag: $LATEST_TAG"
-            echo "Version string: $VERSION"
-
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-            echo "Parsed - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
-
-            if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
-              MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
-            elif [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:minor"* ]]; then
-              MINOR=$((MINOR + 1)); PATCH=0
-            else
-              PATCH=$((PATCH + 1))
-            fi
-
-            echo "After bump - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
-            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-            echo "New version: $NEW_VERSION"
-
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            echo "🏷️  Tag trigger - Version: $VERSION"
           fi
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          release_name: Shop Manager v${{ steps.get_version.outputs.version }}
-          draft: true
-          prerelease: false
-          body: |
-            # Shop Manager v${{ steps.get_version.outputs.version }}
-
-            ## 📦 Downloads
-
-            **Windows (64-bit)**:
-            - `Shop Manager-Setup-${{ steps.get_version.outputs.version }}-Windows-x64.exe`
-
-            **macOS (Intel & Apple Silicon)**:
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-x64.dmg` - Intel
-            - `Shop Manager-${{ steps.get_version.outputs.version }}-macOS-arm64.dmg` - Apple Silicon
-
-            **Docker Compose Lite (All Platforms)**:
-            - `shop-manager-docker-lite-YYYYMMDD.tar.gz` - Lightweight Docker images with compose file
-
-            **Embedded JAR**:
-            - `shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar` - Standalone JAR with embedded PostgreSQL
-
-  # Build Docker Compose Lite Package
-  build-docker-compose-lite:
-    name: Build Docker Compose Lite
-    runs-on: ubuntu-latest
-    needs: [create-release, build-embedded-jar]
-    permissions:
-      contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Download embedded JAR
         uses: actions/download-artifact@v4
         with:
