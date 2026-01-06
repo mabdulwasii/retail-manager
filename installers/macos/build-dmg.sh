@@ -110,8 +110,8 @@ create_app_bundle() {
     mkdir -p "${APP_BUNDLE_DIR}/Contents/Resources/docs"
     print_success "Created app bundle structure"
 
-    # Copy JAR
-    cp "$JAR_FILE" "${APP_BUNDLE_DIR}/Contents/Resources/shop-manager.jar"
+    # Copy JAR (preserve original filename for version tracking)
+    cp "$JAR_FILE" "${APP_BUNDLE_DIR}/Contents/Resources/"
     print_success "Copied embedded JAR"
 
     # Copy launcher script
