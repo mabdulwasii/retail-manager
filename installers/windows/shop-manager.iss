@@ -191,14 +191,20 @@ begin
     'Configure basic settings for Shop Manager',
     'You can change these settings later by editing the .env file in the config folder.');
 
+  EnvConfigPage.Add('Shop Hostname (use .local for mDNS discovery):', False);
+  EnvConfigPage.Values[0] := 'shopmanager.local';
+
+  EnvConfigPage.Add('Shop Name:', False);
+  EnvConfigPage.Values[1] := 'Shop Manager';
+
   EnvConfigPage.Add('Backend Port:', False);
-  EnvConfigPage.Values[0] := '8081';
+  EnvConfigPage.Values[2] := '8081';
 
   EnvConfigPage.Add('Frontend Port:', False);
-  EnvConfigPage.Values[1] := '3001';
+  EnvConfigPage.Values[3] := '3001';
 
   EnvConfigPage.Add('Generate JWT Secret automatically', True);
-  EnvConfigPage.Values[2] := 'Yes';
+  EnvConfigPage.Values[4] := 'Yes';
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -236,12 +242,16 @@ begin
     begin
       LoadStringsFromFile(ExpandConstant('{app}\config\.env.template'), EnvContent);
 
+      // Set hostname and shop name
+      StringChangeEx(EnvContent[7], 'SHOP_HOSTNAME=shopmanager.local', 'SHOP_HOSTNAME=' + EnvConfigPage.Values[0], True);
+      StringChangeEx(EnvContent[8], 'SHOP_NAME=Shop Manager', 'SHOP_NAME=' + EnvConfigPage.Values[1], True);
+
       // Set ports
-      StringChangeEx(EnvContent[9], 'BACKEND_PORT=8081', 'BACKEND_PORT=' + EnvConfigPage.Values[0], True);
-      StringChangeEx(EnvContent[10], 'FRONTEND_PORT=3001', 'FRONTEND_PORT=' + EnvConfigPage.Values[1], True);
+      StringChangeEx(EnvContent[9], 'BACKEND_PORT=8081', 'BACKEND_PORT=' + EnvConfigPage.Values[2], True);
+      StringChangeEx(EnvContent[10], 'FRONTEND_PORT=3001', 'FRONTEND_PORT=' + EnvConfigPage.Values[3], True);
 
       // Generate JWT secret if requested
-      if EnvConfigPage.Values[2] = 'Yes' then
+      if EnvConfigPage.Values[4] = 'Yes' then
       begin
         TempFile := ExpandConstant('{tmp}\jwt-secret.txt');
         if Exec('powershell.exe', '-Command "[Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 })) | Out-File -FilePath ''' + TempFile + ''' -Encoding ASCII -NoNewline"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
