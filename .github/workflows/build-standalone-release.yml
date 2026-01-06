@@ -39,11 +39,35 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # Get latest project-wide tag (v*.*.*) excluding module-specific tags (vbackend-v*, vfrontend-v*)
+            LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
+              MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+            elif [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:minor"* ]]; then
+              MINOR=$((MINOR + 1)); PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build embedded JAR
         run: |
           cd backend
           chmod +x ./mvnw
-          ./mvnw clean package -Pembedded -DskipTests
+          ./mvnw clean package -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}
           echo "✅ Embedded JAR built successfully"
 
       - name: Upload embedded JAR artifact
@@ -162,18 +186,20 @@ jobs:
       - name: Build backend lite image
         run: |
           cd backend
-          docker build -f Dockerfile.lite -t shop-manager-backend-lite:latest .
+          docker build -f Dockerfile.lite -t shop-manager-backend-lite:${{ needs.create-release.outputs.version }} .
+          docker tag shop-manager-backend-lite:${{ needs.create-release.outputs.version }} shop-manager-backend-lite:latest
 
       - name: Build frontend lite image
         run: |
           cd frontend
-          docker build -f Dockerfile.lite -t shop-manager-frontend-lite:latest .
+          docker build -f Dockerfile.lite -t shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} .
+          docker tag shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} shop-manager-frontend-lite:latest
 
       - name: Save Docker images
         run: |
           mkdir -p build/installers/docker-lite
-          docker save shop-manager-backend-lite:latest | gzip > build/installers/docker-lite/shop-manager-backend-lite.tar.gz
-          docker save shop-manager-frontend-lite:latest | gzip > build/installers/docker-lite/shop-manager-frontend-lite.tar.gz
+          docker save shop-manager-backend-lite:${{ needs.create-release.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-backend-lite-${{ needs.create-release.outputs.version }}.tar.gz
+          docker save shop-manager-frontend-lite:${{ needs.create-release.outputs.version }} | gzip > build/installers/docker-lite/shop-manager-frontend-lite-${{ needs.create-release.outputs.version }}.tar.gz
 
       - name: Create Docker Lite package
         run: |
@@ -182,7 +208,7 @@ jobs:
           cp ../../../.env.lite.template .
           cp ../../../lite-init.sh .
           cp -r ../../../docs .
-          tar -czf shop-manager-docker-lite-$(date +%Y%m%d).tar.gz *
+          tar -czf shop-manager-docker-lite-${{ needs.create-release.outputs.version }}.tar.gz *
 
       - name: Upload Docker Lite package
         run: |
@@ -228,7 +254,7 @@ jobs:
       - name: Build Windows installer
         shell: powershell
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installers\windows\shop-manager.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="${{ needs.create-release.outputs.version }}" /DJarVersion="${{ needs.create-release.outputs.version }}" installers\windows\shop-manager.iss
 
       - name: Upload Windows installer artifact
         shell: bash
@@ -279,6 +305,8 @@ jobs:
           ./build-dmg.sh
         env:
           TERM: xterm
+          APP_VERSION: ${{ needs.create-release.outputs.version }}
+          JAR_VERSION: ${{ needs.create-release.outputs.version }}
 
       - name: Upload macOS DMG artifact
         run: |

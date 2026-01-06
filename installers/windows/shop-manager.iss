@@ -4,12 +4,19 @@
 ; This script creates a Windows installer (.exe) for Shop Manager Embedded
 ; ============================================================================
 
+; Allow version to be passed as command-line parameter
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
+#ifndef JarVersion
+  #define JarVersion "1.0.0-SNAPSHOT"
+#endif
+
 #define MyAppName "Shop Manager"
-#define MyAppVersion "1.0.0"
 #define MyAppPublisher "Princely Software"
 #define MyAppURL "https://github.com/yourorg/shop-manager"
 #define MyAppExeName "shop-manager.exe"
-#define JarFileName "shop-manager-1.0.0-SNAPSHOT-embedded.jar"
+#define JarFileName "shop-manager-" + JarVersion + "-embedded.jar"
 
 [Setup]
 ; App identification

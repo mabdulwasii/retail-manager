@@ -16,8 +16,9 @@ NC='\033[0m'
 
 # Configuration
 APP_NAME="Shop Manager"
-APP_VERSION="1.0.0"
-JAR_FILE="../../backend/target/shop-manager-1.0.0-SNAPSHOT-embedded.jar"
+APP_VERSION="${APP_VERSION:-1.0.0}"
+JAR_VERSION="${JAR_VERSION:-1.0.0-SNAPSHOT}"
+JAR_FILE="../../backend/target/shop-manager-${JAR_VERSION}-embedded.jar"
 DMG_OUTPUT_DIR="../../build/installers/macos"
 DMG_FILENAME="shop-manager-${APP_VERSION}-macos-x64.dmg"
 APP_BUNDLE_DIR="build/${APP_NAME}.app"
