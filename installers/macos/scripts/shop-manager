@@ -94,6 +94,32 @@ check_running() {
     fi
 }
 
+# Function to check if ports are available
+check_ports() {
+    if lsof -i ":$BACKEND_PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
+        RESPONSE=$(osascript -e 'display dialog "Port '"$BACKEND_PORT"' is already in use by another application.\n\nThis may be an old Shop Manager instance.\nWould you like to attempt to stop it?" buttons {"Cancel", "Stop Old Instance"} default button "Stop Old Instance" with icon caution with title "Shop Manager - Port Conflict"' 2>&1)
+
+        if [[ "$RESPONSE" == *"Stop Old Instance"* ]]; then
+            # Run pre-install stop script
+            if [ -f "$APP_DIR/../MacOS/../Resources/../MacOS/../Resources/../../scripts/pre-install-stop.sh" ]; then
+                bash "$APP_DIR/../scripts/pre-install-stop.sh"
+            else
+                # Manual cleanup if script not found
+                pkill -9 -f "shop-manager.*\.jar" 2>/dev/null || true
+                sleep 2
+            fi
+
+            # Check again
+            if lsof -i ":$BACKEND_PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
+                osascript -e 'display dialog "Failed to free port '"$BACKEND_PORT"'.\n\nPlease manually stop the application using that port." buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
+                exit 1
+            fi
+        else
+            exit 1
+        fi
+    fi
+}
+
 # Function to start application
 start_application() {
     # Find the JAR file (supports any version)
@@ -104,7 +130,11 @@ start_application() {
         exit 1
     fi
 
-    echo "Starting Shop Manager from: $JAR_FILE" >> "$HOME/.shopmanager/data/logs/shop-manager.log"
+    LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"
+    echo "=========================================" > "$LOG_FILE"
+    echo "Shop Manager Starting: $(date)" >> "$LOG_FILE"
+    echo "JAR: $JAR_FILE" >> "$LOG_FILE"
+    echo "=========================================" >> "$LOG_FILE"
 
     # Change to user's data directory
     cd "$HOME/.shopmanager/data"
@@ -120,24 +150,38 @@ start_application() {
         -Dapplication.sync.store-id="$STORE_ID" \
         -Dspring.config.additional-location="file:$APP_DIR/config/application.yml" \
         -jar "$JAR_FILE" \
-        > "$HOME/.shopmanager/data/logs/shop-manager.log" 2>&1 &
+        >> "$LOG_FILE" 2>&1 &
 
     # Save PID
-    echo $! > "$HOME/.shopmanager/shop-manager.pid"
+    APP_PID=$!
+    echo $APP_PID > "$HOME/.shopmanager/shop-manager.pid"
 
-    # Wait for startup
-    sleep 5
+    # Wait for startup with timeout
+    echo "Waiting for Shop Manager to start (PID: $APP_PID)..." >> "$LOG_FILE"
+    for i in {1..30}; do
+        sleep 1
 
-    # Check if application started
-    if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
-        # Open browser
-        open "http://localhost:$BACKEND_PORT"
+        # Check if process is still running
+        if ! ps -p $APP_PID > /dev/null 2>&1; then
+            # Get last 20 lines of log for error
+            TAIL_LOG=$(tail -n 20 "$LOG_FILE")
+            osascript -e 'display dialog "Shop Manager process terminated unexpectedly.\n\nRecent log:\n'"$(echo "$TAIL_LOG" | head -n 5 | tr '\n' ' ')"'\n\nFull log at:\n'"$LOG_FILE"'" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
+            exit 1
+        fi
 
-        osascript -e 'display notification "Shop Manager started successfully" with title "Shop Manager" sound name "Glass"'
-    else
-        osascript -e 'display dialog "Shop Manager failed to start.\n\nCheck logs at:\n'"$HOME/.shopmanager/data/logs/shop-manager.log"'" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
-        exit 1
-    fi
+        # Check if health endpoint is responding
+        if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+            echo "✅ Shop Manager started successfully" >> "$LOG_FILE"
+            # Open browser
+            open "http://localhost:$BACKEND_PORT"
+            osascript -e 'display notification "Shop Manager started successfully" with title "Shop Manager" sound name "Glass"'
+            return 0
+        fi
+    done
+
+    # Timeout - failed to start
+    TAIL_LOG=$(tail -n 30 "$LOG_FILE")
+    osascript -e 'display dialog "Shop Manager failed to start within 30 seconds.\n\nThe application may still be initializing.\nCheck:\n'"$LOG_FILE"'\n\nProcess (PID '"$APP_PID"') is still running." buttons {"OK"} default button "OK" with icon caution with title "Shop Manager - Startup Timeout"'
 }
 
 # Main execution
@@ -146,6 +190,7 @@ main() {
     load_env
     create_data_dirs
     check_running
+    check_ports
     start_application
 }
 

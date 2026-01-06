@@ -282,20 +282,52 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
+  UserProfile: String;
 begin
   Result := '';
+
+  Log('Preparing to install - stopping running Shop Manager instances');
 
   // Try to stop Shop Manager service if it's running
   if Exec('cmd.exe', '/c net stop "Shop Manager" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
+    Log('Shop Manager service stopped');
     Sleep(2000); // Wait for service to stop
   end;
 
   // Kill any running java processes with shop-manager JAR
+  Log('Stopping Shop Manager Java processes');
   Exec('cmd.exe', '/c taskkill /F /FI "WINDOWTITLE eq Shop Manager*" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Exec('cmd.exe', '/c taskkill /F /FI "IMAGENAME eq javaw.exe" /FI "MEMUSAGE gt 50000" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
-  Sleep(1000); // Wait for processes to terminate
+  Sleep(2000); // Wait for Java processes to terminate
+
+  // Stop embedded PostgreSQL processes
+  Log('Stopping embedded PostgreSQL processes');
+  Exec('cmd.exe', '/c taskkill /F /FI "IMAGENAME eq postgres.exe" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('cmd.exe', '/c taskkill /F /FI "WINDOWTITLE eq *postgres*" 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Sleep(1000); // Wait for PostgreSQL to terminate
+
+  // Clean up PID and lock files
+  UserProfile := GetEnv('USERPROFILE');
+  Log('Cleaning up lock files in: ' + UserProfile);
+
+  // Delete PID files
+  if FileExists(UserProfile + '\.shopmanager\shop-manager.pid') then
+  begin
+    DeleteFile(UserProfile + '\.shopmanager\shop-manager.pid');
+    Log('Removed shop-manager.pid');
+  end;
+
+  if FileExists(UserProfile + '\.shopmanager\data\postgres\postmaster.pid') then
+  begin
+    DeleteFile(UserProfile + '\.shopmanager\data\postgres\postmaster.pid');
+    Log('Removed postmaster.pid');
+  end;
+
+  Sleep(1000); // Final wait before installation proceeds
+  Log('Pre-install cleanup completed');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
