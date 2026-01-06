@@ -47,6 +47,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Configure Maven settings
+        run: |
+          mkdir -p ~/.m2
+          cp .github/maven-settings.xml ~/.m2/settings.xml
+          echo "✅ Maven settings configured with Google CDN mirror"
+
       - name: Get version
         id: get_version
         run: |

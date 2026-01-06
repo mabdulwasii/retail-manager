@@ -1,80 +1,92 @@
 # Shop Manager - Update Notification Setup
 
-> **Status**: PLANNED - Not yet implemented
+> **Status**: ✅ IMPLEMENTED
 >
-> This document describes the planned update notification system for Shop Manager embedded installations.
+> This document describes the update notification system for Shop Manager embedded installations.
 
 ---
 
 ## Overview
 
-The update notification system will allow embedded installations to receive notifications when new versions of Shop Manager are available.
+The update notification system allows embedded installations to receive notifications when new versions of Shop Manager are available.
 
-### Planned Features
+### Features
 
 - **Automatic Version Checking**: Background service checks for updates every 24 hours
-- **Frontend Notifications**: Banner notification when update available
+- **Frontend Notifications**: Banner notification when update available (pending)
 - **Manual Check**: User-triggered update check from Settings
 - **Release Notes**: View what's new in the latest version
 - **Download Links**: Direct links to installers
 
 ---
 
-## Planned Architecture
+## Architecture
 
-### Backend Components (To Be Implemented)
+### Backend Components
 
-#### 1. UpdateCheckService
+#### 1. UpdateCheckService ✅ IMPLEMENTED
 **Location**: `backend/src/main/java/com/princely/shopmanager/embedded/service/UpdateCheckService.java`
 
 **Responsibilities**:
-- Scheduled version check (daily)
+- Scheduled version check (daily at midnight)
 - Call cloud API `/api/registration/latest-version`
-- Compare with current version
-- Cache result
-- Emit event if update available
+- Compare current version with latest using semantic versioning
+- Cache result in memory
+- Log update notifications
 
 **Scheduled Task**:
 ```java
-@Scheduled(cron = "0 0 */24 * * ?")  // Every 24 hours
-public void checkForUpdates() {
-    // Implementation pending
+@Scheduled(cron = "${application.update-check.cron:0 0 */24 * * ?}")
+public void scheduledUpdateCheck() {
+    log.info("Running scheduled update check...");
+    checkForUpdates();
 }
 ```
 
-#### 2. UpdateController
+**Configuration**:
+- `application.update-check.enabled`: Enable/disable update checks (default: true)
+- `application.update-check.cron`: Cron expression for schedule (default: daily at midnight)
+
+#### 2. UpdateController ✅ IMPLEMENTED
 **Location**: `backend/src/main/java/com/princely/shopmanager/embedded/controller/UpdateController.java`
 
-**Planned Endpoints**:
+**Endpoints**:
 ```
-GET  /api/updates/check          // Manual check
-GET  /api/updates/status         // Get cached status
-GET  /api/updates/release-notes  // Fetch release notes
+POST /api/updates/check    // Manual check (requires authentication)
+GET  /api/updates/status   // Get cached status
 ```
 
-### Cloud API Enhancement (To Be Implemented)
+**Authentication**: Requires `SYSTEM_ADMIN`, `TENANT_ADMIN`, `OWNER`, or `MANAGER` role
+
+### Cloud API Enhancement ✅ IMPLEMENTED
 
 #### Latest Version Endpoint
-**Location**: Aggregator module
+**Location**: `backend/src/main/java/com/princely/shopmanager/aggregator/controller/AggregatorController.java`
 
-**Endpoint**:
-```
-GET /api/registration/latest-version
-Response: 200 OK
+**Endpoint**: `GET /api/registration/latest-version`
+
+**Response**:
+```json
 {
-  "version": "0.1.28",
+  "version": "0.1.29",
   "releaseDate": "2026-01-06",
   "downloadUrls": {
-    "windows": "https://github.com/.../shop-manager-0.1.28-windows-x64-setup.exe",
-    "macos": "https://github.com/.../shop-manager-0.1.28-macos-x64.dmg",
-    "linux_deb": "https://github.com/.../shop-manager_0.1.28_all.deb",
-    "linux_rpm": "https://github.com/.../shop-manager-0.1.28-1.x86_64.rpm"
+    "windows": "https://github.com/mabdulwasii/retail-manager/releases/download/v0.1.29/shop-manager-0.1.29-windows-x64-setup.exe",
+    "macos": "https://github.com/mabdulwasii/retail-manager/releases/download/v0.1.29/shop-manager-0.1.29-macos-x64.dmg",
+    "linux_deb": "https://github.com/mabdulwasii/retail-manager/releases/download/v0.1.29/shop-manager_0.1.29_all.deb",
+    "linux_rpm": "https://github.com/mabdulwasii/retail-manager/releases/download/v0.1.29/shop-manager-0.1.29-1.x86_64.rpm",
+    "linux_appimage": "https://github.com/mabdulwasii/retail-manager/releases/download/v0.1.29/shop-manager-0.1.29-x86_64.AppImage"
   },
-  "releaseNotes": "https://github.com/.../releases/tag/v0.1.28"
+  "releaseNotes": "https://github.com/mabdulwasii/retail-manager/releases/tag/v0.1.29"
 }
 ```
 
-### Frontend Components (To Be Implemented)
+**How it works**:
+- Version is injected from `application.version` property (set via Maven `-Drevision`)
+- Download URLs are dynamically constructed using GitHub releases pattern
+- Cloud installation returns the version it's running
+
+### Frontend Components (Planned for Future PR)
 
 #### 1. UpdateNotificationBanner
 **Location**: `frontend/src/components/UpdateNotificationBanner.tsx`
@@ -107,29 +119,29 @@ UPDATE_NOTIFICATION_DISMISS_DAYS=7  # Days before re-showing
 
 ---
 
-## Implementation Roadmap
+## Implementation Status
 
-### Phase 1: Cloud API
-- [ ] Add `/api/registration/latest-version` endpoint to AggregatorController
-- [ ] Query GitHub Releases API or maintain version registry
-- [ ] Return version, URLs, release notes
+### Phase 1: Cloud API ✅ COMPLETED
+- [x] Add `/api/registration/latest-version` endpoint to AggregatorController
+- [x] Return version, URLs, release notes dynamically
 
-### Phase 2: Backend Service
-- [ ] Create `UpdateCheckService` with scheduled task
-- [ ] Create `UpdateController` with endpoints
-- [ ] Cache update status in memory or database
-- [ ] Unit tests
+### Phase 2: Backend Service ✅ COMPLETED
+- [x] Create `UpdateCheckService` with scheduled task
+- [x] Create `UpdateController` with endpoints
+- [x] Cache update status in memory (AtomicReference)
+- [x] Add configuration properties to `application-embedded.yml`
+- [x] Add environment variables to all installer `.env.template` files
 
-### Phase 3: Frontend UI
+### Phase 3: Frontend UI ⏳ PENDING (Future PR)
 - [ ] Create `UpdateNotificationBanner` component
 - [ ] Create `useUpdateCheck` hook
 - [ ] Add notification to main layout
 - [ ] Settings page integration (manual check button)
 
-### Phase 4: Testing & Documentation
-- [ ] Integration tests
-- [ ] Update this documentation with implementation details
-- [ ] User guide for update process
+### Phase 4: Testing & Documentation ✅ COMPLETED
+- [x] Update this documentation with implementation details
+- [ ] Integration tests (can be added later)
+- [ ] User guide for update process (in INSTALLER_FEATURES.md)
 
 ---
 
@@ -151,14 +163,19 @@ UPDATE_NOTIFICATION_DISMISS_DAYS=7  # Days before re-showing
 
 ## Current Status
 
-**Implemented**: None
+**Backend Implementation**: ✅ Complete
 
-**Next Steps**:
-1. Decide on version source (GitHub API vs manual registry)
-2. Implement cloud endpoint
-3. Implement backend service
-4. Implement frontend components
-5. Update this document with implementation details
+**What Works**:
+- Scheduled update checks every 24 hours
+- Manual update check via API
+- Cached update status
+- Semantic version comparison
+- Cloud API endpoint for latest version
+- Environment variable configuration
+
+**Pending**:
+- Frontend UI components (banner, notification, settings integration)
+- Integration tests
 
 ---
 
@@ -171,4 +188,4 @@ UPDATE_NOTIFICATION_DISMISS_DAYS=7  # Days before re-showing
 ---
 
 **Last Updated**: 2026-01-06
-**Status**: Planning Phase
+**Status**: Backend Implemented, Frontend Pending
