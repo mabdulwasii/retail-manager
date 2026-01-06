@@ -296,12 +296,13 @@ class RBACIntegrationTest extends AbstractIntegrationTest {
         endpoint("PUT", "/api/cloud/tenants/{tenantId}/subscription/tier", "TENANT_UPDATE", "TENANT_ADMIN"),
 
         // ========================================
-        // REGISTRATION SERVICE ENDPOINTS (4 total)
+        // REGISTRATION SERVICE ENDPOINTS (5 total)
         // ========================================
         endpoint("POST", "/api/registration/shops", "PUBLIC", "ANONYMOUS"),
         endpoint("GET", "/api/registration/health", "PUBLIC", "ANONYMOUS"),
         endpoint("POST", "/api/registration/tenants", "PUBLIC", "ANONYMOUS"),
-        endpoint("DELETE", "/api/registration/tenants/{cloudTenantId}", "TENANT_DELETE", "SYSTEM_ADMIN")
+        endpoint("DELETE", "/api/registration/tenants/{cloudTenantId}", "TENANT_DELETE", "SYSTEM_ADMIN"),
+        endpoint("GET", "/api/registration/latest-version", "PUBLIC", "ANONYMOUS")
     );
 
     /**
