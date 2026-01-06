@@ -3,7 +3,7 @@ name: Build Standalone Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*'  # Project-wide releases only (e.g., v0.1.27)
   workflow_dispatch:
     inputs:
       version:
@@ -86,7 +86,8 @@ jobs:
           elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           else
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+            # Get latest project-wide tag (v*.*.*) excluding module-specific tags (vbackend-v*, vfrontend-v*)
+            LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
             VERSION=${LATEST_TAG#v}
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 
