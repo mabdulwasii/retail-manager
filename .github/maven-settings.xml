@@ -7,11 +7,18 @@
   <!--
     Maven Settings for GitHub Actions
 
-    Purpose: Configure Maven Central with aggressive retry to handle 403 errors
-    Strategy: No mirrors (avoid auth issues), rely on Maven Central with retry
+    Purpose: Configure Maven Central with CDN mirror and aggressive retry to handle 403 errors
+    Strategy: Use Google CDN mirror (official, reliable) + aggressive retry as fallback
   -->
 
-  <!-- No mirrors configured - using Maven Central directly with retry -->
+  <mirrors>
+    <!-- Google CDN mirror - official, CDN-backed, more reliable on GitHub Actions -->
+    <mirror>
+      <id>central-google</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven-central.storage-download.googleapis.com/maven2</url>
+    </mirror>
+  </mirrors>
 
   <profiles>
     <!-- GitHub Actions optimized profile -->

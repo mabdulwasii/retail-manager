@@ -41,13 +41,13 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           cd backend
-          mvn clean test jacoco:report -s ../.github/maven-settings.xml -B -T 2C
+          mvn clean test jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true
           echo "✅ Unit tests completed"
 
       - name: Run integration tests with coverage
         run: |
           cd backend
-          mvn verify -Pintegration-tests jacoco:report -s ../.github/maven-settings.xml -B -T 2C
+          mvn verify -Pintegration-tests jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true
           echo "✅ Integration tests completed"
           echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
@@ -66,7 +66,8 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.BACKEND_SONAR_TOKEN }} \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
+            -Dsonar.qualitygate.timeout=300 \
+            -Djava.net.preferIPv4Stack=true
           echo "✅ SonarQube analysis completed"
 
       - name: Upload coverage reports

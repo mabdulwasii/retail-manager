@@ -77,7 +77,7 @@ jobs:
           # Retry logic for Maven Central intermittent 403 errors
           for i in {1..3}; do
             echo "Build attempt $i of 3..."
-            if mvn clean package -s ../.github/maven-settings.xml -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}; then
+            if mvn clean package -s ../.github/maven-settings.xml -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }} -Djava.net.preferIPv4Stack=true; then
               echo "✅ Embedded JAR built successfully"
               # Verify JAR exists with correct name
               JAR_FILE="target/shop-manager-${{ steps.get_version.outputs.version }}-embedded.jar"
