@@ -3,7 +3,8 @@ name: Build Standalone Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*'           # Project-wide releases (e.g., v0.1.26)
+      - 'vbackend-v*.*.*'  # Backend-specific releases (e.g., vbackend-v0.0.66)
   workflow_dispatch:
     inputs:
       version:
