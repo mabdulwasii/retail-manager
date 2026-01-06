@@ -66,8 +66,7 @@ jobs:
       - name: Build embedded JAR
         run: |
           cd backend
-          chmod +x ./mvnw
-          ./mvnw clean package -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}
+          mvn clean package -Pembedded -DskipTests -Drevision=${{ steps.get_version.outputs.version }}
           echo "✅ Embedded JAR built successfully"
 
       - name: Upload embedded JAR artifact
