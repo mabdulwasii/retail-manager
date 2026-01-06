@@ -97,9 +97,29 @@ REM Determine javaw path (for windowless execution)
 if "%JAVA%"=="java" (
     set "JAVAW=javaw"
 ) else (
-    REM Get the directory containing java.exe
-    for %%i in ("%JAVA%") do set "JAVA_DIR=%%~dpi"
-    set "JAVAW=%JAVA_DIR%javaw.exe"
+    REM Get the directory containing java.exe and construct javaw path
+    for %%i in ("%JAVA%") do (
+        set "JAVA_DIR=%%~dpi"
+    )
+    REM Remove trailing backslash if present
+    if "!JAVA_DIR:~-1!"=="\" set "JAVA_DIR=!JAVA_DIR:~0,-1!"
+    set "JAVAW=!JAVA_DIR!\javaw.exe"
+)
+
+REM Verify javaw exists
+if not exist "%JAVAW%" (
+    echo.
+    echo ========================================
+    echo ERROR: javaw.exe not found
+    echo ========================================
+    echo.
+    echo Expected location: %JAVAW%
+    echo Java location: %JAVA%
+    echo.
+    echo Please ensure Java is properly installed.
+    echo.
+    pause
+    exit /b 1
 )
 
 REM Launch application (no console window)
