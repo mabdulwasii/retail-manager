@@ -64,7 +64,13 @@ jobs:
             # Get latest project-wide tag (v*.*.*) excluding module-specific tags (vbackend-v*, vfrontend-v*)
             LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
             VERSION=${LATEST_TAG#v}
+
+            echo "Latest tag: $LATEST_TAG"
+            echo "Version string: $VERSION"
+
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            echo "Parsed - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
 
             if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
               MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
@@ -74,7 +80,11 @@ jobs:
               PATCH=$((PATCH + 1))
             fi
 
-            echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+            echo "After bump - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "New version: $NEW_VERSION"
+
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           fi
 
       - name: Build embedded JAR
@@ -156,7 +166,13 @@ jobs:
             # Get latest project-wide tag (v*.*.*) excluding module-specific tags (vbackend-v*, vfrontend-v*)
             LATEST_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v 'vbackend-v' | grep -v 'vfrontend-v' | head -1 || echo "v0.1.0")
             VERSION=${LATEST_TAG#v}
+
+            echo "Latest tag: $LATEST_TAG"
+            echo "Version string: $VERSION"
+
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            echo "Parsed - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
 
             if [[ "${{ github.event.pull_request.labels.*.name }}" == *"release:major"* ]]; then
               MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
@@ -166,7 +182,11 @@ jobs:
               PATCH=$((PATCH + 1))
             fi
 
-            echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+            echo "After bump - MAJOR: $MAJOR, MINOR: $MINOR, PATCH: $PATCH"
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "New version: $NEW_VERSION"
+
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           fi
 
       - name: Create Release
