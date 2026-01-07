@@ -72,7 +72,7 @@ load_env() {
     fi
 
     # Set defaults
-    export BACKEND_PORT=${BACKEND_PORT:-8081}
+    export BACKEND_PORT=${BACKEND_PORT:-80}
     export JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
     export SPRING_PROFILES_ACTIVE=embedded
 }
@@ -92,12 +92,43 @@ check_running() {
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if ps -p "$OLD_PID" > /dev/null 2>&1; then
+            # Construct URL
+            CUSTOM_DOMAIN=${CUSTOM_DOMAIN:-localhost}
+            if [ "$BACKEND_PORT" = "80" ]; then
+                APP_URL="http://$CUSTOM_DOMAIN"
+            else
+                APP_URL="http://$CUSTOM_DOMAIN:$BACKEND_PORT"
+            fi
             echo "Shop Manager is already running (PID: $OLD_PID)"
-            echo "Access it at: http://localhost:$BACKEND_PORT"
+            echo "Access it at: $APP_URL"
             exit 0
         else
             rm "$PID_FILE"
         fi
+    fi
+}
+
+# Function to cleanup zombie postgres processes
+cleanup_postgres() {
+    # Kill any zombie postgres processes on embedded port 5433
+    # This prevents port conflicts and file permission errors
+    POSTGRES_PORT=${POSTGRES_PORT:-5433}
+
+    POSTGRES_PIDS=$(lsof -ti :$POSTGRES_PORT 2>/dev/null || fuser $POSTGRES_PORT/tcp 2>/dev/null || true)
+    if [ -n "$POSTGRES_PIDS" ]; then
+        echo "⚠️  Found zombie postgres process(es) on port $POSTGRES_PORT"
+        echo "Stopping old postgres instances..."
+        for pid in $POSTGRES_PIDS; do
+            kill -9 $pid 2>/dev/null || true
+        done
+        sleep 2
+        echo "✅ Old postgres processes stopped"
+    fi
+
+    # Also clean up any stale lock files
+    if [ -d "$DATA_DIR/postgres" ]; then
+        find "$DATA_DIR/postgres" -name "*.lock" -delete 2>/dev/null || true
+        find "$DATA_DIR/postgres" -name ".s.PGSQL.*" -delete 2>/dev/null || true
     fi
 }
 
@@ -148,18 +179,26 @@ start_application() {
     echo "Waiting for startup..."
     sleep 5
 
+    # Construct application URL
+    CUSTOM_DOMAIN=${CUSTOM_DOMAIN:-localhost}
+    if [ "$BACKEND_PORT" = "80" ]; then
+        APP_URL="http://$CUSTOM_DOMAIN"
+    else
+        APP_URL="http://$CUSTOM_DOMAIN:$BACKEND_PORT"
+    fi
+
     # Check if application started
-    if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+    if curl -s "$APP_URL/actuator/health" > /dev/null 2>&1; then
         echo ""
         echo "✓ Shop Manager started successfully!"
         echo ""
-        echo "Access the application at: http://localhost:$BACKEND_PORT"
+        echo "Access the application at: $APP_URL"
         echo "Logs: $LOG_FILE"
         echo ""
 
         # Try to open browser
         if command -v xdg-open &> /dev/null; then
-            xdg-open "http://localhost:$BACKEND_PORT" &
+            xdg-open "$APP_URL" &
         fi
     else
         echo ""
@@ -175,6 +214,7 @@ main() {
     load_env
     create_data_dirs
     check_running
+    cleanup_postgres
     start_application
 }
 
