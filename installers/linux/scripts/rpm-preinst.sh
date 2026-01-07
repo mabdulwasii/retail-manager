@@ -63,15 +63,29 @@ stop_shop_manager() {
     echo "Shop Manager: Stop completed"
 }
 
+cleanup_old_jars() {
+    # Clean up any old versioned JAR files (in case of manual installations)
+    if [ -d "/opt/shop-manager/lib" ]; then
+        OLD_JARS=$(find /opt/shop-manager/lib -name "shop-manager-*-embedded.jar" 2>/dev/null || true)
+        if [ -n "$OLD_JARS" ]; then
+            echo "Shop Manager: Cleaning up old versioned JAR files..."
+            find /opt/shop-manager/lib -name "shop-manager-*-embedded.jar" -delete 2>/dev/null || true
+            echo "Shop Manager: Old JARs cleaned up"
+        fi
+    fi
+}
+
 if [ "$1" = "2" ]; then
     # Upgrade - stop the service
     echo "Shop Manager: Preparing for upgrade..."
     stop_shop_manager
+    cleanup_old_jars
     echo "Shop Manager: Ready for upgrade"
 elif [ "$1" = "1" ]; then
     # Fresh install - also stop in case of manual installation
     echo "Shop Manager: Preparing for fresh installation..."
     stop_shop_manager
+    cleanup_old_jars
 fi
 
 exit 0

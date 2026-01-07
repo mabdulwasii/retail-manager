@@ -79,10 +79,12 @@ set SPRING_PROFILES_ACTIVE=embedded
 REM Find the JAR file (picks highest version if multiple exist)
 set "JAR_FILE="
 set "JAR_COUNT=0"
+set "NEWEST_JAR="
 
 REM Count JAR files and find the latest version (sort descending)
 for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
-    if not defined JAR_FILE (
+    if not defined NEWEST_JAR (
+        set "NEWEST_JAR=%%f"
         set "JAR_FILE=%APP_DIR%\lib\%%f"
     )
     set /a JAR_COUNT+=1
@@ -101,20 +103,28 @@ if not defined JAR_FILE (
     exit /b 1
 )
 
-REM Warn if multiple JARs found
+REM Clean up old JAR files if multiple found
 if %JAR_COUNT% GTR 1 (
     echo.
     echo ========================================
-    echo WARNING: Multiple JAR files detected
+    echo Cleaning up old JAR files
     echo ========================================
     echo.
-    echo Found %JAR_COUNT% JAR files in %APP_DIR%\lib
-    echo Using latest version: %JAR_FILE%
+    echo Found %JAR_COUNT% JAR files, keeping only: !NEWEST_JAR!
     echo.
-    echo This may indicate an incomplete upgrade.
-    echo Consider reinstalling Shop Manager.
+
+    REM Delete all JARs except the newest
+    for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
+        if not "%%f"=="!NEWEST_JAR!" (
+            echo Removing old JAR: %%f
+            del /f /q "%APP_DIR%\lib\%%f" 2>nul
+        )
+    )
+
     echo.
-    timeout /t 5 /nobreak
+    echo Cleanup complete
+    echo.
+    timeout /t 2 /nobreak >nul
 )
 
 echo Starting Shop Manager from: %JAR_FILE%
@@ -132,41 +142,37 @@ if "%JAVA%"=="java" (
     set "JAVAW=!JAVA_DIR!\javaw.exe"
 )
 
-REM Verify javaw exists (check PATH or file path depending on JAVAW value)
-echo %JAVAW% | findstr /C:"\" >nul
+REM Verify javaw exists (try PATH first, then file path)
+where %JAVAW% >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-    REM JAVAW contains path separator - verify file exists
-    if not exist "%JAVAW%" (
-        echo.
-        echo ========================================
-        echo ERROR: javaw.exe not found
-        echo ========================================
-        echo.
-        echo Expected location: %JAVAW%
-        echo Java location: %JAVA%
-        echo.
-        echo Please ensure Java is properly installed.
-        echo.
-        pause
-        exit /b 1
-    )
-) else (
-    REM JAVAW is just a command name - verify it's in PATH
-    where %JAVAW% >nul 2>nul
-    if %ERRORLEVEL% NEQ 0 (
-        echo.
-        echo ========================================
-        echo ERROR: javaw not found in PATH
-        echo ========================================
-        echo.
-        echo Java command: %JAVA%
-        echo.
-        echo Please ensure Java is properly installed with javaw.exe.
-        echo.
-        pause
-        exit /b 1
-    )
+    REM Found in PATH, we're good
+    goto :javaw_verified
 )
+
+REM Not in PATH, check if it's a valid file path
+if exist "%JAVAW%" (
+    REM Valid file path, we're good
+    goto :javaw_verified
+)
+
+REM Neither in PATH nor valid file - error
+echo.
+echo ========================================
+echo ERROR: javaw.exe not found
+echo ========================================
+echo.
+echo Checked locations:
+echo   - System PATH: %JAVAW%
+echo   - File path: %JAVAW%
+echo.
+echo Java location: %JAVA%
+echo.
+echo Please ensure Java is properly installed with javaw.exe.
+echo.
+pause
+exit /b 1
+
+:javaw_verified
 
 REM Launch application (no console window)
 start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
