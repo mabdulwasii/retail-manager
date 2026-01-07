@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/context/ManualAuthContext";
+import { useAuth } from "@/context/UnifiedAuthContext";
 import { apiService } from "@/services/api";
 import { UserProfileResponse } from "@/types/user";
 import { UserRole } from "@/types/roles";
