@@ -67,8 +67,10 @@ load_env() {
         echo ""
     fi
 
-    # Load environment variables
-    export $(grep -v '^#' "$ENV_FILE" | xargs)
+    # Load environment variables using safe method (handles spaces in values)
+    set -a
+    source "$ENV_FILE" 2>/dev/null || true
+    set +a
 
     # Migrate old configurations automatically
     MIGRATED=false
@@ -87,19 +89,6 @@ load_env() {
         MIGRATED=true
     fi
 
-    # Fix unquoted cron expressions (causes app startup failure)
-    if grep -q "^CLOUD_SYNC_CRON=[^']" "$ENV_FILE" 2>/dev/null; then
-        sed -i '' "s/^CLOUD_SYNC_CRON=\(.*\)$/CLOUD_SYNC_CRON='\1'/" "$ENV_FILE"
-        echo "✅ Fixed CLOUD_SYNC_CRON quotes"
-        MIGRATED=true
-    fi
-
-    if grep -q "^UPDATE_CHECK_CRON=[^']" "$ENV_FILE" 2>/dev/null; then
-        sed -i '' "s/^UPDATE_CHECK_CRON=\(.*\)$/UPDATE_CHECK_CRON='\1'/" "$ENV_FILE"
-        echo "✅ Fixed UPDATE_CHECK_CRON quotes"
-        MIGRATED=true
-    fi
-
     # Add config version if missing
     if ! grep -q "CONFIG_VERSION" "$ENV_FILE" 2>/dev/null; then
         echo "" >> "$ENV_FILE"
@@ -111,7 +100,9 @@ load_env() {
     if [ "$MIGRATED" = true ]; then
         echo "📦 Configuration migrated to latest version"
         # Reload after migration
-        export $(grep -v '^#' "$ENV_FILE" | xargs)
+        set -a
+        source "$ENV_FILE" 2>/dev/null || true
+        set +a
     fi
 
     # Migrate postgres data from old location to new location
