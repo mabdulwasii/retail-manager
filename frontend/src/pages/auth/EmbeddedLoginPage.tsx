@@ -115,23 +115,6 @@ export const EmbeddedLoginPage: React.FC = () => {
                 </Link>
               </p>
             </div>
-
-            <div className="mt-6 pt-4 border-t">
-              <p className="text-xs font-semibold text-gray-700 mb-2">Default Accounts:</p>
-              <div className="space-y-2 text-xs text-gray-600">
-                <div className="bg-gray-50 p-2 rounded">
-                  <p className="font-medium text-gray-800">System Admin (Full Access)</p>
-                  <p className="font-mono text-blue-600">superadmin / changeme</p>
-                  <p className="text-gray-500 text-[10px]">108 permissions - All tenants & features</p>
-                </div>
-                <div className="bg-gray-50 p-2 rounded">
-                  <p className="font-medium text-gray-800">Tenant Admin</p>
-                  <p className="font-mono text-blue-600">admin / admin123</p>
-                  <p className="text-gray-500 text-[10px]">86 permissions - Tenant resources</p>
-                </div>
-              </div>
-              <p className="text-[10px] text-amber-600 mt-2">⚠️ Change passwords after first login</p>
-            </div>
           </CardContent>
         </Card>
 
