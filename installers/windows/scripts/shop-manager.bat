@@ -62,6 +62,42 @@ if exist "%APP_DIR%\config\.env" (
     for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
         set "%%a=%%b"
     )
+
+    REM Migrate old configurations automatically
+    set MIGRATED=false
+
+    REM Fix old port (8081 → 80)
+    findstr /C:"BACKEND_PORT=8081" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'BACKEND_PORT=8081', 'BACKEND_PORT=80' | Set-Content '%APP_DIR%\config\.env'"
+        echo Migrated BACKEND_PORT: 8081 to 80
+        set MIGRATED=true
+    )
+
+    REM Fix old postgres path (./data/postgres → postgres)
+    findstr /C:"POSTGRES_DATA_DIR=./data/postgres" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content '%APP_DIR%\config\.env'"
+        echo Migrated POSTGRES_DATA_DIR: ./data/postgres to postgres
+        set MIGRATED=true
+    )
+
+    REM Add config version if missing
+    findstr /C:"CONFIG_VERSION" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% NEQ 0 (
+        echo. >> "%APP_DIR%\config\.env"
+        echo # Configuration Version ^(for automatic migration^) >> "%APP_DIR%\config\.env"
+        echo CONFIG_VERSION=1.0 >> "%APP_DIR%\config\.env"
+        set MIGRATED=true
+    )
+
+    if "%MIGRATED%"=="true" (
+        echo Configuration migrated to latest version
+        REM Reload after migration
+        for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
+            set "%%a=%%b"
+        )
+    )
 )
 
 REM Set defaults if not configured
@@ -157,46 +193,32 @@ if not "%JAVA%"=="java" (
     )
 )
 
-REM Strategy 3: javaw not found - use VBScript wrapper to launch java hidden
+REM Strategy 3: javaw not found - use console mode (visible window)
 echo.
-echo Warning: javaw.exe not found, using VBScript wrapper for hidden launch
+echo ============================================
+echo WARNING: javaw.exe not found
+echo ============================================
+echo.
+echo Shop Manager will start with a console window.
+echo The console window will remain visible while the application runs.
+echo.
+echo To hide the window, ensure javaw.exe is in your PATH or set JAVA_HOME.
+echo.
+echo Starting Shop Manager...
 echo.
 
-REM Create VBScript launcher with proper quote escaping
-set "VBS_LAUNCHER=%TEMP%\shop-manager-launch.vbs"
-(
-echo Set WshShell = CreateObject^("WScript.Shell"^)
-echo Dim cmd, jarPath
-echo jarPath = "%JAR_FILE%"
-echo cmd = "%JAVA% %JAVA_OPTS% -Dspring.profiles.active=embedded"
-echo cmd = cmd ^& " -Dserver.port=%BACKEND_PORT%"
-echo cmd = cmd ^& " -Dapplication.jwt.secret=%JWT_SECRET%"
-echo cmd = cmd ^& " -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED%"
-echo cmd = cmd ^& " -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL%"
-echo cmd = cmd ^& " -Dapplication.sync.api-key=%CLOUD_API_KEY%"
-echo cmd = cmd ^& " -Dapplication.sync.store-id=%STORE_ID%"
-echo cmd = cmd ^& " -jar " ^& Chr^(34^) ^& jarPath ^& Chr^(34^)
-echo WshShell.Run cmd, 0, False
-) > "%VBS_LAUNCHER%"
+REM Launch with console window visible
+start "Shop Manager Console" "%JAVA%" %JAVA_OPTS% ^
+    -Dspring.profiles.active=embedded ^
+    -Dserver.port=%BACKEND_PORT% ^
+    -Dapplication.jwt.secret=%JWT_SECRET% ^
+    -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% ^
+    -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
+    -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
+    -Dapplication.sync.store-id=%STORE_ID% ^
+    -jar "%JAR_FILE%"
 
-REM Launch using VBScript (window hidden)
-cscript //nologo "%VBS_LAUNCHER%"
-
-REM Wait and check if application started
-timeout /t 5 /nobreak >nul
-curl -s http://localhost:%BACKEND_PORT%/actuator/health >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo Shop Manager started successfully
-    echo Access the application at http://localhost:%BACKEND_PORT%
-) else (
-    echo Shop Manager may be starting... Please check logs if issues persist
-    echo Logs location: %APP_DIR%\data\logs
-)
-
-REM Cleanup and exit
-del "%VBS_LAUNCHER%" 2>nul
-endlocal
-exit /b 0
+goto :check_startup
 
 :javaw_found
 REM javaw.exe found and verified
@@ -212,6 +234,7 @@ start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
     -Dapplication.sync.store-id=%STORE_ID% ^
     -jar "%JAR_FILE%"
 
+:check_startup
 REM Wait a moment and check if application started
 timeout /t 5 /nobreak >nul
 
