@@ -84,9 +84,15 @@ if exist "%APP_DIR%\config\.env" (
         echo.
     )
 
-    REM Load all environment variables
+    REM Load all environment variables (skip comments and empty lines)
     for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
-        set "%%a=%%b"
+        REM Check if line starts with # (comment) or is empty
+        echo %%a | findstr /r "^#" >nul
+        if errorlevel 1 (
+            if not "%%a"=="" (
+                set "%%a=%%b"
+            )
+        )
     )
 
     REM Migrate specific old values
@@ -119,9 +125,14 @@ if exist "%APP_DIR%\config\.env" (
 
     if "%MIGRATED%"=="true" (
         echo Configuration migrated to latest version
-        REM Reload after migration
+        REM Reload after migration (skip comments and empty lines)
         for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
-            set "%%a=%%b"
+            echo %%a | findstr /r "^#" >nul
+            if errorlevel 1 (
+                if not "%%a"=="" (
+                    set "%%a=%%b"
+                )
+            )
         )
     )
 )
@@ -254,10 +265,6 @@ start "Shop Manager Console" "!JAVA!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
-    -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% ^
-    -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
-    -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
-    -Dapplication.sync.store-id=%STORE_ID% ^
     -jar "%JAR_FILE%"
 
 goto :check_startup
@@ -270,10 +277,6 @@ start "Shop Manager" /B "!JAVAW!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
-    -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% ^
-    -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
-    -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
-    -Dapplication.sync.store-id=%STORE_ID% ^
     -jar "%JAR_FILE%"
 
 :check_startup

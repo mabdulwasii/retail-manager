@@ -266,10 +266,6 @@ start_application() {
         -Dspring.profiles.active=embedded \
         -Dserver.port=$BACKEND_PORT \
         -Dapplication.jwt.secret="$JWT_SECRET" \
-        -Dapplication.sync.enabled="${CLOUD_SYNC_ENABLED:-false}" \
-        -Dapplication.sync.cloud-endpoint="$CLOUD_API_URL" \
-        -Dapplication.sync.api-key="$CLOUD_API_KEY" \
-        -Dapplication.sync.store-id="$STORE_ID" \
         -jar "$JAR_FILE" \
         > "$LOG_FILE" 2>&1 &
 
