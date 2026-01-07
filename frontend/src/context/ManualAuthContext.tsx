@@ -106,6 +106,12 @@ export const ManualAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Initialize Keycloak on mount to handle OAuth callback
   React.useEffect(() => {
+    // Skip Keycloak initialization in embedded mode
+    if (configService.isEmbeddedMode) {
+      setIsInitialized(true);
+      return;
+    }
+
     if (initializingRef.current || keycloak) return;
     initializingRef.current = true;
 
