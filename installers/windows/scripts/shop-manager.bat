@@ -84,9 +84,15 @@ if exist "%APP_DIR%\config\.env" (
         echo.
     )
 
-    REM Load all environment variables
+    REM Load all environment variables (skip comments and empty lines)
     for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
-        set "%%a=%%b"
+        REM Check if line starts with # (comment) or is empty
+        echo %%a | findstr /r "^#" >nul
+        if errorlevel 1 (
+            if not "%%a"=="" (
+                set "%%a=%%b"
+            )
+        )
     )
 
     REM Migrate specific old values
@@ -108,21 +114,6 @@ if exist "%APP_DIR%\config\.env" (
         set MIGRATED=true
     )
 
-    REM Fix unquoted cron expressions (causes app startup failure)
-    findstr /R "^CLOUD_SYNC_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
-    if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^CLOUD_SYNC_CRON=(.*)$', 'CLOUD_SYNC_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
-        echo Fixed CLOUD_SYNC_CRON quotes
-        set MIGRATED=true
-    )
-
-    findstr /R "^UPDATE_CHECK_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
-    if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^UPDATE_CHECK_CRON=(.*)$', 'UPDATE_CHECK_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
-        echo Fixed UPDATE_CHECK_CRON quotes
-        set MIGRATED=true
-    )
-
     REM Add config version if missing
     findstr /C:"CONFIG_VERSION" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% NEQ 0 (
@@ -134,9 +125,14 @@ if exist "%APP_DIR%\config\.env" (
 
     if "%MIGRATED%"=="true" (
         echo Configuration migrated to latest version
-        REM Reload after migration
+        REM Reload after migration (skip comments and empty lines)
         for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
-            set "%%a=%%b"
+            echo %%a | findstr /r "^#" >nul
+            if errorlevel 1 (
+                if not "%%a"=="" (
+                    set "%%a=%%b"
+                )
+            )
         )
     )
 )
@@ -269,10 +265,6 @@ start "Shop Manager Console" "!JAVA!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
-    -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% ^
-    -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
-    -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
-    -Dapplication.sync.store-id=%STORE_ID% ^
     -jar "%JAR_FILE%"
 
 goto :check_startup
@@ -285,10 +277,6 @@ start "Shop Manager" /B "!JAVAW!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
-    -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% ^
-    -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% ^
-    -Dapplication.sync.api-key=%CLOUD_API_KEY% ^
-    -Dapplication.sync.store-id=%STORE_ID% ^
     -jar "%JAR_FILE%"
 
 :check_startup
