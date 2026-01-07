@@ -69,7 +69,7 @@ if exist "%APP_DIR%\config\.env" (
     REM Fix old port (8081 → 80)
     findstr /C:"BACKEND_PORT=8081" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'BACKEND_PORT=8081', 'BACKEND_PORT=80' | Set-Content '%APP_DIR%\config\.env'"
+        powershell -Command "(Get-Content \"\"%APP_DIR%\config\.env\"\" ) -replace 'BACKEND_PORT=8081', 'BACKEND_PORT=80' | Set-Content \"\"%APP_DIR%\config\.env\"\" "
         echo Migrated BACKEND_PORT: 8081 to 80
         set MIGRATED=true
     )
@@ -77,7 +77,7 @@ if exist "%APP_DIR%\config\.env" (
     REM Fix old postgres path (./data/postgres → postgres)
     findstr /C:"POSTGRES_DATA_DIR=./data/postgres" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content '%APP_DIR%\config\.env'"
+        powershell -Command "(Get-Content \"\"%APP_DIR%\config\.env\"\" ) -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content \"\"%APP_DIR%\config\.env\"\" "
         echo Migrated POSTGRES_DATA_DIR: ./data/postgres to postgres
         set MIGRATED=true
     )
@@ -86,7 +86,7 @@ if exist "%APP_DIR%\config\.env" (
     findstr /C:"CONFIG_VERSION" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% NEQ 0 (
         echo. >> "%APP_DIR%\config\.env"
-        echo # Configuration Version ^(for automatic migration^) >> "%APP_DIR%\config\.env"
+        echo # Configuration Version >> "%APP_DIR%\config\.env"
         echo CONFIG_VERSION=1.0 >> "%APP_DIR%\config\.env"
         set MIGRATED=true
     )
