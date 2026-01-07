@@ -5,6 +5,26 @@ All notable changes to Shop Manager will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.44] - 2026-01-07
+
+### Fixed
+- **macOS Installer**: PostgreSQL data preservation across updates
+  - Added `setCleanDataDirectory(false)` to prevent re-initialization of existing database
+  - Fixes "directory exists but is not empty" error on reinstall/update
+  - Application data now preserved during upgrades
+
+- **Windows Installer**: VBScript launcher path escaping
+  - Fixed VBScript quote escaping for paths with spaces
+  - Resolves "The system cannot find the file specified" error
+  - Properly handles "Program Files" and "Shop Manager" directory spaces
+
+- **Workflow**: Removed redundant quality-gate job
+  - Eliminated duplicate test execution in build-standalone-release workflow
+  - PR Quality Checks workflow already covers merged PRs
+  - Saves GitHub Actions minutes
+
+---
+
 ## [1.1.0] - 2026-01-04
 
 ### Added - Cloud Portal & Management Features
