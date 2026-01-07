@@ -86,7 +86,7 @@ if exist "%APP_DIR%\config\.env" (
     findstr /C:"CONFIG_VERSION" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% NEQ 0 (
         echo. >> "%APP_DIR%\config\.env"
-        echo # Configuration Version ^(for automatic migration^) >> "%APP_DIR%\config\.env"
+        echo # Configuration Version >> "%APP_DIR%\config\.env"
         echo CONFIG_VERSION=1.0 >> "%APP_DIR%\config\.env"
         set MIGRATED=true
     )

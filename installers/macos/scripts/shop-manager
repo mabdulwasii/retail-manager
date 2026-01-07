@@ -80,22 +80,34 @@ load_env() {
     OLD_POSTGRES="$HOME/.shopmanager/data/data/postgres"
     NEW_POSTGRES="$HOME/.shopmanager/data/postgres"
 
-    if [ -d "$OLD_POSTGRES" ] && [ ! -d "$NEW_POSTGRES" ]; then
-        echo ""
-        echo "📦 Migrating postgres data to correct location..."
-        echo "   From: $OLD_POSTGRES"
-        echo "   To:   $NEW_POSTGRES"
-        mkdir -p "$HOME/.shopmanager/data"
-        if mv "$OLD_POSTGRES" "$NEW_POSTGRES" 2>/dev/null; then
-            echo "✅ Database migrated successfully"
-            # Clean up empty directory
-            rmdir "$HOME/.shopmanager/data/data" 2>/dev/null || true
-        else
-            echo "⚠️  Warning: Could not migrate database automatically"
-            echo "   Please manually move: $OLD_POSTGRES"
-            echo "   To: $NEW_POSTGRES"
+    # Check if OLD location has actual postgres data (check for base/ directory)
+    # and NEW location either doesn't exist or doesn't have postgres data yet
+    if [ -d "$OLD_POSTGRES/base" ]; then
+        if [ ! -d "$NEW_POSTGRES/base" ]; then
+            echo ""
+            echo "📦 Migrating postgres data to correct location..."
+            echo "   From: $OLD_POSTGRES"
+            echo "   To:   $NEW_POSTGRES"
+
+            # Backup NEW if it exists (empty database created by v0.1.46)
+            if [ -d "$NEW_POSTGRES" ]; then
+                echo "   Backing up empty database created by previous version..."
+                mv "$NEW_POSTGRES" "$NEW_POSTGRES.backup.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+            fi
+
+            mkdir -p "$HOME/.shopmanager/data"
+            if mv "$OLD_POSTGRES" "$NEW_POSTGRES" 2>/dev/null; then
+                echo "✅ Database migrated successfully"
+                echo "   Your existing credentials and data are preserved"
+                # Clean up empty directory
+                rmdir "$HOME/.shopmanager/data/data" 2>/dev/null || true
+            else
+                echo "⚠️  Warning: Could not migrate database automatically"
+                echo "   Please manually move: $OLD_POSTGRES"
+                echo "   To: $NEW_POSTGRES"
+            fi
+            echo ""
         fi
-        echo ""
     fi
 
     # Set defaults
