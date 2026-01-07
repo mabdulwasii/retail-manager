@@ -243,6 +243,22 @@ export const Sidebar: React.FC = () => {
               Settings
             </h3>
             <div className="space-y-1">
+              {/* System Settings - Embedded mode only, admin users only */}
+              {configService.isEmbeddedMode && hasAnyPermission([Permission.SYSTEM_SETTING_VIEW, Permission.SYSTEM_SETTING_UPDATE, Permission.SYSTEM_SETTING_MANAGE]) && (
+                <Link
+                  to="/settings/system"
+                  onClick={handleNavigation}
+                  className={cn(
+                    "flex items-center p-2 w-full cursor-pointer hover:bg-primary/10 rounded-lg transition",
+                    location.pathname === "/settings/system"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span className="text-sm">System Settings</span>
+                </Link>
+              )}
               <div className="flex items-center justify-between p-2">
                 <div className="flex items-center">
                   <Settings className="h-4 w-4 mr-2 text-muted-foreground" />

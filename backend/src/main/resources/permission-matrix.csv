@@ -104,3 +104,6 @@ FRAUD,FRAUD_LIST,List fraud alerts and assessments,✓,✓,✓,✓,,,FRAUD_LIST
 FRAUD,FRAUD_INVESTIGATE,Investigate fraud alerts,✓,✓,✓,✓,,,FRAUD_INVESTIGATE
 FRAUD,FRAUD_RESOLVE,Resolve fraud alerts and assessments,✓,✓,✓,,,,FRAUD_RESOLVE
 FRAUD,FRAUD_DETECT,Manage fraud detection rules,✓,✓,✓,,,,FRAUD_DETECT
+SYSTEM_SETTING,SYSTEM_SETTING_VIEW,View system settings (embedded mode only),✓,✓,✓,,,,SYSTEM_SETTING_VIEW
+SYSTEM_SETTING,SYSTEM_SETTING_UPDATE,Update system settings (embedded mode only),✓,✓,✓,,,,SYSTEM_SETTING_UPDATE
+SYSTEM_SETTING,SYSTEM_SETTING_MANAGE,Manage all system settings (embedded mode only),✓,,,,,, SYSTEM_SETTING_MANAGE

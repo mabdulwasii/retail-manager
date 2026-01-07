@@ -28,6 +28,7 @@ import { EditProductPage } from "@/pages/products/EditProductPage";
 import { ProductDetailPage } from "@/pages/products/ProductDetailPage";
 import { CategoriesPage } from "@/pages/categories";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { SystemSettingsPage } from "@/pages/settings/SystemSettingsPage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
 import { RolesPage } from "@/pages/admin/RolesPage";
 import { CreateRolePage } from "@/pages/admin/CreateRolePage";
@@ -94,6 +95,18 @@ export const AuthenticatedApp: React.FC = () => {
         element={
           <Layout>
             <ProfilePage />
+          </Layout>
+        }
+      />
+
+      {/* System Settings (Embedded Mode Only) */}
+      <Route
+        path="/settings/system"
+        element={
+          <Layout>
+            <ProtectedRoute permissions={[Permission.SYSTEM_SETTING_VIEW, Permission.SYSTEM_SETTING_UPDATE, Permission.SYSTEM_SETTING_MANAGE]}>
+              <SystemSettingsPage />
+            </ProtectedRoute>
           </Layout>
         }
       />

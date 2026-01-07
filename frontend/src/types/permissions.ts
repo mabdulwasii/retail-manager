@@ -160,6 +160,11 @@ export enum Permission {
   AUDIT_LOG_EXPORT = 'AUDIT_LOG_EXPORT',
   AUDIT_LOG_VIEW_SHOP = 'AUDIT_LOG_VIEW_SHOP',
   AUDIT_LOG_VIEW_TENANT = 'AUDIT_LOG_VIEW_TENANT',
+
+  // System Settings Permissions (Embedded Mode Only)
+  SYSTEM_SETTING_VIEW = 'SYSTEM_SETTING_VIEW',
+  SYSTEM_SETTING_UPDATE = 'SYSTEM_SETTING_UPDATE',
+  SYSTEM_SETTING_MANAGE = 'SYSTEM_SETTING_MANAGE',
 }
 
 /**
@@ -361,7 +366,12 @@ export const getPermissionDisplayName = (permission: string): string => {
     [Permission.AUDIT_LOG_EXPORT]: 'Export Audit Logs',
     [Permission.AUDIT_LOG_VIEW_SHOP]: 'View Shop Audit Logs',
     [Permission.AUDIT_LOG_VIEW_TENANT]: 'View Tenant Audit Logs',
+
+    // System Settings
+    [Permission.SYSTEM_SETTING_VIEW]: 'View System Settings',
+    [Permission.SYSTEM_SETTING_UPDATE]: 'Update System Settings',
+    [Permission.SYSTEM_SETTING_MANAGE]: 'Manage All System Settings',
   }
-  
+
   return displayNames[permission] || permission
 }

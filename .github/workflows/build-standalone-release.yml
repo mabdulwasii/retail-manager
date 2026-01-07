@@ -307,6 +307,9 @@ jobs:
           cp ../../../.env.lite.template .
           cp ../../../lite-init.sh .
           cp ../../../lite-init.ps1 .
+          cp ../../../setup-custom-domain.sh .
+          cp ../../../setup-custom-domain.ps1 .
+          cp ../../../DOCKER_LITE_CUSTOM_DOMAIN.md .
           cp -r ../../../docs .
           tar -czf shop-manager-docker-lite-${{ steps.get_version.outputs.version }}.tar.gz *
 
