@@ -108,6 +108,21 @@ if exist "%APP_DIR%\config\.env" (
         set MIGRATED=true
     )
 
+    REM Fix unquoted cron expressions (causes app startup failure)
+    findstr /R "^CLOUD_SYNC_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^CLOUD_SYNC_CRON=(.*)$', 'CLOUD_SYNC_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
+        echo Fixed CLOUD_SYNC_CRON quotes
+        set MIGRATED=true
+    )
+
+    findstr /R "^UPDATE_CHECK_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^UPDATE_CHECK_CRON=(.*)$', 'UPDATE_CHECK_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
+        echo Fixed UPDATE_CHECK_CRON quotes
+        set MIGRATED=true
+    )
+
     REM Add config version if missing
     findstr /C:"CONFIG_VERSION" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% NEQ 0 (

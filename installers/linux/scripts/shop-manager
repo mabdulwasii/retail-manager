@@ -116,6 +116,19 @@ load_env() {
             MIGRATED=true
         fi
 
+        # Fix unquoted cron expressions (causes app startup failure)
+        if grep -q "^CLOUD_SYNC_CRON=[^']" "$CONFIG_FILE" 2>/dev/null; then
+            sed -i "s/^CLOUD_SYNC_CRON=\(.*\)$/CLOUD_SYNC_CRON='\1'/" "$CONFIG_FILE"
+            echo "✅ Fixed CLOUD_SYNC_CRON quotes"
+            MIGRATED=true
+        fi
+
+        if grep -q "^UPDATE_CHECK_CRON=[^']" "$CONFIG_FILE" 2>/dev/null; then
+            sed -i "s/^UPDATE_CHECK_CRON=\(.*\)$/UPDATE_CHECK_CRON='\1'/" "$CONFIG_FILE"
+            echo "✅ Fixed UPDATE_CHECK_CRON quotes"
+            MIGRATED=true
+        fi
+
         # Add config version if missing
         if ! grep -q "CONFIG_VERSION" "$CONFIG_FILE" 2>/dev/null; then
             echo "" >> "$CONFIG_FILE"
