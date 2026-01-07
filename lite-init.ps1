@@ -227,10 +227,9 @@ function Show-NextSteps {
     Write-Host ""
     Write-Host "3. " -NoNewline -ForegroundColor White
     Write-Host "Access the application:" -ForegroundColor Yellow
-    Write-Host "   Frontend: " -NoNewline
-    Write-Host "http://localhost:3001" -ForegroundColor Green
-    Write-Host "   Backend:  " -NoNewline
-    Write-Host "http://localhost:8081" -ForegroundColor Green
+    Write-Host "   Application: " -NoNewline
+    Write-Host "http://shopmanager.local" -ForegroundColor Green
+    Write-Host "   (or http://localhost if not using .local domain)" -ForegroundColor Gray
     Write-Host ""
     Write-Host "4. " -NoNewline -ForegroundColor White
     Write-Host "Check logs:" -ForegroundColor Yellow

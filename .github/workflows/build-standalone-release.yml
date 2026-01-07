@@ -303,6 +303,7 @@ jobs:
         run: |
           cd build/installers/docker-lite
           cp ../../../docker-compose-lite.yml .
+          cp ../../../nginx-lite.conf .
           cp ../../../.env.lite.template .
           cp ../../../lite-init.sh .
           cp ../../../lite-init.ps1 .
