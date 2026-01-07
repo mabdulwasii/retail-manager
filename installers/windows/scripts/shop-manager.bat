@@ -65,13 +65,19 @@ if exist "%APP_DIR%\config\.env" (
 )
 
 REM Set defaults if not configured
-if not defined BACKEND_PORT set BACKEND_PORT=8081
+if not defined BACKEND_PORT set BACKEND_PORT=80
 if not defined JAVA_OPTS set JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC
 
 REM Create data directories if they don't exist
 if not exist "%APP_DIR%\data\h2" mkdir "%APP_DIR%\data\h2"
 if not exist "%APP_DIR%\data\uploads" mkdir "%APP_DIR%\data\uploads"
 if not exist "%APP_DIR%\data\logs" mkdir "%APP_DIR%\data\logs"
+
+REM Cleanup zombie postgres processes on port 5433
+echo Checking for zombie postgres processes...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5433"') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
 
 REM Set Spring profile
 set SPRING_PROFILES_ACTIVE=embedded
@@ -162,7 +168,7 @@ set "VBS_LAUNCHER=%TEMP%\shop-manager-launch.vbs"
 echo Set WshShell = CreateObject^("WScript.Shell"^)
 echo Dim cmd, jarPath
 echo jarPath = "%JAR_FILE%"
-echo cmd = "java %JAVA_OPTS% -Dspring.profiles.active=embedded"
+echo cmd = "%JAVA% %JAVA_OPTS% -Dspring.profiles.active=embedded"
 echo cmd = cmd ^& " -Dserver.port=%BACKEND_PORT%"
 echo cmd = cmd ^& " -Dapplication.jwt.secret=%JWT_SECRET%"
 echo cmd = cmd ^& " -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED%"
