@@ -1,0 +1,543 @@
+# Gomco Retail Platform - Kubernetes Deployment Configuration
+# Version: 0.1.51
+# Deployment Mode: Cloud (Keycloak Auth)
+# Target: Docker Desktop Kubernetes
+
+# Global configuration
+global:
+  appName: "retail"
+  domain: "gomco.local"
+  environment: "production"
+  imageRegistry: ""
+  commonLabels:
+    environment: production
+    deployment: gomco
+  commonAnnotations: {}
+
+# Image pull secrets (if using private registry)
+imagePullSecrets: []
+
+# Gomco branding
+branding:
+  platformName: "Gomco Retail Platform"
+  companyName: "Gomco Technologies"
+  platformDescription: "Enterprise Retail Management Solution"
+
+  logo:
+    primary: ""
+    favicon: ""
+    loginLogo: ""
+
+  colors:
+    primary: "#1976d2"
+    secondary: "#dc004e"
+    success: "#388e3c"
+    warning: "#f57c00"
+    error: "#d32f2f"
+    background: "#fafafa"
+    surface: "#ffffff"
+
+  fonts:
+    family: "Roboto, Arial, sans-serif"
+    size:
+      small: "12px"
+      medium: "14px"
+      large: "16px"
+      title: "20px"
+
+  loginTheme:
+    backgroundColor: "#f5f5f5"
+    cardBackgroundColor: "#ffffff"
+    cardShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+    borderRadius: "8px"
+
+  ui:
+    showCompanyName: true
+    showPoweredBy: false
+    customFooterText: "© 2025 Gomco Technologies. All rights reserved."
+
+  email:
+    headerColor: "#1976d2"
+    logoUrl: ""
+    companyAddress: ""
+
+  reports:
+    headerLogo: ""
+    watermark: ""
+
+# Backend service configuration
+backend:
+  replicaCount: 1
+
+  image:
+    repository: shop-manager-backend
+    tag: "latest"  # Using latest - will tag as 0.1.51 after testing
+    pullPolicy: IfNotPresent
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: shop-manager-frontend
+    tag: "latest"  # Using latest - will tag as 0.1.51 after testing
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 3000
+    targetPort: 80
+    nodePort: 30080
+  config:
+    environment: production
+    keycloakRealm: shop-manager
+    keycloakClientId: ""  # Will be dynamically generated as retail-frontend
+    apiBaseUrl: ""  # Will become https://api.retail.gomco.local/api
+    keycloakUrl: ""  # Will become https://auth.retail.gomco.local
+    logging:
+      level: "info"
+      debugMode: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnvVars: []
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "local-ca-issuer"
+    hosts:
+      - host: retail.gomco.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: retail-frontend-tls
+        hosts:
+          - retail.gomco.local
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: NodePort
+  port: 8081
+  targetPort: 8081
+  nodePort: 30081
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "local-ca-issuer"
+  hosts:
+    - host: api.retail.gomco.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: retail-backend-tls
+      hosts:
+        - api.retail.gomco.local
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# TLS Certificate configuration
+tls:
+  enabled: true
+  issuer: local-ca-issuer
+  email: admin@gomco.local
+  localCertInstallation:
+    enabled: true
+    platforms:
+      - macOS
+      - linux
+      - windows
+    installMethods:
+      macOS:
+        keychain: true
+        trust: trustRoot
+        browsers: [safari, chrome, firefox]
+      linux:
+        systemStore: true
+        updateCa: true
+        browsers: [chrome, firefox]
+      windows:
+        certStore: true
+        scope: LocalMachine
+        browsers: [chrome, firefox, edge]
+    postInstall:
+      showInstructions: true
+      verifyInstallation: true
+      restartServices: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 5
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 90
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 5
+
+# Environment variables
+env:
+  SPRING_PROFILES_ACTIVE: cloud  # IMPORTANT: Cloud mode for Keycloak
+  SERVER_PORT: "8081"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+  SPRING_JPA_HIBERNATE_DDL_AUTO: none
+
+# ConfigMap configuration
+configMap:
+  data:
+    # Super Admin Bootstrap Configuration
+    APP_BOOTSTRAP_SUPERADMIN_ENABLED: "true"
+    APP_BOOTSTRAP_SUPERADMIN_USERNAME: "superadmin"
+    APP_BOOTSTRAP_SUPERADMIN_EMAIL: "superadmin@gomco.local"
+    APP_BOOTSTRAP_SUPERADMIN_FIRSTNAME: "Super"
+    APP_BOOTSTRAP_SUPERADMIN_LASTNAME: "Admin"
+    APP_BOOTSTRAP_SUPERADMIN_PHONENUMBER: "+1-555-GOMCO-01"
+    APP_BOOTSTRAP_SUPERADMIN_PASSWORD: "GomcoSuperAdmin@2025!"
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "GomcoPostgresAdm1n@2025!SecureDB"
+    username: "retail"
+    password: "GomcoDB@2025!SecurePassword"
+    database: "retaildb"
+  persistence:
+    size: 5Gi  # Increased for production
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Separate PostgreSQL for Keycloak
+keycloakPostgresql:
+  enabled: true
+  auth:
+    postgresPassword: "KeycloakDB@2025!SecurePassword"
+    username: "keycloak"
+    password: "KeycloakDB@2025!SecurePassword"
+    database: "keycloak"
+  persistence:
+    size: 2Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Kafka configuration (KRaft mode - no Zookeeper)
+kafka:
+  enabled: true
+  fullnameOverride: ""
+  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
+  persistence:
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+# Keycloak configuration
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: "GomcoKeycloakAdm1n@2025!"
+  externalDatabase:
+    host: ""  # Dynamically set by template
+    port: 5432
+    user: "keycloak"
+    database: "keycloak"
+    password: "KeycloakDB@2025!SecurePassword"
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: true
+    hostname: auth.retail.gomco.local
+    ingressClassName: nginx
+    tls: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      cert-manager.io/cluster-issuer: "local-ca-issuer"
+  logLevel: "INFO"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Application configuration
+config:
+  # Database settings
+  database:
+    showSql: false
+    formatSql: true
+    poolSize: 30
+    minIdle: 10
+    connectionTimeout: 30000
+
+  # Timezone and locale
+  timezone: "UTC"
+  locale: "en_US"
+
+  # Business rules
+  business:
+    defaultCurrency: "NGN"
+    defaultTaxRate: "0.075"
+    maxReturnDays: 30
+    minReorderPoint: 10
+
+  # Inventory management
+  inventory:
+    lowStockThreshold: 10
+    expiryWarningDays: 30
+    autoReorderEnabled: false
+    stockCheckIntervalHours: 6
+
+  # Security settings
+  security:
+    tenantIsolation: true
+    permissionCaching: true
+    sessionTimeoutMinutes: 30
+    maxLoginAttempts: 5
+    accountLockDurationMinutes: 30
+    passwordMinLength: 8
+    jwtExpirationHours: 24
+    cors:
+      allowedOrigins: ""  # Dynamically generated
+      allowedMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      allowedHeaders: "*"
+      allowCredentials: "true"
+
+  # Audit configuration
+  audit:
+    enabled: true
+    retentionDays: 90
+    logEntityChanges: true
+    logSecurityEvents: true
+    logApiRequests: false
+
+  # Backup configuration
+  backup:
+    path: "/var/retail/backups"
+    retentionDays: 30
+    maxFileSizeMb: 500
+    compressionEnabled: true
+    encryptionAlgorithm: "AES256"
+    scheduleCron: "0 0 2 * * SUN"
+
+  # Cache settings
+  cache:
+    defaultTtlMinutes: 60
+    analyticsTtlHours: 1
+
+  # Notification settings
+  notification:
+    emailEnabled: false  # Configure in production
+    smsEnabled: false
+    lowStockAlertEnabled: true
+
+  # Upload configuration
+  upload:
+    maxFileSizeMb: 10
+    allowedExtensions: "csv,xlsx,xls,pdf,jpg,jpeg,png"
+    tempDirectory: "/tmp/retail/uploads"
+
+  # Performance tuning
+  performance:
+    connectionPoolSize: 20
+    queryTimeoutSeconds: 30
+    bulkBatchSize: 1000
+
+  # Report generation
+  reports:
+    defaultFormat: "PDF"
+    generationTimeoutMinutes: 5
+
+  # Integration settings
+  integration:
+    retryAttempts: 3
+    retryDelayMs: 1000
+    timeoutSeconds: 30
+
+  # Monitoring
+  monitoring:
+    exposedEndpoints: "health,info,metrics,prometheus"
+    showHealthDetails: "always"
+    prometheusEnabled: true
+
+  # Scheduler configuration
+  scheduler:
+    profitDistribution:
+      enabled: true
+      monthlyDay: 1
+      monthlyHour: 2
+    cacheCleanup:
+      enabled: true
+      intervalHours: 6
+    auditCleanup:
+      enabled: true
+      intervalDays: 7
+
+  # Logging configuration
+  logging:
+    rootLevel: "INFO"
+    appLevel: "INFO"
+    securityLevel: "INFO"
+    webLevel: "INFO"
+    oauth2Level: "DEBUG"
+    pattern: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+  # Keycloak settings
+  keycloak:
+    realm: "shop-manager"
+    clientId: "retail-frontend"
+    authServerUrl: "https://auth.retail.gomco.local"
+    issuerUri: "https://auth.retail.gomco.local/realms/shop-manager"
+    jwkSetUri: "http://retail-keycloak:80/realms/shop-manager/protocol/openid-connect/certs"
+
+  # Test users (DEVELOPMENT - Disable in production)
+  testUsers:
+    enabled: false  # Disabled for production deployment
+
+  # System flags
+  maintenanceMode: false
+  debugMode: false
+
+# Feature flags
+features:
+  investment:
+    enabled: true
+  analytics:
+    enabled: true
+  fraud:
+    enabled: false
+  multiCurrency: false
+  barcodeScanning: true
+  loyaltyProgram: false
+
+# Secrets configuration
+secrets:
+  database:
+    postgresPassword: "GomcoPostgresAdm1n@2025!SecureDB"
+    shopPassword: "GomcoDB@2025!SecurePassword"
+    keycloakPassword: "KeycloakDB@2025!SecurePassword"
+
+  keycloak:
+    adminUser: "admin"
+    adminPassword: "GomcoKeycloakAdm1n@2025!"
+    frontendClientSecret: "gomco-frontend-secret-2025-compliant"
+    backendClientSecret: "gomco-backend-secret-2025-compliant"
+
+  minio:
+    rootUser: "gomcoretail"
+    rootPassword: "GomcoMin1o!SecureK3y2025#"
+
+  security:
+    jwtSecret: "GomcoJWT@SecureKey2025!CompliantTokenSigning#"
+    encryptionKey: "GomcoAES256@EncryptionKey2025!CompliantData#"
+    swaggerPassword: "GomcoSwaggerDoc@2025!SecureAPIAccess#"
+
+  email:
+    enabled: false
+    host: "smtp.gmail.com"
+    port: 587
+    username: ""  # Configure in production
+    password: ""  # Configure in production
+    smtpAuth: true
+    starttlsEnable: true
+
+# Sealed Secrets (optional)
+sealedSecrets:
+  enabled: false
+
+# MinIO configuration
+minio:
+  enabled: true
+  auth:
+    rootUser: "gomcoretail"
+    rootPassword: "GomcoMin1o!SecureK3y2025#"
+  persistence:
+    size: 10Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Certificate management
+certificates:
+  enabled: true
+  issuer: "local-ca-issuer"
+  duration: "8760h"  # 1 year
+  renewBefore: "720h"  # 30 days
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s
