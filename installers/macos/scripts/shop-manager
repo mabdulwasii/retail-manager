@@ -140,10 +140,11 @@ start_application() {
 
     # Find all JAR files and pick the highest version
     # Use bash 3.2 compatible approach (macOS default bash is 3.2)
+    # Sort by version number properly (semantic versioning aware)
     JAR_FILES=()
     while IFS= read -r jar; do
         JAR_FILES+=("$jar")
-    done < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
+    done < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -t'-' -k2 -V -r 2>/dev/null || find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
     JAR_COUNT=${#JAR_FILES[@]}
 
     if [ "$JAR_COUNT" -eq 0 ]; then
@@ -159,14 +160,29 @@ start_application() {
 
     # Clean up old JAR files if multiple versions found
     if [ "$JAR_COUNT" -gt 1 ]; then
-        echo "Found $JAR_COUNT JAR files, cleaning up old versions..."
+        echo "⚠️  WARNING: Found $JAR_COUNT JAR files!" | tee -a "$LOG_FILE"
+        echo "Cleaning up old versions..." | tee -a "$LOG_FILE"
+        echo "" >> "$LOG_FILE"
+        echo "All JARs found:" >> "$LOG_FILE"
+        for jar in "${JAR_FILES[@]}"; do
+            echo "  - $(basename "$jar")" >> "$LOG_FILE"
+        done
+        echo "" >> "$LOG_FILE"
+        echo "Keeping newest: $JAR_BASENAME" | tee -a "$LOG_FILE"
+
         # Keep only the newest JAR (first in sorted array)
         for ((i=1; i<JAR_COUNT; i++)); do
             OLD_JAR="${JAR_FILES[$i]}"
-            echo "Removing old JAR: $(basename "$OLD_JAR")"
-            rm -f "$OLD_JAR"
+            OLD_JAR_NAME="$(basename "$OLD_JAR")"
+            echo "Removing old JAR: $OLD_JAR_NAME" | tee -a "$LOG_FILE"
+            if rm -f "$OLD_JAR"; then
+                echo "  ✅ Deleted: $OLD_JAR_NAME" >> "$LOG_FILE"
+            else
+                echo "  ❌ Failed to delete: $OLD_JAR_NAME" >> "$LOG_FILE"
+            fi
         done
-        echo "Cleanup complete. Using: $JAR_BASENAME"
+        echo "✅ Cleanup complete" | tee -a "$LOG_FILE"
+        echo ""
     fi
 
     # Log startup info (log file already created above with debug info)
@@ -209,12 +225,21 @@ start_application() {
             exit 1
         fi
 
+        # Construct application URL
+        CUSTOM_DOMAIN=${CUSTOM_DOMAIN:-localhost}
+        if [ "$BACKEND_PORT" = "80" ]; then
+            APP_URL="http://$CUSTOM_DOMAIN"
+        else
+            APP_URL="http://$CUSTOM_DOMAIN:$BACKEND_PORT"
+        fi
+
         # Check if health endpoint is responding
-        if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+        if curl -s "$APP_URL/actuator/health" > /dev/null 2>&1; then
             echo "✅ Shop Manager started successfully" >> "$LOG_FILE"
+            echo "   URL: $APP_URL" >> "$LOG_FILE"
             # Open browser
-            open "http://localhost:$BACKEND_PORT"
-            osascript -e 'display notification "Shop Manager started successfully" with title "Shop Manager" sound name "Glass"'
+            open "$APP_URL"
+            osascript -e 'display notification "Shop Manager started at '"$APP_URL"'" with title "Shop Manager" sound name "Glass"'
             return 0
         fi
     done

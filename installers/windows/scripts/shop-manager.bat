@@ -156,10 +156,21 @@ echo.
 echo Warning: javaw.exe not found, using VBScript wrapper for hidden launch
 echo.
 
-REM Create VBScript launcher
+REM Create VBScript launcher with proper quote escaping
 set "VBS_LAUNCHER=%TEMP%\shop-manager-launch.vbs"
-echo Set WshShell = CreateObject("WScript.Shell") > "%VBS_LAUNCHER%"
-echo WshShell.Run "java %JAVA_OPTS% -Dspring.profiles.active=embedded -Dserver.port=%BACKEND_PORT% -Dapplication.jwt.secret=%JWT_SECRET% -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% -Dapplication.sync.api-key=%CLOUD_API_KEY% -Dapplication.sync.store-id=%STORE_ID% -jar \"%JAR_FILE%\"", 0, False >> "%VBS_LAUNCHER%"
+(
+echo Set WshShell = CreateObject^("WScript.Shell"^)
+echo Dim cmd
+echo cmd = "java %JAVA_OPTS% -Dspring.profiles.active=embedded"
+echo cmd = cmd ^& " -Dserver.port=%BACKEND_PORT%"
+echo cmd = cmd ^& " -Dapplication.jwt.secret=%JWT_SECRET%"
+echo cmd = cmd ^& " -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED%"
+echo cmd = cmd ^& " -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL%"
+echo cmd = cmd ^& " -Dapplication.sync.api-key=%CLOUD_API_KEY%"
+echo cmd = cmd ^& " -Dapplication.sync.store-id=%STORE_ID%"
+echo cmd = cmd ^& " -jar ""%JAR_FILE%"""
+echo WshShell.Run cmd, 0, False
+) > "%VBS_LAUNCHER%"
 
 REM Launch using VBScript (window hidden)
 cscript //nologo "%VBS_LAUNCHER%"
@@ -197,14 +208,38 @@ start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
 REM Wait a moment and check if application started
 timeout /t 5 /nobreak >nul
 
-REM Try to check health endpoint
-curl -s http://localhost:%BACKEND_PORT%/actuator/health >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo Shop Manager started successfully
-    echo Access the application at http://localhost:%BACKEND_PORT%
+REM Construct application URL
+if not defined CUSTOM_DOMAIN set CUSTOM_DOMAIN=localhost
+if "%BACKEND_PORT%"=="80" (
+    set "APP_URL=http://%CUSTOM_DOMAIN%"
 ) else (
-    echo Shop Manager may be starting... Please check logs if issues persist
+    set "APP_URL=http://%CUSTOM_DOMAIN%:%BACKEND_PORT%"
+)
+
+REM Try to check health endpoint
+curl -s "%APP_URL%/actuator/health" >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo ========================================
+    echo Shop Manager started successfully
+    echo ========================================
+    echo.
+    echo Access the application at: %APP_URL%
+    echo.
+
+    REM Open browser automatically
+    start "" "%APP_URL%"
+) else (
+    echo.
+    echo ========================================
+    echo Shop Manager is starting...
+    echo ========================================
+    echo.
+    echo Application URL: %APP_URL%
     echo Logs location: %APP_DIR%\data\logs
+    echo.
+    echo Please wait a moment and check the logs if issues persist
+    echo.
 )
 
 endlocal
