@@ -122,8 +122,8 @@ check_ports() {
 
 # Function to start application
 start_application() {
-    # Find all JAR files and pick the highest version
-    JAR_FILES=($(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r))
+    # Find all JAR files and pick the highest version (use mapfile for proper space handling)
+    mapfile -t JAR_FILES < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
     JAR_COUNT=${#JAR_FILES[@]}
 
     if [ "$JAR_COUNT" -eq 0 ]; then
@@ -133,10 +133,11 @@ start_application() {
 
     # Use the first (highest version) JAR
     JAR_FILE="${JAR_FILES[0]}"
+    JAR_BASENAME="$(basename "$JAR_FILE")"
 
     # Warn if multiple JARs found
     if [ "$JAR_COUNT" -gt 1 ]; then
-        osascript -e 'display dialog "Warning: Found '"$JAR_COUNT"' JAR files.\n\nUsing latest:\n'"$(basename "$JAR_FILE")"'\n\nThis may indicate an incomplete upgrade.\nConsider reinstalling Shop Manager." buttons {"Continue"} default button "Continue" with icon caution with title "Shop Manager - Multiple Versions"' &
+        osascript -e "display dialog \"Warning: Found $JAR_COUNT JAR files.\n\nUsing latest:\n$JAR_BASENAME\n\nThis may indicate an incomplete upgrade.\nConsider reinstalling Shop Manager.\" buttons {\"Continue\"} default button \"Continue\" with icon caution with title \"Shop Manager - Multiple Versions\"" &
         # Don't wait for user to dismiss - continue launching
     fi
 
@@ -149,10 +150,10 @@ start_application() {
     # Change to user's data directory
     cd "$HOME/.shopmanager/data"
 
-    # Start application in background
+    # Start application in background (quote all variables properly)
     java $JAVA_OPTS \
         -Dspring.profiles.active=embedded \
-        -Dserver.port=$BACKEND_PORT \
+        -Dserver.port="$BACKEND_PORT" \
         -Dapplication.jwt.secret="$JWT_SECRET" \
         -Dapplication.sync.enabled="${CLOUD_SYNC_ENABLED:-false}" \
         -Dapplication.sync.cloud-endpoint="$CLOUD_API_URL" \
