@@ -160,7 +160,8 @@ REM Create VBScript launcher with proper quote escaping
 set "VBS_LAUNCHER=%TEMP%\shop-manager-launch.vbs"
 (
 echo Set WshShell = CreateObject^("WScript.Shell"^)
-echo Dim cmd
+echo Dim cmd, jarPath
+echo jarPath = "%JAR_FILE%"
 echo cmd = "java %JAVA_OPTS% -Dspring.profiles.active=embedded"
 echo cmd = cmd ^& " -Dserver.port=%BACKEND_PORT%"
 echo cmd = cmd ^& " -Dapplication.jwt.secret=%JWT_SECRET%"
@@ -168,7 +169,7 @@ echo cmd = cmd ^& " -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED%"
 echo cmd = cmd ^& " -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL%"
 echo cmd = cmd ^& " -Dapplication.sync.api-key=%CLOUD_API_KEY%"
 echo cmd = cmd ^& " -Dapplication.sync.store-id=%STORE_ID%"
-echo cmd = cmd ^& " -jar ""%JAR_FILE%"""
+echo cmd = cmd ^& " -jar " ^& Chr^(34^) ^& jarPath ^& Chr^(34^)
 echo WshShell.Run cmd, 0, False
 ) > "%VBS_LAUNCHER%"
 
