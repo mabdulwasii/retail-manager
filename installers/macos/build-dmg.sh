@@ -111,8 +111,22 @@ create_app_bundle() {
     print_success "Created app bundle structure"
 
     # Copy JAR (preserve original filename for version tracking)
+    if [ ! -f "$JAR_FILE" ]; then
+        print_error "JAR file not found: $JAR_FILE"
+        exit 1
+    fi
+
     cp "$JAR_FILE" "${APP_BUNDLE_DIR}/Contents/Resources/"
-    print_success "Copied embedded JAR"
+
+    # Verify JAR was copied
+    JAR_BASENAME=$(basename "$JAR_FILE")
+    if [ ! -f "${APP_BUNDLE_DIR}/Contents/Resources/$JAR_BASENAME" ]; then
+        print_error "Failed to copy JAR to app bundle"
+        exit 1
+    fi
+
+    print_success "Copied embedded JAR: $JAR_BASENAME"
+    print_info "JAR location: ${APP_BUNDLE_DIR}/Contents/Resources/$JAR_BASENAME"
 
     # Copy launcher script
     cp scripts/shop-manager "${APP_BUNDLE_DIR}/Contents/MacOS/shop-manager"
@@ -178,6 +192,13 @@ EOF
     # Create PkgInfo
     echo -n "APPLSMGR" > "${APP_BUNDLE_DIR}/Contents/PkgInfo"
     print_success "Created PkgInfo"
+
+    echo ""
+
+    # Verify app bundle contents
+    print_info "Verifying app bundle contents..."
+    print_info "JARs in Resources directory:"
+    ls -lh "${APP_BUNDLE_DIR}/Contents/Resources/"*.jar 2>/dev/null || print_warning "No JAR files found in Resources directory!"
 
     echo ""
 }

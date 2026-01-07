@@ -129,30 +129,33 @@ if %JAR_COUNT% GTR 1 (
 
 echo Starting Shop Manager from: %JAR_FILE%
 
-REM Determine javaw path by deriving from java location
-REM This is more reliable than PATH validation
+REM Determine javaw path by deriving from java.home property
+REM This is the most reliable method that works in all contexts
 if "%JAVA%"=="java" (
-    REM Java is in PATH - find its actual location
-    set "JAVA_PATH="
-    for /f "delims=" %%i in ('where java 2^>nul ^| findstr /v "System32"') do (
-        if not defined JAVA_PATH (
-            set "JAVA_PATH=%%i"
-        )
+    REM Java is in PATH - get java.home property to find installation directory
+    set "JAVA_HOME_PROPERTY="
+    for /f "tokens=2 delims==" %%i in ('java -XshowSettings:properties 2^>^&1 ^| findstr "java.home"') do (
+        set "JAVA_HOME_PROPERTY=%%i"
     )
 
-    if not defined JAVA_PATH (
+    REM Trim leading/trailing spaces from java.home
+    for /f "tokens=* delims= " %%a in ("!JAVA_HOME_PROPERTY!") do set "JAVA_HOME_PROPERTY=%%a"
+
+    if not defined JAVA_HOME_PROPERTY (
         echo.
         echo ========================================
-        echo ERROR: Could not locate java.exe
+        echo ERROR: Could not determine Java installation directory
         echo ========================================
+        echo.
+        echo Java command works but could not read java.home property.
+        echo Please ensure Java is properly installed.
         echo.
         pause
         exit /b 1
     )
 
-    REM Extract directory from java path and construct javaw path
-    for %%i in ("!JAVA_PATH!") do set "JAVA_BIN_DIR=%%~dpi"
-    set "JAVAW=!JAVA_BIN_DIR!javaw.exe"
+    REM Construct javaw path from java.home
+    set "JAVAW=!JAVA_HOME_PROPERTY!\bin\javaw.exe"
 ) else (
     REM JAVA contains full path - use same directory for javaw
     for %%i in ("%JAVA%") do set "JAVA_BIN_DIR=%%~dpi"
@@ -169,8 +172,8 @@ if not exist "%JAVAW%" (
     echo Java location: %JAVA%
     echo Expected javaw at: %JAVAW%
     echo.
-    echo Please ensure Java is properly installed.
-    echo JDK installations include javaw.exe in the same directory as java.exe.
+    echo Please ensure Java JDK (not JRE) is installed.
+    echo JDK installations include javaw.exe in the bin directory.
     echo.
     pause
     exit /b 1
