@@ -156,10 +156,21 @@ echo.
 echo Warning: javaw.exe not found, using VBScript wrapper for hidden launch
 echo.
 
-REM Create VBScript launcher
+REM Create VBScript launcher with proper quote escaping
 set "VBS_LAUNCHER=%TEMP%\shop-manager-launch.vbs"
-echo Set WshShell = CreateObject("WScript.Shell") > "%VBS_LAUNCHER%"
-echo WshShell.Run "java %JAVA_OPTS% -Dspring.profiles.active=embedded -Dserver.port=%BACKEND_PORT% -Dapplication.jwt.secret=%JWT_SECRET% -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED% -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL% -Dapplication.sync.api-key=%CLOUD_API_KEY% -Dapplication.sync.store-id=%STORE_ID% -jar \"%JAR_FILE%\"", 0, False >> "%VBS_LAUNCHER%"
+(
+echo Set WshShell = CreateObject^("WScript.Shell"^)
+echo Dim cmd
+echo cmd = "java %JAVA_OPTS% -Dspring.profiles.active=embedded"
+echo cmd = cmd ^& " -Dserver.port=%BACKEND_PORT%"
+echo cmd = cmd ^& " -Dapplication.jwt.secret=%JWT_SECRET%"
+echo cmd = cmd ^& " -Dapplication.sync.enabled=%CLOUD_SYNC_ENABLED%"
+echo cmd = cmd ^& " -Dapplication.sync.cloud-endpoint=%CLOUD_API_URL%"
+echo cmd = cmd ^& " -Dapplication.sync.api-key=%CLOUD_API_KEY%"
+echo cmd = cmd ^& " -Dapplication.sync.store-id=%STORE_ID%"
+echo cmd = cmd ^& " -jar ""%JAR_FILE%"""
+echo WshShell.Run cmd, 0, False
+) > "%VBS_LAUNCHER%"
 
 REM Launch using VBScript (window hidden)
 cscript //nologo "%VBS_LAUNCHER%"
