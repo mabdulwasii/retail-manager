@@ -39,7 +39,7 @@ export const EmbeddedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (token && !embeddedAuthService.isTokenExpired(token)) {
         // Valid token exists, fetch user profile
         try {
-          setTokenProvider(() => token);
+          setTokenProvider(() => embeddedAuthService.getAccessToken());
           const profile = await embeddedAuthService.getProfile();
           setUser(profile);
           setIsAuthenticated(true);
@@ -81,8 +81,8 @@ export const EmbeddedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const login = useCallback(async (username: string, password: string) => {
     try {
-      const tokens = await embeddedAuthService.login({ username, password });
-      setTokenProvider(() => tokens.accessToken);
+      await embeddedAuthService.login({ username, password });
+      setTokenProvider(() => embeddedAuthService.getAccessToken());
 
       // Fetch user profile
       const profile = await embeddedAuthService.getProfile();
@@ -102,14 +102,14 @@ export const EmbeddedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     lastName?: string
   ) => {
     try {
-      const tokens = await embeddedAuthService.register({
+      await embeddedAuthService.register({
         username,
         password,
         email,
         firstName,
         lastName
       });
-      setTokenProvider(() => tokens.accessToken);
+      setTokenProvider(() => embeddedAuthService.getAccessToken());
 
       // Fetch user profile
       const profile = await embeddedAuthService.getProfile();

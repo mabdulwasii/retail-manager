@@ -39,9 +39,11 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Add Keycloak realm and client headers for proper context
-    config.headers["X-Keycloak-Realm"] = configService.keycloakRealm;
-    config.headers["X-Keycloak-Client"] = configService.keycloakClientId;
+    // Add Keycloak realm and client headers for proper context (only in cloud mode)
+    if (!configService.isEmbeddedMode) {
+      config.headers["X-Keycloak-Realm"] = configService.keycloakRealm;
+      config.headers["X-Keycloak-Client"] = configService.keycloakClientId;
+    }
 
     return config;
   },
