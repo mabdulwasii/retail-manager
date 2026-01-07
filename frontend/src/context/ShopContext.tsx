@@ -1,6 +1,6 @@
 import { Permission } from "@/types/permissions";
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { useAuth } from './ManualAuthContext';
+import { useAuth } from './UnifiedAuthContext';
 import { shopService, ShopResponse } from '@/services/shopService';
 
 interface ShopContextType {

@@ -1,4 +1,4 @@
-import { useAuth } from "@/context/ManualAuthContext";
+import { useAuth } from "@/context/UnifiedAuthContext";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Permission } from "@/types/permissions";

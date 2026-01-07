@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/ManualAuthContext";
+import { useAuth } from "@/context/UnifiedAuthContext";
 import { useActiveShops } from "@/hooks/useDashboard";
 import { Permission } from "@/types/permissions";
 import { Building2, Loader2 } from "lucide-react";

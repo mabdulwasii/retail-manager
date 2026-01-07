@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useSidebar } from '@/context/SidebarContext'
 import { useTheme } from '@/context/ThemeContext'
 import configService from '@/config/runtime-config'

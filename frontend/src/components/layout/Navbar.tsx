@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useTheme } from '@/context/ThemeContext'
 import { useSidebar } from '@/context/SidebarContext'
 import { Button } from '@/components/ui/button'

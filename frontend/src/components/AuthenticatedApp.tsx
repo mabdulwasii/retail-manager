@@ -1,7 +1,7 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useAuth } from "@/context/ManualAuthContext";
+import { useAuth } from "@/context/UnifiedAuthContext";
 import { Permission } from "@/types/permissions";
 import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { AuditPage } from "@/pages/audit/AuditPage";

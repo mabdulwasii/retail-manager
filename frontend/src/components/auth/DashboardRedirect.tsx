@@ -1,6 +1,6 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../context/ManualAuthContext";
+import { useAuth } from "../../context/UnifiedAuthContext";
 import { Permission } from "@/types/permissions";
 
 export function DashboardRedirect() {
