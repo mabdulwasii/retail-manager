@@ -34,7 +34,7 @@ import {
   Receipt,
   ReceiptFilter 
 } from '@/hooks/useReceipts'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useShopContext } from '@/context/ShopContext'
 import { ShopSelector } from '@/components/ui/shop-selector'
 import { useCurrency } from '@/hooks/useCurrency'

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Store, TrendingUp, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()

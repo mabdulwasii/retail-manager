@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Shield, Loader2, AlertCircle, Key, Edit, Users } from 'lucide-react'
 import { useRole } from '@/hooks/useRoles'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission } from '@/types/permissions'
 
 export const RoleDetailPage: React.FC = () => {

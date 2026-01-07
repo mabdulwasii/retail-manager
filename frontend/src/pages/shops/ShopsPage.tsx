@@ -20,7 +20,7 @@ import {
 import { useShops, useUpdateShopStatus } from '@/hooks/useShops'
 import { ShopResponse } from '@/services/shopService'
 import { ShopStatusBadge } from '@/components/shops'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -31,7 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useInventory } from '@/hooks/useInventory'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useShopContext } from '@/context/ShopContext'
 import { ShopSelector } from '@/components/ui/shop-selector'
 import { useCurrency } from '@/hooks/useCurrency'

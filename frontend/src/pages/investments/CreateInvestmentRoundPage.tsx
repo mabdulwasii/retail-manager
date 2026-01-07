@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCreateInvestmentRound } from '@/hooks/investment/useInvestmentRounds'
 import { InvestmentType, ProfitSharingModel, InvestmentRoundInvestor } from '@/types/investment'
 import { useCurrency } from '@/hooks/useCurrency'

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission } from '@/types/permissions'
 import { expenseService } from '@/services/expenseService'
 import { toast } from 'sonner'

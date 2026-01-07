@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { useSales } from '@/hooks/useSales'
 import { useCurrency } from '@/hooks/useCurrency'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useShopContext } from '@/context/ShopContext'
 import { 
   useReceiptByTransaction, 

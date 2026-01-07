@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useInvestmentRounds, useCloseInvestmentRound, useCompleteInvestmentRound, useDeleteInvestmentRound } from '@/hooks/investment/useInvestmentRounds'
 import { RoundStatus } from '@/types/investment'
 import { useCurrency } from '@/hooks/useCurrency'

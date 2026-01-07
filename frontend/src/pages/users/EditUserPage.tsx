@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useUpdateUser, useUser } from '@/hooks/useUsers'
 import { useActiveShops } from '@/hooks/useShops'
 import { useRoles } from '@/hooks/useRoles'

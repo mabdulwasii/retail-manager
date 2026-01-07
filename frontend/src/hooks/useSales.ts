@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCurrency } from './useCurrency'
 import { api } from '@/services/api'
 import { Product } from '@/types/api'

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productService, ProductListParams } from '@/services/productService'
 import { ProductCreateRequest, ProductUpdateRequest } from '@/types/api'
 import { toast } from 'sonner'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 
 /**
  * Hook to fetch paginated product list with filters

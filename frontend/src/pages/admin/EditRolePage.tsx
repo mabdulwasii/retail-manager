@@ -21,7 +21,7 @@ import {
   useRemovePermissions,
 } from '@/hooks/useRoles'
 import { RoleUpdateRequest, Permission } from '@/types/role'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission as permissions } from '@/types/permissions'
 
 const roleSchema = yup.object().shape({

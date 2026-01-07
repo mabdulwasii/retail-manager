@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission } from '@/types/permissions'
 import { auditLogService, type AuditLogFilter } from '@/services/auditLogService'
 import { toast } from 'sonner'

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft, Shield, Loader2, CheckCircle2 } from 'lucide-react'
 import { useCreateRole } from '@/hooks/useRoles'
 import { RoleCreateRequest } from '@/types/role'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission } from '@/types/permissions'
 
 // Validation schema

@@ -11,7 +11,7 @@ import { SalesHistory } from '@/components/sales/SalesHistory'
 import { useSales } from '@/hooks/useSales'
 import { Product } from '@/types/api'
 import { ShoppingCartIcon, ScanIcon, HistoryIcon, CreditCardIcon, ExternalLink } from 'lucide-react'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 

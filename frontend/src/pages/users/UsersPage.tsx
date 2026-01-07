@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useTenantUsers } from '@/hooks/useUsers'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { format } from 'date-fns'

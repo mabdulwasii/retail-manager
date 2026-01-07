@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useInvestments } from '@/hooks/investment/useInvestments'
 import { useDistributions } from '@/hooks/investment/useDistributions'

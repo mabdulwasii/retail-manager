@@ -23,7 +23,7 @@ import { InvestmentType, ProfitSharingModel, InvestmentCreateRequest } from '@/t
 import { useCurrency } from '@/hooks/useCurrency'
 import { useActiveShops } from '@/hooks/useShops'
 import { useShopUsers } from '@/hooks/useUsers'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { addMonths, format } from 'date-fns'
 import { toast } from 'sonner'
 
