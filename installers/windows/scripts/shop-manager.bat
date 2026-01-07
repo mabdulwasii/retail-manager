@@ -208,7 +208,7 @@ echo Starting Shop Manager...
 echo.
 
 REM Launch with console window visible
-start "Shop Manager Console" "%JAVA%" %JAVA_OPTS% ^
+start "Shop Manager Console" "!JAVA!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
@@ -224,7 +224,7 @@ goto :check_startup
 REM javaw.exe found and verified
 
 REM Launch application (no console window)
-start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
+start "Shop Manager" /B "!JAVAW!" %JAVA_OPTS% ^
     -Dspring.profiles.active=embedded ^
     -Dserver.port=%BACKEND_PORT% ^
     -Dapplication.jwt.secret=%JWT_SECRET% ^
