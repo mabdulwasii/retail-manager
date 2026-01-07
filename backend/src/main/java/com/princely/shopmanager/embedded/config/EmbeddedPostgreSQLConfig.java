@@ -73,6 +73,7 @@ public class EmbeddedPostgreSQLConfig {
         embeddedPostgres = EmbeddedPostgres.builder()
                 .setPort(postgresPort)
                 .setDataDirectory(dataDir)
+                .setCleanDataDirectory(false)  // Preserve existing data across restarts/updates
                 .start();
 
         log.info("✅ Embedded PostgreSQL started successfully on port {}", postgresPort);
