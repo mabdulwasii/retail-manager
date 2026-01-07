@@ -76,6 +76,28 @@ load_env() {
         export $(grep -v '^#' "$ENV_FILE" | xargs)
     fi
 
+    # Migrate postgres data from old location to new location
+    OLD_POSTGRES="$HOME/.shopmanager/data/data/postgres"
+    NEW_POSTGRES="$HOME/.shopmanager/data/postgres"
+
+    if [ -d "$OLD_POSTGRES" ] && [ ! -d "$NEW_POSTGRES" ]; then
+        echo ""
+        echo "📦 Migrating postgres data to correct location..."
+        echo "   From: $OLD_POSTGRES"
+        echo "   To:   $NEW_POSTGRES"
+        mkdir -p "$HOME/.shopmanager/data"
+        if mv "$OLD_POSTGRES" "$NEW_POSTGRES" 2>/dev/null; then
+            echo "✅ Database migrated successfully"
+            # Clean up empty directory
+            rmdir "$HOME/.shopmanager/data/data" 2>/dev/null || true
+        else
+            echo "⚠️  Warning: Could not migrate database automatically"
+            echo "   Please manually move: $OLD_POSTGRES"
+            echo "   To: $NEW_POSTGRES"
+        fi
+        echo ""
+    fi
+
     # Set defaults
     export BACKEND_PORT=${BACKEND_PORT:-80}
     export JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
