@@ -70,25 +70,17 @@ if exist "%APP_DIR%\config\.env" (
         echo Migrating to new format with embedded PostgreSQL...
         echo.
 
-        REM Extract old JWT_SECRET
-        for /f "usebackq tokens=2 delims==" %%a in (`findstr /C:"JWT_SECRET=" "%APP_DIR%\config\.env" 2^>nul`) do set "OLD_JWT_SECRET=%%a"
-
         REM Backup old config
         copy "%APP_DIR%\config\.env" "%APP_DIR%\config\.env.backup" >nul 2>&1
+        echo Backed up old config: config\.env.backup
 
         REM Copy new template
         copy /Y "%APP_DIR%\config\.env.template" "%APP_DIR%\config\.env" >nul
+        echo Created new configuration with PostgreSQL settings
 
-        REM Restore JWT_SECRET if it exists and is not placeholder
-        if defined OLD_JWT_SECRET (
-            if not "!OLD_JWT_SECRET!"=="REPLACE_WITH_SECURE_RANDOM_SECRET" (
-                REM Replace JWT_SECRET in new file
-                powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET', 'JWT_SECRET=!OLD_JWT_SECRET!' | Set-Content '%APP_DIR%\config\.env'"
-                echo Preserved your JWT secret
-            )
-        )
-
-        echo Configuration upgraded to v0.1.48 format
+        echo.
+        echo Configuration upgraded to v0.1.49 format
+        echo NOTE: You will need to log in again with your credentials
         echo.
     )
 
@@ -113,6 +105,21 @@ if exist "%APP_DIR%\config\.env" (
     if %ERRORLEVEL% EQU 0 (
         powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content '%APP_DIR%\config\.env'"
         echo Migrated POSTGRES_DATA_DIR: ./data/postgres to postgres
+        set MIGRATED=true
+    )
+
+    REM Fix unquoted cron expressions (causes app startup failure)
+    findstr /R "^CLOUD_SYNC_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^CLOUD_SYNC_CRON=(.*)$', 'CLOUD_SYNC_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
+        echo Fixed CLOUD_SYNC_CRON quotes
+        set MIGRATED=true
+    )
+
+    findstr /R "^UPDATE_CHECK_CRON=[^^']" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace '^UPDATE_CHECK_CRON=(.*)$', 'UPDATE_CHECK_CRON=''$1''' | Set-Content '%APP_DIR%\config\.env'"
+        echo Fixed UPDATE_CHECK_CRON quotes
         set MIGRATED=true
     )
 
