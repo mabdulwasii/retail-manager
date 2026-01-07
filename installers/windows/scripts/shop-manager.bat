@@ -59,17 +59,51 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM Load environment variables
 if exist "%APP_DIR%\config\.env" (
+    REM Check if old format (missing POSTGRES_DATA_DIR)
+    findstr /C:"POSTGRES_DATA_DIR" "%APP_DIR%\config\.env" >nul 2>&1
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo ========================================
+        echo Detected old configuration format
+        echo ========================================
+        echo.
+        echo Migrating to new format with embedded PostgreSQL...
+        echo.
+
+        REM Extract old JWT_SECRET
+        for /f "usebackq tokens=2 delims==" %%a in (`findstr /C:"JWT_SECRET=" "%APP_DIR%\config\.env" 2^>nul`) do set "OLD_JWT_SECRET=%%a"
+
+        REM Backup old config
+        copy "%APP_DIR%\config\.env" "%APP_DIR%\config\.env.backup" >nul 2>&1
+
+        REM Copy new template
+        copy /Y "%APP_DIR%\config\.env.template" "%APP_DIR%\config\.env" >nul
+
+        REM Restore JWT_SECRET if it exists and is not placeholder
+        if defined OLD_JWT_SECRET (
+            if not "!OLD_JWT_SECRET!"=="REPLACE_WITH_SECURE_RANDOM_SECRET" (
+                REM Replace JWT_SECRET in new file
+                powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET', 'JWT_SECRET=!OLD_JWT_SECRET!' | Set-Content '%APP_DIR%\config\.env'"
+                echo Preserved your JWT secret
+            )
+        )
+
+        echo Configuration upgraded to v0.1.48 format
+        echo.
+    )
+
+    REM Load all environment variables
     for /f "usebackq tokens=1,* delims==" %%a in ("%APP_DIR%\config\.env") do (
         set "%%a=%%b"
     )
 
-    REM Migrate old configurations automatically
+    REM Migrate specific old values
     set MIGRATED=false
 
-    REM Fix old port (8081 → 80)
+    REM Fix old port (8081 → 80) - Use batch string replacement
     findstr /C:"BACKEND_PORT=8081" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content \"\"%APP_DIR%\config\.env\"\" ) -replace 'BACKEND_PORT=8081', 'BACKEND_PORT=80' | Set-Content \"\"%APP_DIR%\config\.env\"\" "
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'BACKEND_PORT=8081', 'BACKEND_PORT=80' | Set-Content '%APP_DIR%\config\.env'"
         echo Migrated BACKEND_PORT: 8081 to 80
         set MIGRATED=true
     )
@@ -77,7 +111,7 @@ if exist "%APP_DIR%\config\.env" (
     REM Fix old postgres path (./data/postgres → postgres)
     findstr /C:"POSTGRES_DATA_DIR=./data/postgres" "%APP_DIR%\config\.env" >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        powershell -Command "(Get-Content \"\"%APP_DIR%\config\.env\"\" ) -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content \"\"%APP_DIR%\config\.env\"\" "
+        powershell -Command "(Get-Content '%APP_DIR%\config\.env') -replace 'POSTGRES_DATA_DIR=./data/postgres', 'POSTGRES_DATA_DIR=postgres' | Set-Content '%APP_DIR%\config\.env'"
         echo Migrated POSTGRES_DATA_DIR: ./data/postgres to postgres
         set MIGRATED=true
     )
@@ -171,6 +205,22 @@ if %JAR_COUNT% GTR 1 (
 
 echo Starting Shop Manager from: %JAR_FILE%
 
+REM Verify JAVA variable is set
+if not defined JAVA (
+    echo.
+    echo ========================================
+    echo ERROR: JAVA variable not set
+    echo ========================================
+    echo.
+    echo This is a critical error. Java detection failed.
+    echo Please report this error with your system details.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Using Java: !JAVA!
+
 REM Determine javaw path using multi-strategy approach for maximum reliability
 set "JAVAW="
 
@@ -184,8 +234,8 @@ if defined JAVA_HOME (
 )
 
 REM Strategy 2: If JAVA variable contains full path, use same directory
-if not "%JAVA%"=="java" (
-    for %%i in ("%JAVA%") do set "JAVA_BIN_DIR=%%~dpi"
+if not "!JAVA!"=="java" (
+    for %%i in ("!JAVA!") do set "JAVA_BIN_DIR=%%~dpi"
     set "JAVAW=!JAVA_BIN_DIR!javaw.exe"
     if exist "!JAVAW!" (
         echo Using javaw from JAVA directory: !JAVAW!

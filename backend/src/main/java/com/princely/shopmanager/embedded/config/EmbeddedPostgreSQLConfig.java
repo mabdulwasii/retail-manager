@@ -80,7 +80,27 @@ public class EmbeddedPostgreSQLConfig {
         log.info("Database: {}", databaseName);
         log.info("Data directory: {}", dataDir.getAbsolutePath());
 
-        // Connect to the specified database (shopmanager) instead of default postgres database
+        // Create shopmanager database if it doesn't exist
+        try (var postgresConnection = embeddedPostgres.getPostgresDatabase().getConnection();
+             var stmt = postgresConnection.createStatement()) {
+
+            // Check if database exists
+            var rs = stmt.executeQuery("SELECT 1 FROM pg_database WHERE datname = '" + databaseName + "'");
+            if (!rs.next()) {
+                // Database doesn't exist, create it
+                log.info("Creating database: {}", databaseName);
+                stmt.execute("CREATE DATABASE " + databaseName);
+                log.info("✅ Database '{}' created successfully", databaseName);
+            } else {
+                log.info("Database '{}' already exists", databaseName);
+            }
+            rs.close();
+        } catch (Exception e) {
+            log.error("Error creating database: {}", databaseName, e);
+            throw new IOException("Failed to create database: " + databaseName, e);
+        }
+
+        // Connect to the specified database (shopmanager)
         return embeddedPostgres.getDatabase("postgres", databaseName);
     }
 
