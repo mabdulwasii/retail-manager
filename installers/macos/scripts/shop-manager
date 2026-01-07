@@ -135,10 +135,16 @@ start_application() {
     JAR_FILE="${JAR_FILES[0]}"
     JAR_BASENAME="$(basename "$JAR_FILE")"
 
-    # Warn if multiple JARs found
+    # Clean up old JAR files if multiple versions found
     if [ "$JAR_COUNT" -gt 1 ]; then
-        osascript -e "display dialog \"Warning: Found $JAR_COUNT JAR files.\n\nUsing latest:\n$JAR_BASENAME\n\nThis may indicate an incomplete upgrade.\nConsider reinstalling Shop Manager.\" buttons {\"Continue\"} default button \"Continue\" with icon caution with title \"Shop Manager - Multiple Versions\"" &
-        # Don't wait for user to dismiss - continue launching
+        echo "Found $JAR_COUNT JAR files, cleaning up old versions..."
+        # Keep only the newest JAR (first in sorted array)
+        for ((i=1; i<JAR_COUNT; i++)); do
+            OLD_JAR="${JAR_FILES[$i]}"
+            echo "Removing old JAR: $(basename "$OLD_JAR")"
+            rm -f "$OLD_JAR"
+        done
+        echo "Cleanup complete. Using: $JAR_BASENAME"
     fi
 
     LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"

@@ -79,10 +79,12 @@ set SPRING_PROFILES_ACTIVE=embedded
 REM Find the JAR file (picks highest version if multiple exist)
 set "JAR_FILE="
 set "JAR_COUNT=0"
+set "NEWEST_JAR="
 
 REM Count JAR files and find the latest version (sort descending)
 for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
-    if not defined JAR_FILE (
+    if not defined NEWEST_JAR (
+        set "NEWEST_JAR=%%f"
         set "JAR_FILE=%APP_DIR%\lib\%%f"
     )
     set /a JAR_COUNT+=1
@@ -101,20 +103,28 @@ if not defined JAR_FILE (
     exit /b 1
 )
 
-REM Warn if multiple JARs found
+REM Clean up old JAR files if multiple found
 if %JAR_COUNT% GTR 1 (
     echo.
     echo ========================================
-    echo WARNING: Multiple JAR files detected
+    echo Cleaning up old JAR files
     echo ========================================
     echo.
-    echo Found %JAR_COUNT% JAR files in %APP_DIR%\lib
-    echo Using latest version: %JAR_FILE%
+    echo Found %JAR_COUNT% JAR files, keeping only: !NEWEST_JAR!
     echo.
-    echo This may indicate an incomplete upgrade.
-    echo Consider reinstalling Shop Manager.
+
+    REM Delete all JARs except the newest
+    for /f "delims=" %%f in ('dir /b /o-n "%APP_DIR%\lib\shop-manager-*-embedded.jar" 2^>nul') do (
+        if not "%%f"=="!NEWEST_JAR!" (
+            echo Removing old JAR: %%f
+            del /f /q "%APP_DIR%\lib\%%f" 2>nul
+        )
+    )
+
     echo.
-    timeout /t 5 /nobreak
+    echo Cleanup complete
+    echo.
+    timeout /t 2 /nobreak >nul
 )
 
 echo Starting Shop Manager from: %JAR_FILE%
