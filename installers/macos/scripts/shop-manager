@@ -122,12 +122,30 @@ check_ports() {
 
 # Function to start application
 start_application() {
+    # Debug: Log directory contents
+    LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    echo "=========================================" > "$LOG_FILE"
+    echo "Shop Manager Launcher Debug" >> "$LOG_FILE"
+    echo "Date: $(date)" >> "$LOG_FILE"
+    echo "=========================================" >> "$LOG_FILE"
+    echo "APP_DIR: $APP_DIR" >> "$LOG_FILE"
+    echo "" >> "$LOG_FILE"
+    echo "Contents of APP_DIR:" >> "$LOG_FILE"
+    ls -la "$APP_DIR" >> "$LOG_FILE" 2>&1
+    echo "" >> "$LOG_FILE"
+    echo "Searching for: shop-manager-*-embedded.jar" >> "$LOG_FILE"
+    find "$APP_DIR" -name "shop-manager-*-embedded.jar" >> "$LOG_FILE" 2>&1
+    echo "=========================================" >> "$LOG_FILE"
+
     # Find all JAR files and pick the highest version (use mapfile for proper space handling)
     mapfile -t JAR_FILES < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
     JAR_COUNT=${#JAR_FILES[@]}
 
     if [ "$JAR_COUNT" -eq 0 ]; then
-        osascript -e 'display dialog "Shop Manager JAR file not found in:\n'"$APP_DIR"'\n\nExpected: shop-manager-*-embedded.jar" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
+        # Enhanced error message with debug info
+        ALL_JARS=$(find "$APP_DIR" -name "*.jar" 2>/dev/null || echo "No JAR files found")
+        osascript -e 'display dialog "Shop Manager JAR file not found in:\n'"$APP_DIR"'\n\nExpected: shop-manager-*-embedded.jar\n\nFound JARs:\n'"$ALL_JARS"'\n\nSee log: '"$LOG_FILE"'" buttons {"OK"} default button "OK" with icon stop with title "Shop Manager - Error"'
         exit 1
     fi
 
@@ -147,10 +165,11 @@ start_application() {
         echo "Cleanup complete. Using: $JAR_BASENAME"
     fi
 
-    LOG_FILE="$HOME/.shopmanager/data/logs/shop-manager.log"
-    echo "=========================================" > "$LOG_FILE"
-    echo "Shop Manager Starting: $(date)" >> "$LOG_FILE"
-    echo "JAR: $JAR_FILE" >> "$LOG_FILE"
+    # Log startup info (log file already created above with debug info)
+    echo "" >> "$LOG_FILE"
+    echo "Starting application..." >> "$LOG_FILE"
+    echo "JAR File: $JAR_FILE" >> "$LOG_FILE"
+    echo "JAR Count: $JAR_COUNT" >> "$LOG_FILE"
     echo "=========================================" >> "$LOG_FILE"
 
     # Change to user's data directory
