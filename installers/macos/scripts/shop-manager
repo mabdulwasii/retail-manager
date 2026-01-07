@@ -138,8 +138,12 @@ start_application() {
     find "$APP_DIR" -name "shop-manager-*-embedded.jar" >> "$LOG_FILE" 2>&1
     echo "=========================================" >> "$LOG_FILE"
 
-    # Find all JAR files and pick the highest version (use mapfile for proper space handling)
-    mapfile -t JAR_FILES < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
+    # Find all JAR files and pick the highest version
+    # Use bash 3.2 compatible approach (macOS default bash is 3.2)
+    JAR_FILES=()
+    while IFS= read -r jar; do
+        JAR_FILES+=("$jar")
+    done < <(find "$APP_DIR" -name "shop-manager-*-embedded.jar" | sort -r)
     JAR_COUNT=${#JAR_FILES[@]}
 
     if [ "$JAR_COUNT" -eq 0 ]; then
