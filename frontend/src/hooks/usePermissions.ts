@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { Permission } from '@/types/permissions'
 
 /**
