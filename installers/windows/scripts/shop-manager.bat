@@ -129,50 +129,52 @@ if %JAR_COUNT% GTR 1 (
 
 echo Starting Shop Manager from: %JAR_FILE%
 
-REM Determine javaw path (for windowless execution)
+REM Determine javaw path by deriving from java location
+REM This is more reliable than PATH validation
 if "%JAVA%"=="java" (
-    set "JAVAW=javaw"
-) else (
-    REM Get the directory containing java.exe and construct javaw path
-    for %%i in ("%JAVA%") do (
-        set "JAVA_DIR=%%~dpi"
+    REM Java is in PATH - find its actual location
+    set "JAVA_PATH="
+    for /f "delims=" %%i in ('where java 2^>nul ^| findstr /v "System32"') do (
+        if not defined JAVA_PATH (
+            set "JAVA_PATH=%%i"
+        )
     )
-    REM Remove trailing backslash if present
-    if "!JAVA_DIR:~-1!"=="\" set "JAVA_DIR=!JAVA_DIR:~0,-1!"
-    set "JAVAW=!JAVA_DIR!\javaw.exe"
+
+    if not defined JAVA_PATH (
+        echo.
+        echo ========================================
+        echo ERROR: Could not locate java.exe
+        echo ========================================
+        echo.
+        pause
+        exit /b 1
+    )
+
+    REM Extract directory from java path and construct javaw path
+    for %%i in ("!JAVA_PATH!") do set "JAVA_BIN_DIR=%%~dpi"
+    set "JAVAW=!JAVA_BIN_DIR!javaw.exe"
+) else (
+    REM JAVA contains full path - use same directory for javaw
+    for %%i in ("%JAVA%") do set "JAVA_BIN_DIR=%%~dpi"
+    set "JAVAW=!JAVA_BIN_DIR!javaw.exe"
 )
 
-REM Verify javaw exists (try PATH first, then file path)
-where %JAVAW% >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    REM Found in PATH, we're good
-    goto :javaw_verified
+REM Verify javaw exists at constructed path
+if not exist "%JAVAW%" (
+    echo.
+    echo ========================================
+    echo ERROR: javaw.exe not found
+    echo ========================================
+    echo.
+    echo Java location: %JAVA%
+    echo Expected javaw at: %JAVAW%
+    echo.
+    echo Please ensure Java is properly installed.
+    echo JDK installations include javaw.exe in the same directory as java.exe.
+    echo.
+    pause
+    exit /b 1
 )
-
-REM Not in PATH, check if it's a valid file path
-if exist "%JAVAW%" (
-    REM Valid file path, we're good
-    goto :javaw_verified
-)
-
-REM Neither in PATH nor valid file - error
-echo.
-echo ========================================
-echo ERROR: javaw.exe not found
-echo ========================================
-echo.
-echo Checked locations:
-echo   - System PATH: %JAVAW%
-echo   - File path: %JAVAW%
-echo.
-echo Java location: %JAVA%
-echo.
-echo Please ensure Java is properly installed with javaw.exe.
-echo.
-pause
-exit /b 1
-
-:javaw_verified
 
 REM Launch application (no console window)
 start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
