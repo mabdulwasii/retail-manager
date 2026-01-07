@@ -225,12 +225,21 @@ start_application() {
             exit 1
         fi
 
+        # Construct application URL
+        CUSTOM_DOMAIN=${CUSTOM_DOMAIN:-localhost}
+        if [ "$BACKEND_PORT" = "80" ]; then
+            APP_URL="http://$CUSTOM_DOMAIN"
+        else
+            APP_URL="http://$CUSTOM_DOMAIN:$BACKEND_PORT"
+        fi
+
         # Check if health endpoint is responding
-        if curl -s http://localhost:$BACKEND_PORT/actuator/health > /dev/null 2>&1; then
+        if curl -s "$APP_URL/actuator/health" > /dev/null 2>&1; then
             echo "✅ Shop Manager started successfully" >> "$LOG_FILE"
+            echo "   URL: $APP_URL" >> "$LOG_FILE"
             # Open browser
-            open "http://localhost:$BACKEND_PORT"
-            osascript -e 'display notification "Shop Manager started successfully" with title "Shop Manager" sound name "Glass"'
+            open "$APP_URL"
+            osascript -e 'display notification "Shop Manager started at '"$APP_URL"'" with title "Shop Manager" sound name "Glass"'
             return 0
         fi
     done

@@ -208,14 +208,38 @@ start "Shop Manager" /B "%JAVAW%" %JAVA_OPTS% ^
 REM Wait a moment and check if application started
 timeout /t 5 /nobreak >nul
 
-REM Try to check health endpoint
-curl -s http://localhost:%BACKEND_PORT%/actuator/health >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo Shop Manager started successfully
-    echo Access the application at http://localhost:%BACKEND_PORT%
+REM Construct application URL
+if not defined CUSTOM_DOMAIN set CUSTOM_DOMAIN=localhost
+if "%BACKEND_PORT%"=="80" (
+    set "APP_URL=http://%CUSTOM_DOMAIN%"
 ) else (
-    echo Shop Manager may be starting... Please check logs if issues persist
+    set "APP_URL=http://%CUSTOM_DOMAIN%:%BACKEND_PORT%"
+)
+
+REM Try to check health endpoint
+curl -s "%APP_URL%/actuator/health" >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo ========================================
+    echo Shop Manager started successfully
+    echo ========================================
+    echo.
+    echo Access the application at: %APP_URL%
+    echo.
+
+    REM Open browser automatically
+    start "" "%APP_URL%"
+) else (
+    echo.
+    echo ========================================
+    echo Shop Manager is starting...
+    echo ========================================
+    echo.
+    echo Application URL: %APP_URL%
     echo Logs location: %APP_DIR%\data\logs
+    echo.
+    echo Please wait a moment and check the logs if issues persist
+    echo.
 )
 
 endlocal
