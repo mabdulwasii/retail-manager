@@ -42,6 +42,38 @@ load_env() {
         chmod 600 "$ENV_FILE"
     fi
 
+    # Check if .env is old format (missing POSTGRES_DATA_DIR)
+    if ! grep -q "POSTGRES_DATA_DIR" "$ENV_FILE" 2>/dev/null; then
+        echo ""
+        echo "📦 Detected old configuration format (v0.1.30)"
+        echo "   Migrating to new format with embedded PostgreSQL..."
+
+        # Preserve user's JWT_SECRET if it exists
+        OLD_JWT_SECRET=$(grep "JWT_SECRET=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2-)
+
+        # Backup old .env
+        cp "$ENV_FILE" "$ENV_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+        echo "   Backed up old config: $ENV_FILE.backup.*"
+
+        # Copy new template
+        cp "$APP_DIR/config/.env.template" "$ENV_FILE"
+
+        # Restore JWT_SECRET if it was set
+        if [ -n "$OLD_JWT_SECRET" ] && [ "$OLD_JWT_SECRET" != "REPLACE_WITH_SECURE_RANDOM_SECRET" ]; then
+            sed -i '' "s|JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET|JWT_SECRET=$OLD_JWT_SECRET|" "$ENV_FILE"
+            echo "   Preserved your JWT secret"
+        else
+            # Generate new JWT secret
+            JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+            sed -i '' "s|JWT_SECRET=REPLACE_WITH_SECURE_RANDOM_SECRET|JWT_SECRET=$JWT_SECRET|" "$ENV_FILE"
+        fi
+
+        # Set permissions
+        chmod 600 "$ENV_FILE"
+        echo "✅ Configuration upgraded to v0.1.48 format"
+        echo ""
+    fi
+
     # Load environment variables
     export $(grep -v '^#' "$ENV_FILE" | xargs)
 
