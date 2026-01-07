@@ -80,7 +80,8 @@ public class EmbeddedPostgreSQLConfig {
         log.info("Database: {}", databaseName);
         log.info("Data directory: {}", dataDir.getAbsolutePath());
 
-        return embeddedPostgres.getPostgresDatabase();
+        // Connect to the specified database (shopmanager) instead of default postgres database
+        return embeddedPostgres.getDatabase("postgres", databaseName);
     }
 
     /**
