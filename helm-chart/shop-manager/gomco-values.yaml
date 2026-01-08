@@ -6,7 +6,7 @@
 # Global configuration
 global:
   appName: "retail"
-  domain: "gomco.local"
+  domain: "gomco.com"
   environment: "production"
   imageRegistry: ""
   commonLabels:
@@ -250,7 +250,7 @@ postgresql:
     password: "GomcoDB@2025!SecurePassword"
     database: "retaildb"
   persistence:
-    size: 5Gi  # Increased for production
+    size: 2Gi
   resources:
     requests:
       memory: "512Mi"
@@ -268,7 +268,7 @@ keycloakPostgresql:
     password: "KeycloakDB@2025!SecurePassword"
     database: "keycloak"
   persistence:
-    size: 2Gi
+    size: 1Gi
   resources:
     requests:
       memory: "512Mi"
@@ -279,12 +279,11 @@ keycloakPostgresql:
 
 # Kafka configuration (KRaft mode - no Zookeeper)
 kafka:
-  enabled: true
+  enabled: false  # Disabled for Gomco deployment
   fullnameOverride: ""
   clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
   persistence:
-    size: 5Gi
-    storageClass: ""
+    enabled: false  # Disabled for docker-desktop testing
   resources:
     requests:
       memory: "1Gi"
@@ -514,12 +513,12 @@ sealedSecrets:
 
 # MinIO configuration
 minio:
-  enabled: true
+  enabled: false  # Disabled for Gomco deployment
   auth:
     rootUser: "gomcoretail"
     rootPassword: "GomcoMin1o!SecureK3y2025#"
   persistence:
-    size: 10Gi
+    enabled: false  # Disabled for docker-desktop testing
   resources:
     requests:
       memory: "512Mi"

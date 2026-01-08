@@ -6,7 +6,7 @@ import com.princely.shopmanager.embedded.dto.SystemSettingDTO;
 import com.princely.shopmanager.embedded.dto.UpdateSettingRequest;
 import com.princely.shopmanager.embedded.dto.BulkUpdateSettingsRequest;
 import com.princely.shopmanager.embedded.service.SystemSettingsService;
-import com.princely.shopmanager.auth.security.JwtPrincipal;
+import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
