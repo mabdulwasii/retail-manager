@@ -98,12 +98,7 @@ public class SystemSettings extends BaseEntity {
     @Column(name = "updated_by", length = 36)
     private String updatedBy;
 
-    /**
-     * Optimistic locking version
-     */
-    @Version
-    @Column(nullable = false)
-    private Integer version = 0;
+    // Note: version field inherited from BaseEntity for JPA optimistic locking
 
     /**
      * Setting categories for logical grouping

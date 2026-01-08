@@ -112,7 +112,7 @@ public class UserController {
                 .phoneNumber(user.getPhoneNumber())
                 .status(user.getStatus().name())
                 .roles(roleResponses) // Database roles with permissions
-                .tenantId(user.getTenant().getId()) // From DB, not JWT (prevents staleness)
+                .tenantId(user.getTenant() != null ? user.getTenant().getId() : null) // From DB, not JWT (prevents staleness)
                 .shopId(user.getShop() != null ? user.getShop().getId() : null) // From DB, not JWT
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
