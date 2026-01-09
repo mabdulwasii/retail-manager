@@ -77,7 +77,7 @@ public class ExpenseService extends ShopAwareService {
      * Create a new expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'MANAGER', 'ACCOUNTANT')")
     public ExpenseResponse createExpense(String shopId, ExpenseCreateRequest request, JwtPrincipal principal) {
         log.info("Creating expense for shop: {}, title: {}", shopId, request.title());
 
@@ -145,7 +145,7 @@ public class ExpenseService extends ShopAwareService {
      * Update an existing expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'MANAGER', 'ACCOUNTANT')")
     public ExpenseResponse updateExpense(UUID expenseId, ExpenseUpdateRequest request, JwtPrincipal principal) {
         log.info("Updating expense: {}", expenseId);
 
@@ -184,7 +184,7 @@ public class ExpenseService extends ShopAwareService {
      * Approve an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'MANAGER')")
     public ExpenseResponse approveExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Approving expense: {}", expenseId);
 
@@ -213,7 +213,7 @@ public class ExpenseService extends ShopAwareService {
      * Reject an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'MANAGER')")
     public ExpenseResponse rejectExpense(UUID expenseId, ExpenseApprovalRequest request, JwtPrincipal principal) {
         log.info("Rejecting expense: {}", expenseId);
 
@@ -267,7 +267,7 @@ public class ExpenseService extends ShopAwareService {
      * Delete an expense
      */
     @Transactional
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'MANAGER')")
     public void deleteExpense(UUID expenseId, JwtPrincipal principal) {
         log.info("Deleting expense: {}", expenseId);
 

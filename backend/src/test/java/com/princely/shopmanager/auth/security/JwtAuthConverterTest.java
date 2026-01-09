@@ -70,7 +70,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(3);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER");
+            .containsExactlyInAnyOrder("admin", "user", "manager");
     }
 
     @Test
@@ -212,11 +212,11 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(1);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactly("ROLE_SHOP_MANAGER");
+            .containsExactly("shop_manager");
     }
 
     @Test
-    void convert_WithMixedCaseRoles_ShouldReturnUppercaseAuthorities() {
+    void convert_WithMixedCaseRoles_ShouldPreserveCaseAsIs() {
         // Arrange
         Map<String, Object> resourceAccess = new HashMap<>();
         Map<String, Object> clientResource = new HashMap<>();
@@ -241,7 +241,7 @@ class JwtAuthConverterTest {
         assertThat(authorities).hasSize(4);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER", "ROLE_MANAGER", "ROLE_OWNER");
+            .containsExactlyInAnyOrder("Admin", "User", "MANAGER", "owner");
     }
 
     @Test
@@ -297,6 +297,6 @@ class JwtAuthConverterTest {
         // This test mainly verifies that the conversion completes without errors when roles are present
         assertThat(token.getAuthorities())
             .extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_MANAGER");
+            .containsExactlyInAnyOrder("admin", "manager");
     }
 }
