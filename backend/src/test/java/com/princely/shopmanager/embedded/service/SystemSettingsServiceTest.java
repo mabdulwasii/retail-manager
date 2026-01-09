@@ -71,7 +71,7 @@ class SystemSettingsServiceTest {
         when(repository.findByKey(TEST_KEY)).thenReturn(Optional.of(setting));
 
         // When
-        SystemSettings result = service.getSettingByKey(TEST_KEY);
+        SystemSettings result = service.getSettingByKey(TEST_KEY).orElseThrow();
 
         // Then
         assertThat(result).isNotNull();
@@ -330,7 +330,7 @@ class SystemSettingsServiceTest {
         setting.setRequiresRestart(false);
         setting.setIsSensitive(false);
         setting.setDefaultValue(value);
-        setting.setVersion(0);
+        setting.setVersion(0L);
         return setting;
     }
 }

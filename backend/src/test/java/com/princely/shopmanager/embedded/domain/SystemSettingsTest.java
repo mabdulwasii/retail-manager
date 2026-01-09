@@ -77,7 +77,7 @@ class SystemSettingsTest {
         setting.setRequiresRestart(false);
         setting.setIsSensitive(isSensitive);
         setting.setDefaultValue("default-value");
-        setting.setVersion(0);
+        setting.setVersion(0L);
         return setting;
     }
 }

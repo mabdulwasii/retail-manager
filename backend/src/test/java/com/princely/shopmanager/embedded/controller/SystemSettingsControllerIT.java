@@ -368,7 +368,7 @@ class SystemSettingsControllerIT {
         setting.setRequiresRestart(requiresRestart);
         setting.setIsSensitive(isSensitive);
         setting.setDefaultValue(value);
-        setting.setVersion(0);
+        setting.setVersion(0L);
         return setting;
     }
 
@@ -391,11 +391,11 @@ class SystemSettingsControllerIT {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setFirstName("Test");
         user.setLastName("User");
         user.setRoles(roles);
-        user.setActive(true);
+        user.setStatus(User.UserStatus.ACTIVE);
         return userRepository.save(user);
     }
 }
