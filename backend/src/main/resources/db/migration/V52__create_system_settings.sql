@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(36),
-    version INTEGER NOT NULL DEFAULT 0
+    version BIGINT NOT NULL DEFAULT 0
 );
 
 -- Create index for faster lookups
@@ -83,7 +83,7 @@ COMMENT ON TABLE system_settings IS 'System-wide configuration settings manageab
 COMMENT ON COLUMN system_settings.setting_key IS 'Unique key identifier for the setting';
 COMMENT ON COLUMN system_settings.setting_value IS 'Current value of the setting';
 COMMENT ON COLUMN system_settings.setting_category IS 'Category grouping (SYSTEM, DOMAIN, SYNC, STORAGE, SECURITY, DATABASE)';
-COMMENT ON COLUMN system_settings.setting_data IS 'Data type for validation (STRING, NUMBER, BOOLEAN, JSON, ENCRYPTED)';
+COMMENT ON COLUMN system_settings.data_type IS 'Data type for validation (STRING, NUMBER, BOOLEAN, JSON, ENCRYPTED)';
 COMMENT ON COLUMN system_settings.requires_restart IS 'Whether changing this setting requires application restart';
 COMMENT ON COLUMN system_settings.is_sensitive IS 'Whether this setting contains sensitive data (API keys, passwords)';
 COMMENT ON COLUMN system_settings.default_value IS 'Default value to use if setting is not configured';

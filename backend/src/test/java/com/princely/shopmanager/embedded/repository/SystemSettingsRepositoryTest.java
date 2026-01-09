@@ -148,7 +148,7 @@ class SystemSettingsRepositoryTest {
         setting.setRequiresRestart(false);
         setting.setIsSensitive(false);
         setting.setDefaultValue(value);
-        setting.setVersion(0);
+        setting.setVersion(0L);
         return setting;
     }
 }

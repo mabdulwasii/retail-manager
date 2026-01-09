@@ -36,5 +36,5 @@ public class SystemSettingDTO {
     private Boolean isModified;
     private String updatedBy;
     private LocalDateTime updatedAt;
-    private Integer version;
+    private Long version;
 }
