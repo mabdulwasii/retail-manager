@@ -68,7 +68,7 @@ Write-Host ""
 
 # Check if domain is localhost (no hosts file needed)
 if ($CustomDomain -eq "localhost") {
-    Write-Host "✓ Using localhost - no hosts file configuration needed" -ForegroundColor $ColorGreen
+    Write-Host "[OK] Using localhost - no hosts file configuration needed" -ForegroundColor $ColorGreen
     Write-Host ""
     Write-Host "Access your application at:"
     Write-Host "  Frontend: " -NoNewline
@@ -90,10 +90,10 @@ Write-Host ""
 # Check if entry already exists
 $HostsContent = Get-Content $HostsFile -ErrorAction SilentlyContinue
 if ($HostsContent | Select-String -Pattern $CustomDomain -Quiet) {
-    Write-Host "✓ Domain already configured in hosts file" -ForegroundColor $ColorGreen
+    Write-Host "[OK] Domain already configured in hosts file" -ForegroundColor $ColorGreen
     $HostsContent | Select-String -Pattern $CustomDomain
 } else {
-    Write-Host "⚠ Domain not found in hosts file" -ForegroundColor $ColorYellow
+    Write-Host "[WARNING] Domain not found in hosts file" -ForegroundColor $ColorYellow
     Write-Host ""
     Write-Host "To access your application via custom domain, add this line to $HostsFile" + ":"
     Write-Host ""
@@ -123,12 +123,12 @@ if ($HostsContent | Select-String -Pattern $CustomDomain -Quiet) {
         try {
             # Add entry to hosts file
             Add-Content -Path $HostsFile -Value "127.0.0.1   $CustomDomain"
-            Write-Host "✓ Domain added to hosts file" -ForegroundColor $ColorGreen
+            Write-Host "[OK] Domain added to hosts file" -ForegroundColor $ColorGreen
 
             # Flush DNS cache
             Write-Host "Flushing DNS cache..." -ForegroundColor $ColorYellow
             ipconfig /flushdns | Out-Null
-            Write-Host "✓ DNS cache flushed" -ForegroundColor $ColorGreen
+            Write-Host "[OK] DNS cache flushed" -ForegroundColor $ColorGreen
         } catch {
             Write-Host ""
             Write-Host "Error adding entry to hosts file: $_" -ForegroundColor $ColorRed
@@ -179,7 +179,7 @@ Write-Host "admin" -ForegroundColor $ColorYellow -NoNewline
 Write-Host " / " -NoNewline
 Write-Host "admin123" -ForegroundColor $ColorYellow
 Write-Host ""
-Write-Host "⚠ IMPORTANT: Change default passwords after first login!" -ForegroundColor $ColorRed
+Write-Host "[WARNING] IMPORTANT: Change default passwords after first login!" -ForegroundColor $ColorRed
 Write-Host ""
 Write-Host "For more information, see DOCKER_LITE_CUSTOM_DOMAIN.md"
 Write-Host ""
