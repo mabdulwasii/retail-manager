@@ -175,6 +175,33 @@ JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC
     Write-Host ""
 }
 
+# Load pre-built Docker images
+function Import-DockerImages {
+    Write-Header "Loading Docker Images"
+
+    # Check if pre-built images exist
+    $backendImage = Get-ChildItem -Path . -Filter "shop-manager-backend-lite-*.tar.gz" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $frontendImage = Get-ChildItem -Path . -Filter "shop-manager-frontend-lite-*.tar.gz" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if ($backendImage -and $frontendImage) {
+        Write-Info "Found pre-built Docker images"
+
+        # Load backend image
+        Write-Info "Loading backend image: $($backendImage.Name)"
+        Get-Content $backendImage.FullName -Raw | docker load
+
+        # Load frontend image
+        Write-Info "Loading frontend image: $($frontendImage.Name)"
+        Get-Content $frontendImage.FullName -Raw | docker load
+
+        Write-Success "Docker images loaded successfully"
+    } else {
+        Write-Warning "Pre-built Docker images not found"
+        Write-Info "Skipping image loading - will pull from Docker Hub when starting"
+    }
+    Write-Host ""
+}
+
 # Verify configuration
 function Test-Configuration {
     Write-Header "Verifying Configuration"
@@ -191,17 +218,11 @@ function Test-Configuration {
     }
     Write-Success "docker-compose-lite.yml file found"
 
-    if (-not (Test-Path "backend\Dockerfile.lite")) {
-        Write-ErrorMessage "backend\Dockerfile.lite not found"
+    if (-not (Test-Path "nginx-lite.conf")) {
+        Write-ErrorMessage "nginx-lite.conf file not found"
         exit 1
     }
-    Write-Success "backend\Dockerfile.lite found"
-
-    if (-not (Test-Path "frontend\Dockerfile.lite")) {
-        Write-ErrorMessage "frontend\Dockerfile.lite not found"
-        exit 1
-    }
-    Write-Success "frontend\Dockerfile.lite found"
+    Write-Success "nginx-lite.conf file found"
 
     Write-Host ""
 }
@@ -254,6 +275,7 @@ function Main {
     Test-Prerequisites
     New-DirectoryStructure
     New-EnvFile
+    Import-DockerImages
     Test-Configuration
     Show-NextSteps
 }
