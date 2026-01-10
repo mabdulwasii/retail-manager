@@ -3,9 +3,33 @@
 # ============================================================================
 # This script helps configure custom domain access for Shop Manager Docker Lite
 # ============================================================================
+#
+# USAGE:
+#   Right-click this file and select "Run with PowerShell"
+#   OR open PowerShell in this directory and run:
+#     .\setup-custom-domain.ps1
+#
+# IMPORTANT:
+#   If you get "execution policy" errors, run this first:
+#     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+#
+# ============================================================================
 
 # Set error action preference
 $ErrorActionPreference = "Stop"
+
+# Check PowerShell execution policy
+$executionPolicy = Get-ExecutionPolicy
+if ($executionPolicy -eq "Restricted") {
+    Write-Host ""
+    Write-Host "ERROR: PowerShell execution policy is Restricted." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "To allow this script to run, please execute:" -ForegroundColor Yellow
+    Write-Host "  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor Cyan
+    Write-Host ""
+    Read-Host "Press Enter to exit"
+    exit 1
+}
 
 # Colors for output
 $ColorRed = "Red"
@@ -17,14 +41,20 @@ $ColorBlue = "Cyan"
 if (Test-Path .env) {
     $CustomDomain = (Get-Content .env | Select-String -Pattern "^CUSTOM_DOMAIN=" | ForEach-Object { $_ -replace "CUSTOM_DOMAIN=", "" }).Trim()
 } else {
+    Write-Host ""
     Write-Host "Error: .env file not found" -ForegroundColor $ColorRed
     Write-Host "Please create .env file from .env.lite template:" -ForegroundColor $ColorRed
     Write-Host "  Copy-Item .env.lite .env" -ForegroundColor $ColorYellow
+    Write-Host ""
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
 if ([string]::IsNullOrEmpty($CustomDomain)) {
+    Write-Host ""
     Write-Host "Error: CUSTOM_DOMAIN not set in .env file" -ForegroundColor $ColorRed
+    Write-Host ""
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
@@ -45,6 +75,8 @@ if ($CustomDomain -eq "localhost") {
     Write-Host "http://localhost/" -ForegroundColor $ColorBlue
     Write-Host "  Backend API: " -NoNewline
     Write-Host "http://localhost/api" -ForegroundColor $ColorBlue
+    Write-Host ""
+    Read-Host "Press Enter to exit"
     exit 0
 }
 
@@ -83,6 +115,8 @@ if ($HostsContent | Select-String -Pattern $CustomDomain -Quiet) {
             Write-Host "1. Right-click PowerShell and select 'Run as Administrator'" -ForegroundColor $ColorYellow
             Write-Host "2. Navigate to the project directory" -ForegroundColor $ColorYellow
             Write-Host "3. Run: .\setup-custom-domain.ps1" -ForegroundColor $ColorYellow
+            Write-Host ""
+            Read-Host "Press Enter to exit"
             exit 1
         }
 
@@ -96,7 +130,10 @@ if ($HostsContent | Select-String -Pattern $CustomDomain -Quiet) {
             ipconfig /flushdns | Out-Null
             Write-Host "✓ DNS cache flushed" -ForegroundColor $ColorGreen
         } catch {
+            Write-Host ""
             Write-Host "Error adding entry to hosts file: $_" -ForegroundColor $ColorRed
+            Write-Host ""
+            Read-Host "Press Enter to exit"
             exit 1
         }
     } else {
@@ -146,3 +183,4 @@ Write-Host "⚠ IMPORTANT: Change default passwords after first login!" -Foregro
 Write-Host ""
 Write-Host "For more information, see DOCKER_LITE_CUSTOM_DOMAIN.md"
 Write-Host ""
+Read-Host "Press Enter to exit"
