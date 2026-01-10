@@ -162,25 +162,29 @@ EOF
     echo ""
 }
 
-# Build embedded JAR
-build_embedded_jar() {
-    print_header "Building Embedded JAR"
+# Load pre-built Docker images
+load_docker_images() {
+    print_header "Loading Docker Images"
 
-    if [ ! -f "backend/target/shop-manager-1.0.0-SNAPSHOT-embedded.jar" ]; then
-        print_info "Embedded JAR not found. Building..."
-        cd backend
-        ./mvnw clean package -Pembedded -DskipTests
-        cd ..
-        print_success "Embedded JAR built successfully"
+    # Check if pre-built images exist
+    backend_image=$(ls shop-manager-backend-lite-*.tar.gz 2>/dev/null | head -1)
+    frontend_image=$(ls shop-manager-frontend-lite-*.tar.gz 2>/dev/null | head -1)
+
+    if [ -n "$backend_image" ] && [ -n "$frontend_image" ]; then
+        print_info "Found pre-built Docker images"
+
+        # Load backend image
+        print_info "Loading backend image: $backend_image"
+        docker load < "$backend_image"
+
+        # Load frontend image
+        print_info "Loading frontend image: $frontend_image"
+        docker load < "$frontend_image"
+
+        print_success "Docker images loaded successfully"
     else
-        print_info "Embedded JAR already exists. Skipping build."
-        read -p "Do you want to rebuild? (y/N): " rebuild
-        if [[ $rebuild =~ ^[Yy]$ ]]; then
-            cd backend
-            ./mvnw clean package -Pembedded -DskipTests
-            cd ..
-            print_success "Embedded JAR rebuilt successfully"
-        fi
+        print_warning "Pre-built Docker images not found"
+        print_info "Skipping image loading - will pull from Docker Hub when starting"
     fi
     echo ""
 }
@@ -201,17 +205,11 @@ verify_configuration() {
     fi
     print_success "docker-compose-lite.yml file found"
 
-    if [ ! -f "backend/Dockerfile.lite" ]; then
-        print_error "backend/Dockerfile.lite not found"
+    if [ ! -f "nginx-lite.conf" ]; then
+        print_error "nginx-lite.conf file not found"
         exit 1
     fi
-    print_success "backend/Dockerfile.lite found"
-
-    if [ ! -f "frontend/Dockerfile.lite" ]; then
-        print_error "frontend/Dockerfile.lite not found"
-        exit 1
-    fi
-    print_success "frontend/Dockerfile.lite found"
+    print_success "nginx-lite.conf file found"
 
     echo ""
 }
@@ -254,7 +252,7 @@ main() {
     check_prerequisites
     create_directories
     create_env_file
-    build_embedded_jar
+    load_docker_images
     verify_configuration
     display_next_steps
 }
