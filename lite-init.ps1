@@ -217,11 +217,25 @@ function Import-DockerImages {
 
         # Load backend image
         Write-Info "Loading backend image: $($backendImage.Name)"
-        Get-Content $backendImage.FullName -Raw | docker load
+        docker load -i $backendImage.FullName
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-ErrorMessage "Failed to load backend Docker image"
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
 
         # Load frontend image
         Write-Info "Loading frontend image: $($frontendImage.Name)"
-        Get-Content $frontendImage.FullName -Raw | docker load
+        docker load -i $frontendImage.FullName
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-ErrorMessage "Failed to load frontend Docker image"
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
 
         Write-Success "Docker images loaded successfully"
     } else {
