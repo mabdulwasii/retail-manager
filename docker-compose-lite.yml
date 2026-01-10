@@ -34,11 +34,7 @@ services:
   # Backend Service (Embedded Mode)
   # ==========================================================================
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.lite
-      args:
-        JAR_FILE: target/shop-manager-*-embedded.jar
+    image: shop-manager-backend-lite:latest
     container_name: retailhq-backend-lite
     environment:
       # Application Mode
@@ -102,14 +98,7 @@ services:
   # Frontend Service (Static Build)
   # ==========================================================================
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.lite
-      args:
-        VITE_API_BASE_URL: /api
-        VITE_APP_VERSION: ${APP_VERSION:-1.0.0}
-        VITE_APP_ENVIRONMENT: standalone
-        VITE_AUTH_MODE: embedded
+    image: shop-manager-frontend-lite:latest
     container_name: shop-manager-frontend-lite
     environment:
       VITE_API_BASE_URL: /api
