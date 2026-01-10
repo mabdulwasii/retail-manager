@@ -3,6 +3,17 @@
 # ============================================================================
 # This script sets up the environment for running Shop Manager in lite mode
 # ============================================================================
+#
+# USAGE:
+#   Right-click this file and select "Run with PowerShell"
+#   OR open PowerShell in this directory and run:
+#     .\lite-init.ps1
+#
+# IMPORTANT:
+#   If you get "execution policy" errors, run this first:
+#     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+#
+# ============================================================================
 
 [CmdletBinding()]
 param()
@@ -51,11 +62,25 @@ function New-SecureSecret {
 function Test-Prerequisites {
     Write-Header "Checking Prerequisites"
 
+    # Check PowerShell execution policy
+    $executionPolicy = Get-ExecutionPolicy
+    if ($executionPolicy -eq "Restricted") {
+        Write-Warning "PowerShell execution policy is Restricted."
+        Write-Host "To allow this script to run, please execute:" -ForegroundColor Yellow
+        Write-Host "  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor Cyan
+        Write-Host ""
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
+    Write-Success "PowerShell execution policy: $executionPolicy"
+
     # Check Docker
     $dockerInstalled = Get-Command docker -ErrorAction SilentlyContinue
     if (-not $dockerInstalled) {
         Write-ErrorMessage "Docker is not installed. Please install Docker Desktop from:"
         Write-Host "https://www.docker.com/products/docker-desktop/" -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "Press Enter to exit"
         exit 1
     }
     Write-Success "Docker is installed"
@@ -66,6 +91,8 @@ function Test-Prerequisites {
         Write-Success "Docker Compose is available"
     } catch {
         Write-ErrorMessage "Docker Compose is not installed or not available."
+        Write-Host ""
+        Read-Host "Press Enter to exit"
         exit 1
     }
 
@@ -75,6 +102,8 @@ function Test-Prerequisites {
         Write-Success "Docker is running"
     } catch {
         Write-ErrorMessage "Docker is not running. Please start Docker Desktop."
+        Write-Host ""
+        Read-Host "Press Enter to exit"
         exit 1
     }
 
@@ -265,6 +294,8 @@ function Show-NextSteps {
     Write-Host "📖 For more information, see: " -NoNewline -ForegroundColor Yellow
     Write-Host "docs\DOCKER_LITE_WINDOWS_GUIDE.md" -ForegroundColor White
     Write-Host ""
+    Write-Host ""
+    Read-Host "Press Enter to exit"
 }
 
 # Main execution
@@ -287,5 +318,8 @@ try {
     Write-Host ""
     Write-ErrorMessage "Setup failed: $_"
     Write-Host ""
+    Write-Host "For troubleshooting, see: docs\DOCKER_LITE_WINDOWS_GUIDE.md" -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "Press Enter to exit"
     exit 1
 }
