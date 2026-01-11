@@ -1,0 +1,317 @@
+# ============================================================================
+# Shop Manager - Kubernetes Deployment Configuration Template
+# ============================================================================
+# This template provides all configuration options for deploying Shop Manager
+# to your Kubernetes cluster. Edit the values below before installation.
+#
+# REQUIRED: Change all values marked with "CHANGE-ME" or "YOUR-DOMAIN.com"
+# OPTIONAL: Other values have sensible defaults but can be customized
+# ============================================================================
+
+# ============================================================================
+# Global Configuration
+# ============================================================================
+global:
+  # Application name - used in resource names and DNS
+  # Example: "retail", "shop-manager", "mystore"
+  appName: "retail"
+
+  # Domain for all services (REQUIRED - CHANGE THIS)
+  # This will be used to create URLs:
+  #   - Frontend: https://retail.YOUR-DOMAIN.com
+  #   - API: https://api.retail.YOUR-DOMAIN.com
+  #   - Keycloak: https://auth.retail.YOUR-DOMAIN.com
+  domain: "YOUR-DOMAIN.com"  # CHANGE-ME
+
+  # Environment: development, staging, production
+  environment: "production"
+
+  # Image registry (leave empty for Docker Hub)
+  imageRegistry: ""
+
+  # Common labels/annotations applied to all resources
+  commonLabels: {}
+  commonAnnotations: {}
+
+# ============================================================================
+# Image Pull Secrets (Optional)
+# ============================================================================
+# Only needed if using private container registry
+# For public Docker Hub images, leave as empty list
+imagePullSecrets: []
+# Example for private registry:
+# imagePullSecrets:
+#   - name: regcred
+
+# ============================================================================
+# Platform Branding (Optional)
+# ============================================================================
+branding:
+  # Customize the platform name and company branding
+  platformName: "Shop Manager"
+  companyName: "Your Company"
+  platformDescription: "Retail Management Platform"
+
+  # Color scheme for UI
+  colors:
+    primary: "#1976d2"      # Primary brand color
+    secondary: "#dc004e"    # Secondary brand color
+    success: "#388e3c"      # Success indicators
+    warning: "#f57c00"      # Warnings
+    error: "#d32f2f"        # Errors
+    background: "#fafafa"   # Page background
+    surface: "#ffffff"      # Card backgrounds
+
+# ============================================================================
+# Backend Service Configuration
+# ============================================================================
+backend:
+  # Number of backend pods (increase for high availability)
+  replicaCount: 1
+
+  image:
+    # Docker image repository
+    repository: princely/shop-manager
+    # Image tag - use specific version or "backend-latest"
+    tag: backend-latest
+    pullPolicy: Always
+
+  # Resource limits (IMPORTANT for production)
+  resources:
+    requests:
+      cpu: "500m"      # 0.5 CPU core
+      memory: "1Gi"    # 1 GB RAM
+    limits:
+      cpu: "2000m"     # 2 CPU cores max
+      memory: "2Gi"    # 2 GB RAM max
+
+  # Environment variables
+  env:
+    # Disable Swagger authentication (set to "true" to enable)
+    SWAGGER_SECURITY_ENABLED: "false"
+
+    # Java options (memory settings)
+    JAVA_OPTS: "-Xms512m -Xmx1536m -XX:+UseG1GC"
+
+  # Pod annotations (optional)
+  podAnnotations: {}
+
+# ============================================================================
+# Frontend Service Configuration
+# ============================================================================
+frontend:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: princely/shop-manager
+    tag: frontend-latest
+    pullPolicy: Always
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# ============================================================================
+# PostgreSQL Database Configuration
+# ============================================================================
+postgresql:
+  enabled: true
+
+  auth:
+    # Database credentials (REQUIRED - CHANGE THESE)
+    postgresPassword: "CHANGE-ME"        # Superuser password
+    username: "shopmanager"              # Application user
+    password: "CHANGE-ME"                # Application password
+    database: "shopmanager"              # Database name
+
+    # Leave empty to let Helm create secrets automatically
+    existingSecret: ""
+
+  # Persistence for database data
+  persistence:
+    enabled: true
+    size: 10Gi              # Database storage size
+    storageClass: ""        # Use default storage class
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# ============================================================================
+# Keycloak Authentication Service
+# ============================================================================
+keycloak:
+  enabled: true
+
+  auth:
+    # Keycloak admin credentials (REQUIRED - CHANGE THESE)
+    adminUser: "admin"
+    adminPassword: "CHANGE-ME"  # Strong password required
+
+  # Keycloak database (separate from main PostgreSQL)
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: "CHANGE-ME"
+      username: "keycloak"
+      password: "CHANGE-ME"
+      database: "keycloak"
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# ============================================================================
+# Application Settings
+# ============================================================================
+application:
+  # Test users (disable in production)
+  testUsers:
+    enabled: false  # Set to true only for development/testing
+
+  # JWT token settings
+  jwt:
+    # Secret key for JWT tokens (REQUIRED - CHANGE THIS)
+    # Generate with: openssl rand -base64 32
+    secret: "CHANGE-ME-GENERATE-RANDOM-32-CHAR-STRING"
+    # Token expiration time (in seconds)
+    expiration: 86400  # 24 hours
+
+# ============================================================================
+# TLS/SSL Configuration
+# ============================================================================
+tls:
+  # Enable HTTPS with automatic certificate management
+  enabled: true
+
+  # Certificate issuer
+  # Options: "letsencrypt-prod", "letsencrypt-staging", "local-ca-issuer"
+  issuer: "letsencrypt-prod"
+
+  # Email for Let's Encrypt notifications
+  email: "admin@YOUR-DOMAIN.com"  # CHANGE-ME
+
+  # Local CA certificate installation (for development only)
+  localCertInstallation:
+    enabled: false  # Set to true for local development with self-signed certs
+
+# ============================================================================
+# Ingress Configuration
+# ============================================================================
+ingress:
+  enabled: true
+  className: "nginx"
+
+  # Annotations for ingress controller
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+# ============================================================================
+# MinIO Object Storage (Optional)
+# ============================================================================
+minio:
+  # Disable MinIO (use local file storage)
+  enabled: false
+
+  # If enabling MinIO, set credentials
+  auth:
+    rootUser: "admin"
+    rootPassword: "CHANGE-ME"
+    existingSecret: ""
+
+  persistence:
+    enabled: true
+    size: 50Gi
+
+# ============================================================================
+# Apache Kafka (Optional - Advanced)
+# ============================================================================
+kafka:
+  # Disable Kafka (not required for basic operation)
+  enabled: false
+
+  # If enabling Kafka, configure resources
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# ============================================================================
+# Monitoring & Observability (Optional)
+# ============================================================================
+monitoring:
+  # Enable Prometheus metrics
+  prometheus:
+    enabled: false
+
+  # Enable application logging
+  logging:
+    level: "INFO"  # Options: DEBUG, INFO, WARN, ERROR
+
+# ============================================================================
+# Backup Configuration (Optional)
+# ============================================================================
+backup:
+  # Enable automated backups
+  enabled: false
+
+  # Backup schedule (cron format)
+  schedule: "0 2 * * *"  # Daily at 2 AM
+
+  # Retention policy
+  retention:
+    days: 7
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# Minimum System Requirements:
+#   - Kubernetes 1.24+
+#   - Helm 3.10+
+#   - 4 CPU cores
+#   - 8 GB RAM
+#   - 20 GB storage
+#
+# Recommended for Production:
+#   - 8+ CPU cores
+#   - 16+ GB RAM
+#   - 100+ GB SSD storage
+#   - High availability: replicaCount: 2+ for backend/frontend
+#
+# Installation:
+#   helm install retail oci://registry-1.docker.io/princely/shop-manager \
+#     --version <VERSION> \
+#     -f values-template.yaml \
+#     -n gomco \
+#     --create-namespace
+#
+# For more information, see:
+#   - QUICKSTART.md
+#   - PREREQUISITES.md
+#   - https://github.com/princely/shop-manager
+# ============================================================================
