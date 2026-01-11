@@ -619,19 +619,32 @@ data:
         fi
     fi
 
-    # Set custom theme for the realm (uses appName dynamically)
-    echo "Configuring custom theme for realm..."
+    # Set theme for the realm (uses appName dynamically, falls back to default)
+    echo "Configuring theme for realm..."
     THEME_NAME="{{ include "shop-manager.appName" . }}"
+
+    # Check if custom theme exists by listing available themes
+    THEMES_AVAILABLE=$(curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/ui-ext/available-themes/login" \
+        | jq -r '.[].name' || echo "")
+
+    if echo "$THEMES_AVAILABLE" | grep -q "^$THEME_NAME$"; then
+        echo "✓ Custom theme '$THEME_NAME' found, applying..."
+        SELECTED_THEME="$THEME_NAME"
+    else
+        echo "⚠ Custom theme '$THEME_NAME' not found, using default 'keycloak' theme"
+        SELECTED_THEME="keycloak"
+    fi
 
     curl -s -X PUT "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}" \
         -H "Authorization: Bearer $ADMIN_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"loginTheme\": \"$THEME_NAME\", \"accountTheme\": \"$THEME_NAME\", \"emailTheme\": \"$THEME_NAME\"}"
+        -d "{\"loginTheme\": \"$SELECTED_THEME\", \"accountTheme\": \"$SELECTED_THEME\", \"emailTheme\": \"$SELECTED_THEME\"}"
 
     if [ $? -eq 0 ]; then
-        echo "✓ Custom theme '$THEME_NAME' applied to realm"
+        echo "✓ Theme '$SELECTED_THEME' applied to realm successfully"
     else
-        echo "⚠ Warning: Failed to apply custom theme (may not exist yet)"
+        echo "⚠ Warning: Failed to apply theme"
     fi
 
     # Create Superadmin user (ALWAYS - required for system management)
@@ -641,31 +654,38 @@ data:
         | jq -r 'length')
 
     if [ "$SUPERADMIN_EXISTS" = "0" ]; then
+        echo "Superadmin user not found, creating..."
+
         SUPERADMIN_PAYLOAD=$(cat <<'EOF'
-    {
-      "username": "superadmin",
-      "email": "superadmin@shopmanager.local",
-      "firstName": "Super",
-      "lastName": "Admin",
-      "enabled": true,
-      "emailVerified": true,
-      "credentials": [{"type": "password", "value": "changeme", "temporary": false}],
-      "realmRoles": ["SYSTEM_ADMIN"],
-      "attributes": {"role": ["SYSTEM_ADMIN"]}
-    }
-    EOF
+{
+  "username": "superadmin",
+  "email": "superadmin@shopmanager.local",
+  "firstName": "Super",
+  "lastName": "Admin",
+  "enabled": true,
+  "emailVerified": true,
+  "credentials": [{"type": "password", "value": "changeme", "temporary": false}],
+  "realmRoles": ["SYSTEM_ADMIN"],
+  "attributes": {"role": ["SYSTEM_ADMIN"]}
+}
+EOF
         )
 
-        curl -s -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
+        HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/superadmin_response.txt \
+            -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "$SUPERADMIN_PAYLOAD"
+            -d "$SUPERADMIN_PAYLOAD")
 
-        if [ $? -eq 0 ]; then
-            echo "✓ Superadmin user created: superadmin / changeme"
+        if [ "$HTTP_CODE" = "201" ]; then
+            echo "✓ Superadmin user created successfully: superadmin / changeme"
+        elif [ "$HTTP_CODE" = "409" ]; then
+            echo "✓ Superadmin user already exists (conflict)"
         else
-            echo "✗ Failed to create superadmin user"
+            echo "✗ Failed to create superadmin user (HTTP $HTTP_CODE)"
+            echo "Response: $(cat /tmp/superadmin_response.txt)"
         fi
+        rm -f /tmp/superadmin_response.txt
     else
         echo "✓ Superadmin user already exists"
     fi
@@ -691,19 +711,23 @@ data:
                 # Get user payload from JSON
                 USER_PAYLOAD=$(jq ".[$i]" /config/keycloak-users.json)
 
-                # Create user
-                curl -s -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
+                # Create user with HTTP code checking
+                HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/user_response_$i.txt \
+                    -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
                     -H "Authorization: Bearer $ADMIN_TOKEN" \
                     -H "Content-Type: application/json" \
-                    -d "$USER_PAYLOAD"
+                    -d "$USER_PAYLOAD")
 
-                if [ $? -eq 0 ]; then
+                if [ "$HTTP_CODE" = "201" ]; then
                     PASSWORD=$(jq -r ".[$i].credentials[0].value" /config/keycloak-users.json)
                     ROLE=$(jq -r ".[$i].realmRoles[0]" /config/keycloak-users.json)
                     echo "✓ Created user: $EMAIL / $PASSWORD ($ROLE)"
+                elif [ "$HTTP_CODE" = "409" ]; then
+                    echo "✓ User $USERNAME already exists (conflict)"
                 else
-                    echo "✗ Failed to create user: $EMAIL"
+                    echo "✗ Failed to create user: $EMAIL (HTTP $HTTP_CODE)"
                 fi
+                rm -f /tmp/user_response_$i.txt
             else
                 echo "✓ User $USERNAME already exists"
             fi

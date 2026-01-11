@@ -204,10 +204,13 @@ tls:
   enabled: true
 
   # Certificate issuer
-  # Options: "letsencrypt-prod", "letsencrypt-staging", "local-ca-issuer"
-  issuer: "letsencrypt-prod"
+  # Options:
+  #   - "local-ca-issuer": Self-signed certificates (default, works everywhere)
+  #   - "letsencrypt-prod": Production Let's Encrypt (requires public domain + DNS)
+  #   - "letsencrypt-staging": Staging Let's Encrypt (for testing)
+  issuer: "local-ca-issuer"
 
-  # Email for Let's Encrypt notifications
+  # Email for Let's Encrypt notifications (only used if issuer is letsencrypt-*)
   email: "admin@YOUR-DOMAIN.com"  # CHANGE-ME
 
   # Local CA certificate installation (for development only)
