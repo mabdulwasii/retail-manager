@@ -225,8 +225,8 @@ ingress:
   className: "nginx"
 
   # Annotations for ingress controller
+  # Note: cert-manager.io/cluster-issuer is automatically set from tls.issuer above
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 
