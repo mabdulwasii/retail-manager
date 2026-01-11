@@ -347,18 +347,26 @@ function Install-ShopManager {
             Write-Host ""
         }
 
-        # Show credentials based on testUsers setting
+        # Show login credentials
+        Write-Host "Login Credentials:" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  System Admin (always created):"
+        Write-Host "    superadmin / changeme"
+        Write-Host ""
+
         if ($TEST_USERS_ENABLED -eq "true") {
-            Write-Host "Default Test Credentials:" -ForegroundColor Cyan
-            Write-Host "  System Admin: superadmin / changeme"
-            Write-Host "  Tenant Admin: admin@shopmanager.com / admin123"
+            Write-Host "  Test Users (testUsers.enabled=true):"
+            Write-Host "    admin@shopmanager.com / DevAdmin@2024!Test (Tenant Admin)"
+            Write-Host "    manager@shopmanager.com / DevManager@2024!Test (Manager)"
+            Write-Host "    employee@shopmanager.com / DevEmployee@2024!Test (Employee)"
+            Write-Host "    + 5 more test users (see keycloak-users.json)"
             Write-Host ""
             Write-Warning "IMPORTANT: Change default passwords after first login!"
             Write-Warning "IMPORTANT: Disable test users in production (set testUsers.enabled: false)"
             Write-Host ""
         } else {
-            Write-Warning "Test users are DISABLED"
-            Write-Info "You need to create users manually in Keycloak:"
+            Write-Warning "Test users are DISABLED (testUsers.enabled=false)"
+            Write-Info "To create users manually in Keycloak:"
             Write-Host "  1. Access Keycloak admin: https://auth.$APP_NAME.$DOMAIN"
             Write-Host "  2. Login with Keycloak admin credentials (from values file)"
             Write-Host "  3. Select realm: $APP_NAME"

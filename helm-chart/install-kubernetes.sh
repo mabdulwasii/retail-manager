@@ -252,18 +252,26 @@ else
     echo ""
 fi
 
-# Show credentials based on testUsers setting
+# Show login credentials
+echo "Login Credentials:"
+echo ""
+echo "  System Admin (always created):"
+echo "    superadmin / changeme"
+echo ""
+
 if [ "$TEST_USERS_ENABLED" = "true" ]; then
-    echo "Default Test Credentials:"
-    echo "  System Admin: superadmin / changeme"
-    echo "  Tenant Admin: admin@shopmanager.com / admin123"
+    echo "  Test Users (testUsers.enabled=true):"
+    echo "    admin@shopmanager.com / DevAdmin@2024!Test (Tenant Admin)"
+    echo "    manager@shopmanager.com / DevManager@2024!Test (Manager)"
+    echo "    employee@shopmanager.com / DevEmployee@2024!Test (Employee)"
+    echo "    + 5 more test users (see keycloak-users.json)"
     echo ""
     print_warning "IMPORTANT: Change default passwords after first login!"
     print_warning "IMPORTANT: Disable test users in production (set testUsers.enabled: false)"
     echo ""
 else
-    print_warning "Test users are DISABLED"
-    print_info "You need to create users manually in Keycloak:"
+    print_warning "Test users are DISABLED (testUsers.enabled=false)"
+    print_info "To create users manually in Keycloak:"
     echo "  1. Access Keycloak admin: https://auth.${APP_NAME}.${DOMAIN}"
     echo "  2. Login with Keycloak admin credentials (from values file)"
     echo "  3. Select realm: ${APP_NAME}"

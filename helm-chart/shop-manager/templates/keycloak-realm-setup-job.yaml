@@ -39,6 +39,7 @@ spec:
 
           # Set environment variables
           export KEYCLOAK_ADMIN_PASSWORD="$ADMIN_PASSWORD"
+          export TEST_USERS_ENABLED="$TEST_USERS_ENABLED"
 
           # Run the setup script
           chmod +x /config/setup-realm.sh
@@ -51,6 +52,8 @@ spec:
             secretKeyRef:
               name: {{ include "shop-manager.fullname" . }}-keycloak
               key: admin-password
+        - name: TEST_USERS_ENABLED
+          value: "{{ .Values.application.testUsers.enabled }}"
         volumeMounts:
         - name: realm-config
           mountPath: /config

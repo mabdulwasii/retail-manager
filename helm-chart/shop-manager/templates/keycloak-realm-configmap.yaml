@@ -398,6 +398,174 @@ data:
       ]{{- end }}
     }
 
+  keycloak-users.json: |
+    [
+      {
+        "username": "admin",
+        "email": "admin@shopmanager.com",
+        "firstName": "Admin",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevAdmin@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["TENANT_ADMIN"],
+        "attributes": {
+          "role": ["TENANT_ADMIN"],
+          "tenant_id": ["default-tenant-id"],
+          "shop_id": ["default-shop-id"]
+        }
+      },
+      {
+        "username": "manager",
+        "email": "manager@shopmanager.com",
+        "firstName": "Shop",
+        "lastName": "Manager",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevManager@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["MANAGER"],
+        "attributes": {
+          "role": ["MANAGER"],
+          "tenant_id": ["default-tenant-id"],
+          "shop_id": ["default-shop-id"]
+        }
+      },
+      {
+        "username": "employee",
+        "email": "employee@shopmanager.com",
+        "firstName": "Shop",
+        "lastName": "Employee",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevEmployee@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["EMPLOYEE"],
+        "attributes": {
+          "role": ["EMPLOYEE"],
+          "tenant_id": ["default-tenant-id"],
+          "shop_id": ["default-shop-id"]
+        }
+      },
+      {
+        "username": "investor",
+        "email": "investor@shopmanager.com",
+        "firstName": "Investor",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevInvestor@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["INVESTOR"],
+        "attributes": {
+          "role": ["INVESTOR"],
+          "tenant_id": ["default-tenant-id"]
+        }
+      },
+      {
+        "username": "customer",
+        "email": "customer@shopmanager.com",
+        "firstName": "Customer",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevCustomer@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["CUSTOMER"],
+        "attributes": {
+          "role": ["CUSTOMER"],
+          "tenant_id": ["default-tenant-id"]
+        }
+      },
+      {
+        "username": "cashier",
+        "email": "cashier@shopmanager.com",
+        "firstName": "Cashier",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevCashier@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["CASHIER"],
+        "attributes": {
+          "role": ["CASHIER"],
+          "tenant_id": ["default-tenant-id"],
+          "shop_id": ["default-shop-id"]
+        }
+      },
+      {
+        "username": "accountant",
+        "email": "accountant@shopmanager.com",
+        "firstName": "Accountant",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevAccountant@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["ACCOUNTANT"],
+        "attributes": {
+          "role": ["ACCOUNTANT"],
+          "tenant_id": ["default-tenant-id"]
+        }
+      },
+      {
+        "username": "auditor",
+        "email": "auditor@shopmanager.com",
+        "firstName": "Auditor",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "DevAuditor@2024!Test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["AUDITOR"],
+        "attributes": {
+          "role": ["AUDITOR"],
+          "tenant_id": ["default-tenant-id"]
+        }
+      }
+    ]
+
   setup-realm.sh: |
     #!/bin/bash
     set -e
@@ -466,21 +634,92 @@ data:
         echo "⚠ Warning: Failed to apply custom theme (may not exist yet)"
     fi
 
+    # Create Superadmin user (ALWAYS - required for system management)
+    echo "Creating superadmin user..."
+    SUPERADMIN_EXISTS=$(curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+        "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users?username=superadmin&exact=true" \
+        | jq -r 'length')
+
+    if [ "$SUPERADMIN_EXISTS" = "0" ]; then
+        SUPERADMIN_PAYLOAD=$(cat <<'EOF'
+    {
+      "username": "superadmin",
+      "email": "superadmin@shopmanager.local",
+      "firstName": "Super",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{"type": "password", "value": "changeme", "temporary": false}],
+      "realmRoles": ["SYSTEM_ADMIN"],
+      "attributes": {"role": ["SYSTEM_ADMIN"]}
+    }
+    EOF
+        )
+
+        curl -s -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$SUPERADMIN_PAYLOAD"
+
+        if [ $? -eq 0 ]; then
+            echo "✓ Superadmin user created: superadmin / changeme"
+        else
+            echo "✗ Failed to create superadmin user"
+        fi
+    else
+        echo "✓ Superadmin user already exists"
+    fi
+
+    # Create test users from JSON (CONDITIONAL - only if TEST_USERS_ENABLED=true)
+    if [ "$TEST_USERS_ENABLED" = "true" ]; then
+        echo "Creating test users from keycloak-users.json..."
+
+        # Read users from JSON and create them
+        USERS_COUNT=$(jq 'length' /config/keycloak-users.json)
+        echo "Found $USERS_COUNT test users to create"
+
+        for i in $(seq 0 $(($USERS_COUNT - 1))); do
+            USERNAME=$(jq -r ".[$i].username" /config/keycloak-users.json)
+            EMAIL=$(jq -r ".[$i].email" /config/keycloak-users.json)
+
+            # Check if user already exists
+            USER_EXISTS=$(curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+                "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users?username=$USERNAME&exact=true" \
+                | jq -r 'length')
+
+            if [ "$USER_EXISTS" = "0" ]; then
+                # Get user payload from JSON
+                USER_PAYLOAD=$(jq ".[$i]" /config/keycloak-users.json)
+
+                # Create user
+                curl -s -X POST "http://{{ include "shop-manager.fullname" . }}-keycloak:80/admin/realms/{{ include "shop-manager.keycloak.realmName" . }}/users" \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d "$USER_PAYLOAD"
+
+                if [ $? -eq 0 ]; then
+                    PASSWORD=$(jq -r ".[$i].credentials[0].value" /config/keycloak-users.json)
+                    ROLE=$(jq -r ".[$i].realmRoles[0]" /config/keycloak-users.json)
+                    echo "✓ Created user: $EMAIL / $PASSWORD ($ROLE)"
+                else
+                    echo "✗ Failed to create user: $EMAIL"
+                fi
+            else
+                echo "✓ User $USERNAME already exists"
+            fi
+        done
+
+        echo "✓ Test users creation completed"
+    else
+        echo "⚠ Test users are DISABLED (testUsers.enabled=false)"
+        echo "  You need to create users manually in Keycloak"
+    fi
+
     # Verify realm is accessible
     REALM_CHECK=$(curl -s "http://{{ include "shop-manager.fullname" . }}-keycloak:80/realms/{{ include "shop-manager.keycloak.realmName" . }}/.well-known/openid-configuration" | jq -r '.issuer')
 
     if [[ "$REALM_CHECK" == *"shop-manager"* ]]; then
         echo "✓ Realm configuration completed successfully"
-        echo "✓ Test users created with credentials:"
-        echo "  - admin@shopmanager.com / DevAdmin@2024!Test (TENANT_ADMIN)"
-        echo "  - owner@shopmanager.com / DevOwner@2024!Test (OWNER)"
-        echo "  - manager@shopmanager.com / DevManager@2024!Test (MANAGER)"
-        echo "  - employee@shopmanager.com / DevEmployee@2024!Test (EMPLOYEE)"
-        echo "  - investor@shopmanager.com / DevInvestor@2024!Test (INVESTOR)"
-        echo "  - customer@shopmanager.com / DevCustomer@2024!Test (CUSTOMER)"
-        echo "  - cashier@shopmanager.com / DevCashier@2024!Test (CASHIER)"
-        echo "  - accountant@shopmanager.com / DevAccountant@2024!Test (ACCOUNTANT)"
-        echo "  - auditor@shopmanager.com / DevAuditor@2024!Test (AUDITOR)"
     else
         echo "✗ Realm verification failed"
         exit 1
