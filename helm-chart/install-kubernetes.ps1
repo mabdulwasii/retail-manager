@@ -305,23 +305,71 @@ function Install-ShopManager {
         $valuesContent = Get-Content $VALUES_FILE -Raw
         $DOMAIN = if ($valuesContent -match 'domain:\s+(\S+)') { $Matches[1] -replace '[''"]','' } else { "YOUR-DOMAIN.com" }
         $APP_NAME = if ($valuesContent -match 'appName:\s+(\S+)') { $Matches[1] -replace '[''"]','' } else { "retail" }
+        $TEST_USERS_ENABLED = if ($valuesContent -match 'testUsers:[\s\S]*?enabled:\s+(\S+)') { $Matches[1] -replace '[''"]','' } else { "false" }
 
         Write-Host "Access URLs:" -ForegroundColor Cyan
         Write-Host "  Frontend:  https://$APP_NAME.$DOMAIN"
         Write-Host "  API:       https://api.$APP_NAME.$DOMAIN/swagger-ui.html"
         Write-Host "  Keycloak:  https://auth.$APP_NAME.$DOMAIN"
         Write-Host ""
+
+        # Check DNS resolution
+        Write-Info "Checking DNS resolution..."
+        $dnsIssue = $false
+        $hosts = @("$APP_NAME.$DOMAIN", "api.$APP_NAME.$DOMAIN", "auth.$APP_NAME.$DOMAIN")
+        foreach ($host in $hosts) {
+            try {
+                [System.Net.Dns]::GetHostEntry($host) | Out-Null
+            } catch {
+                $dnsIssue = $true
+                break
+            }
+        }
+
+        if ($dnsIssue) {
+            Write-Warning "DNS resolution failed for $DOMAIN"
+            Write-Host ""
+            Write-Info "For local testing, add these entries to hosts file:"
+            Write-Host ""
+            Write-Host "  # Get your cluster's ingress IP:" -ForegroundColor Yellow
+            Write-Host "  kubectl get ingress -n $NAMESPACE"
+            Write-Host ""
+            Write-Host "  # Add to C:\Windows\System32\drivers\etc\hosts (replace <INGRESS-IP>):" -ForegroundColor Yellow
+            Write-Host "  <INGRESS-IP> $APP_NAME.$DOMAIN"
+            Write-Host "  <INGRESS-IP> api.$APP_NAME.$DOMAIN"
+            Write-Host "  <INGRESS-IP> auth.$APP_NAME.$DOMAIN"
+            Write-Host ""
+            Write-Host "  # Example PowerShell command (requires Administrator):" -ForegroundColor Yellow
+            Write-Host "  Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value '<INGRESS-IP> $APP_NAME.$DOMAIN api.$APP_NAME.$DOMAIN auth.$APP_NAME.$DOMAIN'"
+            Write-Host ""
+        } else {
+            Write-Success "DNS resolution successful"
+            Write-Host ""
+        }
+
+        # Show credentials based on testUsers setting
+        if ($TEST_USERS_ENABLED -eq "true") {
+            Write-Host "Default Test Credentials:" -ForegroundColor Cyan
+            Write-Host "  System Admin: superadmin / changeme"
+            Write-Host "  Tenant Admin: admin@shopmanager.com / admin123"
+            Write-Host ""
+            Write-Warning "IMPORTANT: Change default passwords after first login!"
+            Write-Warning "IMPORTANT: Disable test users in production (set testUsers.enabled: false)"
+            Write-Host ""
+        } else {
+            Write-Warning "Test users are DISABLED"
+            Write-Info "You need to create users manually in Keycloak:"
+            Write-Host "  1. Access Keycloak admin: https://auth.$APP_NAME.$DOMAIN"
+            Write-Host "  2. Login with Keycloak admin credentials (from values file)"
+            Write-Host "  3. Select realm: $APP_NAME"
+            Write-Host "  4. Create users with appropriate roles"
+            Write-Host ""
+            Write-Info "Or enable test users by setting testUsers.enabled: true in values file"
+            Write-Host ""
+        }
     } catch {
-        Write-Warning "Could not parse domain from values file"
+        Write-Warning "Could not parse configuration from values file"
     }
-
-    Write-Host "Default Credentials (if test users enabled):" -ForegroundColor Cyan
-    Write-Host "  System Admin: superadmin / changeme"
-    Write-Host "  Tenant Admin: admin@shopmanager.com / admin123"
-    Write-Host ""
-
-    Write-Warning "IMPORTANT: Change default passwords after first login!"
-    Write-Host ""
 
     Write-Host "Useful Commands:" -ForegroundColor Cyan
     Write-Host "  Check status: kubectl get pods -n $NAMESPACE"
