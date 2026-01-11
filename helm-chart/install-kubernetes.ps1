@@ -303,8 +303,8 @@ function Install-ShopManager {
     # Get domain from values file
     try {
         $valuesContent = Get-Content $VALUES_FILE -Raw
-        $DOMAIN = if ($valuesContent -match 'domain:\s*["\']?([^"\'`r`n]+)') { $Matches[1] } else { "YOUR-DOMAIN.com" }
-        $APP_NAME = if ($valuesContent -match 'appName:\s*["\']?([^"\'`r`n]+)') { $Matches[1] } else { "retail" }
+        $DOMAIN = if ($valuesContent -match 'domain:\s+(\S+)') { $Matches[1] -replace '[''"]','' } else { "YOUR-DOMAIN.com" }
+        $APP_NAME = if ($valuesContent -match 'appName:\s+(\S+)') { $Matches[1] -replace '[''"]','' } else { "retail" }
 
         Write-Host "Access URLs:" -ForegroundColor Cyan
         Write-Host "  Frontend:  https://$APP_NAME.$DOMAIN"
