@@ -181,9 +181,12 @@ keycloak:
 # Application Settings
 # ============================================================================
 application:
-  # Test users (disable in production)
+  # Test users (IMPORTANT: Disable in production!)
+  # When enabled, creates default users for testing:
+  #   - superadmin / changeme (System Admin)
+  #   - admin@shopmanager.com / admin123 (Tenant Admin)
   testUsers:
-    enabled: false  # Set to true only for development/testing
+    enabled: true  # Set to false for production deployments
 
   # JWT token settings
   jwt:

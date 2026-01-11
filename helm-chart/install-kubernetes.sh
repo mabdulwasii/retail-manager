@@ -213,6 +213,7 @@ echo ""
 # Get domain from values file
 DOMAIN=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "domain:" | awk '{print $2}' | tr -d '"')
 APP_NAME=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "appName:" | awk '{print $2}' | tr -d '"')
+TEST_USERS_ENABLED=$(grep -A 5 "testUsers:" "${VALUES_FILE}" | grep "enabled:" | awk '{print $2}' | tr -d ' ')
 
 echo "Access URLs:"
 echo "  Frontend:  https://${APP_NAME}.${DOMAIN}"
@@ -220,13 +221,65 @@ echo "  API:       https://api.${APP_NAME}.${DOMAIN}/swagger-ui.html"
 echo "  Keycloak:  https://auth.${APP_NAME}.${DOMAIN}"
 echo ""
 
-echo "Default Credentials (if test users enabled):"
-echo "  System Admin: superadmin / changeme"
-echo "  Tenant Admin: admin@shopmanager.com / admin123"
+# Check DNS resolution
+print_info "Checking DNS resolution..."
+DNS_ISSUE=false
+for host in "${APP_NAME}.${DOMAIN}" "api.${APP_NAME}.${DOMAIN}" "auth.${APP_NAME}.${DOMAIN}"; do
+    if ! host "$host" &>/dev/null && ! nslookup "$host" &>/dev/null; then
+        DNS_ISSUE=true
+        break
+    fi
+done
+
+if [ "$DNS_ISSUE" = true ]; then
+    print_warning "DNS resolution failed for ${DOMAIN}"
+    echo ""
+    print_info "For local testing, add these entries to /etc/hosts:"
+    echo ""
+    echo "  # Get your cluster's ingress IP:"
+    echo "  kubectl get ingress -n ${NAMESPACE}"
+    echo ""
+    echo "  # Add to /etc/hosts (replace <INGRESS-IP> with actual IP):"
+    echo "  <INGRESS-IP> ${APP_NAME}.${DOMAIN}"
+    echo "  <INGRESS-IP> api.${APP_NAME}.${DOMAIN}"
+    echo "  <INGRESS-IP> auth.${APP_NAME}.${DOMAIN}"
+    echo ""
+    echo "  # Example command (requires sudo):"
+    echo "  echo \"<INGRESS-IP> ${APP_NAME}.${DOMAIN} api.${APP_NAME}.${DOMAIN} auth.${APP_NAME}.${DOMAIN}\" | sudo tee -a /etc/hosts"
+    echo ""
+else
+    print_success "DNS resolution successful"
+    echo ""
+fi
+
+# Show login credentials
+echo "Login Credentials:"
+echo ""
+echo "  System Admin (always created):"
+echo "    superadmin / changeme"
 echo ""
 
-print_warning "IMPORTANT: Change default passwords after first login!"
-echo ""
+if [ "$TEST_USERS_ENABLED" = "true" ]; then
+    echo "  Test Users (testUsers.enabled=true):"
+    echo "    admin@shopmanager.com / DevAdmin@2024!Test (Tenant Admin)"
+    echo "    manager@shopmanager.com / DevManager@2024!Test (Manager)"
+    echo "    employee@shopmanager.com / DevEmployee@2024!Test (Employee)"
+    echo "    + 5 more test users (see keycloak-users.json)"
+    echo ""
+    print_warning "IMPORTANT: Change default passwords after first login!"
+    print_warning "IMPORTANT: Disable test users in production (set testUsers.enabled: false)"
+    echo ""
+else
+    print_warning "Test users are DISABLED (testUsers.enabled=false)"
+    print_info "To create users manually in Keycloak:"
+    echo "  1. Access Keycloak admin: https://auth.${APP_NAME}.${DOMAIN}"
+    echo "  2. Login with Keycloak admin credentials (from values file)"
+    echo "  3. Select realm: ${APP_NAME}"
+    echo "  4. Create users with appropriate roles"
+    echo ""
+    print_info "Or enable test users by setting testUsers.enabled: true in values file"
+    echo ""
+fi
 
 echo "Useful Commands:"
 echo "  Check status: kubectl get pods -n ${NAMESPACE}"
