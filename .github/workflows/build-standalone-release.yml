@@ -253,13 +253,43 @@ jobs:
           Built from commit: ${{ github.sha }}
 
           ## Downloads
-          - Windows Installer (.exe)
-          - macOS Installer (.dmg)
-          - Linux Packages (.deb, .rpm, AppImage)
-          - Embedded JAR
-          - Docker Compose Lite
 
-          See full changelog and installation instructions in the documentation."
+          ### Native Installers
+          - **Windows Installer** (.exe) - Double-click installer for Windows
+          - **macOS Installer** (.dmg) - Drag-and-drop installer for macOS
+          - **Linux Packages** (.deb, .rpm, AppImage) - Package managers or AppImage
+
+          ### Standalone Deployment
+          - **Embedded JAR** - Run anywhere with Java 21+
+          - **Docker Compose Lite** - Self-contained Docker deployment (~50MB package)
+
+          ### Kubernetes Deployment
+          - **Kubernetes Package** (shop-manager-kubernetes-${VERSION}.tar.gz) - Complete deployment bundle (~50KB)
+            - Includes: Installation scripts, configuration templates, documentation
+            - Pulls Helm chart from: \`oci://registry-1.docker.io/princely/shop-manager:${VERSION}\`
+          - **Helm Chart** (shop-manager-${VERSION}.tgz) - Direct Helm installation
+
+          ### Docker Images (Docker Hub)
+          - \`princely/shop-manager:backend-v${VERSION}\` (and \`:backend-latest\`)
+          - \`princely/shop-manager:frontend-v${VERSION}\` (and \`:frontend-latest\`)
+
+          ## Installation
+
+          **Kubernetes:**
+          \`\`\`bash
+          tar -xzf shop-manager-kubernetes-${VERSION}.tar.gz
+          cd shop-manager-kubernetes
+          ./install-kubernetes.sh
+          \`\`\`
+
+          **Docker Compose Lite:**
+          \`\`\`bash
+          tar -xzf shop-manager-docker-lite-${VERSION}.tar.gz
+          cd shop-manager-docker-lite
+          ./lite-init.sh
+          \`\`\`
+
+          See full changelog and documentation at https://github.com/princely/shop-manager"
 
           echo "✅ Created draft release: $TAG"
         env:
@@ -323,6 +353,239 @@ jobs:
               gh release upload v${{ steps.get_version.outputs.version }} "$file" --clobber
             fi
           done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build Backend Docker Image and Push to Docker Hub
+  build-backend-image:
+    name: Build Backend Docker Image
+    runs-on: ubuntu-latest
+    needs: [create-release, build-embedded-jar]
+    permissions:
+      contents: read
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clean target directory
+        run: |
+          echo "Cleaning backend/target directory..."
+          rm -rf backend/target/*.jar || true
+          mkdir -p backend/target
+          echo "✅ Target directory cleaned"
+
+      - name: Download embedded JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: embedded-jar
+          path: backend/target/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: princely
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push backend image
+        run: |
+          cd backend
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Build multi-platform image
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag princely/shop-manager:backend-v${VERSION} \
+            --tag princely/shop-manager:backend-latest \
+            --push \
+            .
+
+          echo "✅ Backend image pushed to Docker Hub"
+          echo "   - princely/shop-manager:backend-v${VERSION}"
+          echo "   - princely/shop-manager:backend-latest"
+
+  # Build Frontend Docker Image and Push to Docker Hub
+  build-frontend-image:
+    name: Build Frontend Docker Image
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    permissions:
+      contents: read
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: princely
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push frontend image
+        run: |
+          cd frontend
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Build multi-platform image
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag princely/shop-manager:frontend-v${VERSION} \
+            --tag princely/shop-manager:frontend-latest \
+            --push \
+            .
+
+          echo "✅ Frontend image pushed to Docker Hub"
+          echo "   - princely/shop-manager:frontend-v${VERSION}"
+          echo "   - princely/shop-manager:frontend-latest"
+
+  # Package and Publish Helm Chart to Docker Hub OCI Registry
+  publish-helm-chart:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    needs: [create-release, build-backend-image, build-frontend-image]
+    permissions:
+      contents: write
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.13.0'
+
+      - name: Update Chart version
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Update Chart.yaml with new version
+          sed -i "s/^version: .*/version: ${VERSION}/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"${VERSION}\"/" helm-chart/shop-manager/Chart.yaml
+
+          # Update image tags in Chart.yaml annotations
+          sed -i "s/backend-v[0-9]*\.[0-9]*\.[0-9]*/backend-v${VERSION}/" helm-chart/shop-manager/Chart.yaml
+          sed -i "s/frontend-v[0-9]*\.[0-9]*\.[0-9]*/frontend-v${VERSION}/" helm-chart/shop-manager/Chart.yaml
+
+          echo "✅ Chart version updated to ${VERSION}"
+
+      - name: Package Helm chart
+        run: |
+          cd helm-chart
+          helm package shop-manager
+
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ls -lh shop-manager-${VERSION}.tgz
+          echo "✅ Helm chart packaged"
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login registry-1.docker.io -u princely --password-stdin
+
+      - name: Push Helm chart to Docker Hub OCI registry
+        run: |
+          cd helm-chart
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          helm push shop-manager-${VERSION}.tgz oci://registry-1.docker.io/princely
+
+          echo "✅ Helm chart pushed to Docker Hub OCI registry"
+          echo "   - oci://registry-1.docker.io/princely/shop-manager:${VERSION}"
+
+      - name: Upload Helm chart to GitHub release
+        run: |
+          cd helm-chart
+          VERSION="${{ needs.create-release.outputs.version }}"
+          gh release upload v${VERSION} shop-manager-${VERSION}.tgz --clobber
+          echo "✅ Helm chart uploaded to GitHub release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build Kubernetes Deployment Package
+  build-kubernetes-package:
+    name: Build Kubernetes Package
+    runs-on: ubuntu-latest
+    needs: [create-release, publish-helm-chart]
+    permissions:
+      contents: write
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Kubernetes package
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          mkdir -p build/installers/kubernetes
+
+          # Copy all files to package directory
+          cp helm-chart/values-template.yaml build/installers/kubernetes/
+          cp helm-chart/install-kubernetes.sh build/installers/kubernetes/
+          cp helm-chart/install-kubernetes.ps1 build/installers/kubernetes/
+          cp helm-chart/install-kubernetes.bat build/installers/kubernetes/
+          cp helm-chart/uninstall-kubernetes.sh build/installers/kubernetes/
+          cp helm-chart/uninstall-kubernetes.ps1 build/installers/kubernetes/
+          cp helm-chart/uninstall-kubernetes.bat build/installers/kubernetes/
+          cp helm-chart/check-prerequisites.sh build/installers/kubernetes/
+          cp helm-chart/check-prerequisites.ps1 build/installers/kubernetes/
+          cp helm-chart/QUICKSTART.md build/installers/kubernetes/
+          cp helm-chart/PREREQUISITES.md build/installers/kubernetes/
+
+          # Make scripts executable
+          chmod +x build/installers/kubernetes/*.sh
+
+          # Create tarball
+          cd build/installers/kubernetes
+          tar -czf shop-manager-kubernetes-${VERSION}.tar.gz *
+
+          ls -lh shop-manager-kubernetes-${VERSION}.tar.gz
+          echo "✅ Kubernetes package created (~$(du -h shop-manager-kubernetes-${VERSION}.tar.gz | cut -f1))"
+
+      - name: Upload Kubernetes package to GitHub release
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          cd build/installers/kubernetes
+          gh release upload v${VERSION} shop-manager-kubernetes-${VERSION}.tar.gz --clobber
+          echo "✅ Kubernetes package uploaded to GitHub release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -598,7 +861,7 @@ jobs:
   publish-release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: [create-release, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar]
+    needs: [create-release, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar, build-kubernetes-package]
     permissions:
       contents: write
     if: |
