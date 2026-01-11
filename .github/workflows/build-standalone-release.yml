@@ -244,15 +244,28 @@ jobs:
           VERSION="${{ steps.get_version.outputs.version }}"
           TAG="v$VERSION"
 
-          # Create draft release
+          # Create PUBLIC release (not draft)
           gh release create "$TAG" \
-            --draft \
             --title "Shop Manager v$VERSION" \
             --notes "Release v$VERSION
 
           Built from commit: ${{ github.sha }}
 
+          ## ⏳ Artifacts Uploading
+
+          Artifacts are being built and will appear below as they become available.
+          **Refresh this page to see the latest uploads.**
+
+          **Typical upload times:**
+          - Embedded JAR: ~5 minutes
+          - Native Installers: ~8-10 minutes
+          - Docker/Kubernetes: ~15-20 minutes
+
+          ---
+
           ## Downloads
+
+          Artifacts will appear here as they are uploaded:
 
           ### Native Installers
           - **Windows Installer** (.exe) - Double-click installer for Windows
@@ -291,7 +304,7 @@ jobs:
 
           See full changelog and documentation at https://github.com/princely/shop-manager"
 
-          echo "✅ Created draft release: $TAG"
+          echo "✅ Created PUBLIC release: $TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -857,27 +870,91 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish Release
-  publish-release:
-    name: Publish Release
+  # Finalize Release Notes (Optional - runs after all artifacts)
+  finalize-release-notes:
+    name: Update Final Release Notes
     runs-on: ubuntu-latest
     needs: [create-release, build-windows-installer, build-macos-installer, build-linux-packages-native, upload-embedded-jar, build-kubernetes-package]
     permissions:
       contents: write
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.merged == true &&
-       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
-        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
-        contains(github.event.pull_request.labels.*.name, 'release:major')))
+    if: always()  # Run even if some jobs failed
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Publish release
-        run: gh release edit v${{ needs.create-release.outputs.version }} --draft=false
+      - name: Update release notes with completion status
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          TAG="v${VERSION}"
+
+          # Check which artifacts succeeded
+          INSTALLERS_STATUS="✅"
+          DOCKER_K8S_STATUS="✅"
+
+          # Check installer jobs
+          if [ "${{ needs.build-windows-installer.result }}" != "success" ] || \
+             [ "${{ needs.build-macos-installer.result }}" != "success" ] || \
+             [ "${{ needs.build-linux-packages-native.result }}" != "success" ]; then
+            INSTALLERS_STATUS="⚠️ Some installers failed - check workflow logs"
+          fi
+
+          # Check Docker/K8s jobs
+          if [ "${{ needs.build-kubernetes-package.result }}" != "success" ]; then
+            DOCKER_K8S_STATUS="⚠️ Docker/Kubernetes artifacts failed - check workflow logs"
+          fi
+
+          # Update release notes with completion status
+          gh release edit "${TAG}" --notes "Release v${VERSION}
+
+          Built from commit: ${{ github.sha }}
+
+          ## ${INSTALLERS_STATUS} Native Installers
+          ## ${DOCKER_K8S_STATUS} Docker/Kubernetes
+
+          **All artifacts have been processed.** Download the available artifacts below.
+
+          ---
+
+          ## Downloads
+
+          ### Native Installers
+          - **Windows Installer** (.exe) - Double-click installer for Windows
+          - **macOS Installer** (.dmg) - Drag-and-drop installer for macOS
+          - **Linux Packages** (.deb, .rpm, AppImage) - Package managers or AppImage
+
+          ### Standalone Deployment
+          - **Embedded JAR** - Run anywhere with Java 21+
+          - **Docker Compose Lite** - Self-contained Docker deployment (~50MB package)
+
+          ### Kubernetes Deployment
+          - **Kubernetes Package** (shop-manager-kubernetes-${VERSION}.tar.gz) - Complete deployment bundle (~50KB)
+            - Includes: Installation scripts, configuration templates, documentation
+            - Pulls Helm chart from: \`oci://registry-1.docker.io/princely/shop-manager:${VERSION}\`
+          - **Helm Chart** (shop-manager-${VERSION}.tgz) - Direct Helm installation
+
+          ### Docker Images (Docker Hub)
+          - \`princely/shop-manager:backend-v${VERSION}\` (and \`:backend-latest\`)
+          - \`princely/shop-manager:frontend-v${VERSION}\` (and \`:frontend-latest\`)
+
+          ## Installation
+
+          **Kubernetes:**
+          \`\`\`bash
+          tar -xzf shop-manager-kubernetes-${VERSION}.tar.gz
+          cd shop-manager-kubernetes
+          ./install-kubernetes.sh
+          \`\`\`
+
+          **Docker Compose Lite:**
+          \`\`\`bash
+          tar -xzf shop-manager-docker-lite-${VERSION}.tar.gz
+          cd shop-manager-docker-lite
+          ./lite-init.sh
+          \`\`\`
+
+          See full changelog and documentation at https://github.com/princely/shop-manager"
+
+          echo "✅ Release notes updated with final status"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
