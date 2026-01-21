@@ -10,6 +10,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "inventory", uniqueConstraints = {
@@ -20,8 +22,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"shop", "product"})
-@EqualsAndHashCode(callSuper = true, exclude = {"shop", "product"})
+@ToString(exclude = {"shop", "product", "unitPrices"})
+@EqualsAndHashCode(callSuper = true, exclude = {"shop", "product", "unitPrices"})
 public class Inventory extends BaseEntity implements ShopAware {
 
     @Id
@@ -62,6 +64,31 @@ public class Inventory extends BaseEntity implements ShopAware {
     @Column(name = "selling_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal sellingPrice;
 
+    /**
+     * Smallest sellable unit for stock tracking (piece, kg, liter, etc.)
+     */
+    @Builder.Default
+    @Column(name = "base_unit", length = 50)
+    private String baseUnit = "piece";
+
+    /**
+     * Unit in which this batch was purchased (e.g., pack, carton)
+     */
+    @Column(name = "purchase_unit", length = 50)
+    private String purchaseUnit;
+
+    /**
+     * Quantity purchased in purchase_unit (e.g., 10 packs)
+     */
+    @Column(name = "purchase_quantity", precision = 10, scale = 2)
+    private BigDecimal purchaseQuantity;
+
+    /**
+     * Cost per purchase_unit (e.g., ₦12,000 per pack)
+     */
+    @Column(name = "purchase_unit_cost", precision = 10, scale = 2)
+    private BigDecimal purchaseUnitCost;
+
     private String location;
 
     @Column(name = "batch_number", length = 100)
@@ -77,6 +104,14 @@ public class Inventory extends BaseEntity implements ShopAware {
 
     @Column(name = "last_stock_update")
     private LocalDateTime lastStockUpdate;
+
+    /**
+     * Batch-specific selling prices for each unit type.
+     * Different units can have different prices for this inventory batch.
+     */
+    @OneToMany(mappedBy = "inventory", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<InventoryUnitPrice> unitPrices = new ArrayList<>();
 
     public enum InventoryStatus {
         ACTIVE,

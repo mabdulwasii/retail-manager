@@ -1,6 +1,7 @@
 package com.princely.shopmanager.inventory.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Request DTO for updating inventory metadata.
@@ -54,4 +57,25 @@ public class InventoryUpdateRequest {
     @Schema(description = "Selling price for this batch", example = "25.00")
     @Min(value = 0, message = "Selling price cannot be negative")
     private BigDecimal sellingPrice;
+
+    @Schema(description = "Smallest sellable unit for stock tracking", example = "piece")
+    @Size(max = 50, message = "Base unit must not exceed 50 characters")
+    private String baseUnit;
+
+    @Schema(description = "Unit in which this batch was purchased", example = "pack")
+    @Size(max = 50, message = "Purchase unit must not exceed 50 characters")
+    private String purchaseUnit;
+
+    @Schema(description = "Quantity purchased in purchase_unit", example = "10")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Purchase quantity must be positive")
+    private BigDecimal purchaseQuantity;
+
+    @Schema(description = "Cost per purchase_unit", example = "12000.00")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase unit cost must be non-negative")
+    private BigDecimal purchaseUnitCost;
+
+    @Schema(description = "Batch-specific selling prices for each unit type")
+    @Builder.Default
+    private List<InventoryUnitPriceRequest> unitPrices = new ArrayList<>();
 }
+

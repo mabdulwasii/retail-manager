@@ -7,8 +7,9 @@ import { Separator } from '@/components/ui/separator'
 import { ProductSearch } from '@/components/sales/ProductSearch'
 import { ShoppingCart } from '@/components/sales/ShoppingCart'
 import { PaymentModal } from '@/components/sales/PaymentModal'
+import { UnitSelectDialog } from '@/components/sales/UnitSelectDialog'
 import { useSales, CreateSaleRequest } from '@/hooks/useSales'
-import { Product } from '@/types/api'
+import { Product, ProductUnitDefinition, InventoryUnitPrice } from '@/types/api'
 import { useAuth } from '@/context/UnifiedAuthContext'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -50,6 +51,16 @@ export const POSPage: React.FC = () => {
   const [lastSaleId, setLastSaleId] = useState<string | null>(null)
   const [barcodeInput, setBarcodeInput] = useState('')
   const [isBarcodeMode, setIsBarcodeMode] = useState(false)
+
+  // Unit selection dialog state
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false)
+  const [pendingProduct, setPendingProduct] = useState<{
+    product: Product;
+    inventoryId: string;
+    sellingPrice: number;
+    unitDefinitions?: ProductUnitDefinition[];
+    unitPrices?: InventoryUnitPrice[];
+  } | null>(null)
   
   // Update selected shop when user shop changes
   useEffect(() => {
@@ -109,13 +120,46 @@ export const POSPage: React.FC = () => {
     // }
   }
 
-  const handleProductSelect = (product: Product, inventoryId: string, sellingPrice: number) => {
+  const handleProductSelect = (
+    product: Product,
+    inventoryId: string,
+    sellingPrice: number,
+    unitDefinitions?: ProductUnitDefinition[],
+    unitPrices?: InventoryUnitPrice[]
+  ) => {
     if (!sellingPrice) {
       toast.error('Product price not available. Please ensure inventory is set up.')
       return
     }
-    
-    addToCart(product, 1, inventoryId, sellingPrice)
+
+    // Check if product has multi-unit pricing
+    if (unitDefinitions && unitDefinitions.length > 0 && unitPrices && unitPrices.length > 0) {
+      // Show unit selection dialog
+      setPendingProduct({
+        product,
+        inventoryId,
+        sellingPrice,
+        unitDefinitions,
+        unitPrices
+      })
+      setIsUnitDialogOpen(true)
+    } else {
+      // Add directly to cart with default price
+      addToCart(product, 1, inventoryId, sellingPrice)
+    }
+  }
+
+  const handleUnitConfirm = (unitType: string, unitPrice: number) => {
+    if (pendingProduct) {
+      // Add to cart with selected unit and price
+      addToCart(pendingProduct.product, 1, pendingProduct.inventoryId, unitPrice, unitType)
+      setPendingProduct(null)
+    }
+  }
+
+  const handleUnitDialogClose = () => {
+    setIsUnitDialogOpen(false)
+    setPendingProduct(null)
   }
 
   const handleCheckout = () => {
@@ -132,7 +176,8 @@ export const POSPage: React.FC = () => {
         productId: item.product.id,
         quantity: item.quantity,
         unitPrice: item.unitPrice,  // Use inventory-based selling price
-        discount: 0
+        discount: 0,
+        unitType: item.unitType  // Include unit type for multi-unit pricing
       })),
       paymentMethod: paymentData.method,
       discountAmount: paymentData.discount || 0,
@@ -378,6 +423,19 @@ export const POSPage: React.FC = () => {
         cartSummary={cartSummary}
         isLoading={isLoading}
       />
+
+      {/* Unit Selection Dialog */}
+      {pendingProduct && (
+        <UnitSelectDialog
+          isOpen={isUnitDialogOpen}
+          onClose={handleUnitDialogClose}
+          product={pendingProduct.product}
+          inventoryId={pendingProduct.inventoryId}
+          unitDefinitions={pendingProduct.unitDefinitions || []}
+          unitPrices={pendingProduct.unitPrices || []}
+          onConfirm={handleUnitConfirm}
+        />
+      )}
     </div>
   )
 }

@@ -42,6 +42,32 @@ public class LineItem extends BaseEntity {
     @Column(nullable = false)
     private Integer quantity;
 
+    /**
+     * Unit type sold (piece, pack, half_pack, etc.) - matches product_unit_definitions
+     */
+    @Column(name = "unit_type", length = 50)
+    private String unitType;
+
+    /**
+     * Display label for the unit sold (e.g., "Pack (12pcs)")
+     */
+    @Column(name = "unit_label", length = 100)
+    private String unitLabel;
+
+    /**
+     * Conversion factor at time of sale (e.g., 12 for pack of 12)
+     */
+    @Builder.Default
+    @Column(name = "unit_conversion_factor", precision = 10, scale = 4)
+    private BigDecimal unitConversionFactor = BigDecimal.ONE;
+
+    /**
+     * Quantity in base units (quantity × conversion_factor) used for FEFO
+     * Example: Sold 5 packs → quantity=5, unitConversionFactor=12, baseUnitQuantity=60
+     */
+    @Column(name = "base_unit_quantity")
+    private Integer baseUnitQuantity;
+
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 

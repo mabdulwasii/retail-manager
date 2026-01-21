@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -38,4 +40,19 @@ public class InventoryResponse {
     private boolean isLowStock;
     private boolean isExpired;
     private boolean isExpiringSoon;
+
+    // Financial projections for this item
+    private BigDecimal itemTotalCost;          // currentStock × costPrice
+    private BigDecimal itemProjectedSales;     // currentStock × sellingPrice
+    private BigDecimal itemProjectedProfit;    // itemProjectedSales - itemTotalCost
+
+    // Multi-unit pricing fields
+    private String baseUnit;                   // Smallest sellable unit (piece, kg, liter)
+    private String purchaseUnit;               // Unit in which batch was purchased
+    private BigDecimal purchaseQuantity;       // Quantity purchased in purchase_unit
+    private BigDecimal purchaseUnitCost;       // Cost per purchase_unit
+
+    // Batch-specific unit prices
+    @Builder.Default
+    private List<InventoryUnitPriceResponse> unitPrices = new ArrayList<>();
 }

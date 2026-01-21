@@ -8,6 +8,7 @@ import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
+import com.princely.shopmanager.inventory.dto.InventoryUnitPriceResponse;
 import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.specification.InventorySpecifications;
@@ -446,5 +447,23 @@ public class InventoryController {
 
         InventorySummaryDto response = inventoryService.getInventorySummary(shopId, principal);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Get inventory unit prices",
+        description = "Retrieve batch-specific unit prices for an inventory item (e.g., piece, pack, carton prices)"
+    )
+    @ApiResponse(responseCode = "200", description = "Unit prices retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Inventory not found")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/inventory/{inventoryId}/unit-prices")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).INVENTORY_READ)")
+    public ResponseEntity<List<InventoryUnitPriceResponse>> getInventoryUnitPrices(
+            @Parameter(description = "Inventory ID") @PathVariable String inventoryId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.debug("Fetching unit prices for inventory: {}", inventoryId);
+        InventoryResponse inventory = inventoryService.getInventoryById(inventoryId, principal);
+        return ResponseEntity.ok(inventory.getUnitPrices());
     }
 }

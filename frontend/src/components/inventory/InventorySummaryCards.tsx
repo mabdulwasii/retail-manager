@@ -58,7 +58,7 @@ export const InventorySummaryCards: React.FC<InventorySummaryCardsProps> = ({
   return (
     <div className="space-y-6">
       {/* Main Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -77,16 +77,16 @@ export const InventorySummaryCards: React.FC<InventorySummaryCardsProps> = ({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Total Value
+              Total Cost
             </CardTitle>
             <DollarSignIcon className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(summary.totalValue)}
+            <div className="text-2xl font-bold text-orange-600">
+              {formatCurrency(summary.totalInventoryCost || summary.totalValue || 0)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Inventory valuation
+              Inventory cost
             </div>
           </CardContent>
         </Card>
@@ -94,25 +94,41 @@ export const InventorySummaryCards: React.FC<InventorySummaryCardsProps> = ({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Stock Health
+              Projected Sales
             </CardTitle>
-            {stockHealthPercent >= 80 ? (
+            <BarChart3Icon className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(summary.projectedTotalSales || 0)}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              If all sold
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Projected Profit
+            </CardTitle>
+            {(summary.projectedProfit || 0) >= 0 ? (
               <TrendingUpIcon className="h-4 w-4 text-green-600" />
-            ) : stockHealthPercent >= 60 ? (
-              <TrendingUpIcon className="h-4 w-4 text-yellow-600" />
             ) : (
               <AlertTriangleIcon className="h-4 w-4 text-red-600" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              stockHealthPercent >= 80 ? 'text-green-600' :
-              stockHealthPercent >= 60 ? 'text-yellow-600' : 'text-red-600'
+              (summary.projectedProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
-              {stockHealthPercent}%
+              {formatCurrency(summary.projectedProfit || 0)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''}
+              {summary.projectedProfitMargin
+                ? `${summary.projectedProfitMargin.toFixed(1)}% margin`
+                : 'Profit margin'}
             </div>
           </CardContent>
         </Card>

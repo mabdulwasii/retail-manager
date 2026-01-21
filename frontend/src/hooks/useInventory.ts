@@ -44,6 +44,10 @@ export interface InventoryItem {
   isLowStock: boolean
   isExpired: boolean
   isExpiringSoon: boolean
+  // Financial projections
+  itemTotalCost?: number
+  itemProjectedSales?: number
+  itemProjectedProfit?: number
 }
 
 export type InventoryStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED' | 'QUARANTINED' | 'EXPIRED'
@@ -112,6 +116,11 @@ export interface InventorySummary {
     itemCount: number
     totalValue: number
   }>
+  // Financial projections
+  totalInventoryCost?: number
+  projectedTotalSales?: number
+  projectedProfit?: number
+  projectedProfitMargin?: number
 }
 
 export const useInventory = () => {

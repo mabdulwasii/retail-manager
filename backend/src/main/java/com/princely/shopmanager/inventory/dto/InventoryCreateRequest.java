@@ -1,7 +1,9 @@
 package com.princely.shopmanager.inventory.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -40,6 +44,42 @@ public class InventoryCreateRequest {
     @NotNull(message = "Selling price is required")
     @Min(value = 0, message = "Selling price cannot be negative")
     private BigDecimal sellingPrice;
+
+    /**
+     * Smallest sellable unit for stock tracking (piece, kg, liter, etc.).
+     * Defaults to "piece".
+     */
+    @Size(max = 50, message = "Base unit must not exceed 50 characters")
+    @Builder.Default
+    private String baseUnit = "piece";
+
+    /**
+     * Unit in which this batch was purchased (e.g., pack, carton).
+     * Optional - used for purchase tracking.
+     */
+    @Size(max = 50, message = "Purchase unit must not exceed 50 characters")
+    private String purchaseUnit;
+
+    /**
+     * Quantity purchased in purchase_unit (e.g., 10 packs).
+     * Optional - used for purchase tracking.
+     */
+    @DecimalMin(value = "0.0", inclusive = false, message = "Purchase quantity must be positive")
+    private BigDecimal purchaseQuantity;
+
+    /**
+     * Cost per purchase_unit (e.g., ₦12,000 per pack).
+     * Optional - used for purchase tracking.
+     */
+    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase unit cost must be non-negative")
+    private BigDecimal purchaseUnitCost;
+
+    /**
+     * Batch-specific selling prices for each unit type.
+     * Optional - for multi-unit pricing support.
+     */
+    @Builder.Default
+    private List<InventoryUnitPriceRequest> unitPrices = new ArrayList<>();
 
     private String location;
 

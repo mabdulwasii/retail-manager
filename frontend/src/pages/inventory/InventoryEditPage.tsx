@@ -315,7 +315,6 @@ export const InventoryEditPage: React.FC = () => {
                   <Input
                     id="expiryDate"
                     type="date"
-                    min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
                   />

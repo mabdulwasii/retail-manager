@@ -12,9 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { UnitDefinitionManager } from "@/components/products/UnitDefinitionManager";
 import { useCategories } from "@/hooks/useCategories";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Product, ProductStatus } from "@/types/api";
+import { Product, ProductStatus, ProductUnitDefinitionRequest } from "@/types/api";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -83,6 +84,7 @@ const PRODUCT_UNITS = [
   { value: "ml", label: "Milliliter (ml)" },
   { value: "carton", label: "Carton" },
   { value: "dozen", label: "Dozen" },
+  { value: "roll", label: "Roll" },
   { value: "other", label: "Other" },
 ];
 
@@ -97,6 +99,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     useCategories(false, shopId);
   const { formatCurrency } = useCurrency();
   const [showCustomUnit, setShowCustomUnit] = useState(false);
+  const [unitDefinitions, setUnitDefinitions] = useState<ProductUnitDefinitionRequest[]>(
+    product?.unitDefinitions?.map((ud) => ({
+      unitType: ud.unitType,
+      unitLabel: ud.unitLabel,
+      conversionFactor: ud.conversionFactor,
+      isBaseUnit: ud.isBaseUnit,
+      sortOrder: ud.sortOrder,
+    })) || []
+  );
 
   const {
     register,
@@ -152,8 +163,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   //   setValue('sku', newSKU)
   // }
 
+  const handleFormSubmit = (data: ProductFormData) => {
+    // Add unit definitions to form data
+    const submitData = {
+      ...data,
+      unitDefinitions: unitDefinitions.length > 0 ? unitDefinitions : undefined,
+    };
+    onSubmit(submitData as any);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <Card>
         <CardContent className="pt-6 space-y-4">
           {/* Product Name */}
@@ -485,6 +505,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </Select>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Multi-Unit Pricing Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <UnitDefinitionManager
+            unitDefinitions={unitDefinitions}
+            onChange={setUnitDefinitions}
+            disabled={isSubmitting}
+          />
         </CardContent>
       </Card>
 
