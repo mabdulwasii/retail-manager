@@ -48,31 +48,37 @@ class InventoryAllocationServiceTest {
 
     private Product mockProduct;
     private JwtPrincipal mockPrincipal;
+    private com.princely.shopmanager.core.domain.Shop mockShop;
 
     @BeforeEach
     void setUp() {
+        mockShop = com.princely.shopmanager.core.domain.Shop.builder()
+            .id("shop1")
+            .name("Test Shop")
+            .build();
+
         mockProduct = Product.builder()
             .id("prod1")
             .name("Coca-Cola")
             .sku("COKE-500ML")
             .build();
 
-        mockPrincipal = new JwtPrincipal(
-            "user1",
-            "testuser",
-            "test@example.com",
-            List.of(),
-            "tenant1",
-            "shop1",
-            List.of()
-        );
+        mockPrincipal = JwtPrincipal.builder()
+            .subject("keycloak-user-1")
+            .userId("user1")
+            .preferredUsername("testuser")
+            .email("test@example.com")
+            .tenantId("tenant1")
+            .shopId("shop1")
+            .roles(List.of())
+            .build();
     }
 
     @Test
     void shouldConvertPackQuantityToBaseUnitsCorrectly() {
         // Given - User wants to sell 5 packs, each pack = 12 pieces
         ProductUnitDefinition packDef = ProductUnitDefinition.builder()
-            .productId("prod1")
+            .product(mockProduct)
             .unitType("pack")
             .unitLabel("Pack (12pcs)")
             .conversionFactor(BigDecimal.valueOf(12.0))
@@ -90,8 +96,9 @@ class InventoryAllocationServiceTest {
 
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
+            .shop(mockShop)
             .currentStock(100)
-            .availableStock(100)
+            .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .expiryDate(LocalDate.now().plusMonths(6))
             .build();
@@ -127,7 +134,7 @@ class InventoryAllocationServiceTest {
     void shouldHandleCartonConversionCorrectly() {
         // Given - User wants to sell 2 cartons, each carton = 144 pieces
         ProductUnitDefinition cartonDef = ProductUnitDefinition.builder()
-            .productId("prod1")
+            .product(mockProduct)
             .unitType("carton")
             .unitLabel("Carton (144pcs)")
             .conversionFactor(BigDecimal.valueOf(144.0))
@@ -145,8 +152,9 @@ class InventoryAllocationServiceTest {
 
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
+            .shop(mockShop)
             .currentStock(300)
-            .availableStock(300)
+            .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
 
@@ -189,8 +197,9 @@ class InventoryAllocationServiceTest {
 
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
+            .shop(mockShop)
             .currentStock(50)
-            .availableStock(50)
+            .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
 
@@ -234,8 +243,16 @@ class InventoryAllocationServiceTest {
 
         // When - should still work but log warning
         // The service continues with quantity as-is if unit not found
+        Inventory mockInventory = Inventory.builder()
+            .id("inv1")
+            .shop(mockShop)
+            .currentStock(50)
+            .reservedStock(0)
+            .status(Inventory.InventoryStatus.ACTIVE)
+            .build();
+
         when(productService.hasAvailableStock(eq("prod1"), eq(5), any())).thenReturn(true);
-        when(inventoryRepository.findByProductId("prod1")).thenReturn(List.of());
+        when(inventoryRepository.findByProductId("prod1")).thenReturn(List.of(mockInventory));
 
         // Then - should not throw, but use quantity as-is
         assertDoesNotThrow(() -> inventoryAllocationService.validateAndAllocate(
@@ -249,7 +266,7 @@ class InventoryAllocationServiceTest {
     void shouldThrowExceptionWhenInsufficientStock() {
         // Given - Not enough stock available
         ProductUnitDefinition packDef = ProductUnitDefinition.builder()
-            .productId("prod1")
+            .product(mockProduct)
             .unitType("pack")
             .unitLabel("Pack (12pcs)")
             .conversionFactor(BigDecimal.valueOf(12.0))
@@ -294,7 +311,7 @@ class InventoryAllocationServiceTest {
             .build();
 
         ProductUnitDefinition packDef1 = ProductUnitDefinition.builder()
-            .productId("prod1")
+            .product(mockProduct)
             .unitType("pack")
             .unitLabel("Pack (12pcs)")
             .conversionFactor(BigDecimal.valueOf(12.0))
@@ -302,7 +319,7 @@ class InventoryAllocationServiceTest {
             .build();
 
         ProductUnitDefinition cartonDef2 = ProductUnitDefinition.builder()
-            .productId("prod2")
+            .product(product2)
             .unitType("carton")
             .unitLabel("Carton (24pcs)")
             .conversionFactor(BigDecimal.valueOf(24.0))
@@ -327,15 +344,17 @@ class InventoryAllocationServiceTest {
 
         Inventory mockInventory1 = Inventory.builder()
             .id("inv1")
+            .shop(mockShop)
             .currentStock(100)
-            .availableStock(100)
+            .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
 
         Inventory mockInventory2 = Inventory.builder()
             .id("inv2")
+            .shop(mockShop)
             .currentStock(100)
-            .availableStock(100)
+            .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
 
