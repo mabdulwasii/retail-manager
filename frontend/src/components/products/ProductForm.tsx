@@ -83,6 +83,7 @@ const PRODUCT_UNITS = [
   { value: "ml", label: "Milliliter (ml)" },
   { value: "carton", label: "Carton" },
   { value: "dozen", label: "Dozen" },
+  { value: "roll", label: "Roll" },
   { value: "other", label: "Other" },
 ];
 

@@ -24,6 +24,12 @@ public class InventorySummaryDto {
     private Integer expiringSoonItems;
     private List<CategoryBreakdown> categoryBreakdown;
 
+    // Financial projections
+    private BigDecimal totalInventoryCost;       // Sum of (currentStock × costPrice)
+    private BigDecimal projectedTotalSales;      // Sum of (currentStock × sellingPrice)
+    private BigDecimal projectedProfit;          // projectedTotalSales - totalInventoryCost
+    private BigDecimal projectedProfitMargin;    // (projectedProfit / totalInventoryCost) × 100
+
     @Data
     @Builder
     @NoArgsConstructor

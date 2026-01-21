@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -110,4 +112,8 @@ public class ProductResponse {
 
     @Schema(description = "Last updated by user ID", example = "user-456")
     private String updatedBy;
+
+    @Schema(description = "Unit definitions for multi-unit pricing (catalog level - no prices)")
+    @Builder.Default
+    private List<ProductUnitDefinitionResponse> unitDefinitions = new ArrayList<>();
 }

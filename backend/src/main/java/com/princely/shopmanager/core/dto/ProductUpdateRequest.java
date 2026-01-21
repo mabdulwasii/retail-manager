@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,4 +80,8 @@ public class ProductUpdateRequest {
 
     @Schema(description = "Additional metadata")
     private Map<String, Object> metadata;
+
+    @Schema(description = "Unit definitions for multi-unit pricing (catalog level - no prices)")
+    @Builder.Default
+    private List<ProductUnitDefinitionRequest> unitDefinitions = new ArrayList<>();
 }

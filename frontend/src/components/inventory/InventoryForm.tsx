@@ -519,7 +519,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                 <Input
                   id="expiryDate"
                   type="date"
-                  min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
                   value={formData.expiryDate}
                   onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                   className={`pl-10 ${validationErrors.expiryDate ? 'border-red-500' : ''}`}

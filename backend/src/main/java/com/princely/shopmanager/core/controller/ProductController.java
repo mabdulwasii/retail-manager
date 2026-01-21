@@ -3,6 +3,7 @@ package com.princely.shopmanager.core.controller;
 import com.princely.shopmanager.core.domain.Product;
 import com.princely.shopmanager.core.dto.ProductCreateRequest;
 import com.princely.shopmanager.core.dto.ProductResponse;
+import com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.core.service.ProductService;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
@@ -285,5 +286,23 @@ public class ProductController {
 
         var response = productService.getProductsWithNoStock(shopId, principal);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "Get product unit definitions",
+        description = "Retrieve unit definitions for a product (e.g., piece, pack, carton with conversion factors)"
+    )
+    @ApiResponse(responseCode = "200", description = "Unit definitions retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Product not found")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @GetMapping("/products/{productId}/unit-definitions")
+    @PreAuthorize("hasPermission(null, T(com.princely.shopmanager.shared.constants.PermissionConstants).PRODUCT_READ)")
+    public ResponseEntity<List<ProductUnitDefinitionResponse>> getProductUnitDefinitions(
+            @Parameter(description = "Product ID") @PathVariable String productId,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+
+        log.debug("Fetching unit definitions for product: {}", productId);
+        ProductResponse product = productService.getProductById(productId, false, principal);
+        return ResponseEntity.ok(product.getUnitDefinitions());
     }
 }

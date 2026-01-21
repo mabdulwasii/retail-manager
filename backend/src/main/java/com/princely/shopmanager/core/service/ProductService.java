@@ -3,12 +3,16 @@ package com.princely.shopmanager.core.service;
 import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Category;
 import com.princely.shopmanager.core.domain.Product;
+import com.princely.shopmanager.core.domain.ProductUnitDefinition;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.dto.ProductCreateRequest;
 import com.princely.shopmanager.core.dto.ProductResponse;
+import com.princely.shopmanager.core.dto.ProductUnitDefinitionRequest;
+import com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse;
 import com.princely.shopmanager.core.dto.ProductUpdateRequest;
 import com.princely.shopmanager.core.repository.CategoryRepository;
 import com.princely.shopmanager.core.repository.ProductRepository;
+import com.princely.shopmanager.core.repository.ProductUnitDefinitionRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
@@ -60,6 +64,7 @@ public class ProductService extends ShopAwareService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductUnitDefinitionRepository productUnitDefinitionRepository;
     private final InventoryRepository inventoryRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
@@ -70,6 +75,7 @@ public class ProductService extends ShopAwareService {
             ShopRepository shopRepository,
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
+            ProductUnitDefinitionRepository productUnitDefinitionRepository,
             InventoryRepository inventoryRepository,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
@@ -77,6 +83,7 @@ public class ProductService extends ShopAwareService {
         super(shopAccessValidator, shopRepository);
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.productUnitDefinitionRepository = productUnitDefinitionRepository;
         this.inventoryRepository = inventoryRepository;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
@@ -164,6 +171,11 @@ public class ProductService extends ShopAwareService {
 
         product = productRepository.save(product);
 
+        // Handle unit definitions if provided
+        if (request.getUnitDefinitions() != null && !request.getUnitDefinitions().isEmpty()) {
+            handleUnitDefinitions(product, request.getUnitDefinitions());
+        }
+
         // Audit the creation
         auditService.logEntityCreation(ENTITY_TYPE_PRODUCT, product.getId(),
             "Product created: " + product.getName() + " (SKU: " + product.getSku() + ")");
@@ -203,6 +215,12 @@ public class ProductService extends ShopAwareService {
         productFieldUpdater.updateBasicFields(product, request, changes);
         productFieldUpdater.updateCatalogFields(product, request);
         productFieldUpdater.updateSupplierAndPricingFields(product, request);
+
+        // Handle unit definitions if provided
+        if (request.getUnitDefinitions() != null && !request.getUnitDefinitions().isEmpty()) {
+            handleUnitDefinitions(product, request.getUnitDefinitions());
+            changes.append("Unit definitions updated. ");
+        }
 
         product = productRepository.save(product);
 
@@ -467,6 +485,14 @@ public class ProductService extends ShopAwareService {
                    .hasExpiredBatches(summary.getHasExpiredBatches());
         }
 
+        // Include unit definitions
+        if (product.getUnitDefinitions() != null && !product.getUnitDefinitions().isEmpty()) {
+            List<ProductUnitDefinitionResponse> unitDefResponses = product.getUnitDefinitions().stream()
+                .map(this::mapUnitDefinitionToResponse)
+                .collect(Collectors.toList());
+            builder.unitDefinitions(unitDefResponses);
+        }
+
         return builder.build();
     }
 
@@ -561,6 +587,58 @@ public class ProductService extends ShopAwareService {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Handles creating or updating unit definitions for a product.
+     * Replaces all existing unit definitions with the new ones.
+     *
+     * @param product Product entity
+     * @param unitDefinitionRequests List of unit definition requests
+     */
+    private void handleUnitDefinitions(Product product, List<ProductUnitDefinitionRequest> unitDefinitionRequests) {
+        // Clear existing unit definitions
+        product.getUnitDefinitions().clear();
+
+        // Create new unit definitions
+        for (ProductUnitDefinitionRequest request : unitDefinitionRequests) {
+            ProductUnitDefinition unitDef = ProductUnitDefinition.builder()
+                .product(product)
+                .unitType(request.getUnitType())
+                .unitLabel(request.getUnitLabel())
+                .conversionFactor(request.getConversionFactor())
+                .isBaseUnit(request.getIsBaseUnit() != null ? request.getIsBaseUnit() : false)
+                .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
+                .build();
+
+            product.getUnitDefinitions().add(unitDef);
+        }
+
+        log.debug("Updated unit definitions for product: {}, count: {}",
+            product.getId(), unitDefinitionRequests.size());
+    }
+
+    /**
+     * Maps a ProductUnitDefinition entity to a ProductUnitDefinitionResponse DTO.
+     *
+     * @param unitDef Unit definition entity
+     * @return Unit definition response DTO
+     */
+    private ProductUnitDefinitionResponse mapUnitDefinitionToResponse(ProductUnitDefinition unitDef) {
+        return ProductUnitDefinitionResponse.builder()
+            .id(unitDef.getId())
+            .productId(unitDef.getProduct().getId())
+            .productName(unitDef.getProduct().getName())
+            .unitType(unitDef.getUnitType())
+            .unitLabel(unitDef.getUnitLabel())
+            .conversionFactor(unitDef.getConversionFactor())
+            .isBaseUnit(unitDef.getIsBaseUnit())
+            .sortOrder(unitDef.getSortOrder())
+            .createdAt(unitDef.getCreatedAt())
+            .updatedAt(unitDef.getUpdatedAt())
+            .createdBy(unitDef.getCreatedBy())
+            .updatedBy(unitDef.getUpdatedBy())
+            .build();
     }
 
     /**

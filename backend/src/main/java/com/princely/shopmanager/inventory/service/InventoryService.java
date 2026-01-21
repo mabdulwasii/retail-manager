@@ -8,14 +8,18 @@ import com.princely.shopmanager.core.repository.ProductRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.domain.InventoryHistory;
+import com.princely.shopmanager.inventory.domain.InventoryUnitPrice;
 import com.princely.shopmanager.inventory.dto.InventoryAdjustmentRequest;
 import com.princely.shopmanager.inventory.dto.InventoryCreateRequest;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.dto.InventorySummaryDto;
+import com.princely.shopmanager.inventory.dto.InventoryUnitPriceRequest;
+import com.princely.shopmanager.inventory.dto.InventoryUnitPriceResponse;
 import com.princely.shopmanager.inventory.dto.InventoryUpdateRequest;
 import com.princely.shopmanager.inventory.dto.StockReservationRequest;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
 import com.princely.shopmanager.inventory.repository.InventoryRepository;
+import com.princely.shopmanager.inventory.repository.InventoryUnitPriceRepository;
 import com.princely.shopmanager.inventory.specification.InventorySpecifications;
 import com.princely.shopmanager.shared.domain.JwtPrincipal;
 import com.princely.shopmanager.shared.events.InventoryLowStockEvent;
@@ -52,6 +56,7 @@ public class InventoryService extends ShopAwareService {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository historyRepository;
+    private final InventoryUnitPriceRepository inventoryUnitPriceRepository;
     private final ProductRepository productRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
@@ -61,12 +66,14 @@ public class InventoryService extends ShopAwareService {
             ShopRepository shopRepository,
             InventoryRepository inventoryRepository,
             InventoryHistoryRepository historyRepository,
+            InventoryUnitPriceRepository inventoryUnitPriceRepository,
             ProductRepository productRepository,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher) {
         super(shopAccessValidator, shopRepository);
         this.inventoryRepository = inventoryRepository;
         this.historyRepository = historyRepository;
+        this.inventoryUnitPriceRepository = inventoryUnitPriceRepository;
         this.productRepository = productRepository;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
@@ -109,6 +116,10 @@ public class InventoryService extends ShopAwareService {
             .reorderPoint(request.getReorderPoint())
             .costPrice(request.getCostPrice())
             .sellingPrice(request.getSellingPrice())
+            .baseUnit(request.getBaseUnit() != null ? request.getBaseUnit() : "piece")
+            .purchaseUnit(request.getPurchaseUnit())
+            .purchaseQuantity(request.getPurchaseQuantity())
+            .purchaseUnitCost(request.getPurchaseUnitCost())
             .location(request.getLocation())
             .batchNumber(batchNumber)
             .expiryDate(request.getExpiryDate())
@@ -116,6 +127,11 @@ public class InventoryService extends ShopAwareService {
             .build();
 
         inventory = inventoryRepository.save(inventory);
+
+        // Handle unit prices if provided
+        if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+            handleUnitPrices(inventory, request.getUnitPrices());
+        }
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.STOCK_IN,
             request.getCurrentStock(), 0, request.getCurrentStock(),
@@ -344,6 +360,36 @@ public class InventoryService extends ShopAwareService {
             BigDecimal oldValue = inventory.getSellingPrice();
             inventory.setSellingPrice(request.getSellingPrice());
             changes.append(String.format("Selling price: %s → %s; ", oldValue, request.getSellingPrice()));
+        }
+
+        if (request.getBaseUnit() != null) {
+            String oldValue = inventory.getBaseUnit();
+            inventory.setBaseUnit(request.getBaseUnit());
+            changes.append(String.format("Base unit: %s → %s; ", oldValue, request.getBaseUnit()));
+        }
+
+        if (request.getPurchaseUnit() != null) {
+            String oldValue = inventory.getPurchaseUnit();
+            inventory.setPurchaseUnit(request.getPurchaseUnit());
+            changes.append(String.format("Purchase unit: %s → %s; ", oldValue, request.getPurchaseUnit()));
+        }
+
+        if (request.getPurchaseQuantity() != null) {
+            BigDecimal oldValue = inventory.getPurchaseQuantity();
+            inventory.setPurchaseQuantity(request.getPurchaseQuantity());
+            changes.append(String.format("Purchase quantity: %s → %s; ", oldValue, request.getPurchaseQuantity()));
+        }
+
+        if (request.getPurchaseUnitCost() != null) {
+            BigDecimal oldValue = inventory.getPurchaseUnitCost();
+            inventory.setPurchaseUnitCost(request.getPurchaseUnitCost());
+            changes.append(String.format("Purchase unit cost: %s → %s; ", oldValue, request.getPurchaseUnitCost()));
+        }
+
+        // Handle unit prices if provided
+        if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+            handleUnitPrices(inventory, request.getUnitPrices());
+            changes.append("Unit prices updated. ");
         }
 
         inventory = inventoryRepository.save(inventory);
@@ -591,6 +637,26 @@ public class InventoryService extends ShopAwareService {
             .sorted((a, b) -> b.getItemCount().compareTo(a.getItemCount()))
             .toList();
 
+        // Calculate financial projections
+        BigDecimal totalInventoryCost = allInventory.stream()
+            .filter(inv -> inv.getCostPrice() != null)
+            .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal projectedTotalSales = allInventory.stream()
+            .filter(inv -> inv.getSellingPrice() != null)
+            .map(inv -> inv.getSellingPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal projectedProfit = projectedTotalSales.subtract(totalInventoryCost);
+
+        BigDecimal projectedProfitMargin = BigDecimal.ZERO;
+        if (totalInventoryCost.compareTo(BigDecimal.ZERO) > 0) {
+            projectedProfitMargin = projectedProfit
+                .divide(totalInventoryCost, 4, java.math.RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        }
+
         return InventorySummaryDto.builder()
             .totalItems(allInventory.size())
             .totalValue(totalValue)
@@ -598,10 +664,33 @@ public class InventoryService extends ShopAwareService {
             .expiredItems(expiredCount)
             .expiringSoonItems(expiringSoonCount)
             .categoryBreakdown(categoryBreakdown)
+            .totalInventoryCost(totalInventoryCost)
+            .projectedTotalSales(projectedTotalSales)
+            .projectedProfit(projectedProfit)
+            .projectedProfitMargin(projectedProfitMargin)
             .build();
     }
 
     private InventoryResponse mapToResponse(Inventory inventory) {
+        // Calculate financial projections
+        BigDecimal itemTotalCost = null;
+        BigDecimal itemProjectedSales = null;
+        BigDecimal itemProjectedProfit = null;
+
+        if (inventory.getCostPrice() != null && inventory.getSellingPrice() != null) {
+            itemTotalCost = inventory.getCostPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+            itemProjectedSales = inventory.getSellingPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+            itemProjectedProfit = itemProjectedSales.subtract(itemTotalCost);
+        }
+
+        // Map unit prices if available
+        List<InventoryUnitPriceResponse> unitPriceResponses = new java.util.ArrayList<>();
+        if (inventory.getUnitPrices() != null && !inventory.getUnitPrices().isEmpty()) {
+            unitPriceResponses = inventory.getUnitPrices().stream()
+                .map(this::mapUnitPriceToResponse)
+                .collect(Collectors.toList());
+        }
+
         return InventoryResponse.builder()
             .id(inventory.getId())
             .shopId(inventory.getShop().getId())
@@ -617,6 +706,11 @@ public class InventoryService extends ShopAwareService {
             .reorderPoint(inventory.getReorderPoint())
             .costPrice(inventory.getCostPrice())
             .sellingPrice(inventory.getSellingPrice())
+            .baseUnit(inventory.getBaseUnit())
+            .purchaseUnit(inventory.getPurchaseUnit())
+            .purchaseQuantity(inventory.getPurchaseQuantity())
+            .purchaseUnitCost(inventory.getPurchaseUnitCost())
+            .unitPrices(unitPriceResponses)
             .location(inventory.getLocation())
             .batchNumber(inventory.getBatchNumber())
             .expiryDate(inventory.getExpiryDate())
@@ -625,6 +719,9 @@ public class InventoryService extends ShopAwareService {
             .isLowStock(inventory.isLowStock())
             .isExpired(inventory.isExpired())
             .isExpiringSoon(inventory.isExpiringSoon(30))
+            .itemTotalCost(itemTotalCost)
+            .itemProjectedSales(itemProjectedSales)
+            .itemProjectedProfit(itemProjectedProfit)
             .build();
     }
 
@@ -644,5 +741,52 @@ public class InventoryService extends ShopAwareService {
         long countToday = inventoryRepository.countByProductIdAndCreatedAtAfter(product.getId(), startOfDay);
 
         return String.format("BATCH-%s-%s-%03d", shopCode, dateStr, countToday + 1);
+    }
+
+    /**
+     * Handles creating or updating unit prices for an inventory batch.
+     * Replaces all existing unit prices with the new ones.
+     *
+     * @param inventory Inventory entity
+     * @param unitPriceRequests List of unit price requests
+     */
+    private void handleUnitPrices(Inventory inventory, List<InventoryUnitPriceRequest> unitPriceRequests) {
+        // Clear existing unit prices
+        inventory.getUnitPrices().clear();
+
+        // Create new unit prices
+        for (InventoryUnitPriceRequest request : unitPriceRequests) {
+            InventoryUnitPrice unitPrice = InventoryUnitPrice.builder()
+                .inventory(inventory)
+                .unitType(request.getUnitType())
+                .sellingPrice(request.getSellingPrice())
+                .build();
+
+            inventory.getUnitPrices().add(unitPrice);
+        }
+
+        log.debug("Updated unit prices for inventory: {}, count: {}",
+            inventory.getId(), unitPriceRequests.size());
+    }
+
+    /**
+     * Maps an InventoryUnitPrice entity to an InventoryUnitPriceResponse DTO.
+     *
+     * @param unitPrice Unit price entity
+     * @return Unit price response DTO
+     */
+    private InventoryUnitPriceResponse mapUnitPriceToResponse(InventoryUnitPrice unitPrice) {
+        return InventoryUnitPriceResponse.builder()
+            .id(unitPrice.getId())
+            .inventoryId(unitPrice.getInventory().getId())
+            .productName(unitPrice.getInventory().getProduct().getName())
+            .batchNumber(unitPrice.getInventory().getBatchNumber())
+            .unitType(unitPrice.getUnitType())
+            .sellingPrice(unitPrice.getSellingPrice())
+            .createdAt(unitPrice.getCreatedAt())
+            .updatedAt(unitPrice.getUpdatedAt())
+            .createdBy(unitPrice.getCreatedBy())
+            .updatedBy(unitPrice.getUpdatedBy())
+            .build();
     }
 }

@@ -364,21 +364,66 @@ export const InventoryDetailPage: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium">Inventory Cost</CardTitle>
+            <DollarSign className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {currentItem?.unitCost 
-                ? formatCurrency(currentItem?.currentStock * currentItem?.unitCost)
-                : '—'}
+            <div className="text-2xl font-bold text-orange-600">
+              {currentItem?.itemTotalCost
+                ? formatCurrency(currentItem.itemTotalCost)
+                : currentItem?.costPrice
+                  ? formatCurrency(currentItem.currentStock * currentItem.costPrice)
+                  : '—'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total value
+              Total cost
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Financial Projections */}
+      {currentItem?.itemProjectedSales && currentItem?.itemProjectedProfit !== undefined && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Projected Sales</CardTitle>
+              <BarChart3 className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(currentItem.itemProjectedSales)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                If all {currentItem.currentStock} units sold
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Projected Profit</CardTitle>
+              {currentItem.itemProjectedProfit >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-green-600" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                currentItem.itemProjectedProfit >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(currentItem.itemProjectedProfit)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {currentItem.itemTotalCost && currentItem.itemTotalCost > 0
+                  ? `${((currentItem.itemProjectedProfit / currentItem.itemTotalCost) * 100).toFixed(1)}% margin`
+                  : 'Profit from sales'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Product & Inventory Details */}
       <div className="grid gap-6 md:grid-cols-2">

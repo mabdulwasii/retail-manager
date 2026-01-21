@@ -6,8 +6,11 @@ import com.princely.shopmanager.shared.domain.ShopAware;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,6 +22,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,8 +43,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"shop", "category"})
-@EqualsAndHashCode(callSuper = true, exclude = {"shop", "category"})
+@ToString(exclude = {"shop", "category", "unitDefinitions"})
+@EqualsAndHashCode(callSuper = true, exclude = {"shop", "category", "unitDefinitions"})
 public class Product extends BaseEntity implements ShopAware {
 
     @Id
@@ -98,6 +102,14 @@ public class Product extends BaseEntity implements ShopAware {
     private String supplierContact;
 
     private String dimensions;
+
+    /**
+     * Unit definitions for multi-unit pricing (catalog level - no prices).
+     * Defines available units for this product (e.g., piece, pack, carton).
+     */
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ProductUnitDefinition> unitDefinitions = new ArrayList<>();
 
     public enum ProductStatus {
         ACTIVE,

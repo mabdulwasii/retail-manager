@@ -53,5 +53,11 @@ public class SalesTransactionCreateRequest {
         private BigDecimal unitPrice;
 
         private BigDecimal discount;
+
+        /**
+         * Unit type for multi-unit pricing (e.g., "piece", "pack", "carton").
+         * Optional - if not provided, uses base unit.
+         */
+        private String unitType;
     }
 }

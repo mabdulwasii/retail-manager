@@ -37,8 +37,9 @@ public class SalesLineItemBuilder {
     }
 
     /**
-     * Builds a single line item from an inventory allocation.
+     * Builds a single line item from an inventory allocation with multi-unit support.
      * Gets selling price from first allocated inventory batch or uses request price.
+     * Includes unit tracking information for multi-unit pricing.
      */
     private LineItem buildLineItem(InventoryAllocationService.InventoryAllocation allocation) {
         // Get selling price from first allocated inventory batch
@@ -53,6 +54,10 @@ public class SalesLineItemBuilder {
             .productCategory(allocation.product.getCategory() != null ?
                 allocation.product.getCategory().getName() : null)
             .quantity(allocation.request.getQuantity())
+            .unitType(allocation.unitType)
+            .unitLabel(allocation.unitLabel)
+            .unitConversionFactor(allocation.conversionFactor)
+            .baseUnitQuantity(allocation.baseUnitQuantity)
             .unitPrice(allocation.request.getUnitPrice() != null ?
                 allocation.request.getUnitPrice() : sellingPrice)
             .discountAmount(allocation.request.getDiscount() != null ?
@@ -60,6 +65,12 @@ public class SalesLineItemBuilder {
             .build();
 
         lineItem.calculateLineTotal();
+
+        log.debug("Built line item: {} {} of {} (base units: {})",
+            lineItem.getQuantity(),
+            lineItem.getUnitType() != null ? lineItem.getUnitType() : "units",
+            lineItem.getProductName(),
+            lineItem.getBaseUnitQuantity());
 
         return lineItem;
     }
