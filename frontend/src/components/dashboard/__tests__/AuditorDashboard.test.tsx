@@ -2,12 +2,12 @@ import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { AuditorDashboard } from '../AuditorDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { getMockAuditor } from '@/testData'
 
 // Mock only infrastructure dependencies
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/usePermissions', () => ({
   usePermissions: jest.fn()
 }))

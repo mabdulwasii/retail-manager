@@ -3,8 +3,8 @@
 -- Product defines the structure, Inventory defines the prices
 
 CREATE TABLE product_unit_definitions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id UUID NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    product_id VARCHAR(36) NOT NULL,
     unit_type VARCHAR(50) NOT NULL,
     unit_label VARCHAR(100) NOT NULL,
     conversion_factor DECIMAL(10, 4) NOT NULL,

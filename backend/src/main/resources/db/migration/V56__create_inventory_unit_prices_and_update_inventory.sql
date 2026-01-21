@@ -15,8 +15,8 @@ COMMENT ON COLUMN inventory.purchase_unit_cost IS 'Cost per purchase_unit (e.g.,
 
 -- Create inventory_unit_prices table for batch-specific unit pricing
 CREATE TABLE inventory_unit_prices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    inventory_id UUID NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    inventory_id VARCHAR(36) NOT NULL,
     unit_type VARCHAR(50) NOT NULL,
     selling_price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
