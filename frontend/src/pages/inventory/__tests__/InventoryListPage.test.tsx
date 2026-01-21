@@ -42,6 +42,8 @@ jest.mock("@/context/UnifiedAuthContext", () => ({
     },
     isAuthenticated: true,
     isLoading: false,
+    hasPermission: jest.fn(() => true),
+    hasAnyPermission: jest.fn(() => true),
   }),
 }));
 
