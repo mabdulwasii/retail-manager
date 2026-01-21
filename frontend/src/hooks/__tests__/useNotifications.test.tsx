@@ -3,7 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import { useNotifications } from "../useNotifications";
 
 // Mock AuthContext - useNotifications uses AuthContext not ManualAuthContext
-jest.mock("@/context/ManualAuthContext", () => ({
+jest.mock("@/context/UnifiedAuthContext", () => ({
   useAuth: () => ({
     user: {
       id: "user1",

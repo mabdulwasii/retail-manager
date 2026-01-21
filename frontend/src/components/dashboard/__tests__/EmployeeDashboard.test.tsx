@@ -3,12 +3,12 @@ import { render, screen } from '@testing-library/react'
 import { createMockAuth } from '@/test/test-utils'
 import { MemoryRouter } from 'react-router-dom'
 import { EmployeeDashboard } from '../EmployeeDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useInventorySummary } from '@/hooks/useDashboard'
 
 // Mock dependencies
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/usePermissions', () => ({
   usePermissions: jest.fn()
 }))

@@ -20,7 +20,7 @@ jest.mock('@/services/analyticsService', () => ({
 }))
 
 // Mock the auth context to allow queries to run
-jest.mock('@/context/ManualAuthContext', () => ({
+jest.mock('@/context/UnifiedAuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     hasAnyPermission: jest.fn(() => true),

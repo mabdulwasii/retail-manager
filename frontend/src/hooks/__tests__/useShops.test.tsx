@@ -32,7 +32,7 @@ jest.mock('sonner', () => ({
   }
 }))
 
-jest.mock('@/context/ManualAuthContext', () => ({
+jest.mock('@/context/UnifiedAuthContext', () => ({
   useAuth: () => ({
     user: {
       id: '1',

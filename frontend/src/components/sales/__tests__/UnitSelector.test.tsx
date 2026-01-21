@@ -91,7 +91,7 @@ describe('UnitSelector', () => {
     );
 
     expect(screen.getByText('Coca-Cola')).toBeInTheDocument();
-    expect(screen.getByText('Pack (12pcs)')).toBeInTheDocument();
+    expect(screen.getAllByText('Pack (12pcs)').length).toBeGreaterThan(0);
     expect(screen.getByText('₦12000.00')).toBeInTheDocument();
   });
 

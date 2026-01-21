@@ -34,7 +34,7 @@ jest.mock("@/hooks/useCurrency", () => ({
   }),
 }));
 
-jest.mock("@/context/ManualAuthContext", () => ({
+jest.mock("@/context/UnifiedAuthContext", () => ({
   useAuth: () => ({
     user: {
       id: "user1",

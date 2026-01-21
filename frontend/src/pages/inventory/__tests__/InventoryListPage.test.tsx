@@ -31,6 +31,20 @@ jest.mock("@/hooks/useCurrency", () => ({
   }),
 }));
 
+jest.mock("@/context/UnifiedAuthContext", () => ({
+  useAuth: () => ({
+    user: {
+      id: "user1",
+      username: "cashier",
+      firstName: "John",
+      lastName: "Doe",
+      shopId: "shop1",
+    },
+    isAuthenticated: true,
+    isLoading: false,
+  }),
+}));
+
 jest.mock("@/context/ShopContext", () => ({
   useShopContext: () => ({
     selectedShopId: "shop1",

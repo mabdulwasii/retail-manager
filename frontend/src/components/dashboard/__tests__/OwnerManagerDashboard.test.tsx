@@ -6,7 +6,7 @@
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import { OwnerManagerDashboard } from '../OwnerManagerDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useCurrency } from '@/hooks/useCurrency'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
@@ -15,7 +15,7 @@ import { server } from '@/mocks/server'
 import { http, HttpResponse } from 'msw'
 
 // Mock only infrastructure dependencies (NOT data hooks)
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/usePermissions', () => ({
   usePermissions: jest.fn()
 }))

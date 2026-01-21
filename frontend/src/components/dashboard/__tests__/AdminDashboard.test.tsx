@@ -2,14 +2,14 @@ import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { AdminDashboard } from '../AdminDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { getMockAdmin } from '@/testData'
 import { server } from '@/mocks/server'
 import { http, HttpResponse } from 'msw'
 
 // Mock only infrastructure dependencies (NOT data hooks)
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/useCurrency')
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
