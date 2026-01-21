@@ -115,6 +115,26 @@ export interface ShopCustomization {
 }
 
 // Product and Inventory Types
+export interface ProductUnitDefinition {
+  id: string
+  productId: string
+  unitType: string
+  unitLabel: string
+  conversionFactor: number
+  isBaseUnit: boolean
+  sortOrder: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ProductUnitDefinitionRequest {
+  unitType: string
+  unitLabel: string
+  conversionFactor: number
+  isBaseUnit?: boolean
+  sortOrder?: number
+}
+
 export interface Product {
   id: string
   name: string
@@ -145,6 +165,7 @@ export interface Product {
   inventoryCount?: number
   hasLowStock?: boolean
   hasExpiredBatches?: boolean
+  unitDefinitions?: ProductUnitDefinition[]
   tenant?: Tenant
   createdAt: string
   updatedAt: string
@@ -173,6 +194,7 @@ export interface ProductCreateRequest {
   imageUrl?: string | undefined
   isTaxable?: boolean | undefined
   isDiscountable?: boolean | undefined
+  unitDefinitions?: ProductUnitDefinitionRequest[] | undefined
   metadata?: Record<string, any> | undefined
 }
 
@@ -190,7 +212,22 @@ export interface ProductUpdateRequest {
   imageUrl?: string | undefined
   isTaxable?: boolean | undefined
   isDiscountable?: boolean | undefined
+  unitDefinitions?: ProductUnitDefinitionRequest[] | undefined
   status?: ProductStatus | undefined
+}
+
+export interface InventoryUnitPrice {
+  id: string
+  inventoryId: string
+  unitType: string
+  sellingPrice: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface InventoryUnitPriceRequest {
+  unitType: string
+  sellingPrice: number
 }
 
 export interface Inventory {
@@ -209,6 +246,11 @@ export interface Inventory {
   reorderPoint: number
   costPrice: number
   sellingPrice: number
+  baseUnit?: string
+  purchaseUnit?: string
+  purchaseQuantity?: number
+  purchaseUnitCost?: number
+  unitPrices?: InventoryUnitPrice[]
   location?: string
   batchNumber?: string
   expiryDate?: string
