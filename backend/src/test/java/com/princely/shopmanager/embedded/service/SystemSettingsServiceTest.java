@@ -81,16 +81,16 @@ class SystemSettingsServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when setting not found")
-    void shouldThrowExceptionWhenSettingNotFound() {
+    @DisplayName("Should return empty optional when setting not found")
+    void shouldReturnEmptyWhenSettingNotFound() {
         // Given
         when(repository.findByKey("nonexistent.key")).thenReturn(Optional.empty());
 
-        // When / Then
-        assertThatThrownBy(() -> service.getSettingByKey("nonexistent.key"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Setting not found");
+        // When
+        Optional<SystemSettings> result = service.getSettingByKey("nonexistent.key");
 
+        // Then
+        assertThat(result).isEmpty();
         verify(repository).findByKey("nonexistent.key");
     }
 
@@ -102,7 +102,7 @@ class SystemSettingsServiceTest {
             createSetting("custom.domain", "shopmanager.local", SettingCategory.DOMAIN, SettingDataType.STRING),
             createSetting("domain.protocol", "https", SettingCategory.DOMAIN, SettingDataType.STRING)
         );
-        when(repository.findByCategory(SettingCategory.DOMAIN)).thenReturn(domainSettings);
+        when(repository.findByCategoryOrderByKeyAsc(SettingCategory.DOMAIN)).thenReturn(domainSettings);
 
         // When
         List<SystemSettings> result = service.getSettingsByCategory(SettingCategory.DOMAIN);
@@ -110,7 +110,7 @@ class SystemSettingsServiceTest {
         // Then
         assertThat(result).hasSize(2);
         assertThat(result).allMatch(s -> s.getCategory() == SettingCategory.DOMAIN);
-        verify(repository).findByCategory(SettingCategory.DOMAIN);
+        verify(repository).findByCategoryOrderByKeyAsc(SettingCategory.DOMAIN);
     }
 
     // ============================================================================

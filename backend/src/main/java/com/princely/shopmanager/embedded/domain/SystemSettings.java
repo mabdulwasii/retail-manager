@@ -124,10 +124,10 @@ public class SystemSettings extends BaseEntity {
     }
 
     /**
-     * Get the effective value (current value or default if null)
+     * Get the effective value (current value or default if null/empty)
      */
     public String getEffectiveValue() {
-        return value != null ? value : defaultValue;
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
     }
 
     /**
