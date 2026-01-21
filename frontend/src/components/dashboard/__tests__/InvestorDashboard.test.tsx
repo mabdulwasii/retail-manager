@@ -8,13 +8,13 @@ import { screen, waitFor } from '@testing-library/react'
 import { InvestorDashboard } from '../InvestorDashboard'
 import { server } from '@/mocks/server'
 import { http, HttpResponse } from 'msw'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { getMockInvestor } from '@/testData'
 
 // Mock only UI/infrastructure dependencies (NOT API hooks)
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/useCurrency')
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>

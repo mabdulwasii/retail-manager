@@ -2,10 +2,10 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { CustomerDashboard } from '../CustomerDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 
 // Mock dependencies
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 

@@ -3,12 +3,12 @@ import { render, screen } from '@testing-library/react'
 import { createMockAuth } from '@/test/test-utils'
 import { MemoryRouter } from 'react-router-dom'
 import { AccountantDashboard } from '../AccountantDashboard'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useRevenueAnalytics, useExpenseSummary } from '@/hooks/useDashboard'
 import { useCurrency } from '@/hooks/useCurrency'
 
 // Mock dependencies
-jest.mock('@/context/ManualAuthContext')
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/hooks/useDashboard')
 jest.mock('@/hooks/useCurrency')
 

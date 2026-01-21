@@ -33,7 +33,7 @@ jest.mock('sonner', () => ({
   }
 }))
 
-jest.mock('@/context/ManualAuthContext', () => ({
+jest.mock('@/context/UnifiedAuthContext', () => ({
   useAuth: () => ({
     user: {
       id: 'user1',
@@ -120,7 +120,7 @@ describe('useCategories', () => {
 
     it('should not fetch if shopId is not available', () => {
       // Override useAuth mock temporarily
-      jest.spyOn(require('@/context/ManualAuthContext'), 'useAuth').mockReturnValueOnce({
+      jest.spyOn(require('@/context/UnifiedAuthContext'), 'useAuth').mockReturnValueOnce({
         user: null,
         isAuthenticated: false
       })

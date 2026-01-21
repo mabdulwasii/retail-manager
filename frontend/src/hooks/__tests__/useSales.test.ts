@@ -1,11 +1,12 @@
 import { renderHook, act } from '@testing-library/react'
 import { useSales, Product, CreateSaleRequest } from '../useSales'
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCurrency } from '../useCurrency'
 import { createMockAuth } from '@/test/test-utils'
 import { api } from '@/services/api'
 
 // Mock dependencies
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('../useCurrency')
 jest.mock('@/services/api', () => ({
   api: {

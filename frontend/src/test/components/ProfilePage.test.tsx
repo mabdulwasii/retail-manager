@@ -69,7 +69,8 @@ const mockData = {
   }
 };
 
-// Mock the API service
+// Mock the API service and auth context
+jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/services/api')
 
 // Mock UI components that might cause issues in tests
@@ -105,7 +106,7 @@ jest.mock('@/components/ui/alert', () => ({
 }))
 
 // Import mocked modules after mocking
-import { useAuth } from '@/context/ManualAuthContext'
+import { useAuth } from '@/context/UnifiedAuthContext'
 import { apiService } from '@/services/api'
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
