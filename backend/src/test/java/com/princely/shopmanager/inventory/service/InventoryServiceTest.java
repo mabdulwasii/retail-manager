@@ -67,6 +67,9 @@ class InventoryServiceTest {
     @Mock
     private ShopAccessValidator shopAccessValidator;
 
+    @Mock
+    private com.princely.shopmanager.inventory.repository.InventoryUnitPriceRepository inventoryUnitPriceRepository;
+
     private InventoryService inventoryService;
 
     private Shop testShop;
@@ -125,6 +128,7 @@ class InventoryServiceTest {
             shopRepository,
             inventoryRepository,
             historyRepository,
+            inventoryUnitPriceRepository,
             productRepository,
             auditService,
             eventPublisher

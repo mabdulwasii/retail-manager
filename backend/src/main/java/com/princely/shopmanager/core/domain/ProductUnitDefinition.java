@@ -76,10 +76,11 @@ public class ProductUnitDefinition extends BaseEntity {
 
     /**
      * Validates that base unit has conversion factor of 1.0
+     * Package-private for testing purposes
      */
     @PrePersist
     @PreUpdate
-    private void validateBaseUnit() {
+    void validateBaseUnit() {
         if (Boolean.TRUE.equals(isBaseUnit)) {
             if (conversionFactor.compareTo(BigDecimal.ONE) != 0) {
                 throw new IllegalStateException("Base unit must have conversion factor of 1.0");

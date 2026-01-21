@@ -78,6 +78,9 @@ class ProductServiceTest {
     @Mock
     private ProductFieldUpdater productFieldUpdater;
 
+    @Mock
+    private com.princely.shopmanager.core.repository.ProductUnitDefinitionRepository productUnitDefinitionRepository;
+
     private ProductService productService;
 
     private Shop testShop;
@@ -125,6 +128,7 @@ class ProductServiceTest {
             shopRepository,
             productRepository,
             categoryRepository,
+            productUnitDefinitionRepository,
             inventoryRepository,
             auditService,
             eventPublisher,

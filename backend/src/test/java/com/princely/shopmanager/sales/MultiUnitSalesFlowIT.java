@@ -139,7 +139,6 @@ class MultiUnitSalesFlowIT {
             .product(product)
             .shop(shop)
             .currentStock(120)
-            .availableStock(120)
             .reservedStock(0)
             .minimumStock(10)
             .reorderPoint(20)
@@ -167,15 +166,15 @@ class MultiUnitSalesFlowIT {
         inventoryUnitPriceRepository.save(packPrice);
 
         // Create JWT principal
-        principal = new JwtPrincipal(
-            "user1",
-            "testuser",
-            "test@example.com",
-            List.of(),
-            tenant.getId(),
-            shop.getId(),
-            List.of("SALES_CREATE")
-        );
+        principal = JwtPrincipal.builder()
+            .subject("keycloak-user-1")
+            .userId("user1")
+            .preferredUsername("testuser")
+            .email("test@example.com")
+            .tenantId(tenant.getId())
+            .shopId(shop.getId())
+            .roles(List.of("SALES_CREATE"))
+            .build();
     }
 
     @Test
@@ -197,10 +196,13 @@ class MultiUnitSalesFlowIT {
             .build();
 
         // When
-        SalesTransaction sale = salesTransactionService.createSalesTransaction(request, principal);
+        var response = salesTransactionService.createTransaction(request, principal);
 
         // Then
-        assertNotNull(sale);
+        assertNotNull(response);
+
+        // Fetch the actual entity for verification
+        SalesTransaction sale = salesTransactionRepository.findById(response.getId()).orElseThrow();
         assertEquals(1, sale.getLineItems().size());
 
         // Verify line item details
@@ -239,10 +241,13 @@ class MultiUnitSalesFlowIT {
             .build();
 
         // When
-        SalesTransaction sale = salesTransactionService.createSalesTransaction(request, principal);
+        var response = salesTransactionService.createTransaction(request, principal);
 
         // Then
-        assertNotNull(sale);
+        assertNotNull(response);
+
+        // Fetch the actual entity for verification
+        SalesTransaction sale = salesTransactionRepository.findById(response.getId()).orElseThrow();
 
         var saleLineItem = sale.getLineItems().get(0);
         assertEquals(10, saleLineItem.getQuantity());
@@ -285,10 +290,13 @@ class MultiUnitSalesFlowIT {
             .build();
 
         // When
-        SalesTransaction sale = salesTransactionService.createSalesTransaction(request, principal);
+        var response = salesTransactionService.createTransaction(request, principal);
 
         // Then
-        assertNotNull(sale);
+        assertNotNull(response);
+
+        // Fetch the actual entity for verification
+        SalesTransaction sale = salesTransactionRepository.findById(response.getId()).orElseThrow();
         assertEquals(2, sale.getLineItems().size());
 
         // Total deduction should be: (2 × 12) + 6 = 30 pieces
@@ -320,7 +328,7 @@ class MultiUnitSalesFlowIT {
         // When/Then
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> salesTransactionService.createSalesTransaction(request, principal)
+            () -> salesTransactionService.createTransaction(request, principal)
         );
 
         assertTrue(exception.getMessage().contains("Insufficient stock"));
@@ -349,9 +357,10 @@ class MultiUnitSalesFlowIT {
             .build();
 
         // When
-        SalesTransaction sale = salesTransactionService.createSalesTransaction(request, principal);
+        var response = salesTransactionService.createTransaction(request, principal);
 
         // Then - Verify all unit tracking fields are stored
+        SalesTransaction sale = salesTransactionRepository.findById(response.getId()).orElseThrow();
         var saleLineItem = sale.getLineItems().get(0);
         assertNotNull(saleLineItem.getUnitType());
         assertNotNull(saleLineItem.getUnitLabel());
