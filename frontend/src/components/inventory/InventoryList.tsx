@@ -175,14 +175,14 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                 <div>
                   <span className="text-gray-600">Available:</span>
                   <div className="font-semibold text-green-600">
-                    {item.availableStock}
+                    {item.availableStock}{item.baseUnit ? ` ${item.baseUnit}s` : ''}
                   </div>
                 </div>
 
                 <div>
                   <span className="text-gray-600">Total Stock:</span>
                   <div className="font-medium">
-                    {item.currentStock}
+                    {item.currentStock}{item.baseUnit ? ` ${item.baseUnit}s` : ''}
                   </div>
                 </div>
 
@@ -190,7 +190,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                   <div>
                     <span className="text-gray-600">Reserved:</span>
                     <div className="font-medium text-orange-600">
-                      {item.reservedStock}
+                      {item.reservedStock}{item.baseUnit ? ` ${item.baseUnit}s` : ''}
                     </div>
                   </div>
                 )}
@@ -198,7 +198,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                 <div>
                   <span className="text-gray-600">Min Stock:</span>
                   <div className="font-medium">
-                    {item.minimumStock}
+                    {item.minimumStock}{item.baseUnit ? ` ${item.baseUnit}s` : ''}
                   </div>
                 </div>
 

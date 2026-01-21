@@ -425,6 +425,78 @@ export const InventoryDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* Multi-Unit Pricing Breakdown */}
+      {currentItem?.unitPrices && currentItem.unitPrices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Multi-Unit Pricing
+            </CardTitle>
+            <CardDescription>
+              Selling prices for different unit types in this batch
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {currentItem.unitPrices.map((unitPrice) => {
+                const unitDef = currentItem.product?.unitDefinitions?.find(
+                  (ud) => ud.unitType === unitPrice.unitType
+                );
+                return (
+                  <div
+                    key={unitPrice.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      unitDef?.isBaseUnit ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Package className="h-5 w-5 text-gray-600" />
+                      <div>
+                        <p className="font-medium">
+                          {unitDef?.unitLabel || unitPrice.unitType}
+                          {unitDef?.isBaseUnit && (
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              Base Unit
+                            </Badge>
+                          )}
+                        </p>
+                        {unitDef && !unitDef.isBaseUnit && (
+                          <p className="text-xs text-muted-foreground">
+                            {unitDef.conversionFactor} base units per {unitPrice.unitType}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-green-600">
+                        {formatCurrency(unitPrice.sellingPrice)}
+                      </p>
+                      {unitDef && !unitDef.isBaseUnit && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrency(unitPrice.sellingPrice / unitDef.conversionFactor)}/base unit
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {currentItem.baseUnit && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Base Unit:</strong> {currentItem.baseUnit}
+                  {currentItem.purchaseUnit && (
+                    <> • <strong>Purchase Unit:</strong> {currentItem.purchaseUnit}</>
+                  )}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Product & Inventory Details */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Product Information */}
