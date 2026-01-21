@@ -12,8 +12,10 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { UnitPricingForm } from '@/components/inventory/UnitPricingForm'
 import { useInventory, CreateInventoryRequest, Product } from '@/hooks/useInventory'
 import { useCurrency } from '@/hooks/useCurrency'
+import { InventoryUnitPriceRequest } from '@/types/api'
 import {
   PackageIcon,
   SearchIcon,
@@ -54,8 +56,14 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
     sellingPrice: '',
     location: '',
     batchNumber: '',
-    expiryDate: ''
+    expiryDate: '',
+    baseUnit: 'piece',
+    purchaseUnit: '',
+    purchaseQuantity: '',
+    purchaseUnitCost: ''
   })
+
+  const [unitPrices, setUnitPrices] = useState<InventoryUnitPriceRequest[]>([])
   
   // Auto-generate batch number on mount
   useEffect(() => {
@@ -84,8 +92,13 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
         sellingPrice: '',
         location: '',
         batchNumber: '',
-        expiryDate: ''
+        expiryDate: '',
+        baseUnit: 'piece',
+        purchaseUnit: '',
+        purchaseQuantity: '',
+        purchaseUnitCost: ''
       })
+      setUnitPrices([])
       setValidationErrors({})
     }
   }, [isOpen])
@@ -257,7 +270,12 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       sellingPrice: parseFloat(formData.sellingPrice),
       location: formData.location || undefined,
       batchNumber: formData.batchNumber || undefined,
-      expiryDate: formData.expiryDate || undefined
+      expiryDate: formData.expiryDate || undefined,
+      baseUnit: formData.baseUnit || 'piece',
+      purchaseUnit: formData.purchaseUnit || undefined,
+      purchaseQuantity: formData.purchaseQuantity ? parseFloat(formData.purchaseQuantity) : undefined,
+      purchaseUnitCost: formData.purchaseUnitCost ? parseFloat(formData.purchaseUnitCost) : undefined,
+      unitPrices: unitPrices.length > 0 ? unitPrices : undefined
     }
 
     const success = await createInventoryItem(shopId, request)
@@ -439,6 +457,67 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
           </div>
 
+          {/* Purchase Details */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Purchase Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="purchaseUnit">Purchase Unit</Label>
+                <Input
+                  id="purchaseUnit"
+                  type="text"
+                  value={formData.purchaseUnit}
+                  onChange={(e) => handleInputChange('purchaseUnit', e.target.value)}
+                  placeholder="e.g., carton, pack"
+                />
+                <p className="text-xs text-muted-foreground">Unit in which you purchased this batch</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="purchaseQuantity">Purchase Quantity</Label>
+                <NumericInput
+                  id="purchaseQuantity"
+                  value={formData.purchaseQuantity}
+                  onValueChange={(values) => {
+                    handleInputChange('purchaseQuantity', values.value || '')
+                  }}
+                  placeholder="0"
+                  decimalScale={2}
+                  allowNegative={false}
+                />
+                <p className="text-xs text-muted-foreground">Number of purchase units bought</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="purchaseUnitCost">Purchase Unit Cost</Label>
+                <NumericInput
+                  id="purchaseUnitCost"
+                  value={formData.purchaseUnitCost}
+                  onValueChange={(values) => {
+                    handleInputChange('purchaseUnitCost', values.value || '')
+                  }}
+                  placeholder="0.00"
+                  decimalScale={2}
+                  fixedDecimalScale={true}
+                  allowNegative={false}
+                />
+                <p className="text-xs text-muted-foreground">Cost per purchase unit</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="baseUnit">Base Unit</Label>
+                <Input
+                  id="baseUnit"
+                  type="text"
+                  value={formData.baseUnit}
+                  onChange={(e) => handleInputChange('baseUnit', e.target.value)}
+                  placeholder="piece"
+                />
+                <p className="text-xs text-muted-foreground">Smallest unit for inventory tracking</p>
+              </div>
+            </div>
+          </div>
+
           {/* Pricing Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -462,7 +541,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sellingPrice">Selling Price *</Label>
+              <Label htmlFor="sellingPrice">Selling Price (Base Unit) *</Label>
               <NumericInput
                 id="sellingPrice"
                 value={formData.sellingPrice}
@@ -475,13 +554,26 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
                 fixedDecimalScale={true}
                 allowNegative={false}
               />
-              <p className="text-xs text-muted-foreground">Price at which this batch will be sold</p>
+              <p className="text-xs text-muted-foreground">Base unit selling price for this batch</p>
               {validationErrors.sellingPrice && (
                 <p className="text-sm text-red-600">{validationErrors.sellingPrice}</p>
               )}
             </div>
 
           </div>
+
+          {/* Multi-Unit Pricing */}
+          {selectedProduct && selectedProduct.unitDefinitions && selectedProduct.unitDefinitions.length > 0 && (
+            <div className="border-t pt-4">
+              <UnitPricingForm
+                productName={selectedProduct.name}
+                unitDefinitions={selectedProduct.unitDefinitions}
+                unitPrices={unitPrices}
+                onChange={setUnitPrices}
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           {/* Additional Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
