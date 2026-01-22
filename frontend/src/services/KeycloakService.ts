@@ -2,6 +2,28 @@ import Keycloak from 'keycloak-js'
 import configService from '@/config/runtime-config'
 
 /**
+ * Keycloak token parsed structure
+ */
+interface KeycloakTokenParsed {
+  sub: string;
+  email?: string;
+  preferred_username?: string;
+  given_name?: string;
+  family_name?: string;
+  name?: string;
+  tenant_id?: string;
+  shop_id?: string;
+  realm_access?: {
+    roles: string[];
+  };
+  resource_access?: {
+    [key: string]: {
+      roles: string[];
+    };
+  };
+}
+
+/**
  * KeycloakService - Centralized service for Keycloak authentication
  * Provides a clean interface for authentication operations
  */
@@ -62,7 +84,7 @@ class KeycloakService {
       return null
     }
 
-    const token = this.keycloak.tokenParsed as any
+    const token = this.keycloak.tokenParsed as KeycloakTokenParsed
 
     return {
       id: token.sub,
@@ -85,7 +107,7 @@ class KeycloakService {
       return []
     }
 
-    const token = this.keycloak.tokenParsed as any
+    const token = this.keycloak.tokenParsed as KeycloakTokenParsed
     const realmRoles = token.realm_access?.roles || []
     const resourceRoles = token.resource_access?.[this.keycloak.clientId!]?.roles || []
 

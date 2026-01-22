@@ -12,6 +12,8 @@ import { InvestorDashboard } from "./InvestorDashboard";
 import { OwnerManagerDashboard } from "./OwnerManagerDashboard";
 
 // Helper function to check if user has permission for a specific view
+// Currently unused but kept for future view-based routing
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const hasPermissionForView = (
   viewType: string,
   hasAnyPermission: (permissions: Permission[]) => boolean
@@ -44,6 +46,8 @@ const hasPermissionForView = (
 export const RoleBasedDashboard: React.FC = () => {
   const { user, isAuthenticated, hasAnyPermission } = useAuth();
   const [searchParams] = useSearchParams();
+  // Currently unused but kept for future view-based routing
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const viewType = searchParams.get("view");
 
   // Debug logging

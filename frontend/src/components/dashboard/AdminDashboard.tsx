@@ -84,7 +84,6 @@ export const AdminDashboard: React.FC = () => {
     revenueLoading ||
     inventoryLoading ||
     fraudLoading;
-  const hasError = shopsError;
 
   const refetch = () => {
     refetchSales();
@@ -159,7 +158,14 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   // Generate activities from real system data
-  const recentActivities = [
+  interface Activity {
+    type: string;
+    description: string;
+    time: string;
+    severity: string;
+  }
+
+  const recentActivities: Activity[] = [
     ...(shops.length > 0
       ? [
           {
@@ -291,7 +297,6 @@ export const AdminDashboard: React.FC = () => {
         ]),
   ].slice(0, 5);
 
-  console.log("AdminDashboard - hasError:", hasError);
   // Handle errors
   // if (hasError) {
   //   return (

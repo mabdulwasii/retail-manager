@@ -3,7 +3,12 @@ import { getMockCategories, getMockCategory } from '@/testData/categories'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 
-
+interface CategoryRequestBody {
+  name: string;
+  description?: string;
+  parentId?: string;
+  [key: string]: unknown;
+}
 
 const server = setupServer(
   // Get categories
@@ -22,14 +27,14 @@ const server = setupServer(
 
   // Create category
   http.post('*/shops/:shopId/categories', async ({ request }) => {
-    const body = await request.json() as any
+    const body = await request.json() as CategoryRequestBody
     console.log('MSW intercepted createCategory:', body)
     return HttpResponse.json(getMockCategory({ id: 'new-cat', name: body.name }))
   }),
 
   // Update category
   http.patch('*/categories/:categoryId', async ({ params, request }) => {
-    const body = await request.json() as any
+    const body = await request.json() as CategoryRequestBody
     console.log('MSW intercepted updateCategory:', params.categoryId, body)
     return HttpResponse.json(getMockCategory({ id: params.categoryId as string, ...body }))
   }),

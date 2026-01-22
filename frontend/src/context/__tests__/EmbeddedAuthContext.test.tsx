@@ -514,13 +514,22 @@ describe('EmbeddedAuthContext', () => {
   describe('Context Error Handling', () => {
     it('should throw error when useEmbeddedAuth is used outside provider', () => {
       const originalError = console.error;
+      // Suppress React error boundary console errors during this test
       console.error = jest.fn();
 
-      expect(() => {
+      // Use a try-catch to handle the error since React Testing Library
+      // wraps hook errors in a way that makes them uncaught
+      try {
         renderHook(() => useEmbeddedAuth());
-      }).toThrow('useEmbeddedAuth must be used within an EmbeddedAuthProvider');
-
-      console.error = originalError;
+        // If we get here, the test should fail
+        expect(true).toBe(false); // Force failure if no error thrown
+      } catch (error) {
+        // Verify the error message is correct
+        expect(error).toHaveProperty('message');
+        expect((error as Error).message).toContain('useEmbeddedAuth must be used within an EmbeddedAuthProvider');
+      } finally {
+        console.error = originalError;
+      }
     });
   });
 });
