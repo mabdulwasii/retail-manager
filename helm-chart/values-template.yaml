@@ -182,11 +182,23 @@ keycloak:
 # ============================================================================
 application:
   # Test users (IMPORTANT: Disable in production!)
-  # When enabled, creates default users for testing:
-  #   - superadmin / changeme (System Admin)
-  #   - admin@shopmanager.com / admin123 (Tenant Admin)
+  # When enabled, creates default users for testing
   testUsers:
     enabled: true  # Set to false for production deployments
+
+    # Configurable passwords for test users (simple pattern for easy testing)
+    # Override these in your values file if needed
+    passwords:
+      superadmin: "SuperAdmin111/"    # superadmin user (System Admin)
+      admin: "Admin111/"               # admin@shopmanager.com (Tenant Admin)
+      owner: "Owner111/"               # owner@shopmanager.com (Shop Owner)
+      manager: "Manager111/"           # manager@shopmanager.com (Manager)
+      employee: "Employee111/"         # employee@shopmanager.com (Employee)
+      investor: "Investor111/"         # investor@shopmanager.com (Investor)
+      customer: "Customer111/"         # customer@shopmanager.com (Customer)
+      cashier: "Cashier111/"           # cashier@shopmanager.com (Cashier)
+      accountant: "Accountant111/"     # accountant@shopmanager.com (Accountant)
+      auditor: "Auditor111/"           # auditor@shopmanager.com (Auditor)
 
   # JWT token settings
   jwt:

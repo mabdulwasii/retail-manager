@@ -229,7 +229,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevAdmin@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.admin | default "Admin111/" }}",
               "temporary": false
             }
           ],
@@ -249,7 +249,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevOwner@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.owner | default "Owner111/" }}",
               "temporary": false
             }
           ],
@@ -269,7 +269,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevManager@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.manager | default "Manager111/" }}",
               "temporary": false
             }
           ],
@@ -289,7 +289,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevEmployee@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.employee | default "Employee111/" }}",
               "temporary": false
             }
           ],
@@ -309,7 +309,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevInvestor@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.investor | default "Investor111/" }}",
               "temporary": false
             }
           ],
@@ -328,7 +328,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevCustomer@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.customer | default "Customer111/" }}",
               "temporary": false
             }
           ],
@@ -347,7 +347,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevCashier@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.cashier | default "Cashier111/" }}",
               "temporary": false
             }
           ],
@@ -367,7 +367,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevAccountant@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.accountant | default "Accountant111/" }}",
               "temporary": false
             }
           ],
@@ -386,7 +386,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "DevAuditor@2024!Test",
+              "value": "{{ .Values.application.testUsers.passwords.auditor | default "Auditor111/" }}",
               "temporary": false
             }
           ],
@@ -410,7 +410,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevAdmin@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.admin | default "Admin111/" }}",
             "temporary": false
           }
         ],
@@ -431,7 +431,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevManager@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.manager | default "Manager111/" }}",
             "temporary": false
           }
         ],
@@ -452,7 +452,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevEmployee@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.employee | default "Employee111/" }}",
             "temporary": false
           }
         ],
@@ -473,7 +473,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevInvestor@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.investor | default "Investor111/" }}",
             "temporary": false
           }
         ],
@@ -493,7 +493,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevCustomer@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.customer | default "Customer111/" }}",
             "temporary": false
           }
         ],
@@ -513,7 +513,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevCashier@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.cashier | default "Cashier111/" }}",
             "temporary": false
           }
         ],
@@ -534,7 +534,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevAccountant@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.accountant | default "Accountant111/" }}",
             "temporary": false
           }
         ],
@@ -554,7 +554,7 @@ data:
         "credentials": [
           {
             "type": "password",
-            "value": "DevAuditor@2024!Test",
+            "value": "{{ .Values.application.testUsers.passwords.auditor | default "Auditor111/" }}",
             "temporary": false
           }
         ],
@@ -657,18 +657,18 @@ data:
         echo "Superadmin user not found, creating..."
 
         SUPERADMIN_PAYLOAD=$(cat <<'EOF'
-{
-  "username": "superadmin",
-  "email": "superadmin@shopmanager.local",
-  "firstName": "Super",
-  "lastName": "Admin",
-  "enabled": true,
-  "emailVerified": true,
-  "credentials": [{"type": "password", "value": "changeme", "temporary": false}],
-  "realmRoles": ["SYSTEM_ADMIN"],
-  "attributes": {"role": ["SYSTEM_ADMIN"]}
-}
-EOF
+    {
+      "username": "superadmin",
+      "email": "superadmin@shopmanager.local",
+      "firstName": "Super",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{"type": "password", "value": "{{ .Values.application.testUsers.passwords.superadmin | default "SuperAdmin111/" }}", "temporary": false}],
+      "realmRoles": ["SYSTEM_ADMIN"],
+      "attributes": {"role": ["SYSTEM_ADMIN"]}
+    }
+    EOF
         )
 
         HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/superadmin_response.txt \
@@ -678,7 +678,7 @@ EOF
             -d "$SUPERADMIN_PAYLOAD")
 
         if [ "$HTTP_CODE" = "201" ]; then
-            echo "✓ Superadmin user created successfully: superadmin / changeme"
+            echo "✓ Superadmin user created successfully: superadmin / {{ .Values.application.testUsers.passwords.superadmin | default "SuperAdmin111/" }}"
         elif [ "$HTTP_CODE" = "409" ]; then
             echo "✓ Superadmin user already exists (conflict)"
         else
