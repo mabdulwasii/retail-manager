@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import configService from '@/config/runtime-config';
 
 describe('ConfigService', () => {

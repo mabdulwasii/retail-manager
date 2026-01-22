@@ -69,6 +69,7 @@ const mockData = {
   }
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Mock the API service and auth context
 jest.mock('@/context/UnifiedAuthContext')
 jest.mock('@/services/api')

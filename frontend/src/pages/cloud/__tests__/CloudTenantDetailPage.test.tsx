@@ -10,6 +10,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CloudTenantDetailPage } from '../CloudTenantDetailPage';
 import {
+  useCloudTenant,
+  useTenantShops,
+  useSuspendTenant,
+  useActivateTenant,
+  useRegenerateApiKey,
+} from '@/hooks/useCloudTenants';
 import type {
   MockCardProps,
   MockButtonProps,
@@ -17,13 +23,6 @@ import type {
   MockSelectItemProps,
   MockShopSelectorProps
 } from '@/test-utils/mock-types'
-
-  useCloudTenant,
-  useTenantShops,
-  useSuspendTenant,
-  useActivateTenant,
-  useRegenerateApiKey,
-} from '@/hooks/useCloudTenants';
 import { getMockCloudTenant, getMockCloudShop } from '@/testData/cloudTenants';
 import { CloudTenantStatus } from '@/services/cloudAggregatorService';
 

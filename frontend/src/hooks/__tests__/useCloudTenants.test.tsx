@@ -176,7 +176,7 @@ describe('useCloudTenants Hooks', () => {
       const request = {
         tenantName: 'Test Tenant',
         tenantEmail: 'test@example.com',
-        subscriptionTier: 'FREE' as any,
+        subscriptionTier: 'FREE' as const,
         shops: [],
       };
 
