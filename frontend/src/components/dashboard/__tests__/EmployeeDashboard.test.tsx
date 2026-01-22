@@ -1,5 +1,13 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import type {
+  MockCardProps,
+  MockButtonProps,
+  MockSelectProps,
+  MockSelectItemProps,
+  MockShopSelectorProps
+} from '@/test-utils/mock-types'
+
 import { createMockAuth } from '@/test/test-utils'
 import { MemoryRouter } from 'react-router-dom'
 import { EmployeeDashboard } from '../EmployeeDashboard'
@@ -20,21 +28,21 @@ const mockUseInventorySummary = useInventorySummary as jest.MockedFunction<typeo
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 
 jest.mock('@/components/ui/shop-selector', () => ({
-  ShopSelector: ({ value, onValueChange }: any) => (
-    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange(e.target.value)}>
+  ShopSelector: ({ value, onValueChange }: MockShopSelectorProps) => (
+    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       <option value="shop1">Shop 1</option>
     </select>
   )

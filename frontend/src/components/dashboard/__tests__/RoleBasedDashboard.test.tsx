@@ -1,5 +1,13 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import type {
+  MockCardProps,
+  MockButtonProps,
+  MockSelectProps,
+  MockSelectItemProps,
+  MockShopSelectorProps
+} from '@/test-utils/mock-types'
+
 import { MemoryRouter } from 'react-router-dom'
 import { RoleBasedDashboard } from '../RoleBasedDashboard'
 import { useAuth } from '@/context/UnifiedAuthContext'

@@ -1,12 +1,17 @@
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
+import { waitFor } from '@testing-library/react'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { AdminDashboard } from '../AdminDashboard'
 import { useAuth } from '@/context/UnifiedAuthContext'
 import { useCurrency } from '@/hooks/useCurrency'
 import { getMockAdmin } from '@/testData'
-import { server } from '@/mocks/server'
-import { http, HttpResponse } from 'msw'
+import type {
+  MockCardProps,
+  MockButtonProps,
+  MockSelectProps,
+  MockSelectItemProps,
+  MockShopSelectorProps
+} from '@/test-utils/mock-types'
 
 // Mock only infrastructure dependencies (NOT data hooks)
 jest.mock('@/context/UnifiedAuthContext')
@@ -17,33 +22,33 @@ const mockUseCurrency = useCurrency as jest.MockedFunction<typeof useCurrency>
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 
 jest.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange }: any) => (
-    <select value={value} onChange={(e) => onValueChange(e.target.value)}>
+  Select: ({ children, value, onValueChange }: MockSelectProps) => (
+    <select value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       {children}
     </select>
   ),
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>
+  SelectContent: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectItem: ({ children, value }: MockSelectItemProps) => <option value={value}>{children}</option>,
+  SelectTrigger: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>
 }))
 
 jest.mock('@/components/ui/shop-selector', () => ({
-  ShopSelector: ({ value, onValueChange }: any) => (
-    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange(e.target.value)}>
+  ShopSelector: ({ value, onValueChange }: MockShopSelectorProps) => (
+    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       <option value="">All Shops</option>
       <option value="shop1">Shop 1</option>
     </select>
