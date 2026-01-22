@@ -35,7 +35,6 @@ jest.mock('@/components/ui/card', () => ({
 }));
 
 jest.mock('@/components/ui/button', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Button: ({ children, asChild, ...props }: any) =>
     asChild ? <>{children}</> : <button {...props}>{children}</button>,
 }));
@@ -76,19 +75,16 @@ describe('CloudTenantDetailPage', () => {
     mockUseSuspendTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseActivateTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseRegenerateApiKey.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });
 
@@ -102,7 +98,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: true,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -144,7 +139,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -167,7 +161,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -189,7 +182,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -211,7 +203,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -238,7 +229,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -262,7 +252,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -287,7 +276,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({
@@ -311,7 +299,6 @@ describe('CloudTenantDetailPage', () => {
       isLoading: false,
       isError: false,
       error: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseTenantShops.mockReturnValue({

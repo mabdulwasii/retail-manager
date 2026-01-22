@@ -3,7 +3,7 @@
  * Tests unified auth provider that switches between Keycloak and embedded mode
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { renderHook, render } from '@testing-library/react';
 import { UnifiedAuthProvider, useAuth } from '../UnifiedAuthContext';
@@ -167,9 +167,7 @@ describe('UnifiedAuthContext', () => {
     });
 
     it('should call both hooks unconditionally (React Rules of Hooks)', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useAuth: useKeycloakAuth } = require('../ManualAuthContext');
 
       mockedConfigService.isEmbeddedMode = false;
@@ -208,7 +206,6 @@ describe('UnifiedAuthContext', () => {
 
   describe('Auth Methods Delegation', () => {
     it('should delegate login to embedded auth in embedded mode', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
       const mockEmbeddedLogin = jest.fn();
       useEmbeddedAuth.mockReturnValue({
@@ -229,7 +226,6 @@ describe('UnifiedAuthContext', () => {
     });
 
     it('should delegate login to Keycloak auth in Keycloak mode', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useAuth: useKeycloakAuth } = require('../ManualAuthContext');
       const mockKeycloakLogin = jest.fn();
       useKeycloakAuth.mockReturnValue({
@@ -250,9 +246,7 @@ describe('UnifiedAuthContext', () => {
     });
 
     it('should delegate logout correctly based on mode', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useAuth: useKeycloakAuth } = require('../ManualAuthContext');
 
       const mockEmbeddedLogout = jest.fn();
@@ -292,7 +286,6 @@ describe('UnifiedAuthContext', () => {
 
   describe('Permission and Role Checks Delegation', () => {
     it('should delegate hasRole to correct auth implementation', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { useEmbeddedAuth } = require('../EmbeddedAuthContext');
       const mockHasRole = jest.fn(() => true);
       useEmbeddedAuth.mockReturnValue({
