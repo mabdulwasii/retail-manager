@@ -52,7 +52,6 @@ export const OwnerManagerDashboard: React.FC = () => {
     expenseSummary,
     fraudStatistics,
     isLoading,
-    hasError: _hasError,
     refetch
   } = useDashboardData(period, selectedShopId)
 

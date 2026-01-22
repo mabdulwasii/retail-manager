@@ -97,8 +97,9 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
   const onSubmit = async (data: CategoryCreateRequest) => {
     try {
-      const{shopId: _shopId, ...restData} = data
       if (isEdit) {
+        // Extract shopId from data (not needed for update)
+        const{shopId: _shopId, ...restData} = data
         await updateMutation.mutateAsync({
           categoryId: category.id,
           data: restData as CategoryUpdateRequest,

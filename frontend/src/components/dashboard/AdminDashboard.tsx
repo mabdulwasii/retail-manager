@@ -53,7 +53,6 @@ export const AdminDashboard: React.FC = () => {
   const {
     data: shopsData,
     isLoading: shopsLoading,
-    error: shopsError,
   } = useAllShops();
   const {
     data: salesSummary,
