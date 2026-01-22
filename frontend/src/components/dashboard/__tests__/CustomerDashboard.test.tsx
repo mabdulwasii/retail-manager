@@ -2,10 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 import { BrowserRouter } from 'react-router-dom'

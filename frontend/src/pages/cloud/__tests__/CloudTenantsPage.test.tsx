@@ -12,11 +12,7 @@ import { CloudTenantsPage } from '../CloudTenantsPage';
 import { useCloudTenants, useSuspendTenant, useActivateTenant } from '@/hooks/useCloudTenants';
 import { getMockPagedTenants } from '@/testData/cloudTenants';
 import type {
-  MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockCardProps
 } from '@/test-utils/mock-types'
 
 
@@ -33,6 +29,7 @@ jest.mock('@/components/ui/card', () => ({
 }));
 
 jest.mock('@/components/ui/button', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
 
@@ -60,11 +57,13 @@ describe('CloudTenantsPage', () => {
     mockUseSuspendTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseActivateTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });
 
@@ -79,6 +78,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -98,6 +98,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -112,6 +113,7 @@ describe('CloudTenantsPage', () => {
       isError: true,
       error: new Error('Failed to fetch'),
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -133,6 +135,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -150,6 +153,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -168,6 +172,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -184,6 +189,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -202,6 +208,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -228,6 +235,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);

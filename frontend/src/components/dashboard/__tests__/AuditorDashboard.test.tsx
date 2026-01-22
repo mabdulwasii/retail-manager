@@ -2,10 +2,7 @@ import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
@@ -54,6 +51,7 @@ describe('AuditorDashboard', () => {
     jest.clearAllMocks()
 
     mockUseAuth.mockReturnValue(createMockAuth(mockUser))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUsePermissions.mockReturnValue(mockPermissions as any)
 
     // MSW will handle data API calls!

@@ -7,10 +7,7 @@ import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 import { InvestorDashboard } from '../InvestorDashboard'

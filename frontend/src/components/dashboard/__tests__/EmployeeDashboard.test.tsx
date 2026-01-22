@@ -2,10 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 import { createMockAuth } from '@/test/test-utils'
@@ -82,6 +79,7 @@ describe('EmployeeDashboard', () => {
 
     mockUseAuth.mockReturnValue(createMockAuth(mockUser))
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUsePermissions.mockReturnValue(mockPermissions as any)
 
     mockUseInventorySummary.mockReturnValue({

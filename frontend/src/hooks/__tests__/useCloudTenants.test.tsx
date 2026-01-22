@@ -236,7 +236,7 @@ describe('useCloudTenants Hooks', () => {
 
   describe('useActivateTenant', () => {
     it('should activate tenant successfully', async () => {
-      const mockTenant = getMockCloudTenant({ status: 'ACTIVE' as any });
+      const mockTenant = getMockCloudTenant({ status: 'ACTIVE' as const });
       mockedService.activateTenant.mockResolvedValueOnce(mockTenant);
 
       const { result } = renderHook(() => useActivateTenant(), {

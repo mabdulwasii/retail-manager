@@ -1,11 +1,5 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import type {
-      MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
-} from '@/test-utils/mock-types'
-
 import { MemoryRouter } from 'react-router-dom'
 import { RoleBasedDashboard } from '../RoleBasedDashboard'
 import { useAuth } from '@/context/UnifiedAuthContext'
@@ -51,6 +45,7 @@ jest.mock('@/context/UnifiedAuthContext', () => ({
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Helper to create mock auth return value
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createMockAuth = (user: any, isAuthenticated: boolean = true) => {
   // Map roles to their permissions
   const rolePermissions: Record<string, string[]> = {
@@ -77,6 +72,7 @@ const createMockAuth = (user: any, isAuthenticated: boolean = true) => {
   })
 
   // Mock hasAnyPermission to check if user has any of the requested permissions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hasAnyPermission = jest.fn((requestedPerms: any[]) => {
     return requestedPerms.some(perm => {
       const permString = typeof perm === 'string' ? perm : perm.toString()
@@ -91,6 +87,7 @@ const createMockAuth = (user: any, isAuthenticated: boolean = true) => {
     isLoading: false,
     isAuthenticated,
     hasAnyPermission,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 }
 

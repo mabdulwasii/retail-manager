@@ -4,13 +4,9 @@
  */
 
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 import { OwnerManagerDashboard } from '../OwnerManagerDashboard'
@@ -19,8 +15,6 @@ import { usePermissions } from '@/hooks/usePermissions'
 import { useCurrency } from '@/hooks/useCurrency'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { getMockShopOwner } from '@/testData'
-import { server } from '@/mocks/server'
-import { http, HttpResponse } from 'msw'
 
 // Mock only infrastructure dependencies (NOT data hooks)
 jest.mock('@/context/UnifiedAuthContext')
@@ -87,6 +81,7 @@ describe('OwnerManagerDashboard', () => {
 
     mockUseAuth.mockReturnValue(createMockAuth(mockUser))
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUsePermissions.mockReturnValue(mockPermissions as any)
 
     mockUseCurrency.mockReturnValue({

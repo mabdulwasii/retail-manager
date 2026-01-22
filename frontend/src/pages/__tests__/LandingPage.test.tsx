@@ -6,10 +6,7 @@ import { UnifiedAuthProvider } from '@/context/UnifiedAuthContext'
 import configService from '@/config/runtime-config'
 import type {
   MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockButtonProps
 } from '@/test-utils/mock-types'
 
 
@@ -231,6 +228,7 @@ describe('LandingPage', () => {
     })
 
     it('should navigate to /login when login button is clicked in embedded mode', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (configService as any).isEmbeddedMode = true
 
       render(<LandingPageWrapper />)
@@ -243,6 +241,7 @@ describe('LandingPage', () => {
     })
 
     it('should call login() for Keycloak when login button is clicked in cloud mode', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (configService as any).isEmbeddedMode = false
 
       // We need to spy on the login function from useAuth

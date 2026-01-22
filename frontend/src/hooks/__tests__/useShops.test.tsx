@@ -11,7 +11,6 @@ import {
 } from '../useShops'
 import { getMockShop, getMockShopsList, getMockActiveShops } from '@/testData/shops'
 import { shopService } from '@/services/shopService'
-import { Permission } from '@/types/permissions'
 import { toast } from 'sonner'
 
 jest.mock('@/services/shopService', () => ({
@@ -42,7 +41,7 @@ jest.mock('@/context/UnifiedAuthContext', () => ({
       shopId: 'shop1'
     },
     isAuthenticated: true,
-    hasAnyPermission: (permissions: Permission[]) => true
+    hasAnyPermission: () => true
   })
 }))
 

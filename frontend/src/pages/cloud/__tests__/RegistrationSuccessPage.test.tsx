@@ -11,11 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RegistrationSuccessPage } from '../RegistrationSuccessPage';
 import { CloudTenantStatus, SubscriptionTier } from '@/services/cloudAggregatorService';
 import type {
-  MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
-  MockSelectItemProps,
-  MockShopSelectorProps
+  MockCardProps
 } from '@/test-utils/mock-types'
 
 
@@ -40,6 +36,7 @@ jest.mock('@/components/ui/card', () => ({
 }));
 
 jest.mock('@/components/ui/button', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Button: ({ children, asChild, ...props }: any) => {
     if (asChild) {
       return <div {...props}>{children}</div>;
@@ -83,6 +80,7 @@ const mockRegistrationData = {
 
 const RegisterPage = () => <div>Register Page</div>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RegistrationSuccessPageWrapper: React.FC<{ state?: any }> = ({ state }) => (
   <QueryClientProvider client={queryClient}>
     <MemoryRouter
@@ -167,6 +165,7 @@ describe('RegistrationSuccessPage', () => {
   });
 
   it('should copy API key to clipboard', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { toast } = require('sonner');
 
     render(<RegistrationSuccessPageWrapper />);
@@ -211,7 +210,9 @@ describe('RegistrationSuccessPage', () => {
   });
 
   it('should open email client with API key', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (window as any).location;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).location = { href: '' };
 
     render(<RegistrationSuccessPageWrapper />);
