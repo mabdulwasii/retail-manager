@@ -11,8 +11,6 @@ import {
   Package,
   Clock,
   TrendingUp,
-  Users,
-  Scan,
   Loader2,
   RefreshCw,
   Star
@@ -176,7 +174,7 @@ export const CashierDashboard: React.FC = () => {
             onValueChange={setSelectedShopId}
             className="w-[200px]"
           />
-          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+          <Select value={period} onValueChange={(value: string) => setPeriod(value as TimePeriod)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />
             </SelectTrigger>

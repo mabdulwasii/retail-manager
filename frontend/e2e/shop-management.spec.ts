@@ -257,8 +257,6 @@ test.describe('Shop Management Page', () => {
     // Navigate and immediately check for loading state
     await page.goto('/cloud/shops');
 
-    // Should show loading text or spinner
-    const loadingIndicator = page.getByText(/Loading shops/i);
     // Loading state might be very fast, so we just check the page loads eventually
     await page.waitForLoadState('networkidle');
 

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
-import { useInventorySummary, TimePeriod } from '@/hooks/useDashboard'
+import { useInventorySummary } from '@/hooks/useDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import {
   Package,
   AlertCircle,
@@ -23,7 +21,6 @@ import { ShopSelector } from '@/components/ui/shop-selector'
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth()
   const permissions = usePermissions()
-  const [period, setPeriod] = useState<TimePeriod>('today')
   const [selectedShopId, setSelectedShopId] = useState<string | undefined>(undefined)
 
   // Set selectedShopId once user is loaded

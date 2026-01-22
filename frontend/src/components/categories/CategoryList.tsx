@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Edit, Trash2, MoreVertical, Tag, AlertCircle } from 'lucide-react'
+import { Edit, Trash2, MoreVertical, Tag } from 'lucide-react'
 import { Category } from '@/services/categoryService'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

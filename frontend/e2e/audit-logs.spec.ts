@@ -293,9 +293,7 @@ test.describe('Audit Logs Page', () => {
     // Navigate and immediately check for loading state
     await page.goto('/cloud/audit-logs');
 
-    // Should show loading text or spinner
-    const loadingIndicator = page.getByText(/Loading audit logs/i);
-    // Loading state might be very fast
+    // Loading state might be very fast, just wait for network idle
     await page.waitForLoadState('networkidle');
 
     // Eventually should show the table or empty state

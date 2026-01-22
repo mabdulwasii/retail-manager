@@ -10,7 +10,6 @@ import {
   ShoppingCart,
   TrendingUp,
   DollarSign,
-  Users,
   AlertCircle,
   Plus,
   BarChart3,
@@ -53,7 +52,7 @@ export const OwnerManagerDashboard: React.FC = () => {
     expenseSummary,
     fraudStatistics,
     isLoading,
-    hasError,
+    hasError: _hasError,
     refetch
   } = useDashboardData(period, selectedShopId)
 
@@ -202,7 +201,7 @@ export const OwnerManagerDashboard: React.FC = () => {
             onValueChange={setSelectedShopId}
             className="w-[200px]"
           />
-          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+          <Select value={period} onValueChange={(value: string) => setPeriod(value as TimePeriod)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />
             </SelectTrigger>
