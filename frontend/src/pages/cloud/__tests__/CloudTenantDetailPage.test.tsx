@@ -10,6 +10,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CloudTenantDetailPage } from '../CloudTenantDetailPage';
 import {
+import type {
+  MockCardProps,
+  MockButtonProps,
+  MockSelectProps,
+  MockSelectItemProps,
+  MockShopSelectorProps
+} from '@/test-utils/mock-types'
+
   useCloudTenant,
   useTenantShops,
   useSuspendTenant,
@@ -24,11 +32,11 @@ jest.mock('@/hooks/useCloudTenants');
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={className} data-testid="card">{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <div>{children}</div>,
-  CardDescription: ({ children }: any) => <div>{children}</div>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={className} data-testid="card">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div>{children}</div>,
 }));
 
 jest.mock('@/components/ui/button', () => ({
