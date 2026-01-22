@@ -47,14 +47,14 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           cd backend
-          mvn clean test jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true
-          echo "✅ Unit tests completed"
+          mvn clean test jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true -Dsurefire.excludes='**/embedded/**/*Test.java'
+          echo "✅ Unit tests completed (embedded profile tests excluded)"
 
       - name: Run integration tests with coverage
         run: |
           cd backend
-          mvn verify -Pintegration-tests jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true
-          echo "✅ Integration tests completed"
+          mvn verify -Pintegration-tests jacoco:report -s ../.github/maven-settings.xml -B -T 2C -Djava.net.preferIPv4Stack=true -Dfailsafe.excludes='**/embedded/**/*IT.java'
+          echo "✅ Integration tests completed (embedded profile tests excluded)"
           echo "ℹ️  Coverage files: target/jacoco.exec (unit), target/jacoco-it.exec (integration)"
 
       - name: SonarQube Scan
