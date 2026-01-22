@@ -12,7 +12,7 @@ import {
 import { useCurrency } from '@/hooks/useCurrency'
 
 interface DataPoint {
-  [key: string]: any
+  [key: string]: string | number | boolean | null | undefined
 }
 
 interface LineChartProps {
@@ -42,14 +42,15 @@ export const LineChart: React.FC<LineChartProps> = ({
 }) => {
   const { formatCurrency } = useCurrency()
 
-  const formatTooltipValue = (value: any, name: string) => {
-    if (currency && typeof value === 'number') {
-      return [formatCurrency(value), name]
+  const formatTooltipValue = (value: string | number | (string | number)[], name: string): [string | number, string] => {
+    const numValue = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : parseFloat(String(value))
+    if (currency && typeof numValue === 'number' && !isNaN(numValue)) {
+      return [formatCurrency(numValue), name]
     }
-    return [value, name]
+    return [value as string | number, name]
   }
 
-  const formatYAxisTick = (value: any) => {
+  const formatYAxisTick = (value: string | number): string | number => {
     if (currency && typeof value === 'number') {
       return formatCurrency(value)
     }
