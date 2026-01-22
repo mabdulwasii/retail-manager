@@ -53,9 +53,13 @@ jest.mock('../components/auth/DashboardRedirect', () => ({
   DashboardRedirect: () => <div data-testid="dashboard-redirect">Dashboard Redirect</div>,
 }));
 
+interface MockProviderProps {
+  children: React.ReactNode;
+}
+
 // Mock the auth contexts
 jest.mock('../context/UnifiedAuthContext', () => ({
-  UnifiedAuthProvider: ({ children }: any) => <div data-testid="unified-auth-provider">{children}</div>,
+  UnifiedAuthProvider: ({ children }: MockProviderProps) => <div data-testid="unified-auth-provider">{children}</div>,
   useAuth: () => ({
     isAuthenticated: false,
     isInitialized: true,
@@ -66,7 +70,7 @@ jest.mock('../context/UnifiedAuthContext', () => ({
 }));
 
 jest.mock('../context/ShopContext', () => ({
-  ShopProvider: ({ children }: any) => <div data-testid="shop-provider">{children}</div>,
+  ShopProvider: ({ children }: MockProviderProps) => <div data-testid="shop-provider">{children}</div>,
 }));
 
 describe('App', () => {
@@ -118,7 +122,7 @@ describe('App', () => {
 
   describe('Embedded Mode Routing', () => {
     it('should render embedded login page at /login when in embedded mode', () => {
-      (configService as any).isEmbeddedMode = true;
+      (configService as unknown as { isEmbeddedMode: boolean }).isEmbeddedMode = true;
 
       render(
         <MemoryRouter initialEntries={['/login']}>
@@ -130,7 +134,7 @@ describe('App', () => {
     });
 
     it('should NOT render embedded login page when not in embedded mode', () => {
-      (configService as any).isEmbeddedMode = false;
+      (configService as unknown as { isEmbeddedMode: boolean }).isEmbeddedMode = false;
 
       render(
         <MemoryRouter initialEntries={['/login']}>
@@ -145,7 +149,7 @@ describe('App', () => {
 
     it('should check configService.isEmbeddedMode during render', () => {
       // Spy on the getter
-      const getSpy = jest.spyOn(configService as any, 'isEmbeddedMode', 'get');
+      const getSpy = jest.spyOn(configService as unknown as Record<string, unknown>, 'isEmbeddedMode', 'get');
 
       render(
         <MemoryRouter initialEntries={['/']}>
