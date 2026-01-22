@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { UnitDefinitionManager } from '../UnitDefinitionManager';
 import { ProductUnitDefinitionRequest } from '@/types/api';
 import '@testing-library/jest-dom';

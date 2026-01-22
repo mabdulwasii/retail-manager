@@ -43,7 +43,7 @@ jest.mock('@/components/ui/loading-spinner', () => ({
 }))
 
 jest.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange }: MockSelectProps) => <div data-testid="select">{children}</div>,
+  Select: ({ children,  }: MockSelectProps) => <div data-testid="select">{children}</div>,
   SelectContent: ({ children }: MockCardProps) => <div>{children}</div>,
   SelectItem: ({ children, value }: MockSelectItemProps) => <option value={value}>{children}</option>,
   SelectTrigger: ({ children }: MockCardProps) => <div>{children}</div>,

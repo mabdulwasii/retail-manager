@@ -1,9 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import type {
-  MockCardProps,
-  MockButtonProps,
-  MockSelectProps,
+      MockSelectProps,
   MockSelectItemProps,
   MockShopSelectorProps
 } from '@/test-utils/mock-types'

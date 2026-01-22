@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { renderHook, render, waitFor } from '@testing-library/react';
+import { renderHook, render } from '@testing-library/react';
 import { UnifiedAuthProvider, useAuth } from '../UnifiedAuthContext';
 import configService from '@/config/runtime-config';
 import React from 'react';
