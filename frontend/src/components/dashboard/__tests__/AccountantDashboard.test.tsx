@@ -17,35 +17,63 @@ const mockUseRevenueAnalytics = useRevenueAnalytics as jest.MockedFunction<typeo
 const mockUseExpenseSummary = useExpenseSummary as jest.MockedFunction<typeof useExpenseSummary>
 const mockUseCurrency = useCurrency as jest.MockedFunction<typeof useCurrency>
 
+// Mock UI component prop types
+interface MockCardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface MockButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  className?: string;
+  asChild?: boolean;
+}
+
+interface MockSelectProps {
+  children: React.ReactNode;
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+interface MockSelectItemProps {
+  children: React.ReactNode;
+  value: string;
+}
+
+interface MockShopSelectorProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 
 jest.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange }: any) => (
-    <select value={value} onChange={(e) => onValueChange(e.target.value)}>
+  Select: ({ children, value, onValueChange }: MockSelectProps) => (
+    <select value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       {children}
     </select>
   ),
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>
+  SelectContent: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectItem: ({ children, value }: MockSelectItemProps) => <option value={value}>{children}</option>,
+  SelectTrigger: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>
 }))
 
 jest.mock('@/components/ui/shop-selector', () => ({
-  ShopSelector: ({ value, onValueChange }: any) => (
-    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange(e.target.value)}>
+  ShopSelector: ({ value, onValueChange }: MockShopSelectorProps) => (
+    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       <option value="shop1">Shop 1</option>
     </select>
   )

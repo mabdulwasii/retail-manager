@@ -3,11 +3,16 @@
  * Tests unified auth provider that switches between Keycloak and embedded mode
  */
 
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { renderHook, render, waitFor } from '@testing-library/react';
+import { renderHook, render } from '@testing-library/react';
 import { UnifiedAuthProvider, useAuth } from '../UnifiedAuthContext';
 import configService from '@/config/runtime-config';
 import React from 'react';
+import type {
+  MockCardProps
+} from '@/test-utils/mock-types'
+
 
 // Mock the config service
 jest.mock('@/config/runtime-config', () => ({
@@ -19,7 +24,7 @@ jest.mock('@/config/runtime-config', () => ({
 
 // Mock both auth contexts
 jest.mock('../EmbeddedAuthContext', () => ({
-  EmbeddedAuthProvider: ({ children }: any) => (
+  EmbeddedAuthProvider: ({ children }: MockCardProps) => (
     <div data-testid="embedded-provider">{children}</div>
   ),
   useEmbeddedAuth: jest.fn(() => ({
@@ -41,7 +46,7 @@ jest.mock('../EmbeddedAuthContext', () => ({
 }));
 
 jest.mock('../ManualAuthContext', () => ({
-  ManualAuthProvider: ({ children }: any) => (
+  ManualAuthProvider: ({ children }: MockCardProps) => (
     <div data-testid="keycloak-provider">{children}</div>
   ),
   useAuth: jest.fn(() => ({

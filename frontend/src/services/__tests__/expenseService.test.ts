@@ -7,7 +7,7 @@ import { setupServer } from 'msw/node'
 // Setup MSW server with handlers
 const server = setupServer(
   // Get expense summary
-  http.get('*/shops/:shopId/expenses/summary', ({ params }) => {
+  http.get('*/shops/:shopId/expenses/summary', () => {
     return HttpResponse.json({
       totalExpenses: 25,
       pendingApproval: 5,

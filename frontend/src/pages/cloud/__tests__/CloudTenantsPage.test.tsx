@@ -11,20 +11,25 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CloudTenantsPage } from '../CloudTenantsPage';
 import { useCloudTenants, useSuspendTenant, useActivateTenant } from '@/hooks/useCloudTenants';
 import { getMockPagedTenants } from '@/testData/cloudTenants';
+import type {
+  MockCardProps
+} from '@/test-utils/mock-types'
+
 
 // Mock hooks
 jest.mock('@/hooks/useCloudTenants');
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <div>{children}</div>,
-  CardDescription: ({ children }: any) => <div>{children}</div>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children }: MockCardProps) => <div data-testid="card">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div>{children}</div>,
 }));
 
 jest.mock('@/components/ui/button', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
 
@@ -52,11 +57,13 @@ describe('CloudTenantsPage', () => {
     mockUseSuspendTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     mockUseActivateTenant.mockReturnValue({
       mutate: jest.fn(),
       isPending: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });
 
@@ -71,6 +78,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -90,6 +98,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -104,6 +113,7 @@ describe('CloudTenantsPage', () => {
       isError: true,
       error: new Error('Failed to fetch'),
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -125,6 +135,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -142,6 +153,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -160,6 +172,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -176,6 +189,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -194,6 +208,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);
@@ -220,6 +235,7 @@ describe('CloudTenantsPage', () => {
       isError: false,
       error: null,
       refetch: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     render(<CloudTenantsPageWrapper />);

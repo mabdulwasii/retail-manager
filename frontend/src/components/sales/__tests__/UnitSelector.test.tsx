@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UnitSelector } from '../UnitSelector';
 import { ProductUnitDefinition, InventoryUnitPrice } from '@/types/api';
 import '@testing-library/jest-dom';

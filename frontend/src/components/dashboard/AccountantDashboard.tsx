@@ -12,7 +12,6 @@ import {
   BarChart3,
   Calculator,
   FileText,
-  PieChart,
   AlertCircle,
   CheckCircle
 } from 'lucide-react'
@@ -50,6 +49,8 @@ export const AccountantDashboard: React.FC = () => {
 
   // Calculate financial metrics from real API data
   const currentRevenue = revenueAnalytics?.currentRevenue || 0
+  // Reserved for future trend calculations
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const previousRevenue = revenueAnalytics?.previousRevenue || 0
   const totalExpenses = expenseSummary?.totalAmount || 0
   const netProfit = currentRevenue - totalExpenses

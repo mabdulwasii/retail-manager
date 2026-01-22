@@ -48,7 +48,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
     const currentRevenue = revenueAnalytics.currentRevenue
     const previousRevenue = revenueAnalytics.previousRevenue
 
-    return months.map((month, index) => ({
+    return months.map((month) => ({
       month,
       current: currentRevenue * (0.8 + Math.random() * 0.4),
       previous: previousRevenue * (0.8 + Math.random() * 0.4),

@@ -4,6 +4,11 @@ import { MemoryRouter } from 'react-router-dom'
 import { LandingPage } from '../LandingPage'
 import { UnifiedAuthProvider } from '@/context/UnifiedAuthContext'
 import configService from '@/config/runtime-config'
+import type {
+  MockCardProps,
+  MockButtonProps
+} from '@/test-utils/mock-types'
+
 
 // Mock react-router-dom
 const mockNavigate = jest.fn()
@@ -24,16 +29,16 @@ jest.mock('@/config/runtime-config', () => ({
 
 // Mock the components that might not be available in test environment
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 const LandingPageWrapper: React.FC = () => (
@@ -223,6 +228,7 @@ describe('LandingPage', () => {
     })
 
     it('should navigate to /login when login button is clicked in embedded mode', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (configService as any).isEmbeddedMode = true
 
       render(<LandingPageWrapper />)
@@ -235,6 +241,7 @@ describe('LandingPage', () => {
     })
 
     it('should call login() for Keycloak when login button is clicked in cloud mode', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (configService as any).isEmbeddedMode = false
 
       // We need to spy on the login function from useAuth

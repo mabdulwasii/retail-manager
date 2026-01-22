@@ -1,5 +1,10 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import type {
+  MockCardProps,
+  MockButtonProps
+} from '@/test-utils/mock-types'
+
 import { BrowserRouter } from 'react-router-dom'
 import { CustomerDashboard } from '../CustomerDashboard'
 import { useAuth } from '@/context/UnifiedAuthContext'
@@ -11,15 +16,15 @@ const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 

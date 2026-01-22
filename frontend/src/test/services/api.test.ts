@@ -23,6 +23,7 @@ const mockUserProfile = {
   ]
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const mockUserProfileInvestor = {
   id: '456',
   username: 'investor',

@@ -21,6 +21,18 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+export interface JwtTokenPayload {
+  sub: string;
+  id: string;
+  username: string;
+  email?: string;
+  permissions?: string[];
+  shopId?: string;
+  exp?: number;
+  iat?: number;
+  [key: string]: unknown;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -138,7 +150,7 @@ class EmbeddedAuthService {
   /**
    * Parse JWT token to extract claims
    */
-  parseToken(token: string): any {
+  parseToken(token: string): JwtTokenPayload {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replaceAll('-', '+').replaceAll('_', '/');

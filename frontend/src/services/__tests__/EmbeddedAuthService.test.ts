@@ -9,8 +9,6 @@ import MockAdapter from 'axios-mock-adapter';
 import api from '@/lib/axios';
 import embeddedAuthService from '../EmbeddedAuthService';
 
-const API_BASE_URL = 'http://localhost:8081/api';
-
 describe('EmbeddedAuthService', () => {
   let mock: MockAdapter;
 

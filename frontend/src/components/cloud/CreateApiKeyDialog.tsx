@@ -71,8 +71,11 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({
 
       const response = await onSubmit(request);
       setCreatedKey(response);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create API key');
+    } catch (err) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      setError(errorMessage || 'Failed to create API key');
     } finally {
       setIsSubmitting(false);
     }

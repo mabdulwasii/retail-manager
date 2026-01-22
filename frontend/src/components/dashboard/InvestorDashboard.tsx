@@ -148,7 +148,7 @@ export const InvestorDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+          <Select value={period} onValueChange={(value: string) => setPeriod(value as TimePeriod)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Period" />
             </SelectTrigger>

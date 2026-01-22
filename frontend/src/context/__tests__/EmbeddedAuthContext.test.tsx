@@ -11,7 +11,6 @@ import MockAdapter from 'axios-mock-adapter';
 import api from '@/lib/axios';
 import React from 'react';
 
-const API_BASE_URL = 'http://localhost:8081/api';
 
 // Valid token with far future expiration
 const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM';
@@ -514,13 +513,22 @@ describe('EmbeddedAuthContext', () => {
   describe('Context Error Handling', () => {
     it('should throw error when useEmbeddedAuth is used outside provider', () => {
       const originalError = console.error;
+      // Suppress React error boundary console errors during this test
       console.error = jest.fn();
 
-      expect(() => {
+      // Use a try-catch to handle the error since React Testing Library
+      // wraps hook errors in a way that makes them uncaught
+      try {
         renderHook(() => useEmbeddedAuth());
-      }).toThrow('useEmbeddedAuth must be used within an EmbeddedAuthProvider');
-
-      console.error = originalError;
+        // If we get here, the test should fail
+        expect(true).toBe(false); // Force failure if no error thrown
+      } catch (error) {
+        // Verify the error message is correct
+        expect(error).toHaveProperty('message');
+        expect((error as Error).message).toContain('useEmbeddedAuth must be used within an EmbeddedAuthProvider');
+      } finally {
+        console.error = originalError;
+      }
     });
   });
 });

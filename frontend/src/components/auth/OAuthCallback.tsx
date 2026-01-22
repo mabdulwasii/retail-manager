@@ -80,7 +80,7 @@ export const OAuthCallback: React.FC = () => {
         const clientId = configService.keycloakClientId
         const redirectUri = window.location.origin + '/auth/callback'
 
-        const tokenParams: any = {
+        const tokenParams: Record<string, string> = {
           grant_type: 'authorization_code',
           client_id: clientId,
           code: code,

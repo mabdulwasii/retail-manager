@@ -42,7 +42,17 @@ describe('CloudTenantRegisterPage', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+      isSuccess: false,
+      data: undefined,
+      reset: jest.fn(),
+      mutateAsync: jest.fn(),
+      variables: undefined,
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      status: 'idle',
+      submittedAt: 0,
+    });
   });
 
   afterEach(() => {

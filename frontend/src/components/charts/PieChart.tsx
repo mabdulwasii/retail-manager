@@ -10,7 +10,7 @@ import {
 import { useCurrency } from '@/hooks/useCurrency'
 
 interface DataPoint {
-  [key: string]: any
+  [key: string]: string | number | boolean | null | undefined
 }
 
 interface PieChartProps {
@@ -42,17 +42,20 @@ export const PieChart: React.FC<PieChartProps> = ({
 }) => {
   const { formatCurrency } = useCurrency()
 
-  const formatTooltipValue = (value: any, name: string) => {
-    if (currency && typeof value === 'number') {
-      return [formatCurrency(value), name]
+  const formatTooltipValue = (value: string | number | (string | number)[], name: string): [string | number, string] => {
+    const numValue = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : parseFloat(String(value))
+    if (currency && typeof numValue === 'number' && !isNaN(numValue)) {
+      return [formatCurrency(numValue), name]
     }
-    return [value, name]
+    return [value as string | number, name]
   }
 
-  const formatLabel = (entry: any) => {
+  const formatLabel = (entry: DataPoint): string => {
     if (!showLabels) return ''
 
-    const percent = ((entry.value / data.reduce((sum, item) => sum + item[valueKey], 0)) * 100).toFixed(1)
+    const value = Number(entry.value) || 0
+    const total = data.reduce((sum, item) => sum + (Number(item[valueKey]) || 0), 0)
+    const percent = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
     return `${entry[labelKey]} (${percent}%)`
   }
 

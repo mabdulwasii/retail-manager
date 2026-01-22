@@ -15,7 +15,6 @@ import {
   TrendingDownIcon,
   ShoppingCartIcon,
   PieChartIcon,
-  AlertTriangleIcon,
   ShieldCheckIcon,
   BarChart3Icon
 } from 'lucide-react'

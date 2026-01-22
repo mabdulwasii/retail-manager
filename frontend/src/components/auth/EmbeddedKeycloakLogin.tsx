@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -170,35 +170,35 @@ export const EmbeddedKeycloakLogin: React.FC<EmbeddedKeycloakLoginProps> = ({
   }
 
   return (
-    <div className=\"space-y-4\">
+    <div className='space-y-4'>
       {error && (
-        <Alert variant=\"destructive\">
+        <Alert variant='destructive'>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {!showIframe ? (
-        <div className=\"space-y-4\">
-          <div className=\"p-4 bg-blue-50 border border-blue-200 rounded-lg\">
-            <p className=\"text-sm font-medium text-blue-700 mb-2\">
-              <Shield className=\"inline h-4 w-4 mr-1\" />
+        <div className='space-y-4'>
+          <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+            <p className='text-sm font-medium text-blue-700 mb-2'>
+              <Shield className='inline h-4 w-4 mr-1' />
               Secure OAuth2 Authorization Code Flow
             </p>
-            <p className=\"text-xs text-blue-600\">
+            <p className='text-xs text-blue-600'>
               Uses industry-standard OAuth2 with PKCE for maximum security.
             </p>
           </div>
 
-          <div className=\"grid grid-cols-1 gap-3\">
+          <div className='grid grid-cols-1 gap-3'>
             <Button
               onClick={handleEmbeddedLogin}
-              className=\"w-full\"
-              size=\"lg\"
+              className='w-full'
+              size='lg'
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                   Loading...
                 </>
               ) : (
@@ -208,17 +208,17 @@ export const EmbeddedKeycloakLogin: React.FC<EmbeddedKeycloakLoginProps> = ({
 
             <Button
               onClick={handleDirectLogin}
-              variant=\"outline\"
-              className=\"w-full\"
-              size=\"lg\"
+              variant='outline'
+              className='w-full'
+              size='lg'
             >
-              <ExternalLink className=\"mr-2 h-4 w-4\" />
+              <ExternalLink className='mr-2 h-4 w-4' />
               Login with Redirect
             </Button>
           </div>
 
-          <div className=\"text-center\">
-            <p className=\"text-xs text-gray-500\">
+          <div className='text-center'>
+            <p className='text-xs text-gray-500'>
               Test accounts: admin@shopmanager.com / admin123
             </p>
           </div>
@@ -226,23 +226,23 @@ export const EmbeddedKeycloakLogin: React.FC<EmbeddedKeycloakLoginProps> = ({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">Keycloak Authentication</CardTitle>
+            <CardTitle className='text-lg'>Keycloak Authentication</CardTitle>
             <CardDescription>
               Please login using your credentials below
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"relative\">
+            <div className='relative'>
               <iframe
                 ref={iframeRef}
-                className=\"w-full h-96 border rounded\"
-                title=\"Keycloak Login\"
-                sandbox=\"allow-same-origin allow-scripts allow-forms allow-top-navigation\"
+                className='w-full h-96 border rounded'
+                title='Keycloak Login'
+                sandbox='allow-same-origin allow-scripts allow-forms allow-top-navigation'
               />
-              <div className=\"absolute top-2 right-2\">
+              <div className='absolute top-2 right-2'>
                 <Button
-                  size=\"sm\"
-                  variant=\"ghost\"
+                  size='sm'
+                  variant='ghost'
                   onClick={() => setShowIframe(false)}
                 >
                   ✕

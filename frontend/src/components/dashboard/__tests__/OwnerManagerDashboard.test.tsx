@@ -4,15 +4,17 @@
  */
 
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
+import type {
+  MockCardProps,
+  MockButtonProps
+} from '@/test-utils/mock-types'
+
 import { OwnerManagerDashboard } from '../OwnerManagerDashboard'
 import { useAuth } from '@/context/UnifiedAuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useCurrency } from '@/hooks/useCurrency'
 import { createMockAuth, renderWithProviders } from '@/test/test-utils'
 import { getMockShopOwner } from '@/testData'
-import { server } from '@/mocks/server'
-import { http, HttpResponse } from 'msw'
 
 // Mock only infrastructure dependencies (NOT data hooks)
 jest.mock('@/context/UnifiedAuthContext')
@@ -27,32 +29,32 @@ const mockUseCurrency = useCurrency as jest.MockedFunction<typeof useCurrency>
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className || ''}`}>{children}</div>,
-  CardContent: ({ children }: any) => <div className="card-content">{children}</div>,
-  CardDescription: ({ children }: any) => <div className="card-description">{children}</div>,
-  CardHeader: ({ children }: any) => <div className="card-header">{children}</div>,
-  CardTitle: ({ children }: any) => <div className="card-title">{children}</div>,
+  Card: ({ children, className }: MockCardProps) => <div className={`card ${className || ''}`}>{children}</div>,
+  CardContent: ({ children }: MockCardProps) => <div className="card-content">{children}</div>,
+  CardDescription: ({ children }: MockCardProps) => <div className="card-description">{children}</div>,
+  CardHeader: ({ children }: MockCardProps) => <div className="card-header">{children}</div>,
+  CardTitle: ({ children }: MockCardProps) => <div className="card-title">{children}</div>,
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, ...props }: any) =>
+  Button: ({ children, className, asChild, ...props }: MockButtonProps) =>
     asChild ? children : <button className={className} {...props}>{children}</button>
 }))
 
 jest.mock('@/components/ui/shop-selector', () => ({
-  ShopSelector: ({ value, onValueChange }: any) => (
-    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange(e.target.value)}>
+  ShopSelector: ({ value, onValueChange }: MockShopSelectorProps) => (
+    <select data-testid="shop-selector" value={value} onChange={(e) => onValueChange?.(e.target.value)}>
       <option value="shop1">Shop 1</option>
     </select>
   )
 }))
 
 jest.mock('@/components/ui/select', () => ({
-  Select: ({ children }: any) => <div>{children}</div>,
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
+  Select: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectContent: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectItem: ({ children, value }: MockSelectItemProps) => <option value={value}>{children}</option>,
+  SelectTrigger: ({ children }: MockCardProps) => <div>{children}</div>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
 }))
 
 describe('OwnerManagerDashboard', () => {
@@ -79,6 +81,7 @@ describe('OwnerManagerDashboard', () => {
 
     mockUseAuth.mockReturnValue(createMockAuth(mockUser))
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUsePermissions.mockReturnValue(mockPermissions as any)
 
     mockUseCurrency.mockReturnValue({

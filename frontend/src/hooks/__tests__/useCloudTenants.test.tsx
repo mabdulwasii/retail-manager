@@ -176,7 +176,7 @@ describe('useCloudTenants Hooks', () => {
       const request = {
         tenantName: 'Test Tenant',
         tenantEmail: 'test@example.com',
-        subscriptionTier: 'FREE' as any,
+        subscriptionTier: 'FREE' as const,
         shops: [],
       };
 
@@ -197,7 +197,7 @@ describe('useCloudTenants Hooks', () => {
       result.current.mutate({
         tenantName: 'Test',
         tenantEmail: 'test@example.com',
-        subscriptionTier: 'FREE' as any,
+        subscriptionTier: 'FREE' as const,
         shops: [],
       });
 
@@ -207,7 +207,7 @@ describe('useCloudTenants Hooks', () => {
 
   describe('useSuspendTenant', () => {
     it('should suspend tenant successfully', async () => {
-      const mockTenant = getMockCloudTenant({ status: 'SUSPENDED' as any });
+      const mockTenant = getMockCloudTenant({ status: 'SUSPENDED' as const });
       mockedService.suspendTenant.mockResolvedValueOnce(mockTenant);
 
       const { result } = renderHook(() => useSuspendTenant(), {
@@ -236,7 +236,7 @@ describe('useCloudTenants Hooks', () => {
 
   describe('useActivateTenant', () => {
     it('should activate tenant successfully', async () => {
-      const mockTenant = getMockCloudTenant({ status: 'ACTIVE' as any });
+      const mockTenant = getMockCloudTenant({ status: 'ACTIVE' as const });
       mockedService.activateTenant.mockResolvedValueOnce(mockTenant);
 
       const { result } = renderHook(() => useActivateTenant(), {

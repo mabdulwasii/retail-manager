@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { productService } from '../productService'
 import { getMockProduct, getMockProductsList } from '@/testData/products'
 import { http, HttpResponse } from 'msw'

@@ -12,7 +12,6 @@ import { EmbeddedAuthProvider } from '@/context/EmbeddedAuthContext';
 import MockAdapter from 'axios-mock-adapter';
 import api from '@/lib/axios';
 
-const API_BASE_URL = 'http://localhost:8081/api';
 const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoidGVzdHVzZXIiLCJpZCI6IjEyMyIsInBlcm1pc3Npb25zIjpbIlBST0RVQ1RfUkVBRCIsIlBST0RVQ1RfV1JJVEUiXX0.C9pGXvBHfHdJsYdRfPOmfZpFw7xO7l8YxPwCqYqXzTM';
 
 const mockUserProfile = {
