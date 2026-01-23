@@ -10,8 +10,9 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { useCurrency } from '@/hooks/useCurrency'
+import { normalizeValue } from './chartUtils'
 
-interface DataPoint {
+interface DataPoint{
   [key: string]: string | number | boolean | null | undefined
 }
 
@@ -41,16 +42,6 @@ export const LineChart: React.FC<LineChartProps> = ({
   strokeWidth = 2
 }) => {
   const { formatCurrency } = useCurrency()
-
-  const normalizeValue = (value: string | number | (string | number)[]): number => {
-    if (typeof value === 'number') {
-      return value
-    }
-    if (Array.isArray(value)) {
-      return Number(value[0])
-    }
-    return Number.parseFloat(String(value))
-  }
 
   const formatTooltipValue = (value: string | number | (string | number)[], name: string): [string | number, string] => {
     const numValue = normalizeValue(value)
