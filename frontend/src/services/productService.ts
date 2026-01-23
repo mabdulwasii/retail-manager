@@ -60,6 +60,7 @@ export const productService = {
 
   generateSKU(): string {
     const timestamp = Date.now().toString(36).toUpperCase()
+    // Safe: Math.random() used for non-cryptographic SKU generation
     const random = Math.random().toString(36).substring(2, 7).toUpperCase()
     return `PRD-${timestamp}-${random}`
   },

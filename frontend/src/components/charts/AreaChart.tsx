@@ -44,9 +44,19 @@ export const AreaChart: React.FC<AreaChartProps> = ({
 }) => {
   const { formatCurrency } = useCurrency()
 
+  const normalizeValue = (value: string | number | (string | number)[]): number => {
+    if (typeof value === 'number') {
+      return value
+    }
+    if (Array.isArray(value)) {
+      return Number(value[0])
+    }
+    return Number.parseFloat(String(value))
+  }
+
   const formatTooltipValue = (value: string | number | (string | number)[], name: string): [string | number, string] => {
-    const numValue = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : parseFloat(String(value))
-    if (currency && typeof numValue === 'number' && !isNaN(numValue)) {
+    const numValue = normalizeValue(value)
+    if (currency && !isNaN(numValue)) {
       return [formatCurrency(numValue), name]
     }
     return [value as string | number, name]
