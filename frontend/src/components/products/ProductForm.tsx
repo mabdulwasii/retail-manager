@@ -313,76 +313,37 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             </div>
           </div>
-          {/* Unit and Weight */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unit</Label>
-              <Select
-                value={selectedUnit || ""}
-                onValueChange={(value) => setValue("unit", value)}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRODUCT_UNITS.map((unit) => (
-                    <SelectItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.unit && (
-                <p className="text-sm text-red-500">{errors.unit.message}</p>
-              )}
-            </div>
-
-            {showCustomUnit && (
-              <div className="space-y-2">
-                <Label htmlFor="customUnit">Custom Unit</Label>
-                <Input
-                  id="customUnit"
-                  {...register("customUnit")}
-                  placeholder="Specify custom unit"
+          {/* Weight (Optional - for reference only) */}
+          <div className="space-y-2">
+            <Label htmlFor="weightInKg">
+              Weight (kg) <span className="text-xs text-gray-500">(Optional)</span>
+            </Label>
+            <Controller
+              name="weightInKg"
+              control={control}
+              render={({ field }) => (
+                <NumericInput
+                  id="weightInKg"
+                  value={field.value ?? ""}
+                  onValueChange={(values) => {
+                    field.onChange(values.floatValue ?? null);
+                  }}
+                  placeholder="0.520"
                   disabled={isSubmitting}
+                  suffix=" kg"
+                  prefix=""
+                  decimalScale={3}
+                  allowNegative={false}
                 />
-                {errors.customUnit && (
-                  <p className="text-sm text-red-500">
-                    {errors.customUnit.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {!showCustomUnit && (
-              <div className="space-y-2">
-                <Label htmlFor="weightInKg">Weight (kg)</Label>
-                <Controller
-                  name="weightInKg"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericInput
-                      id="weightInKg"
-                      value={field.value ?? ""}
-                      onValueChange={(values) => {
-                        field.onChange(values.floatValue ?? null);
-                      }}
-                      placeholder="0.520"
-                      disabled={isSubmitting}
-                      suffix=" kg"
-                      prefix=""
-                      decimalScale={3}
-                      allowNegative={false}
-                    />
-                  )}
-                />
-                {errors.weightInKg && (
-                  <p className="text-sm text-red-500">
-                    {errors.weightInKg.message}
-                  </p>
-                )}
-              </div>
+              )}
+            />
+            <p className="text-xs text-gray-500">
+              Product weight for reference. Use Unit Definitions below for multi-unit pricing.
+            </p>
+            {errors.weightInKg && (
+              <p className="text-sm text-red-500">
+                {errors.weightInKg.message}
+              </p>
             )}
           </div>
 

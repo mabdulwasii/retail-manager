@@ -326,7 +326,7 @@ export const InventoryListPage: React.FC = () => {
       {/* Exportable Content */}
       <div id="inventory-content" className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
@@ -342,15 +342,47 @@ export const InventoryListPage: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Inventory Cost</CardTitle>
+            <TrendingDown className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(summary?.totalValue || 0)}
+              {formatCurrency(summary?.totalInventoryCost || summary?.totalValue || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Inventory worth
+              Total investment
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Projected Sales</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(summary?.projectedTotalSales || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              If all stock sells
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Projected Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(summary?.projectedProfit || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {summary?.projectedProfit && summary?.totalInventoryCost
+                ? `${((summary.projectedProfit / summary.totalInventoryCost) * 100).toFixed(1)}% margin`
+                : 'Potential margin'}
             </p>
           </CardContent>
         </Card>
