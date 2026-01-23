@@ -1,5 +1,6 @@
 package com.princely.shopmanager.inventory.dto;
 
+import com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,4 +56,8 @@ public class InventoryResponse {
     // Batch-specific unit prices
     @Builder.Default
     private List<InventoryUnitPriceResponse> unitPrices = new ArrayList<>();
+
+    // Product catalog unit definitions (for POS multi-unit selection)
+    @Builder.Default
+    private List<ProductUnitDefinitionResponse> unitDefinitions = new ArrayList<>();
 }

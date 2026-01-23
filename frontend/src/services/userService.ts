@@ -90,7 +90,7 @@ export const userService = {
    * Get user by ID
    */
   async getUserById(userId: string): Promise<User> {
-    const { data} = await api.get(`/users/users/${userId}`);
+    const { data} = await api.get(`/users/${userId}`);
     return data;
   },
 

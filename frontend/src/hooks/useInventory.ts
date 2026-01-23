@@ -48,6 +48,9 @@ export interface InventoryItem {
   itemTotalCost?: number
   itemProjectedSales?: number
   itemProjectedProfit?: number
+  // Multi-unit support for POS
+  unitDefinitions?: ProductUnitDefinition[]
+  unitPrices?: InventoryUnitPrice[]
 }
 
 export type InventoryStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED' | 'QUARANTINED' | 'EXPIRED'

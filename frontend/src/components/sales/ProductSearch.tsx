@@ -5,13 +5,19 @@ import { Input } from '@/components/ui/input'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useCurrency } from '@/hooks/useCurrency'
 import { useInventory, InventoryItem } from '@/hooks/useInventory'
-import { Product } from '@/types/api'
+import { Product, ProductUnitDefinition, InventoryUnitPrice } from '@/types/api'
 import { debounce } from 'lodash'
 import { PackageIcon, PlusIcon, SearchIcon } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 interface ProductSearchProps {
-  onProductSelect: (product: Product, inventoryId: string, sellingPrice: number) => void
+  onProductSelect: (
+    product: Product,
+    inventoryId: string,
+    sellingPrice: number,
+    unitDefinitions?: ProductUnitDefinition[],
+    unitPrices?: InventoryUnitPrice[]
+  ) => void
   shopId?: string // Optional shop ID to search products in
 }
 
@@ -73,7 +79,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, s
       createdAt: '',
       updatedAt: ''
     }
-    onProductSelect(product, item.id, item.sellingPrice)
+    // Pass unit definitions and unit prices for multi-unit POS support
+    onProductSelect(product, item.id, item.sellingPrice, item.unitDefinitions, item.unitPrices)
     setSearchQuery('')
   }
 

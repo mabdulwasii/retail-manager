@@ -41,6 +41,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   const [activeTab, setActiveTab] = useState('revenue')
 
   // Generate mock historical data for charts (in real app, this would come from API)
+  // Safe: Math.random() used for non-cryptographic demo data visualization
   const historicalRevenueData = useMemo(() => {
     if (!revenueAnalytics) return []
 

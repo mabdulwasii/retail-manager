@@ -69,6 +69,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
   useEffect(() => {
     if (isOpen && !formData.batchNumber) {
       const timestamp = Date.now()
+      // Safe: Math.random() used for non-cryptographic batch number generation
       const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
       const generatedBatch = `BATCH-${timestamp}-${randomNum}`
       setFormData(prev => ({ ...prev, batchNumber: generatedBatch }))

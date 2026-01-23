@@ -8,6 +8,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { useCurrency } from '@/hooks/useCurrency'
+import { normalizeValue } from './chartUtils'
 
 interface DataPoint {
   [key: string]: string | number | boolean | null | undefined
@@ -43,8 +44,8 @@ export const PieChart: React.FC<PieChartProps> = ({
   const { formatCurrency } = useCurrency()
 
   const formatTooltipValue = (value: string | number | (string | number)[], name: string): [string | number, string] => {
-    const numValue = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : parseFloat(String(value))
-    if (currency && typeof numValue === 'number' && !isNaN(numValue)) {
+    const numValue = normalizeValue(value)
+    if (currency && !isNaN(numValue)) {
       return [formatCurrency(numValue), name]
     }
     return [value as string | number, name]
