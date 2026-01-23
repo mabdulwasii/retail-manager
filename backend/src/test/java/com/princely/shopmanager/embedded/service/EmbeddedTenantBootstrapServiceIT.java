@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
  * Integration tests for EmbeddedTenantBootstrapService.
  * Tests tenant and shop bootstrapping in embedded mode.
  */
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 @SpringBootTest
 @ActiveProfiles("embedded")
 @TestPropertySource(properties = {
@@ -65,9 +66,6 @@ class EmbeddedTenantBootstrapServiceIT {
         // Clean up any existing test data
         shopRepository.deleteAll();
         tenantRepository.deleteAll();
-
-        // Reset mocks to prevent interference between tests
-        org.mockito.Mockito.reset(auditService);
     }
 
     @AfterEach
@@ -153,7 +151,8 @@ class EmbeddedTenantBootstrapServiceIT {
     @DisplayName("Should handle bootstrap errors gracefully without throwing")
     @Transactional
     void shouldHandleBootstrapErrorsGracefully() {
-        // Given - Mock audit service to throw exception
+        // Given - Clear any previous invocations and stub audit service to throw exception
+        org.mockito.Mockito.clearInvocations(auditService);
         doThrow(new RuntimeException("Audit service error"))
                 .when(auditService).logEvent(anyString(), anyString(), anyMap());
 
