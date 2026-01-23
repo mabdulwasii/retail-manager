@@ -47,7 +47,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "embedded.postgres.data-dir=./target/test-postgres-settings",
     "embedded.postgres.port=5436"
 })
-@Transactional
 @DisplayName("System Settings Controller - Integration Tests")
 class SystemSettingsControllerIT {
 
@@ -83,33 +82,30 @@ class SystemSettingsControllerIT {
 
     @BeforeEach
     void setUp() {
-        // Clean up
-        settingsRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        permissionRepository.deleteAll();
+        // Create permissions (find-or-create to avoid conflicts)
+        Permission viewPermission = permissionRepository.findByName("SYSTEM_SETTING_VIEW")
+                .orElseGet(() -> createPermission("SYSTEM_SETTING_VIEW", "View system settings"));
+        Permission updatePermission = permissionRepository.findByName("SYSTEM_SETTING_UPDATE")
+                .orElseGet(() -> createPermission("SYSTEM_SETTING_UPDATE", "Update system settings"));
+        Permission managePermission = permissionRepository.findByName("SYSTEM_SETTING_MANAGE")
+                .orElseGet(() -> createPermission("SYSTEM_SETTING_MANAGE", "Manage all system settings"));
 
-        // Create permissions
-        Permission viewPermission = createPermission("SYSTEM_SETTING_VIEW", "View system settings");
-        Permission updatePermission = createPermission("SYSTEM_SETTING_UPDATE", "Update system settings");
-        Permission managePermission = createPermission("SYSTEM_SETTING_MANAGE", "Manage all system settings");
+        // Create test-specific roles (find-or-create to avoid conflicts)
+        Role adminRole = roleRepository.findByName("TEST_ADMIN")
+                .orElseGet(() -> createRole("TEST_ADMIN", Set.of(viewPermission, updatePermission, managePermission)));
+        Role userRole = roleRepository.findByName("TEST_USER")
+                .orElseGet(() -> createRole("TEST_USER", Set.of()));
 
-        // Create admin role with all permissions
-        Role adminRole = createRole("SYSTEM_ADMIN", Set.of(viewPermission, updatePermission, managePermission));
-
-        // Create normal role with no permissions
-        Role userRole = createRole("EMPLOYEE", Set.of());
-
-        // Create admin user
-        adminUser = createUser("admin", "admin@test.com", "password123", Set.of(adminRole));
+        // Create test users with unique identifiers to avoid conflicts
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().substring(0, 8);
+        adminUser = createUser("admin_" + uniqueSuffix, "admin_" + uniqueSuffix + "@test.com", "password123", Set.of(adminRole));
         adminToken = jwtTokenProvider.generateAccessToken(adminUser);
 
-        // Create normal user
-        normalUser = createUser("user", "user@test.com", "password123", Set.of(userRole));
+        normalUser = createUser("user_" + uniqueSuffix, "user_" + uniqueSuffix + "@test.com", "password123", Set.of(userRole));
         userToken = jwtTokenProvider.generateAccessToken(normalUser);
 
-        // Create test settings
-        createTestSettings();
+        // Create test settings (find-or-create to avoid conflicts)
+        ensureTestSettings();
     }
 
     // ============================================================================
@@ -311,55 +307,59 @@ class SystemSettingsControllerIT {
     // Helper Methods
     // ============================================================================
 
-    private void createTestSettings() {
-        // Domain settings
-        SystemSettings domainSetting = createSetting(
-            "custom.domain",
-            "shopmanager.local",
-            SettingCategory.DOMAIN,
-            SettingDataType.STRING,
-            "Custom domain for the application",
-            true,  // requires restart
-            false  // not sensitive
-        );
+    private void ensureTestSettings() {
+        // Create settings only if they don't exist (find-or-create pattern)
+        settingsRepository.findByKey("custom.domain").orElseGet(() -> {
+            SystemSettings setting = createSetting(
+                "custom.domain",
+                "shopmanager.local",
+                SettingCategory.DOMAIN,
+                SettingDataType.STRING,
+                "Custom domain for the application",
+                true,  // requires restart
+                false  // not sensitive
+            );
+            return settingsRepository.save(setting);
+        });
 
-        // Sync settings
-        SystemSettings syncSetting = createSetting(
-            "cloud.sync.enabled",
-            "false",
-            SettingCategory.SYNC,
-            SettingDataType.BOOLEAN,
-            "Enable cloud synchronization",
-            false,
-            false
-        );
+        settingsRepository.findByKey("cloud.sync.enabled").orElseGet(() -> {
+            SystemSettings setting = createSetting(
+                "cloud.sync.enabled",
+                "false",
+                SettingCategory.SYNC,
+                SettingDataType.BOOLEAN,
+                "Enable cloud synchronization",
+                false,
+                false
+            );
+            return settingsRepository.save(setting);
+        });
 
-        // Storage settings
-        SystemSettings storageSetting = createSetting(
-            "max.upload.size",
-            "10",
-            SettingCategory.STORAGE,
-            SettingDataType.NUMBER,
-            "Maximum upload size in MB",
-            false,
-            false
-        );
+        settingsRepository.findByKey("max.upload.size").orElseGet(() -> {
+            SystemSettings setting = createSetting(
+                "max.upload.size",
+                "10",
+                SettingCategory.STORAGE,
+                SettingDataType.NUMBER,
+                "Maximum upload size in MB",
+                false,
+                false
+            );
+            return settingsRepository.save(setting);
+        });
 
-        // Security settings - sensitive
-        SystemSettings securitySetting = createSetting(
-            "jwt.secret",
-            "secret-key-12345",
-            SettingCategory.SECURITY,
-            SettingDataType.ENCRYPTED,
-            "JWT secret key",
-            true,
-            true  // sensitive
-        );
-
-        settingsRepository.save(domainSetting);
-        settingsRepository.save(syncSetting);
-        settingsRepository.save(storageSetting);
-        settingsRepository.save(securitySetting);
+        settingsRepository.findByKey("jwt.secret").orElseGet(() -> {
+            SystemSettings setting = createSetting(
+                "jwt.secret",
+                "secret-key-12345",
+                SettingCategory.SECURITY,
+                SettingDataType.ENCRYPTED,
+                "JWT secret key",
+                true,
+                true  // sensitive
+            );
+            return settingsRepository.save(setting);
+        });
     }
 
     private SystemSettings createSetting(String key, String value, SettingCategory category,
@@ -382,6 +382,21 @@ class SystemSettingsControllerIT {
         Permission permission = new Permission();
         permission.setName(name);
         permission.setDescription(description);
+
+        // Extract resource and action from permission name (e.g., SYSTEM_SETTING_VIEW)
+        String[] parts = name.split("_");
+        if (parts.length >= 2) {
+            // Last part is action (VIEW, UPDATE, MANAGE, etc.)
+            permission.setAction(parts[parts.length - 1]);
+            // Everything before last part is resource
+            String resource = String.join("_", java.util.Arrays.copyOfRange(parts, 0, parts.length - 1));
+            permission.setResource(resource.toLowerCase());
+        } else {
+            // Fallback defaults
+            permission.setResource("system");
+            permission.setAction("ACCESS");
+        }
+
         return permissionRepository.save(permission);
     }
 
@@ -400,6 +415,7 @@ class SystemSettingsControllerIT {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setFirstName("Test");
         user.setLastName("User");
+        user.setPhoneNumber("+1234567890");
         user.setRoles(roles);
         user.setStatus(User.UserStatus.ACTIVE);
         return userRepository.save(user);

@@ -65,6 +65,9 @@ class EmbeddedTenantBootstrapServiceIT {
         // Clean up any existing test data
         shopRepository.deleteAll();
         tenantRepository.deleteAll();
+
+        // Reset mocks to prevent interference between tests
+        org.mockito.Mockito.reset(auditService);
     }
 
     @AfterEach

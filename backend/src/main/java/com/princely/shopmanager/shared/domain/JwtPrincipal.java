@@ -42,6 +42,7 @@ public class JwtPrincipal {
     private String lastName;
     private String phoneNumber;
     private List<String> roles;
+    private List<String> permissions;
     private Map<String, Object> claims;
     private Instant issuedAt;
     private Instant expiresAt;
