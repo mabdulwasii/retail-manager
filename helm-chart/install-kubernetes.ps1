@@ -144,13 +144,25 @@ function Install-ShopManager {
         } else {
             Write-Info "Installing cert-manager..."
             kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to install cert-manager"
+            }
 
             Write-Info "Waiting for cert-manager to be ready..."
             kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                throw "cert-manager deployments did not become ready within timeout"
+            }
             Write-Success "cert-manager installed and ready"
         }
     } catch {
-        Write-Warning "cert-manager check failed: $_"
+        Write-ErrorMessage "cert-manager installation failed: $_"
+        Write-Host ""
+        Write-Host "cert-manager is required for TLS certificate management." -ForegroundColor Yellow
+        Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "Press Enter to exit"
+        exit 1
     }
     Write-Host ""
 
@@ -172,10 +184,19 @@ function Install-ShopManager {
                 --wait `
                 --timeout 5m
 
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to install NGINX Ingress Controller"
+            }
             Write-Success "NGINX Ingress Controller installed"
         }
     } catch {
-        Write-Warning "NGINX Ingress Controller check failed: $_"
+        Write-ErrorMessage "NGINX Ingress Controller installation failed: $_"
+        Write-Host ""
+        Write-Host "NGINX Ingress Controller is required for routing traffic to the application." -ForegroundColor Yellow
+        Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "Press Enter to exit"
+        exit 1
     }
     Write-Host ""
 
@@ -187,10 +208,16 @@ function Install-ShopManager {
             Write-Info "Namespace '$NAMESPACE' already exists"
         } else {
             kubectl create namespace $NAMESPACE
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create namespace '$NAMESPACE'"
+            }
             Write-Success "Namespace '$NAMESPACE' created"
         }
     } catch {
         Write-ErrorMessage "Failed to create namespace: $_"
+        Write-Host ""
+        Read-Host "Press Enter to exit"
+        exit 1
     }
     Write-Host ""
 
@@ -237,9 +264,9 @@ function Install-ShopManager {
     Write-Host ""
 
     try {
-        # Check if release exists
-        helm list -n $NAMESPACE 2>$null | Select-String -Pattern $RELEASE_NAME -Quiet
-        $releaseExists = $LASTEXITCODE -eq 0
+        # Check if release exists - capture boolean return from Select-String
+        $helmListOutput = helm list -n $NAMESPACE 2>$null
+        $releaseExists = ($helmListOutput | Select-String -Pattern $RELEASE_NAME -Quiet) -eq $true
 
         if ($releaseExists) {
             Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
