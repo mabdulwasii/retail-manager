@@ -41,6 +41,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("embedded")
+@org.springframework.test.context.TestPropertySource(properties = {
+    "app.keycloak.enabled=false",
+    "app.update-check.enabled=true"
+})
 @Transactional
 @DisplayName("System Settings Controller - Integration Tests")
 class SystemSettingsControllerIT {

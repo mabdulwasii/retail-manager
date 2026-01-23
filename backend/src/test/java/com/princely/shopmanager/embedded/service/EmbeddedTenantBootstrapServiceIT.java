@@ -27,6 +27,8 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 @ActiveProfiles("embedded")
 @TestPropertySource(properties = {
+    "app.keycloak.enabled=false",
+    "app.update-check.enabled=true",
     "app.bootstrap.tenant.enabled=true",
     "app.bootstrap.tenant.name=Test Tenant Bootstrap",
     "app.bootstrap.tenant.email=test-bootstrap@test.com",

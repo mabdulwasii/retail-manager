@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Service
 @Profile("embedded")
-@ConditionalOnProperty(name = "application.update-check.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "app.update-check.enabled", havingValue = "true", matchIfMissing = false)
 @RequiredArgsConstructor
 @Slf4j
 public class UpdateCheckService {
