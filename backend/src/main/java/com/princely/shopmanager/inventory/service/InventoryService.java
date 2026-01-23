@@ -691,6 +691,14 @@ public class InventoryService extends ShopAwareService {
                 .collect(Collectors.toList());
         }
 
+        // Map product unit definitions for POS multi-unit selection
+        List<com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse> unitDefResponses = new java.util.ArrayList<>();
+        if (inventory.getProduct().getUnitDefinitions() != null && !inventory.getProduct().getUnitDefinitions().isEmpty()) {
+            unitDefResponses = inventory.getProduct().getUnitDefinitions().stream()
+                .map(this::mapProductUnitDefinitionToResponse)
+                .collect(Collectors.toList());
+        }
+
         return InventoryResponse.builder()
             .id(inventory.getId())
             .shopId(inventory.getShop().getId())
@@ -711,6 +719,7 @@ public class InventoryService extends ShopAwareService {
             .purchaseQuantity(inventory.getPurchaseQuantity())
             .purchaseUnitCost(inventory.getPurchaseUnitCost())
             .unitPrices(unitPriceResponses)
+            .unitDefinitions(unitDefResponses)
             .location(inventory.getLocation())
             .batchNumber(inventory.getBatchNumber())
             .expiryDate(inventory.getExpiryDate())
@@ -787,6 +796,29 @@ public class InventoryService extends ShopAwareService {
             .updatedAt(unitPrice.getUpdatedAt())
             .createdBy(unitPrice.getCreatedBy())
             .updatedBy(unitPrice.getUpdatedBy())
+            .build();
+    }
+
+    /**
+     * Maps a ProductUnitDefinition entity to a ProductUnitDefinitionResponse DTO.
+     * Used to include product unit definitions in inventory responses for POS.
+     *
+     * @param unitDef Unit definition entity
+     * @return Unit definition response DTO
+     */
+    private com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse mapProductUnitDefinitionToResponse(
+            com.princely.shopmanager.core.domain.ProductUnitDefinition unitDef) {
+        return com.princely.shopmanager.core.dto.ProductUnitDefinitionResponse.builder()
+            .id(unitDef.getId())
+            .productId(unitDef.getProduct().getId())
+            .productName(unitDef.getProduct().getName())
+            .unitType(unitDef.getUnitType())
+            .unitLabel(unitDef.getUnitLabel())
+            .conversionFactor(unitDef.getConversionFactor())
+            .isBaseUnit(unitDef.getIsBaseUnit())
+            .sortOrder(unitDef.getSortOrder())
+            .createdAt(unitDef.getCreatedAt())
+            .updatedAt(unitDef.getUpdatedAt())
             .build();
     }
 }
