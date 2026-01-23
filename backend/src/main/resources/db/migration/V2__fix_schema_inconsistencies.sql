@@ -235,7 +235,7 @@ AND NOT EXISTS (
 -- ========================================
 
 -- Insert default tenant if it doesn't exist
-INSERT INTO tenants (id, name, description, contact_email, primary_address, city, country, status, created_at, updated_at, version)
+INSERT INTO tenants (id, name, description, contact_email, address, city, country, status, created_at, updated_at, version)
 SELECT
     'default-tenant-id',
     'Default Tenant',

@@ -43,7 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("embedded")
 @org.springframework.test.context.TestPropertySource(properties = {
     "app.keycloak.enabled=false",
-    "app.update-check.enabled=true"
+    "app.update-check.enabled=true",
+    "embedded.postgres.data-dir=./target/test-postgres-settings",
+    "embedded.postgres.port=5436"
 })
 @Transactional
 @DisplayName("System Settings Controller - Integration Tests")

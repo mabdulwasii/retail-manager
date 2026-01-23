@@ -40,7 +40,9 @@ import static org.mockito.Mockito.*;
     "app.bootstrap.shop.city=Shop City",
     "app.bootstrap.shop.country=Shop Country",
     "app.bootstrap.shop.phone=1-800-TEST-SHOP",
-    "app.bootstrap.shop.email=test-shop@test.com"
+    "app.bootstrap.shop.email=test-shop@test.com",
+    "embedded.postgres.data-dir=./target/test-postgres-bootstrap",
+    "embedded.postgres.port=5437"
 })
 @DisplayName("Embedded Tenant Bootstrap Service - Integration Tests")
 class EmbeddedTenantBootstrapServiceIT {
