@@ -235,12 +235,15 @@ AND NOT EXISTS (
 -- ========================================
 
 -- Insert default tenant if it doesn't exist
-INSERT INTO tenants (id, name, description, contact_email, status, created_at, updated_at, version)
+INSERT INTO tenants (id, name, description, contact_email, address, city, country, status, created_at, updated_at, version)
 SELECT
     'default-tenant-id',
     'Default Tenant',
     'Default tenant for Shop Manager system',
     'admin@shopmanager.com',
+    '123 Main Street',
+    'Springfield',
+    'USA',
     'ACTIVE',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,
@@ -248,13 +251,17 @@ SELECT
 WHERE NOT EXISTS (SELECT 1 FROM tenants WHERE id = 'default-tenant-id');
 
 -- Insert default shop if it doesn't exist
-INSERT INTO shops (id, tenant_id, name, description, email, status, created_at, updated_at, version)
+INSERT INTO shops (id, tenant_id, name, description, email, address, city, country, phone_number, status, created_at, updated_at, version)
 SELECT
     'default-shop-id',
     'default-tenant-id',
     'Default Shop',
     'Default shop for Shop Manager system',
     'shop@shopmanager.com',
+    '456 Shop Street',
+    'Springfield',
+    'USA',
+    '+1-555-0100',
     'ACTIVE',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,

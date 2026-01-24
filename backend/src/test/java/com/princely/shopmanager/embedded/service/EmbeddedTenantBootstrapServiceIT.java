@@ -24,9 +24,12 @@ import static org.mockito.Mockito.*;
  * Integration tests for EmbeddedTenantBootstrapService.
  * Tests tenant and shop bootstrapping in embedded mode.
  */
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 @SpringBootTest
 @ActiveProfiles("embedded")
 @TestPropertySource(properties = {
+    "app.keycloak.enabled=false",
+    "app.update-check.enabled=true",
     "app.bootstrap.tenant.enabled=true",
     "app.bootstrap.tenant.name=Test Tenant Bootstrap",
     "app.bootstrap.tenant.email=test-bootstrap@test.com",
@@ -38,7 +41,9 @@ import static org.mockito.Mockito.*;
     "app.bootstrap.shop.city=Shop City",
     "app.bootstrap.shop.country=Shop Country",
     "app.bootstrap.shop.phone=1-800-TEST-SHOP",
-    "app.bootstrap.shop.email=test-shop@test.com"
+    "app.bootstrap.shop.email=test-shop@test.com",
+    "embedded.postgres.data-dir=./target/test-postgres-bootstrap",
+    "embedded.postgres.port=5437"
 })
 @DisplayName("Embedded Tenant Bootstrap Service - Integration Tests")
 class EmbeddedTenantBootstrapServiceIT {
@@ -145,8 +150,10 @@ class EmbeddedTenantBootstrapServiceIT {
     @Test
     @DisplayName("Should handle bootstrap errors gracefully without throwing")
     @Transactional
+    @org.springframework.test.annotation.DirtiesContext(methodMode = org.springframework.test.annotation.DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldHandleBootstrapErrorsGracefully() {
-        // Given - Mock audit service to throw exception
+        // Given - Clear any previous invocations and stub audit service to throw exception
+        org.mockito.Mockito.clearInvocations(auditService);
         doThrow(new RuntimeException("Audit service error"))
                 .when(auditService).logEvent(anyString(), anyString(), anyMap());
 

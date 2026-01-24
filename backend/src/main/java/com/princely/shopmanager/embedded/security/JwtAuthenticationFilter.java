@@ -40,9 +40,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
                 JwtPrincipal principal = jwtTokenProvider.getPrincipalFromToken(jwt);
 
-                List<SimpleGrantedAuthority> authorities = principal.getRoles().stream()
+                // Include both roles and permissions as authorities
+                List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+
+                // Add roles
+                principal.getRoles().stream()
                         .map(SimpleGrantedAuthority::new)
-                        .toList();
+                        .forEach(authorities::add);
+
+                // Add permissions (if present in JWT)
+                principal.getPermissions().stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .forEach(authorities::add);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, null, authorities);

@@ -38,8 +38,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("embedded")
 @TestPropertySource(properties = {
+    "app.keycloak.enabled=false",
+    "app.update-check.enabled=true",
     "application.encryption.secret=test-encryption-secret-key-32chars",
-    "application.encryption.salt=0123456789abcdef"
+    "application.encryption.salt=0123456789abcdef",
+    "embedded.postgres.data-dir=./target/test-postgres-cloud-sync",
+    "embedded.postgres.port=5434"
 })
 @DisplayName("Cloud Sync Controller - Integration Tests")
 class CloudSyncControllerIT {

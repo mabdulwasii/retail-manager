@@ -62,14 +62,29 @@ UPDATE investor_distributions SET version = 0 WHERE version IS NULL;
 -- UPDATE FRAUD & SECURITY ENTITIES
 -- ========================================
 
--- Update fraud_alerts with NULL version
-UPDATE fraud_alerts SET version = 0 WHERE version IS NULL;
+-- Update fraud_alerts with NULL version (only if column exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fraud_alerts' AND column_name = 'version') THEN
+        UPDATE fraud_alerts SET version = 0 WHERE version IS NULL;
+    END IF;
+END$$;
 
--- Update fraud_rules with NULL version
-UPDATE fraud_rules SET version = 0 WHERE version IS NULL;
+-- Update fraud_rules with NULL version (only if column exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'fraud_rules' AND column_name = 'version') THEN
+        UPDATE fraud_rules SET version = 0 WHERE version IS NULL;
+    END IF;
+END$$;
 
--- Update risk_assessments with NULL version
-UPDATE risk_assessments SET version = 0 WHERE version IS NULL;
+-- Update risk_assessments with NULL version (only if column exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'risk_assessments' AND column_name = 'version') THEN
+        UPDATE risk_assessments SET version = 0 WHERE version IS NULL;
+    END IF;
+END$$;
 
 -- ========================================
 -- UPDATE EXPENSE ENTITIES

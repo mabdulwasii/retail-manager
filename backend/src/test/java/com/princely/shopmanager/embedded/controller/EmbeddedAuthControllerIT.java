@@ -33,6 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("embedded")
+@org.springframework.test.context.TestPropertySource(properties = {
+    "app.keycloak.enabled=false",
+    "app.update-check.enabled=true",
+    "embedded.postgres.data-dir=./target/test-postgres-auth",
+    "embedded.postgres.port=5435"
+})
 @Transactional
 @DisplayName("Embedded Auth Controller - Integration Tests")
 class EmbeddedAuthControllerIT {

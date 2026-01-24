@@ -29,6 +29,7 @@ import java.util.List;
 public class JwtTokenProvider {
 
     private static final String CLAIM_ROLES = "roles";
+    private static final String CLAIM_PERMISSIONS = "permissions";
     private static final String CLAIM_USERNAME = "username";
 
     private final SecretKey secretKey;
@@ -131,11 +132,19 @@ public class JwtTokenProvider {
                 .map(Role::getName)
                 .toList();
 
+        // Extract all permissions from user's roles
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission -> permission.getName())
+                .distinct()
+                .toList();
+
         return Jwts.builder()
                 .subject(user.getId())
                 .claim(CLAIM_USERNAME, user.getUsername())
                 .claim("email", user.getEmail())
                 .claim(CLAIM_ROLES, roles)
+                .claim(CLAIM_PERMISSIONS, permissions)
                 .claim("tenantId", user.getTenantId())
                 .claim("shopId", user.getShopId())
                 .issuer(issuer)
@@ -179,6 +188,7 @@ public class JwtTokenProvider {
                 .getPayload();
 
         List<String> roles = claims.get(CLAIM_ROLES, List.class);
+        List<String> permissions = claims.get(CLAIM_PERMISSIONS, List.class);
 
         return JwtPrincipal.builder()
                 .subject(claims.getSubject())
@@ -188,6 +198,7 @@ public class JwtTokenProvider {
                 .tenantId(claims.get("tenantId", String.class))
                 .shopId(claims.get("shopId", String.class))
                 .roles(roles != null ? roles : List.of())
+                .permissions(permissions != null ? permissions : List.of())
                 .issuer(claims.getIssuer())
                 .issuedAt(claims.getIssuedAt() != null ? claims.getIssuedAt().toInstant() : Instant.now())
                 .expiresAt(claims.getExpiration() != null ? claims.getExpiration().toInstant() : null)
