@@ -120,7 +120,7 @@ function Install-ShopManager {
     # Step 3: Check Kubernetes cluster connectivity
     Write-Header "Step 2: Checking Kubernetes Cluster Connectivity"
 
-    kubectl cluster-info -ErrorAction SilentlyContinue 2>&1 | Out-Null
+    kubectl cluster-info 2>&1 | Out-Null -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorMessage "Cannot connect to Kubernetes cluster. Please check your kubeconfig."
         Write-Host ""
@@ -136,7 +136,7 @@ function Install-ShopManager {
     Write-Header "Step 3: Checking cert-manager Installation"
 
     # Check if cert-manager namespace exists
-    kubectl get namespace cert-manager -ErrorAction SilentlyContinue 2>&1 | Out-Null
+    kubectl get namespace cert-manager 2>&1 | Out-Null -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -eq 0) {
         Write-Info "cert-manager namespace already exists"
     } else {
@@ -153,7 +153,7 @@ function Install-ShopManager {
         }
 
         Write-Info "Waiting for cert-manager to be ready..."
-        kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>&1 | Out-Null
+        kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>&1 | Out-Null -ErrorAction SilentlyContinue
         if ($LASTEXITCODE -ne 0) {
             Write-ErrorMessage "cert-manager deployments did not become ready within timeout"
             Write-Host ""
@@ -170,7 +170,7 @@ function Install-ShopManager {
     Write-Header "Step 4: Checking NGINX Ingress Controller Installation"
 
     # Check if ingress-nginx namespace exists
-    kubectl get namespace ingress-nginx -ErrorAction SilentlyContinue 2>&1 | Out-Null
+    kubectl get namespace ingress-nginx 2>&1 | Out-Null -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -eq 0) {
         Write-Info "ingress-nginx namespace already exists"
     } else {
@@ -202,7 +202,7 @@ function Install-ShopManager {
     Write-Header "Step 5: Creating Namespace '$NAMESPACE'"
 
     # Check if namespace exists
-    kubectl get namespace $NAMESPACE -ErrorAction SilentlyContinue 2>&1 | Out-Null
+    kubectl get namespace $NAMESPACE 2>&1 | Out-Null -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -eq 0) {
         Write-Info "Namespace '$NAMESPACE' already exists"
     } else {
@@ -260,7 +260,7 @@ function Install-ShopManager {
     Write-Host ""
 
     # Check if release exists
-    $releaseExists = helm list -n $NAMESPACE -ErrorAction SilentlyContinue 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
+    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet -ErrorAction SilentlyContinue
 
     if ($releaseExists) {
         Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
