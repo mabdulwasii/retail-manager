@@ -150,6 +150,7 @@ class EmbeddedTenantBootstrapServiceIT {
     @Test
     @DisplayName("Should handle bootstrap errors gracefully without throwing")
     @Transactional
+    @org.springframework.test.annotation.DirtiesContext(methodMode = org.springframework.test.annotation.DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldHandleBootstrapErrorsGracefully() {
         // Given - Clear any previous invocations and stub audit service to throw exception
         org.mockito.Mockito.clearInvocations(auditService);
