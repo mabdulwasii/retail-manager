@@ -1,7 +1,6 @@
 # CLAUDE.md
 
 AI Assistant Instructions for Shop Manager Project
-
 ---
 
 ## Quick Reference
