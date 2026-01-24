@@ -137,87 +137,86 @@ function Install-ShopManager {
 
     # Step 4: Install cert-manager
     Write-Header "Step 3: Checking cert-manager Installation"
-    try {
-        kubectl get namespace cert-manager 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Info "cert-manager namespace already exists"
-        } else {
-            Write-Info "Installing cert-manager..."
-            kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to install cert-manager"
-            }
 
-            Write-Info "Waiting for cert-manager to be ready..."
-            kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                throw "cert-manager deployments did not become ready within timeout"
-            }
-            Write-Success "cert-manager installed and ready"
+    # Check if cert-manager namespace exists
+    kubectl get namespace cert-manager 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Info "cert-manager namespace already exists"
+    } else {
+        Write-Info "Installing cert-manager..."
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage "Failed to install cert-manager"
+            Write-Host ""
+            Write-Host "cert-manager is required for TLS certificate management." -ForegroundColor Yellow
+            Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
         }
-    } catch {
-        Write-ErrorMessage "cert-manager installation failed: $_"
-        Write-Host ""
-        Write-Host "cert-manager is required for TLS certificate management." -ForegroundColor Yellow
-        Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
-        Write-Host ""
-        Read-Host "Press Enter to exit"
-        exit 1
+
+        Write-Info "Waiting for cert-manager to be ready..."
+        kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage "cert-manager deployments did not become ready within timeout"
+            Write-Host ""
+            Write-Host "Please check the cert-manager deployment status and try again." -ForegroundColor Yellow
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
+        Write-Success "cert-manager installed and ready"
     }
     Write-Host ""
 
     # Step 5: Install NGINX Ingress Controller
     Write-Header "Step 4: Checking NGINX Ingress Controller Installation"
-    try {
-        kubectl get namespace ingress-nginx 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Info "ingress-nginx namespace already exists"
-        } else {
-            Write-Info "Installing NGINX Ingress Controller..."
-            helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx 2>$null | Out-Null
-            helm repo update 2>$null | Out-Null
 
-            helm install ingress-nginx ingress-nginx/ingress-nginx `
-                --namespace ingress-nginx `
-                --create-namespace `
-                --set controller.service.type=LoadBalancer `
-                --wait `
-                --timeout 5m
+    # Check if ingress-nginx namespace exists
+    kubectl get namespace ingress-nginx 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Info "ingress-nginx namespace already exists"
+    } else {
+        Write-Info "Installing NGINX Ingress Controller..."
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx 2>&1 | Out-Null
+        helm repo update 2>&1 | Out-Null
 
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to install NGINX Ingress Controller"
-            }
-            Write-Success "NGINX Ingress Controller installed"
+        helm install ingress-nginx ingress-nginx/ingress-nginx `
+            --namespace ingress-nginx `
+            --create-namespace `
+            --set controller.service.type=LoadBalancer `
+            --wait `
+            --timeout 5m
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage "Failed to install NGINX Ingress Controller"
+            Write-Host ""
+            Write-Host "NGINX Ingress Controller is required for routing traffic to the application." -ForegroundColor Yellow
+            Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
         }
-    } catch {
-        Write-ErrorMessage "NGINX Ingress Controller installation failed: $_"
-        Write-Host ""
-        Write-Host "NGINX Ingress Controller is required for routing traffic to the application." -ForegroundColor Yellow
-        Write-Host "Please resolve the issue and run this script again." -ForegroundColor Yellow
-        Write-Host ""
-        Read-Host "Press Enter to exit"
-        exit 1
+        Write-Success "NGINX Ingress Controller installed"
     }
     Write-Host ""
 
     # Step 6: Create namespace
     Write-Header "Step 5: Creating Namespace '$NAMESPACE'"
-    try {
-        kubectl get namespace $NAMESPACE 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Info "Namespace '$NAMESPACE' already exists"
-        } else {
-            kubectl create namespace $NAMESPACE
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to create namespace '$NAMESPACE'"
-            }
-            Write-Success "Namespace '$NAMESPACE' created"
+
+    # Check if namespace exists
+    kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Info "Namespace '$NAMESPACE' already exists"
+    } else {
+        kubectl create namespace $NAMESPACE
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage "Failed to create namespace '$NAMESPACE'"
+            Write-Host ""
+            Read-Host "Press Enter to exit"
+            exit 1
         }
-    } catch {
-        Write-ErrorMessage "Failed to create namespace: $_"
-        Write-Host ""
-        Read-Host "Press Enter to exit"
-        exit 1
+        Write-Success "Namespace '$NAMESPACE' created"
     }
     Write-Host ""
 
@@ -263,49 +262,46 @@ function Install-ShopManager {
     Write-Info "Timeout: $TIMEOUT"
     Write-Host ""
 
-    try {
-        # Check if release exists - capture boolean return from Select-String
-        $helmListOutput = helm list -n $NAMESPACE 2>$null
-        $releaseExists = ($helmListOutput | Select-String -Pattern $RELEASE_NAME -Quiet) -eq $true
+    # Check if release exists
+    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
 
-        if ($releaseExists) {
-            Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
-            $action = "upgrade"
-        } else {
-            Write-Info "Installing new Helm release..."
-            Write-Info "This may take several minutes as Kubernetes pulls Docker images..."
-            $action = "install"
-        }
+    if ($releaseExists) {
+        Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
+        $action = "upgrade"
+    } else {
+        Write-Info "Installing new Helm release..."
+        Write-Info "This may take several minutes as Kubernetes pulls Docker images..."
+        $action = "install"
+    }
 
-        # Build helm command
-        $helmArgs = @(
-            $action,
-            $RELEASE_NAME,
-            $CHART_REPO,
-            "-n", $NAMESPACE,
-            "-f", $VALUES_FILE,
-            "--wait",
-            "--timeout", $TIMEOUT
-        )
+    # Build helm command
+    $helmArgs = @(
+        $action,
+        $RELEASE_NAME,
+        $CHART_REPO,
+        "-n", $NAMESPACE,
+        "-f", $VALUES_FILE,
+        "--wait",
+        "--timeout", $TIMEOUT
+    )
 
-        if ($VERSION) {
-            $helmArgs += "--version"
-            $helmArgs += $VERSION
-        }
+    if ($VERSION) {
+        $helmArgs += "--version"
+        $helmArgs += $VERSION
+    }
 
-        & helm $helmArgs
+    & helm $helmArgs
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "Helm $action failed"
-        }
-
-        Write-Success "Helm release $action completed successfully"
-    } catch {
-        Write-ErrorMessage "Failed to deploy Shop Manager: $_"
+    if ($LASTEXITCODE -ne 0) {
+        Write-ErrorMessage "Helm $action failed"
+        Write-Host ""
+        Write-Host "Please check the error messages above and try again." -ForegroundColor Yellow
         Write-Host ""
         Read-Host "Press Enter to exit"
         exit 1
     }
+
+    Write-Success "Helm release $action completed successfully"
     Write-Host ""
 
     # Step 9: Verify deployment
