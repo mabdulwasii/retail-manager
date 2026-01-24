@@ -81,31 +81,25 @@ function Uninstall-ShopManager {
     }
 
     # Check cluster connectivity
-    try {
-        kubectl cluster-info 2>$null | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Cannot connect to cluster"
-        }
-        Write-Info "Connected to Kubernetes cluster"
-        Write-Host ""
-    } catch {
+    kubectl cluster-info 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
         Write-ErrorMessage "Cannot connect to Kubernetes cluster"
+        Write-Host ""
+        Write-Host "Please check your kubeconfig and cluster connectivity." -ForegroundColor Yellow
+        Write-Host ""
         Read-Host "Press Enter to exit"
         exit 1
     }
+    Write-Info "Connected to Kubernetes cluster"
+    Write-Host ""
 
     # Check if namespace exists
-    try {
-        kubectl get namespace $NAMESPACE 2>$null | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Namespace '$NAMESPACE' does not exist"
-            Write-Host ""
-            Write-Info "Shop Manager may not be installed or already uninstalled"
-            Read-Host "Press Enter to exit"
-            exit 0
-        }
-    } catch {
+    kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
         Write-Warning "Namespace '$NAMESPACE' does not exist"
+        Write-Host ""
+        Write-Info "Shop Manager may not be installed or already uninstalled"
+        Write-Host ""
         Read-Host "Press Enter to exit"
         exit 0
     }
@@ -130,21 +124,21 @@ function Uninstall-ShopManager {
 
     # Step 1: Uninstall Helm release
     Write-Header "Step 1: Uninstalling Helm Release"
-    try {
-        helm list -n $NAMESPACE 2>$null | Select-String -Pattern $RELEASE_NAME -Quiet
-        $releaseExists = $LASTEXITCODE -eq 0
 
-        if ($releaseExists) {
-            helm uninstall $RELEASE_NAME -n $NAMESPACE
-            if ($LASTEXITCODE -ne 0) {
-                throw "Helm uninstall failed"
-            }
-            Write-Success "Helm release '$RELEASE_NAME' uninstalled"
+    # Check if helm release exists
+    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
+
+    if ($releaseExists) {
+        helm uninstall $RELEASE_NAME -n $NAMESPACE
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage "Helm uninstall failed"
+            Write-Host ""
+            Write-Warning "Some resources may remain. Please check manually with: kubectl get all -n $NAMESPACE"
         } else {
-            Write-Warning "Helm release '$RELEASE_NAME' not found"
+            Write-Success "Helm release '$RELEASE_NAME' uninstalled"
         }
-    } catch {
-        Write-ErrorMessage "Failed to uninstall Helm release: $_"
+    } else {
+        Write-Warning "Helm release '$RELEASE_NAME' not found"
     }
     Write-Host ""
 
@@ -171,34 +165,47 @@ function Uninstall-ShopManager {
 
     # Step 3: Ask about persistent volumes
     Write-Header "Step 3: Persistent Volumes"
-    Write-Host "Checking for persistent volume claims..."
 
-    try {
-        $pvcs = kubectl get pvc -n $NAMESPACE 2>$null
+    # Check if namespace still exists
+    kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Info "Namespace already deleted - skipping PVC cleanup"
+    } else {
+        Write-Host "Checking for persistent volume claims..."
+
+        # Get PVCs using JSON output for accurate parsing
+        $pvcJson = kubectl get pvc -n $NAMESPACE -o json 2>&1
         if ($LASTEXITCODE -eq 0) {
-            $pvcCount = ($pvcs | Select-String -Pattern "pvc-" | Measure-Object).Count
+            try {
+                $pvcData = $pvcJson | ConvertFrom-Json
+                $pvcCount = ($pvcData.items | Measure-Object).Count
 
-            if ($pvcCount -gt 0) {
-                Write-Warning "Found $pvcCount persistent volume claims with data"
-                Write-Warning "These may contain database data and backups"
-                Write-Host ""
-                $deletePvc = Read-Host "Delete persistent volumes and ALL DATA? (y/N)"
+                if ($pvcCount -gt 0) {
+                    Write-Warning "Found $pvcCount persistent volume claim(s) with data"
+                    Write-Warning "These may contain database data and backups"
+                    Write-Host ""
+                    $deletePvc = Read-Host "Delete persistent volumes and ALL DATA? (y/N)"
 
-                if ($deletePvc -match '^[Yy]$') {
-                    kubectl delete pvc --all -n $NAMESPACE 2>$null
-                    Write-Success "Persistent volumes deleted"
+                    if ($deletePvc -match '^[Yy]$') {
+                        kubectl delete pvc --all -n $NAMESPACE 2>&1 | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-Success "Persistent volumes deleted"
+                        } else {
+                            Write-Warning "Some PVCs may not have been deleted. Check manually."
+                        }
+                    } else {
+                        Write-Info "Persistent volumes kept"
+                        Write-Warning "You may need to manually delete PVCs later"
+                    }
                 } else {
-                    Write-Info "Persistent volumes kept"
-                    Write-Warning "You may need to manually delete PVCs later"
+                    Write-Info "No persistent volume claims found"
                 }
-            } else {
-                Write-Info "No persistent volume claims found"
+            } catch {
+                Write-Info "Could not parse PVC data - no PVCs or namespace deleted"
             }
         } else {
             Write-Info "No persistent volume claims found"
         }
-    } catch {
-        Write-Info "Could not check persistent volumes"
     }
     Write-Host ""
 
