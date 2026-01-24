@@ -119,13 +119,9 @@ function Install-ShopManager {
 
     # Step 3: Check Kubernetes cluster connectivity
     Write-Header "Step 2: Checking Kubernetes Cluster Connectivity"
-    try {
-        kubectl cluster-info | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "kubectl cluster-info failed"
-        }
-        Write-Success "Connected to Kubernetes cluster"
-    } catch {
+
+    kubectl cluster-info -ErrorAction SilentlyContinue 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
         Write-ErrorMessage "Cannot connect to Kubernetes cluster. Please check your kubeconfig."
         Write-Host ""
         Write-Host "Configure kubectl: kubectl config view" -ForegroundColor Yellow
@@ -133,13 +129,14 @@ function Install-ShopManager {
         Read-Host "Press Enter to exit"
         exit 1
     }
+    Write-Success "Connected to Kubernetes cluster"
     Write-Host ""
 
     # Step 4: Install cert-manager
     Write-Header "Step 3: Checking cert-manager Installation"
 
     # Check if cert-manager namespace exists
-    kubectl get namespace cert-manager 2>&1 | Out-Null
+    kubectl get namespace cert-manager -ErrorAction SilentlyContinue 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Info "cert-manager namespace already exists"
     } else {
@@ -173,7 +170,7 @@ function Install-ShopManager {
     Write-Header "Step 4: Checking NGINX Ingress Controller Installation"
 
     # Check if ingress-nginx namespace exists
-    kubectl get namespace ingress-nginx 2>&1 | Out-Null
+    kubectl get namespace ingress-nginx -ErrorAction SilentlyContinue 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Info "ingress-nginx namespace already exists"
     } else {
@@ -205,7 +202,7 @@ function Install-ShopManager {
     Write-Header "Step 5: Creating Namespace '$NAMESPACE'"
 
     # Check if namespace exists
-    kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    kubectl get namespace $NAMESPACE -ErrorAction SilentlyContinue 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Info "Namespace '$NAMESPACE' already exists"
     } else {
@@ -263,7 +260,7 @@ function Install-ShopManager {
     Write-Host ""
 
     # Check if release exists
-    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
+    $releaseExists = helm list -n $NAMESPACE -ErrorAction SilentlyContinue 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
 
     if ($releaseExists) {
         Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
