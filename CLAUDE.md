@@ -44,6 +44,16 @@ Shop Manager is a multi-tenant retail management platform:
 
 ## Development Workflow
 
+### Git Workflow - CRITICAL
+**NEVER commit directly to the `main` branch!**
+- Always create a feature/fix branch for changes (e.g., `fix/test-failures`, `feature/new-endpoint`)
+- Commit changes to the feature branch
+- After completing work, inform the user so they can:
+  1. Create a Pull Request with appropriate labels (e.g., `release-patch`)
+  2. Trigger the CI/CD pipeline through the PR
+  3. Review and merge the PR
+- Exception: Only commit to `main` if explicitly instructed by the user
+
 ### Code Changes
 - For every successful task, commit changes with clear commit messages
 - For code-breaking changes, prompt the user first
