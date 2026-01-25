@@ -81,7 +81,10 @@ function Uninstall-ShopManager {
     }
 
     # Check cluster connectivity
-    kubectl cluster-info 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl cluster-info 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorMessage "Cannot connect to Kubernetes cluster"
         Write-Host ""
@@ -94,7 +97,10 @@ function Uninstall-ShopManager {
     Write-Host ""
 
     # Check if namespace exists
-    kubectl get namespace $NAMESPACE 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Namespace '$NAMESPACE' does not exist"
         Write-Host ""
@@ -126,7 +132,10 @@ function Uninstall-ShopManager {
     Write-Header "Step 1: Uninstalling Helm Release"
 
     # Check if helm release exists
-    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet -ErrorAction SilentlyContinue
+    $releaseExists = & {
+        $ErrorActionPreference = 'Continue'
+        helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
+    }
 
     if ($releaseExists) {
         helm uninstall $RELEASE_NAME -n $NAMESPACE
@@ -167,7 +176,10 @@ function Uninstall-ShopManager {
     Write-Header "Step 3: Persistent Volumes"
 
     # Check if namespace still exists
-    kubectl get namespace $NAMESPACE 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Info "Namespace already deleted - skipping PVC cleanup"
     } else {

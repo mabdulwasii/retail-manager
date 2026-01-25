@@ -120,11 +120,19 @@ function Install-ShopManager {
     # Step 3: Check Kubernetes cluster connectivity
     Write-Header "Step 2: Checking Kubernetes Cluster Connectivity"
 
-    kubectl cluster-info 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl cluster-info 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) {
-        Write-ErrorMessage "Cannot connect to Kubernetes cluster. Please check your kubeconfig."
+        Write-ErrorMessage "Cannot connect to Kubernetes cluster"
         Write-Host ""
-        Write-Host "Configure kubectl: kubectl config view" -ForegroundColor Yellow
+        Write-Host "Possible causes:" -ForegroundColor Yellow
+        Write-Host "  1. Docker Desktop is not running" -ForegroundColor Yellow
+        Write-Host "  2. Kubernetes is not enabled in Docker Desktop (Settings -> Kubernetes -> Enable Kubernetes)" -ForegroundColor Yellow
+        Write-Host "  3. Kubernetes is still starting (wait 2-3 minutes after enabling)" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Run 'kubectl get nodes' to verify Kubernetes is running" -ForegroundColor Yellow
         Write-Host ""
         Read-Host "Press Enter to exit"
         exit 1
@@ -136,7 +144,10 @@ function Install-ShopManager {
     Write-Header "Step 3: Checking cert-manager Installation"
 
     # Check if cert-manager namespace exists
-    kubectl get namespace cert-manager 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl get namespace cert-manager 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Info "cert-manager namespace already exists"
     } else {
@@ -153,7 +164,10 @@ function Install-ShopManager {
         }
 
         Write-Info "Waiting for cert-manager to be ready..."
-        kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>&1 | Out-Null -ErrorAction SilentlyContinue
+        & {
+            $ErrorActionPreference = 'Continue'
+            kubectl wait --for=condition=available --timeout=300s deployment -n cert-manager --all 2>&1 | Out-Null
+        }
         if ($LASTEXITCODE -ne 0) {
             Write-ErrorMessage "cert-manager deployments did not become ready within timeout"
             Write-Host ""
@@ -170,7 +184,10 @@ function Install-ShopManager {
     Write-Header "Step 4: Checking NGINX Ingress Controller Installation"
 
     # Check if ingress-nginx namespace exists
-    kubectl get namespace ingress-nginx 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl get namespace ingress-nginx 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Info "ingress-nginx namespace already exists"
     } else {
@@ -202,7 +219,10 @@ function Install-ShopManager {
     Write-Header "Step 5: Creating Namespace '$NAMESPACE'"
 
     # Check if namespace exists
-    kubectl get namespace $NAMESPACE 2>&1 | Out-Null -ErrorAction SilentlyContinue
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl get namespace $NAMESPACE 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Info "Namespace '$NAMESPACE' already exists"
     } else {
@@ -260,7 +280,10 @@ function Install-ShopManager {
     Write-Host ""
 
     # Check if release exists
-    $releaseExists = helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet -ErrorAction SilentlyContinue
+    $releaseExists = & {
+        $ErrorActionPreference = 'Continue'
+        helm list -n $NAMESPACE 2>&1 | Select-String -Pattern $RELEASE_NAME -Quiet
+    }
 
     if ($releaseExists) {
         Write-Info "Helm release '$RELEASE_NAME' already exists. Upgrading..."
