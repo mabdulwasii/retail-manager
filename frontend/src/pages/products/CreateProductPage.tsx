@@ -25,6 +25,9 @@ export const CreateProductPage: React.FC = () => {
     }
 
     try {
+      // Handle custom unit - if 'other' is selected, use customUnit
+      const finalUnit = data.unit === 'other' ? data.customUnit : data.unit
+
       // Convert weight from kg to grams for API
       const weightInGrams = data.weightInKg ? data.weightInKg * 1000 : undefined
 
@@ -32,6 +35,7 @@ export const CreateProductPage: React.FC = () => {
         ...data,
         shopId: effectiveShopId,
         weightInGrams: weightInGrams,
+        unit: finalUnit || undefined,
         dimensions: data.dimensions || undefined,
         supplierName: data.supplierName || undefined,
         supplierContact: data.supplierContact || undefined,
@@ -41,7 +45,7 @@ export const CreateProductPage: React.FC = () => {
         isDiscountable: data.isDiscountable ?? true,
       }
 
-      const { category, status, weightInKg, ...rest } = productData;
+      const { category, status, customUnit, weightInKg, ...rest } = productData;
       const newProduct = await createProductMutation.mutateAsync(rest)
       navigate(`/products/${newProduct.id}`)
     } catch (error) {
