@@ -1,28 +1,25 @@
 package com.princely.shopmanager.shared.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 /**
  * Jackson ObjectMapper configuration for JSON serialization/deserialization.
- * Handles circular references, date/time types, and Hibernate proxies.
+ * Uses Spring's Jackson2ObjectMapperBuilder to respect application.yml settings.
+ * Handles Hibernate proxies and lazy-loaded entities.
  */
 @Configuration
 public class JacksonConfig {
 
     @Bean
     @Primary
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-
-        // Register Java 8 date/time module
-        mapper.registerModule(new JavaTimeModule());
+    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
+        // Use Spring's builder - respects application.yml settings including timezone
+        ObjectMapper mapper = builder.build();
 
         // Register Hibernate6 module to handle lazy-loaded entities and proxies
         Hibernate6Module hibernateModule = new Hibernate6Module();
@@ -31,15 +28,6 @@ public class JacksonConfig {
         // Replace lazy-loaded entities with null/empty instead of failing
         hibernateModule.enable(Hibernate6Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS);
         mapper.registerModule(hibernateModule);
-
-        // Don't serialize null values
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        // Write dates as strings instead of timestamps
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        // Don't fail on empty beans
-        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
         return mapper;
     }

@@ -194,6 +194,7 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
                 value={purchaseQuantity || ''}
                 onValueChange={(values) => onPurchaseQuantityChange?.(values.value || '')}
                 placeholder="0"
+                isNumberInput={true}
                 decimalScale={0}
                 allowNegative={false}
               />
