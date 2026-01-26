@@ -5,6 +5,10 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Africa/Lagos
+    date-format: yyyy-MM-dd'T'HH:mm:ss
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shopdb}
@@ -22,7 +26,7 @@ spring:
         dialect: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
         jdbc:
-          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:UTC}
+          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:Africa/Lagos}
           batch_size: 0
         order_inserts: false
         order_updates: false

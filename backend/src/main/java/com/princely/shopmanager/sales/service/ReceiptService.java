@@ -74,6 +74,7 @@ public class ReceiptService extends ShopAwareService {
 
         Receipt receipt = Receipt.builder()
             .transaction(transaction)
+            .shopId(transaction.getShopId())
             .receiptNumber(generateReceiptNumber(transaction))
             .receiptContent(receiptContent)
             .printableContent(printableContent)
@@ -271,10 +272,9 @@ public class ReceiptService extends ShopAwareService {
         // If shopId is provided in the request, validate access and use it
         if (shopId != null && !shopId.trim().isEmpty()) {
             validateShopAccess(shopId, principal);
-            Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
-                Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
-                return criteriaBuilder.equal(transactionJoin.get("shop").get("id"), shopId);
-            };
+            log.debug("Filtering receipts by provided shopId: {}", shopId);
+            Specification<Receipt> spec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("shopId"), shopId);
             return receiptRepository.findAll(spec, pageable);
         }
 
@@ -285,6 +285,7 @@ public class ReceiptService extends ShopAwareService {
             return receiptRepository.findAll(pageable);
         } else if (filterScope.isTenantWide()) {
             // TENANT_ADMIN/OWNER/INVESTOR: Filter by tenantId
+            // Need to join through transaction.shop.tenant for tenant filtering
             log.debug("Tenant-wide access: Filtering receipts by tenantId: {}", filterScope.getTenantId());
             Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
                 Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
@@ -293,12 +294,10 @@ public class ReceiptService extends ShopAwareService {
             };
             return receiptRepository.findAll(spec, pageable);
         } else {
-            // MANAGER/EMPLOYEE/etc.: Filter by shopId
+            // MANAGER/EMPLOYEE/etc.: Filter by shopId using direct shopId column
             log.debug("Shop-scoped access: Filtering receipts by shopId: {}", filterScope.getShopId());
-            Specification<Receipt> spec = (root, query, criteriaBuilder) -> {
-                Join<Receipt, SalesTransaction> transactionJoin = root.join("transaction");
-                return criteriaBuilder.equal(transactionJoin.get("shop").get("id"), filterScope.getShopId());
-            };
+            Specification<Receipt> spec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("shopId"), filterScope.getShopId());
             return receiptRepository.findAll(spec, pageable);
         }
     }
