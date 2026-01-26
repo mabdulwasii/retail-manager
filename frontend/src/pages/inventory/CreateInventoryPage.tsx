@@ -46,6 +46,9 @@ export const CreateInventoryPage: React.FC = () => {
     maximumStock: '',
     reorderPoint: '0',
     costPrice: '',
+    purchaseUnit: '',
+    purchaseQuantity: '',
+    purchaseUnitCost: '',
     location: '',
     expiryDate: ''
   })
@@ -193,6 +196,9 @@ export const CreateInventoryPage: React.FC = () => {
         unitType: up.unitType,
         sellingPrice: up.sellingPrice,
       })),
+      ...(formData.purchaseUnit && { purchaseUnit: formData.purchaseUnit }),
+      ...(formData.purchaseQuantity && { purchaseQuantity: parseFloat(formData.purchaseQuantity) }),
+      ...(formData.purchaseUnitCost && { purchaseUnitCost: parseFloat(formData.purchaseUnitCost) }),
       ...(formData.maximumStock && {
         maximumStock: parseInt(formData.maximumStock, 10),
       }),
@@ -425,11 +431,30 @@ export const CreateInventoryPage: React.FC = () => {
               product={selectedProduct}
               costPrice={formData.costPrice}
               onCostPriceChange={(value) => handleInputChange('costPrice', value)}
+              purchaseUnit={formData.purchaseUnit}
+              onPurchaseUnitChange={(value) => handleInputChange('purchaseUnit', value)}
+              purchaseQuantity={formData.purchaseQuantity}
+              onPurchaseQuantityChange={(value) => handleInputChange('purchaseQuantity', value)}
+              purchaseUnitCost={formData.purchaseUnitCost}
+              onPurchaseUnitCostChange={(value) => {
+                handleInputChange('purchaseUnitCost', value)
+                // Auto-calculate base unit cost price
+                if (value && formData.purchaseUnit && selectedProduct?.unitDefinitions) {
+                  const purchaseUnitDef = selectedProduct.unitDefinitions.find(u => u.unitType === formData.purchaseUnit)
+                  if (purchaseUnitDef && parseFloat(value) > 0) {
+                    const baseCost = (parseFloat(value) / purchaseUnitDef.conversionFactor).toFixed(2)
+                    handleInputChange('costPrice', baseCost)
+                  }
+                }
+              }}
               unitPrices={unitPrices}
               onUnitPricesChange={setUnitPrices}
               errors={{
                 costPrice: errors.costPrice,
                 unitPrices: errors.unitPrices,
+                purchaseUnit: errors.purchaseUnit,
+                purchaseQuantity: errors.purchaseQuantity,
+                purchaseUnitCost: errors.purchaseUnitCost,
               }}
             />
 

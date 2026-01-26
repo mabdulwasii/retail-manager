@@ -56,6 +56,7 @@ public class SalesTransactionResponse {
         private String productName;
         private Integer quantity;
         private BigDecimal unitPrice;
+        private BigDecimal costPrice;  // Cost price for profit calculation
         private BigDecimal discount;
         private BigDecimal lineTotal;
     }
@@ -102,6 +103,7 @@ public class SalesTransactionResponse {
             .productName(lineItem.getProduct() != null ? lineItem.getProduct().getName() : null)
             .quantity(lineItem.getQuantity())
             .unitPrice(lineItem.getUnitPrice())
+            .costPrice(lineItem.getCostPrice())
             .discount(lineItem.getDiscountAmount())
             .lineTotal(lineItem.getLineTotal())
             .build();

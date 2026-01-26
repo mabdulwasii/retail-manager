@@ -160,12 +160,17 @@ export const SalesPage: React.FC = () => {
 
   // Calculate summary statistics
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-  const totalProfit = sales.reduce((sum, sale) => {
-    // Calculate profit from line items if available
+
+  // Calculate total cost and profit from line items
+  const totalCost = sales.reduce((sum, sale) => {
     const cost = sale.lineItems?.reduce((itemSum, item) =>
       itemSum + ((item.costPrice || 0) * item.quantity), 0) || 0;
-    return sum + (sale.totalAmount - cost);
+    return sum + cost;
   }, 0);
+
+  const totalProfit = totalRevenue - totalCost;
+  const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0';
+
   const totalTransactions = sales.length;
   const completedTransactions = sales.filter(
     (s) => s.status === "COMPLETED"
@@ -239,9 +244,15 @@ export const SalesPage: React.FC = () => {
             View and manage all sales transactions
           </p>
           {totalProfit > 0 && (
-            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-              <TrendingUp className="h-4 w-4" />
-              Total Profit: {formatCurrency(totalProfit)}
+            <div className="mt-3 inline-flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg shadow-sm">
+              <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">Total Profit</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-green-700 dark:text-green-300">{formatCurrency(totalProfit)}</span>
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400">({profitMargin}% margin)</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
