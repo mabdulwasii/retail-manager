@@ -79,6 +79,14 @@ export const SalesPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedShopId]);
 
+  // Auto-apply filters when they change
+  useEffect(() => {
+    if (selectedShopId) {
+      loadSales();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, paymentMethodFilter, dateRange.startDate, dateRange.endDate]);
+
   const loadSales = async (page: number = 0) => {
     const filter: SalesFilter = {
       page,
@@ -152,6 +160,12 @@ export const SalesPage: React.FC = () => {
 
   // Calculate summary statistics
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  const totalProfit = sales.reduce((sum, sale) => {
+    // Calculate profit from line items if available
+    const cost = sale.lineItems?.reduce((itemSum, item) =>
+      itemSum + ((item.costPrice || 0) * item.quantity), 0) || 0;
+    return sum + (sale.totalAmount - cost);
+  }, 0);
   const totalTransactions = sales.length;
   const completedTransactions = sales.filter(
     (s) => s.status === "COMPLETED"
@@ -224,6 +238,12 @@ export const SalesPage: React.FC = () => {
           <p className="text-muted-foreground mt-1">
             View and manage all sales transactions
           </p>
+          {totalProfit > 0 && (
+            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+              <TrendingUp className="h-4 w-4" />
+              Total Profit: {formatCurrency(totalProfit)}
+            </div>
+          )}
         </div>
         <div className="flex gap-2 items-center">
           {canManageMultipleShops && selectedShopId && (
