@@ -8,10 +8,14 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Loader2, AlertCircle, Save } from 'lucide-react'
 import { useInventory } from '@/hooks/useInventory'
+import { InventoryUnitPricing, UnitPrice } from '@/components/inventory/InventoryUnitPricing'
+import { useProducts } from '@/hooks/useProducts'
+import { useShopContext } from '@/context/ShopContext'
 
 export const InventoryEditPage: React.FC = () => {
   const { inventoryId } = useParams<{ inventoryId: string }>()
   const navigate = useNavigate()
+  const { selectedShopId } = useShopContext()
 
   const {
     inventory,
@@ -22,6 +26,10 @@ export const InventoryEditPage: React.FC = () => {
     updateInventorySettings,
     clearError,
   } = useInventory()
+
+  const { products } = useProducts({
+    shopId: selectedShopId || undefined
+  })
 
   // Check if user has permission to manage inventory
   useEffect(() => {
@@ -42,7 +50,7 @@ export const InventoryEditPage: React.FC = () => {
   const [maximumStock, setMaximumStock] = useState('')
   const [reorderPoint, setReorderPoint] = useState('')
   const [costPrice, setCostPrice] = useState('')
-  const [sellingPrice, setSellingPrice] = useState('')
+  const [unitPrices, setUnitPrices] = useState<UnitPrice[]>([])
   const [location, setLocation] = useState('')
   const [batchNumber, setBatchNumber] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
@@ -54,6 +62,9 @@ export const InventoryEditPage: React.FC = () => {
     }
   }, [inventoryId, fetchInventoryItem])
 
+  // Get the product for this inventory item
+  const currentProduct = products?.find(p => p.id === currentItem?.productId)
+
   // Populate form when item loads
   useEffect(() => {
     if (currentItem) {
@@ -61,10 +72,17 @@ export const InventoryEditPage: React.FC = () => {
       setMaximumStock(currentItem.maximumStock?.toString() || '')
       setReorderPoint(currentItem.reorderPoint.toString())
       setCostPrice(currentItem.costPrice?.toString() || currentItem.unitCost?.toString() || '')
-      setSellingPrice(currentItem.sellingPrice?.toString() || '')
       setLocation(currentItem.location || '')
       setBatchNumber(currentItem.batchNumber || '')
       setExpiryDate(currentItem.expiryDate ? currentItem.expiryDate.split('T')[0] : '')
+
+      // Load unit prices if available
+      if (currentItem.unitPrices && currentItem.unitPrices.length > 0) {
+        setUnitPrices(currentItem.unitPrices.map(up => ({
+          unitType: up.unitType,
+          sellingPrice: up.sellingPrice,
+        })))
+      }
     }
   }, [currentItem])
 
@@ -73,6 +91,14 @@ export const InventoryEditPage: React.FC = () => {
     e.preventDefault()
     if (!inventoryId) return
 
+    // Calculate base selling price for backward compatibility
+    let baseSellingPrice = 0
+    if (unitPrices.length > 0) {
+      const baseUnit = currentProduct?.unitDefinitions?.find(u => u.isBaseUnit)
+      const baseUnitPrice = unitPrices.find(up => up.unitType === baseUnit?.unitType)
+      baseSellingPrice = baseUnitPrice?.sellingPrice || unitPrices[0].sellingPrice
+    }
+
     const updates: any = {
       minimumStock: parseInt(minimumStock),
       reorderPoint: parseInt(reorderPoint),
@@ -80,7 +106,10 @@ export const InventoryEditPage: React.FC = () => {
 
     if (maximumStock) updates.maximumStock = parseInt(maximumStock)
     if (costPrice) updates.costPrice = parseFloat(costPrice)
-    if (sellingPrice) updates.sellingPrice = parseFloat(sellingPrice)
+    if (unitPrices.length > 0) {
+      updates.sellingPrice = baseSellingPrice
+      updates.unitPrices = unitPrices
+    }
     if (location) updates.location = location
     if (batchNumber) updates.batchNumber = batchNumber
     if (expiryDate) updates.expiryDate = expiryDate
@@ -218,52 +247,14 @@ export const InventoryEditPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Pricing */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pricing Information</CardTitle>
-              <CardDescription>Cost and selling price details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="costPrice">Cost Price</Label>
-                <NumericInput
-                  id="costPrice"
-                  value={costPrice}
-                  onValueChange={(values) => {
-                    setCostPrice(values.value || '')
-                  }}
-                  placeholder="0.00"
-                  prefix="₦ "
-                  decimalScale={2}
-                  fixedDecimalScale={false}
-                  allowNegative={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Purchase price per unit
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sellingPrice">Selling Price</Label>
-                <NumericInput
-                  id="sellingPrice"
-                  value={sellingPrice}
-                  onValueChange={(values) => {
-                    setSellingPrice(values.value || '')
-                  }}
-                  placeholder="0.00"
-                  prefix="₦ "
-                  decimalScale={2}
-                  fixedDecimalScale={false}
-                  allowNegative={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Retail price per unit
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Pricing - Unit Based */}
+          <InventoryUnitPricing
+            product={currentProduct}
+            costPrice={costPrice}
+            onCostPriceChange={setCostPrice}
+            unitPrices={unitPrices}
+            onUnitPricesChange={setUnitPrices}
+          />
 
           {/* Location */}
           <Card>

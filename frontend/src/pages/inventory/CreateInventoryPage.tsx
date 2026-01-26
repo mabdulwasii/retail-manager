@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ShopSelector } from '@/components/ui/shop-selector'
 import { useShopContext } from '@/context/ShopContext'
+import { InventoryUnitPricing, UnitPrice } from '@/components/inventory/InventoryUnitPricing'
 
 export const CreateInventoryPage: React.FC = () => {
   const navigate = useNavigate()
@@ -45,11 +46,11 @@ export const CreateInventoryPage: React.FC = () => {
     maximumStock: '',
     reorderPoint: '0',
     costPrice: '',
-    sellingPrice: '',
     location: '',
     expiryDate: ''
   })
 
+  const [unitPrices, setUnitPrices] = useState<UnitPrice[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [productSearch, setProductSearch] = useState('')
 
@@ -130,15 +131,18 @@ export const CreateInventoryPage: React.FC = () => {
       }
     }
 
-    if (!formData.sellingPrice || formData.sellingPrice.trim() === '') {
-      newErrors.sellingPrice = 'Selling price is required'
-    } else {
-      const sellingPrice = parseFloat(formData.sellingPrice)
-      const costPrice = parseFloat(formData.costPrice)
-      if (isNaN(sellingPrice) || sellingPrice < 0) {
-        newErrors.sellingPrice = 'Selling price must be a non-negative number'
-      } else if (!isNaN(costPrice) && sellingPrice < costPrice) {
-        newErrors.sellingPrice = 'Selling price should not be less than cost price'
+    // Validate unit prices if product has unit definitions
+    if (selectedProduct?.unitDefinitions && selectedProduct.unitDefinitions.length > 0) {
+      const baseUnit = selectedProduct.unitDefinitions.find(u => u.isBaseUnit)
+      if (baseUnit) {
+        const baseUnitPrice = unitPrices.find(up => up.unitType === baseUnit.unitType)
+        if (!baseUnitPrice || baseUnitPrice.sellingPrice <= 0) {
+          newErrors.unitPrices = `Base unit (${baseUnit.unitLabel}) selling price is required`
+        }
+      }
+
+      if (unitPrices.length === 0) {
+        newErrors.unitPrices = 'At least one selling price must be set'
       }
     }
 
@@ -168,13 +172,27 @@ export const CreateInventoryPage: React.FC = () => {
       return
     }
 
+    // For products with unit definitions, use first unit price as base selling price
+    // For backward compatibility
+    let baseSellingPrice = 0
+    if (unitPrices.length > 0) {
+      const baseUnit = selectedProduct?.unitDefinitions?.find(u => u.isBaseUnit)
+      const baseUnitPrice = unitPrices.find(up => up.unitType === baseUnit?.unitType)
+      baseSellingPrice = baseUnitPrice?.sellingPrice || unitPrices[0].sellingPrice
+    }
+
     const request: CreateInventoryRequest = {
       productId: formData.productId,
       currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       costPrice: parseFloat(formData.costPrice),
-      sellingPrice: parseFloat(formData.sellingPrice),
+      sellingPrice: baseSellingPrice,
+      baseUnit: selectedProduct?.unitDefinitions?.find(u => u.isBaseUnit)?.unitType || 'piece',
+      unitPrices: unitPrices.map(up => ({
+        unitType: up.unitType,
+        sellingPrice: up.sellingPrice,
+      })),
       ...(formData.maximumStock && {
         maximumStock: parseInt(formData.maximumStock, 10),
       }),
@@ -402,58 +420,18 @@ export const CreateInventoryPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Pricing */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="costPrice">
-                  Cost Price <span className="text-red-500">*</span>
-                </Label>
-                <NumericInput
-                  id="costPrice"
-                  value={formData.costPrice}
-                  onValueChange={(values) => {
-                    handleInputChange("costPrice", values.value || "");
-                  }}
-                  placeholder="0.00"
-                  disabled={isLoading}
-                  prefix="₦ "
-                  decimalScale={2}
-                  fixedDecimalScale={false}
-                  allowNegative={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Purchase price per unit
-                </p>
-                {errors.costPrice && (
-                  <p className="text-sm text-red-500">{errors.costPrice}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sellingPrice">
-                  Selling Price <span className="text-red-500">*</span>
-                </Label>
-                <NumericInput
-                  id="sellingPrice"
-                  value={formData.sellingPrice}
-                  onValueChange={(values) => {
-                    handleInputChange("sellingPrice", values.value || "");
-                  }}
-                  placeholder="0.00"
-                  disabled={isLoading}
-                  prefix="₦ "
-                  decimalScale={2}
-                  fixedDecimalScale={false}
-                  allowNegative={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Retail price per unit
-                </p>
-                {errors.sellingPrice && (
-                  <p className="text-sm text-red-500">{errors.sellingPrice}</p>
-                )}
-              </div>
-            </div>
+            {/* Pricing - Unit Based */}
+            <InventoryUnitPricing
+              product={selectedProduct}
+              costPrice={formData.costPrice}
+              onCostPriceChange={(value) => handleInputChange('costPrice', value)}
+              unitPrices={unitPrices}
+              onUnitPricesChange={setUnitPrices}
+              errors={{
+                costPrice: errors.costPrice,
+                unitPrices: errors.unitPrices,
+              }}
+            />
 
             {/* Location */}
             <div className="space-y-2">
