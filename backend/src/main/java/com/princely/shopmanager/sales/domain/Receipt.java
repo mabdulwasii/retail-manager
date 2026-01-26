@@ -32,6 +32,9 @@ public class Receipt extends BaseEntity implements ShopAware {
     @JsonIgnoreProperties({"lineItems", "shop", "cashier", "hibernateLazyInitializer", "handler"})
     private SalesTransaction transaction;
 
+    @Column(name = "shop_id", nullable = false)
+    private String shopId;
+
     @Column(name = "issued_date", nullable = false)
     private LocalDateTime issuedDate;
 
@@ -114,13 +117,23 @@ public class Receipt extends BaseEntity implements ShopAware {
     }
 
     /**
-     * Returns the shop ID this receipt belongs to (via its sales transaction).
+     * Returns the shop ID this receipt belongs to.
      * Required by {@link ShopAware} interface for shop-level access control.
      *
-     * @return shop ID, or null if transaction is not loaded
+     * @return shop ID
      */
     @Override
     public String getShopId() {
-        return transaction != null ? transaction.getShopId() : null;
+        return shopId;
+    }
+
+    /**
+     * Sets the shop ID for this receipt.
+     * This is called by the service layer when creating receipts.
+     *
+     * @param shopId the shop ID
+     */
+    public void setShopId(String shopId) {
+        this.shopId = shopId;
     }
 }

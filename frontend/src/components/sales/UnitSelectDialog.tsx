@@ -12,7 +12,7 @@ import {
   ProductUnitDefinition,
   InventoryUnitPrice,
 } from "@/types/api";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Package } from "lucide-react";
 
 interface UnitSelectDialogProps {
@@ -36,6 +36,20 @@ export const UnitSelectDialog: React.FC<UnitSelectDialogProps> = ({
 }) => {
   const [selectedUnitType, setSelectedUnitType] = useState<string | undefined>();
   const [selectedUnitPrice, setSelectedUnitPrice] = useState<number>(0);
+
+  // Auto-select base unit when dialog opens
+  useEffect(() => {
+    if (isOpen && unitDefinitions.length > 0 && !selectedUnitType) {
+      const baseUnit = unitDefinitions.find(u => u.isBaseUnit);
+      if (baseUnit) {
+        const basePrice = unitPrices.find(p => p.unitType === baseUnit.unitType);
+        if (basePrice && basePrice.sellingPrice > 0) {
+          setSelectedUnitType(baseUnit.unitType);
+          setSelectedUnitPrice(basePrice.sellingPrice);
+        }
+      }
+    }
+  }, [isOpen, unitDefinitions, unitPrices, selectedUnitType]);
 
   const handleUnitChange = (unitType: string, unitPrice: number) => {
     setSelectedUnitType(unitType);

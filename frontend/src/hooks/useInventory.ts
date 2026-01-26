@@ -77,6 +77,11 @@ export interface CreateInventoryRequest {
   reorderPoint: number
   costPrice: number
   sellingPrice: number
+  baseUnit?: string | undefined
+  unitPrices?: Array<{
+    unitType: string
+    sellingPrice: number
+  }> | undefined
   location?: string | undefined
   batchNumber?: string | undefined
   expiryDate?: string | undefined
