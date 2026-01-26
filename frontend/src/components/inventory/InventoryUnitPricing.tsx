@@ -16,9 +16,19 @@ interface InventoryUnitPricingProps {
   onCostPriceChange: (value: string) => void;
   unitPrices: UnitPrice[];
   onUnitPricesChange: (unitPrices: UnitPrice[]) => void;
+  // Purchase unit fields
+  purchaseUnit?: string;
+  onPurchaseUnitChange?: (unit: string) => void;
+  purchaseQuantity?: string;
+  onPurchaseQuantityChange?: (quantity: string) => void;
+  purchaseUnitCost?: string;
+  onPurchaseUnitCostChange?: (cost: string) => void;
   errors?: {
     costPrice?: string;
     unitPrices?: string;
+    purchaseUnit?: string;
+    purchaseQuantity?: string;
+    purchaseUnitCost?: string;
   };
 }
 
@@ -28,6 +38,12 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
   onCostPriceChange,
   unitPrices,
   onUnitPricesChange,
+  purchaseUnit,
+  onPurchaseUnitChange,
+  purchaseQuantity,
+  onPurchaseQuantityChange,
+  purchaseUnitCost,
+  onPurchaseUnitCostChange,
   errors,
 }) => {
   const [localPrices, setLocalPrices] = useState<Record<string, string>>({});
@@ -137,31 +153,101 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Cost Price - batch level */}
-        <div className="space-y-2">
-          <Label htmlFor="costPrice">
-            Cost Price (Base Unit) <span className="text-red-500">*</span>
-          </Label>
-          <NumericInput
-            id="costPrice"
-            value={costPrice}
-            onValueChange={(values) => onCostPriceChange(values.value || '')}
-            placeholder="0.00"
-            prefix="₦ "
-            decimalScale={2}
-            fixedDecimalScale={false}
-            allowNegative={false}
-          />
-          <p className="text-xs text-muted-foreground">
-            Purchase price per base unit ({product.unitDefinitions.find(u => u.isBaseUnit)?.unitLabel || 'piece'})
-          </p>
-          {errors?.costPrice && (
-            <p className="text-sm text-red-500 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {errors.costPrice}
-            </p>
+        {/* Purchase Unit Selection */}
+        <div className="space-y-4 pb-4 border-b">
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-400">
+            <Package className="h-4 w-4" />
+            <span>Purchase Information</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+            {/* Purchase Unit Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="purchaseUnit">
+                Purchase Unit <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="purchaseUnit"
+                value={purchaseUnit || ''}
+                onChange={(e) => onPurchaseUnitChange?.(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select unit...</option>
+                {sortedUnits.map((unit) => (
+                  <option key={unit.id} value={unit.unitType}>
+                    {unit.unitLabel} (×{unit.conversionFactor})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Unit you buy in (pack, carton, etc.)
+              </p>
+            </div>
+
+            {/* Purchase Quantity */}
+            <div className="space-y-2">
+              <Label htmlFor="purchaseQuantity">
+                Quantity Purchased
+              </Label>
+              <NumericInput
+                id="purchaseQuantity"
+                value={purchaseQuantity || ''}
+                onValueChange={(values) => onPurchaseQuantityChange?.(values.value || '')}
+                placeholder="0"
+                decimalScale={0}
+                allowNegative={false}
+              />
+              <p className="text-xs text-muted-foreground">
+                How many units purchased
+              </p>
+            </div>
+
+            {/* Purchase Unit Cost */}
+            <div className="space-y-2">
+              <Label htmlFor="purchaseUnitCost">
+                Cost per Unit <span className="text-red-500">*</span>
+              </Label>
+              <NumericInput
+                id="purchaseUnitCost"
+                value={purchaseUnitCost || ''}
+                onValueChange={(values) => onPurchaseUnitCostChange?.(values.value || '')}
+                placeholder="0.00"
+                prefix="₦ "
+                decimalScale={2}
+                fixedDecimalScale={false}
+                allowNegative={false}
+              />
+              <p className="text-xs text-muted-foreground">
+                Price per {purchaseUnit ? sortedUnits.find(u => u.unitType === purchaseUnit)?.unitLabel : 'unit'}
+              </p>
+              {errors?.purchaseUnitCost && (
+                <p className="text-sm text-red-500 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.purchaseUnitCost}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Auto-calculated base cost */}
+          {purchaseUnit && purchaseUnitCost && (
+            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md p-3 ml-6">
+              <p className="text-sm text-blue-700 dark:text-blue-400">
+                <strong>Cost per base unit:</strong> {(() => {
+                  const selectedUnit = sortedUnits.find(u => u.unitType === purchaseUnit);
+                  if (selectedUnit && parseFloat(purchaseUnitCost) > 0) {
+                    const baseUnitCost = parseFloat(purchaseUnitCost) / selectedUnit.conversionFactor;
+                    return `₦${baseUnitCost.toFixed(2)} per ${product.unitDefinitions.find(u => u.isBaseUnit)?.unitLabel || 'piece'}`;
+                  }
+                  return 'N/A';
+                })()}
+              </p>
+            </div>
           )}
         </div>
+
+        {/* Hidden cost price field for backward compatibility */}
+        <input type="hidden" value={costPrice} />
 
         {/* Unit-specific selling prices */}
         <div className="space-y-4">

@@ -38,7 +38,7 @@ public class SalesLineItemBuilder {
 
     /**
      * Builds a single line item from an inventory allocation with multi-unit support.
-     * Gets selling price from first allocated inventory batch or uses request price.
+     * Gets selling price and cost price from first allocated inventory batch or uses request price.
      * Includes unit tracking information for multi-unit pricing.
      */
     private LineItem buildLineItem(InventoryAllocationService.InventoryAllocation allocation) {
@@ -46,6 +46,11 @@ public class SalesLineItemBuilder {
         BigDecimal sellingPrice = allocation.inventories.isEmpty() ?
             allocation.request.getUnitPrice() :
             allocation.inventories.get(0).getSellingPrice();
+
+        // Get cost price from first allocated inventory batch for profit calculation
+        BigDecimal costPrice = allocation.inventories.isEmpty() ?
+            null :
+            allocation.inventories.get(0).getCostPrice();
 
         LineItem lineItem = LineItem.builder()
             .product(allocation.product)
@@ -60,6 +65,7 @@ public class SalesLineItemBuilder {
             .baseUnitQuantity(allocation.baseUnitQuantity)
             .unitPrice(allocation.request.getUnitPrice() != null ?
                 allocation.request.getUnitPrice() : sellingPrice)
+            .costPrice(costPrice)  // Store for profit calculation
             .discountAmount(allocation.request.getDiscount() != null ?
                 allocation.request.getDiscount() : BigDecimal.ZERO)
             .build();

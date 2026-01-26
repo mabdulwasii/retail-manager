@@ -71,6 +71,12 @@ public class LineItem extends BaseEntity {
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    /**
+     * Cost price per unit at the time of sale (for profit calculation)
+     */
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
     @Builder.Default
     @Column(name = "discount_percentage", precision = 5, scale = 2)
     private BigDecimal discountPercentage = BigDecimal.ZERO;

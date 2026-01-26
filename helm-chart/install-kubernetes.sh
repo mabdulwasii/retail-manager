@@ -179,7 +179,13 @@ if helm list -n "${NAMESPACE}" | grep -q "${RELEASE_NAME}"; then
     print_info "Helm release '${RELEASE_NAME}' already exists. Upgrading..."
     HELM_CMD=$(echo "$HELM_CMD" | sed 's/install/upgrade/')
     eval "$HELM_CMD"
-    print_success "Helm release upgraded"
+
+    # Force pod restart to pull latest images and apply configuration changes
+    print_info "Restarting pods to apply changes..."
+    kubectl rollout restart deployment/${RELEASE_NAME}-backend -n "${NAMESPACE}" 2>/dev/null || true
+    kubectl rollout restart deployment/${RELEASE_NAME}-frontend -n "${NAMESPACE}" 2>/dev/null || true
+
+    print_success "Helm release upgraded and pods restarted"
 else
     print_info "Installing new Helm release..."
     print_info "This may take several minutes as Kubernetes pulls Docker images..."

@@ -6,7 +6,7 @@ metadata:
     {{- include "shop-manager.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.backend.replicaCount | default 1 }}
   {{- end }}
   selector:
     matchLabels:
@@ -89,8 +89,6 @@ spec:
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               value: "none"
             - name: SPRING_JPA_SHOW_SQL
-              value: "false"
-            - name: SPRING_FLYWAY_ENABLED
               value: "false"
             - name: SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION
               value: "true"

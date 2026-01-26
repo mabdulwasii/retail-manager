@@ -82,6 +82,9 @@ export interface CreateInventoryRequest {
     unitType: string
     sellingPrice: number
   }> | undefined
+  purchaseUnit?: string | undefined
+  purchaseQuantity?: number | undefined
+  purchaseUnitCost?: number | undefined
   location?: string | undefined
   batchNumber?: string | undefined
   expiryDate?: string | undefined
