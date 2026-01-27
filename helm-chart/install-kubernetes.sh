@@ -14,11 +14,19 @@ echo "==========================================================================
 echo ""
 
 # Configuration
-NAMESPACE="${NAMESPACE:-gomco}"
-RELEASE_NAME="${RELEASE_NAME:-retail}"
 VALUES_FILE="${VALUES_FILE:-values-template.yaml}"
 TIMEOUT="${TIMEOUT:-10m}"
 CHART_REPO="oci://registry-1.docker.io/princely/shop-manager"
+
+# Extract app name from values file (must be done early to set NAMESPACE and RELEASE_NAME)
+if [ -f "${VALUES_FILE}" ]; then
+    APP_NAME=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "appName:" | awk '{print $2}' | tr -d '"')
+fi
+
+# Use APP_NAME for both namespace and release name, fallback to "retail" if not set
+APP_NAME="${APP_NAME:-retail}"
+NAMESPACE="${NAMESPACE:-${APP_NAME}}"
+RELEASE_NAME="${RELEASE_NAME:-${APP_NAME}}"
 
 # Detect version from script directory name or use latest
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -159,6 +167,7 @@ fi
 # Step 7: Deploy Shop Manager with Helm
 echo "Step 7: Deploying Shop Manager with Helm..."
 print_info "Release name: ${RELEASE_NAME}"
+print_info "App name (from values): ${APP_NAME}"
 print_info "Namespace: ${NAMESPACE}"
 print_info "Values file: ${VALUES_FILE}"
 print_info "Chart repository: ${CHART_REPO}"
@@ -182,8 +191,8 @@ if helm list -n "${NAMESPACE}" | grep -q "${RELEASE_NAME}"; then
 
     # Force pod restart to pull latest images and apply configuration changes
     print_info "Restarting pods to apply changes..."
-    kubectl rollout restart deployment/${RELEASE_NAME}-backend -n "${NAMESPACE}" 2>/dev/null || true
-    kubectl rollout restart deployment/${RELEASE_NAME}-frontend -n "${NAMESPACE}" 2>/dev/null || true
+    kubectl rollout restart deployment/${APP_NAME}-backend -n "${NAMESPACE}" 2>/dev/null || true
+    kubectl rollout restart deployment/${APP_NAME}-frontend -n "${NAMESPACE}" 2>/dev/null || true
 
     print_success "Helm release upgraded and pods restarted"
 else
@@ -216,9 +225,8 @@ echo ""
 print_info "Your Shop Manager is now deployed!"
 echo ""
 
-# Get domain from values file
+# Get domain and test user settings from values file
 DOMAIN=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "domain:" | awk '{print $2}' | tr -d '"')
-APP_NAME=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "appName:" | awk '{print $2}' | tr -d '"')
 TEST_USERS_ENABLED=$(grep -A 5 "testUsers:" "${VALUES_FILE}" | grep "enabled:" | awk '{print $2}' | tr -d ' ')
 
 echo "Access URLs:"
