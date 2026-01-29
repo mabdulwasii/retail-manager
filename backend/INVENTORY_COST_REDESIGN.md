@@ -142,9 +142,9 @@ Results:
    - `convertQuantity()` - Unit conversion logic
    - `convertToBaseUnits()` - Convert to base units (pieces)
 
-## Phase 2: Remaining Work
+## Phase 2: Implementation Progress
 
-### 2.1 InventoryService.java (~15-20 changes)
+### 2.1 InventoryService.java ✅ COMPLETED
 
 #### Methods to Update:
 
@@ -260,9 +260,9 @@ private void updateUnitPrices(Inventory inventory, Map<String, BigDecimal> unitC
 }
 ```
 
-### 2.2 InventorySummaryDto.java
+### 2.2 Inventory Summary Calculations ✅ COMPLETED
 
-**Current Calculations (WRONG):**
+**Previous Calculations (WRONG):**
 ```java
 // Wrong - uses old cost structure
 itemTotalCost = currentStock × costPrice
