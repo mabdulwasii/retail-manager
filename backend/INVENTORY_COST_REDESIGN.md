@@ -282,11 +282,11 @@ itemProjectedSales = currentStockBase × avgSellingPrice
 itemProjectedProfit = itemProjectedSales - itemTotalCost
 ```
 
-### 2.3 Sales Service - Profit Calculation
+### 2.3 Sales Profit Calculation with FEFO ✅ COMPLETED
 
-**File:** `SalesService.java` or similar
+**File:** `SalesLineItemBuilder.java`
 
-**Current Logic (WRONG):**
+**Previous Logic (WRONG):**
 ```java
 // Simplified - actual implementation varies
 profit = (sellingPrice - costPrice) × quantity
