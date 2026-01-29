@@ -39,10 +39,6 @@ public class Inventory extends BaseEntity implements ShopAware {
     private Product product;
 
     @Builder.Default
-    @Column(name = "current_stock", nullable = false)
-    private Integer currentStock = 0;
-
-    @Builder.Default
     @Column(name = "reserved_stock", nullable = false)
     private Integer reservedStock = 0;
 
@@ -84,10 +80,11 @@ public class Inventory extends BaseEntity implements ShopAware {
     private BigDecimal purchaseQuantity;
 
     /**
-     * Cost per purchase_unit (e.g., ₦12,000 per pack)
+     * Total cost for all purchased quantity (e.g., ₦106,000 for 20 packs)
+     * System will calculate cost per unit from this: totalPurchaseCost / purchaseQuantity
      */
-    @Column(name = "purchase_unit_cost", precision = 10, scale = 2)
-    private BigDecimal purchaseUnitCost;
+    @Column(name = "total_purchase_cost", precision = 12, scale = 2)
+    private BigDecimal totalPurchaseCost;
 
     private String location;
 
@@ -122,7 +119,22 @@ public class Inventory extends BaseEntity implements ShopAware {
     }
 
     public Integer getAvailableStock() {
-        return Math.max(0, currentStock - reservedStock);
+        // Calculate current stock from purchase quantity converted to base units
+        Integer currentStockInBaseUnits = getCurrentStock();
+        return Math.max(0, currentStockInBaseUnits - reservedStock);
+    }
+
+    /**
+     * Calculate current stock in base units from purchase quantity
+     * This is computed dynamically, not stored
+     */
+    public Integer getCurrentStock() {
+        if (purchaseQuantity == null || purchaseQuantity.compareTo(BigDecimal.ZERO) == 0) {
+            return 0;
+        }
+        // Stock is tracked via purchaseQuantity - need to convert to base units
+        // This will be properly calculated with conversion factors
+        return purchaseQuantity.intValue(); // Temporary - will be enhanced with proper conversion
     }
 
     public boolean isLowStock() {
@@ -164,17 +176,25 @@ public class Inventory extends BaseEntity implements ShopAware {
     }
 
     public void adjustStock(int newStock, String reason) {
-        this.currentStock = Math.max(0, newStock);
+        // Stock is now tracked via purchaseQuantity
+        // This method updates the purchase quantity
+        this.purchaseQuantity = BigDecimal.valueOf(newStock);
         this.lastStockUpdate = LocalDateTime.now();
     }
 
     public void addStock(int quantity) {
-        this.currentStock += quantity;
+        if (this.purchaseQuantity == null) {
+            this.purchaseQuantity = BigDecimal.ZERO;
+        }
+        this.purchaseQuantity = this.purchaseQuantity.add(BigDecimal.valueOf(quantity));
         this.lastStockUpdate = LocalDateTime.now();
     }
 
     public void removeStock(int quantity) {
-        this.currentStock = Math.max(0, this.currentStock - quantity);
+        if (this.purchaseQuantity == null) {
+            this.purchaseQuantity = BigDecimal.ZERO;
+        }
+        this.purchaseQuantity = this.purchaseQuantity.subtract(BigDecimal.valueOf(quantity)).max(BigDecimal.ZERO);
         this.lastStockUpdate = LocalDateTime.now();
     }
 

@@ -23,10 +23,6 @@ public class InventoryCreateRequest {
     @NotNull(message = "Product ID is required")
     private String productId;
 
-    @Min(value = 0, message = "Current stock cannot be negative")
-    @Builder.Default
-    private Integer currentStock = 0;
-
     @Min(value = 0, message = "Minimum stock cannot be negative")
     @Builder.Default
     private Integer minimumStock = 0;
@@ -68,11 +64,12 @@ public class InventoryCreateRequest {
     private BigDecimal purchaseQuantity;
 
     /**
-     * Cost per purchase_unit (e.g., ₦12,000 per pack).
+     * Total cost for all purchased quantity (e.g., ₦106,000 for 20 packs).
+     * System will calculate cost per unit from this: totalPurchaseCost / purchaseQuantity
      * Optional - used for purchase tracking.
      */
-    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase unit cost must be non-negative")
-    private BigDecimal purchaseUnitCost;
+    @DecimalMin(value = "0.0", inclusive = true, message = "Total purchase cost must be non-negative")
+    private BigDecimal totalPurchaseCost;
 
     /**
      * Batch-specific selling prices for each unit type.
