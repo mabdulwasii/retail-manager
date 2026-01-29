@@ -454,13 +454,44 @@ If issues found:
 
 **Total: 8-12 hours**
 
-## Questions for Review
+## Design Decisions ✅
 
-1. Should we prompt user for conversion factor when purchase unit is missing, or require manual creation first?
-2. Should we apply default margin when auto-calculating selling prices from cost?
-3. How to handle partial FEFO allocations (e.g., need 25 packs but batch only has 20)?
-4. Should stock adjustments require re-entering total cost or just adjust quantity?
-5. For inventory summary, how to calculate average selling price when multiple units exist?
+### Q1: Missing Purchase Unit Handling
+**Decision:** Prompt user for conversion factor and auto-create ProductUnitDefinition
+- When user enters purchase unit not in ProductUnitDefinitions
+- System prompts: "Enter how many [base_unit] in 1 [purchase_unit]"
+- Creates ProductUnitDefinition automatically
+- Continues with inventory creation
+
+### Q2: Selling Price Auto-calculation
+**Decision:** NO auto-calculation - User must set selling price for each unit during inventory
+- Do NOT apply automatic margins
+- User explicitly sets selling price for each ProductUnit during inventory creation
+- System only calculates COST breakdown, not selling prices
+
+### Q3: Partial FEFO Allocations
+**Decision:** Chain multiple batches using FEFO priority
+- Example: Need 25 packs, Batch A has 20, Batch B has 15
+  1. Allocate 20 packs from Batch A (expires first)
+  2. Allocate 5 packs from Batch B (expires next)
+  3. Create sale line items with separate costs:
+     - Line 1: 20 packs @ Batch A cost
+     - Line 2: 5 packs @ Batch B cost
+- Each allocation tracks actual batch cost for accurate profit calculation
+
+### Q4: Stock Adjustments and Total Cost
+**Decision:** YES - Adjustments require re-entering total cost
+- When adjusting stock quantity, user must provide new total purchase cost
+- User can re-enter existing total cost if unchanged
+- System recalculates unit costs based on new quantity + new total cost
+- Ensures cost accuracy after manual adjustments
+
+### Q5: Average Selling Price in Summaries
+**Decision:** Remove average selling price calculation
+- No benefit to averaging across multiple units
+- If really necessary, use base unit price only
+- Simplifies summary calculations
+- Removes ambiguity in multi-unit pricing
 
 ## Next Steps
 

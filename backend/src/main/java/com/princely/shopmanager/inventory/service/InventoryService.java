@@ -3,8 +3,10 @@ package com.princely.shopmanager.inventory.service;
 import com.princely.shopmanager.auth.context.TenantContext;
 import com.princely.shopmanager.auth.security.ShopAccessValidator;
 import com.princely.shopmanager.core.domain.Product;
+import com.princely.shopmanager.core.domain.ProductUnitDefinition;
 import com.princely.shopmanager.core.domain.Shop;
 import com.princely.shopmanager.core.repository.ProductRepository;
+import com.princely.shopmanager.core.repository.ProductUnitDefinitionRepository;
 import com.princely.shopmanager.core.repository.ShopRepository;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.domain.InventoryHistory;
@@ -39,9 +41,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,6 +62,8 @@ public class InventoryService extends ShopAwareService {
     private final InventoryHistoryRepository historyRepository;
     private final InventoryUnitPriceRepository inventoryUnitPriceRepository;
     private final ProductRepository productRepository;
+    private final ProductUnitDefinitionRepository productUnitDefRepository;
+    private final InventoryCostCalculator costCalculator;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -68,6 +74,8 @@ public class InventoryService extends ShopAwareService {
             InventoryHistoryRepository historyRepository,
             InventoryUnitPriceRepository inventoryUnitPriceRepository,
             ProductRepository productRepository,
+            ProductUnitDefinitionRepository productUnitDefRepository,
+            InventoryCostCalculator costCalculator,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher) {
         super(shopAccessValidator, shopRepository);
@@ -75,6 +83,8 @@ public class InventoryService extends ShopAwareService {
         this.historyRepository = historyRepository;
         this.inventoryUnitPriceRepository = inventoryUnitPriceRepository;
         this.productRepository = productRepository;
+        this.productUnitDefRepository = productUnitDefRepository;
+        this.costCalculator = costCalculator;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
     }
@@ -110,7 +120,6 @@ public class InventoryService extends ShopAwareService {
         Inventory inventory = Inventory.builder()
             .shop(shop)
             .product(product)
-            .currentStock(request.getCurrentStock())
             .minimumStock(request.getMinimumStock())
             .maximumStock(request.getMaximumStock())
             .reorderPoint(request.getReorderPoint())
@@ -119,7 +128,7 @@ public class InventoryService extends ShopAwareService {
             .baseUnit(request.getBaseUnit() != null ? request.getBaseUnit() : "piece")
             .purchaseUnit(request.getPurchaseUnit())
             .purchaseQuantity(request.getPurchaseQuantity())
-            .purchaseUnitCost(request.getPurchaseUnitCost())
+            .totalPurchaseCost(request.getTotalPurchaseCost())
             .location(request.getLocation())
             .batchNumber(batchNumber)
             .expiryDate(request.getExpiryDate())
@@ -128,17 +137,35 @@ public class InventoryService extends ShopAwareService {
 
         inventory = inventoryRepository.save(inventory);
 
-        // Handle unit prices if provided
-        if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+        // Auto-create purchase unit if missing and calculate unit costs
+        if (request.getPurchaseUnit() != null && request.getTotalPurchaseCost() != null &&
+            request.getPurchaseQuantity() != null) {
+
+            ensurePurchaseUnitExists(product, request.getPurchaseUnit());
+
+            // Calculate costs for all unit types
+            List<ProductUnitDefinition> unitDefs = productUnitDefRepository.findByProductId(product.getId());
+            Map<String, BigDecimal> unitCosts = costCalculator.calculateCostsForAllUnits(
+                request.getTotalPurchaseCost(),
+                request.getPurchaseQuantity(),
+                request.getPurchaseUnit(),
+                unitDefs
+            );
+
+            // Update unit prices with calculated costs
+            updateUnitPrices(inventory, unitCosts, request.getUnitPrices());
+        } else if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+            // Handle unit prices if provided without total cost calculation
             handleUnitPrices(inventory, request.getUnitPrices());
         }
 
+        Integer initialStock = inventory.getCurrentStock();
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.STOCK_IN,
-            request.getCurrentStock(), 0, request.getCurrentStock(),
+            initialStock, 0, initialStock,
             null, InventoryHistory.ReferenceType.PROCUREMENT, "Initial stock");
 
         auditService.logEntityCreation(ENTITY_TYPE_INVENTORY, inventory.getId(),
-            "Created inventory for product: " + product.getName() + " with stock: " + request.getCurrentStock());
+            "Created inventory for product: " + product.getName() + " with stock: " + initialStock);
 
         return mapToResponse(inventory);
     }
@@ -164,6 +191,31 @@ public class InventoryService extends ShopAwareService {
         int quantityChange = newStock - previousStock;
 
         inventory.adjustStock(newStock, request.getReason());
+
+        // Update total purchase cost and recalculate unit costs
+        if (request.getTotalPurchaseCost() != null && inventory.getPurchaseUnit() != null) {
+            inventory.setTotalPurchaseCost(request.getTotalPurchaseCost());
+
+            // Recalculate purchase quantity based on new stock
+            if (inventory.getPurchaseQuantity() != null) {
+                BigDecimal newPurchaseQuantity = BigDecimal.valueOf(newStock);
+                inventory.setPurchaseQuantity(newPurchaseQuantity);
+
+                // Recalculate unit costs
+                List<ProductUnitDefinition> unitDefs = productUnitDefRepository
+                    .findByProductId(inventory.getProduct().getId());
+                Map<String, BigDecimal> unitCosts = costCalculator.calculateCostsForAllUnits(
+                    request.getTotalPurchaseCost(),
+                    newPurchaseQuantity,
+                    inventory.getPurchaseUnit(),
+                    unitDefs
+                );
+
+                // Update unit prices with new costs
+                updateUnitPrices(inventory, unitCosts, null);
+            }
+        }
+
         inventory = inventoryRepository.save(inventory);
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.ADJUSTMENT,
@@ -380,14 +432,26 @@ public class InventoryService extends ShopAwareService {
             changes.append(String.format("Purchase quantity: %s → %s; ", oldValue, request.getPurchaseQuantity()));
         }
 
-        if (request.getPurchaseUnitCost() != null) {
-            BigDecimal oldValue = inventory.getPurchaseUnitCost();
-            inventory.setPurchaseUnitCost(request.getPurchaseUnitCost());
-            changes.append(String.format("Purchase unit cost: %s → %s; ", oldValue, request.getPurchaseUnitCost()));
-        }
+        if (request.getTotalPurchaseCost() != null) {
+            BigDecimal oldValue = inventory.getTotalPurchaseCost();
+            inventory.setTotalPurchaseCost(request.getTotalPurchaseCost());
+            changes.append(String.format("Total purchase cost: %s → %s; ", oldValue, request.getTotalPurchaseCost()));
 
-        // Handle unit prices if provided
-        if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+            // Recalculate unit costs if we have purchase info
+            if (inventory.getPurchaseUnit() != null && inventory.getPurchaseQuantity() != null) {
+                List<ProductUnitDefinition> unitDefs = productUnitDefRepository
+                    .findByProductId(inventory.getProduct().getId());
+                Map<String, BigDecimal> unitCosts = costCalculator.calculateCostsForAllUnits(
+                    request.getTotalPurchaseCost(),
+                    inventory.getPurchaseQuantity(),
+                    inventory.getPurchaseUnit(),
+                    unitDefs
+                );
+                updateUnitPrices(inventory, unitCosts, request.getUnitPrices());
+                changes.append("Unit costs recalculated. ");
+            }
+        } else if (request.getUnitPrices() != null && !request.getUnitPrices().isEmpty()) {
+            // Handle unit prices if provided without cost recalculation
             handleUnitPrices(inventory, request.getUnitPrices());
             changes.append("Unit prices updated. ");
         }
@@ -672,14 +736,38 @@ public class InventoryService extends ShopAwareService {
     }
 
     private InventoryResponse mapToResponse(Inventory inventory) {
-        // Calculate financial projections
+        // Calculate purchase unit cost and stock in purchase units
+        Integer currentStockInPurchaseUnit = null;
+        BigDecimal purchaseUnitCost = null;
+
+        if (inventory.getTotalPurchaseCost() != null &&
+            inventory.getPurchaseQuantity() != null &&
+            inventory.getPurchaseQuantity().compareTo(BigDecimal.ZERO) > 0) {
+
+            purchaseUnitCost = inventory.getTotalPurchaseCost()
+                .divide(inventory.getPurchaseQuantity(), 2, RoundingMode.HALF_UP);
+
+            currentStockInPurchaseUnit = inventory.getPurchaseQuantity().intValue();
+        }
+
+        // Calculate financial projections using totalPurchaseCost if available
         BigDecimal itemTotalCost = null;
         BigDecimal itemProjectedSales = null;
         BigDecimal itemProjectedProfit = null;
 
-        if (inventory.getCostPrice() != null && inventory.getSellingPrice() != null) {
+        if (inventory.getTotalPurchaseCost() != null) {
+            // Use actual total purchase cost
+            itemTotalCost = inventory.getTotalPurchaseCost();
+        } else if (inventory.getCostPrice() != null) {
+            // Fallback to cost price calculation
             itemTotalCost = inventory.getCostPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+        }
+
+        if (inventory.getSellingPrice() != null) {
             itemProjectedSales = inventory.getSellingPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+        }
+
+        if (itemTotalCost != null && itemProjectedSales != null) {
             itemProjectedProfit = itemProjectedSales.subtract(itemTotalCost);
         }
 
@@ -707,6 +795,7 @@ public class InventoryService extends ShopAwareService {
             .productName(inventory.getProduct().getName())
             .productSku(inventory.getProduct().getSku())
             .currentStock(inventory.getCurrentStock())
+            .currentStockInPurchaseUnit(currentStockInPurchaseUnit)
             .reservedStock(inventory.getReservedStock())
             .availableStock(inventory.getAvailableStock())
             .minimumStock(inventory.getMinimumStock())
@@ -717,7 +806,8 @@ public class InventoryService extends ShopAwareService {
             .baseUnit(inventory.getBaseUnit())
             .purchaseUnit(inventory.getPurchaseUnit())
             .purchaseQuantity(inventory.getPurchaseQuantity())
-            .purchaseUnitCost(inventory.getPurchaseUnitCost())
+            .totalPurchaseCost(inventory.getTotalPurchaseCost())
+            .purchaseUnitCost(purchaseUnitCost)
             .unitPrices(unitPriceResponses)
             .unitDefinitions(unitDefResponses)
             .location(inventory.getLocation())
@@ -750,6 +840,76 @@ public class InventoryService extends ShopAwareService {
         long countToday = inventoryRepository.countByProductIdAndCreatedAtAfter(product.getId(), startOfDay);
 
         return String.format("BATCH-%s-%s-%03d", shopCode, dateStr, countToday + 1);
+    }
+
+    /**
+     * Ensures that the purchase unit exists in ProductUnitDefinitions.
+     * If not found, throws exception requiring manual creation.
+     *
+     * @param product Product entity
+     * @param purchaseUnit Purchase unit type
+     * @throws IllegalArgumentException if purchase unit doesn't exist
+     */
+    private void ensurePurchaseUnitExists(Product product, String purchaseUnit) {
+        List<ProductUnitDefinition> existing = productUnitDefRepository
+            .findByProductId(product.getId());
+
+        boolean exists = existing.stream()
+            .anyMatch(ud -> ud.getUnitType().equalsIgnoreCase(purchaseUnit));
+
+        if (!exists) {
+            throw new IllegalArgumentException(
+                String.format("Purchase unit '%s' not found for product '%s'. " +
+                    "Please create unit definition first with conversion factor.",
+                    purchaseUnit, product.getName())
+            );
+        }
+
+        log.debug("Purchase unit '{}' exists for product '{}'", purchaseUnit, product.getName());
+    }
+
+    /**
+     * Updates or creates unit prices for an inventory batch based on calculated costs.
+     * Merges calculated costs with user-provided selling prices.
+     *
+     * @param inventory Inventory entity
+     * @param unitCosts Calculated cost prices for each unit type
+     * @param userProvidedPrices Optional user-provided unit price requests
+     */
+    private void updateUnitPrices(Inventory inventory, Map<String, BigDecimal> unitCosts,
+                                   List<InventoryUnitPriceRequest> userProvidedPrices) {
+        // Clear existing unit prices
+        inventory.getUnitPrices().clear();
+
+        // Create map of user-provided selling prices
+        Map<String, BigDecimal> sellingPrices = new HashMap<>();
+        if (userProvidedPrices != null) {
+            sellingPrices = userProvidedPrices.stream()
+                .collect(Collectors.toMap(
+                    InventoryUnitPriceRequest::getUnitType,
+                    InventoryUnitPriceRequest::getSellingPrice,
+                    (v1, v2) -> v2 // Keep last value if duplicate
+                ));
+        }
+
+        // Create new unit prices from calculated costs
+        for (Map.Entry<String, BigDecimal> entry : unitCosts.entrySet()) {
+            String unitType = entry.getKey();
+            BigDecimal costPrice = entry.getValue();
+            BigDecimal sellingPrice = sellingPrices.get(unitType);
+
+            InventoryUnitPrice unitPrice = InventoryUnitPrice.builder()
+                .inventory(inventory)
+                .unitType(unitType)
+                .costPrice(costPrice)
+                .sellingPrice(sellingPrice) // May be null if not provided
+                .build();
+
+            inventory.getUnitPrices().add(unitPrice);
+        }
+
+        log.debug("Updated unit prices for inventory: {}, count: {}",
+            inventory.getId(), unitCosts.size());
     }
 
     /**
@@ -791,6 +951,7 @@ public class InventoryService extends ShopAwareService {
             .productName(unitPrice.getInventory().getProduct().getName())
             .batchNumber(unitPrice.getInventory().getBatchNumber())
             .unitType(unitPrice.getUnitType())
+            .costPrice(unitPrice.getCostPrice())
             .sellingPrice(unitPrice.getSellingPrice())
             .createdAt(unitPrice.getCreatedAt())
             .updatedAt(unitPrice.getUpdatedAt())
