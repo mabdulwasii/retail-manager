@@ -653,9 +653,16 @@ public class InventoryService extends ShopAwareService {
             InventorySpecifications.forShop(shopId)
         );
 
+        // Use totalPurchaseCost if available, fallback to costPrice calculation
         BigDecimal totalValue = allInventory.stream()
-            .filter(inv -> inv.getCostPrice() != null)
-            .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .map(inv -> {
+                if (inv.getTotalPurchaseCost() != null) {
+                    return inv.getTotalPurchaseCost();
+                } else if (inv.getCostPrice() != null) {
+                    return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                }
+                return BigDecimal.ZERO;
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         int lowStockCount = (int) allInventory.stream()
@@ -683,8 +690,14 @@ public class InventoryService extends ShopAwareService {
                 List<Inventory> categoryItems = entry.getValue();
 
                 BigDecimal categoryValue = categoryItems.stream()
-                    .filter(inv -> inv.getCostPrice() != null)
-                    .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+                    .map(inv -> {
+                        if (inv.getTotalPurchaseCost() != null) {
+                            return inv.getTotalPurchaseCost();
+                        } else if (inv.getCostPrice() != null) {
+                            return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                        }
+                        return BigDecimal.ZERO;
+                    })
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 int categoryLowStockCount = (int) categoryItems.stream()
@@ -701,10 +714,16 @@ public class InventoryService extends ShopAwareService {
             .sorted((a, b) -> b.getItemCount().compareTo(a.getItemCount()))
             .toList();
 
-        // Calculate financial projections
+        // Calculate financial projections using totalPurchaseCost
         BigDecimal totalInventoryCost = allInventory.stream()
-            .filter(inv -> inv.getCostPrice() != null)
-            .map(inv -> inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .map(inv -> {
+                if (inv.getTotalPurchaseCost() != null) {
+                    return inv.getTotalPurchaseCost();
+                } else if (inv.getCostPrice() != null) {
+                    return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                }
+                return BigDecimal.ZERO;
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal projectedTotalSales = allInventory.stream()
@@ -717,7 +736,7 @@ public class InventoryService extends ShopAwareService {
         BigDecimal projectedProfitMargin = BigDecimal.ZERO;
         if (totalInventoryCost.compareTo(BigDecimal.ZERO) > 0) {
             projectedProfitMargin = projectedProfit
-                .divide(totalInventoryCost, 4, java.math.RoundingMode.HALF_UP)
+                .divide(totalInventoryCost, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         }
 
