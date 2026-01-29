@@ -70,6 +70,12 @@ class InventoryServiceTest {
     @Mock
     private com.princely.shopmanager.inventory.repository.InventoryUnitPriceRepository inventoryUnitPriceRepository;
 
+    @Mock
+    private com.princely.shopmanager.core.repository.ProductUnitDefinitionRepository productUnitDefRepository;
+
+    @Mock
+    private InventoryCostCalculator costCalculator;
+
     private InventoryService inventoryService;
 
     private Shop testShop;
@@ -92,7 +98,7 @@ class InventoryServiceTest {
         testInventory.setId("inventory-1");
         testInventory.setShop(testShop);
         testInventory.setProduct(testProduct);
-        testInventory.setCurrentStock(100);
+        testInventory.setPurchaseQuantity(BigDecimal.valueOf(100)); // Changed from setCurrentStock
         testInventory.setMinimumStock(10);
         testInventory.setMaximumStock(500);
         testInventory.setReorderPoint(25);
@@ -101,7 +107,7 @@ class InventoryServiceTest {
 
         createRequest = InventoryCreateRequest.builder()
             .productId("product-1")
-            .currentStock(100)
+            .purchaseQuantity(BigDecimal.valueOf(100))
             .minimumStock(10)
             .maximumStock(500)
             .reorderPoint(25)
@@ -130,6 +136,8 @@ class InventoryServiceTest {
             historyRepository,
             inventoryUnitPriceRepository,
             productRepository,
+            productUnitDefRepository,
+            costCalculator,
             auditService,
             eventPublisher
         );
@@ -366,7 +374,7 @@ class InventoryServiceTest {
     @Test
     void sellStock_WithInsufficientStock_ShouldThrowException() {
         // Arrange
-        testInventory.setCurrentStock(10);
+        testInventory.setPurchaseQuantity(BigDecimal.valueOf(10));
         testInventory.setReservedStock(5);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
@@ -546,7 +554,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithZeroStock_ShouldDeleteSuccessfully() {
         // Arrange
-        testInventory.setCurrentStock(0);
+        testInventory.setPurchaseQuantity(BigDecimal.ZERO);
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
@@ -562,7 +570,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithActiveStock_ShouldThrowException() {
         // Arrange
-        testInventory.setCurrentStock(50);
+        testInventory.setPurchaseQuantity(BigDecimal.valueOf(50));
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
@@ -578,7 +586,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithReservedStock_ShouldThrowException() {
         // Arrange
-        testInventory.setCurrentStock(0);
+        testInventory.setPurchaseQuantity(BigDecimal.ZERO);
         testInventory.setReservedStock(10);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);

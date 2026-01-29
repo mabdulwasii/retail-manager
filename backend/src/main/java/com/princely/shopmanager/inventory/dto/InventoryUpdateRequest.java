@@ -70,9 +70,9 @@ public class InventoryUpdateRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Purchase quantity must be positive")
     private BigDecimal purchaseQuantity;
 
-    @Schema(description = "Cost per purchase_unit", example = "12000.00")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase unit cost must be non-negative")
-    private BigDecimal purchaseUnitCost;
+    @Schema(description = "Total cost for all purchased quantity", example = "106000.00")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Total purchase cost must be non-negative")
+    private BigDecimal totalPurchaseCost;
 
     @Schema(description = "Batch-specific selling prices for each unit type")
     @Builder.Default

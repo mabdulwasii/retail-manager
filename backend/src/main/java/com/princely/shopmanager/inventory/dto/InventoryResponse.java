@@ -25,7 +25,8 @@ public class InventoryResponse {
     private String productId;
     private String productName;
     private String productSku;
-    private Integer currentStock;
+    private Integer currentStock;              // Computed from purchaseQuantity (in base units)
+    private Integer currentStockInPurchaseUnit; // Stock in purchase units (for display)
     private Integer reservedStock;
     private Integer availableStock;
     private Integer minimumStock;
@@ -51,7 +52,8 @@ public class InventoryResponse {
     private String baseUnit;                   // Smallest sellable unit (piece, kg, liter)
     private String purchaseUnit;               // Unit in which batch was purchased
     private BigDecimal purchaseQuantity;       // Quantity purchased in purchase_unit
-    private BigDecimal purchaseUnitCost;       // Cost per purchase_unit
+    private BigDecimal totalPurchaseCost;      // Total cost for all purchased quantity
+    private BigDecimal purchaseUnitCost;       // Calculated: totalPurchaseCost / purchaseQuantity
 
     // Batch-specific unit prices
     @Builder.Default

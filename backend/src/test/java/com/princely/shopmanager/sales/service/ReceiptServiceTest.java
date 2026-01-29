@@ -125,6 +125,7 @@ class ReceiptServiceTest {
         testReceipt = new Receipt();
         testReceipt.setId("receipt-1");
         testReceipt.setTransaction(testTransaction);
+        testReceipt.setShopId("shop-1");
         testReceipt.setReceiptNumber("RCP-TXN001-20240115103000");
         testReceipt.setFormat(Receipt.ReceiptFormat.TEXT);
         testReceipt.setStatus(Receipt.ReceiptStatus.GENERATED);

@@ -138,7 +138,7 @@ class MultiUnitSalesFlowIT {
         inventory = Inventory.builder()
             .product(product)
             .shop(shop)
-            .currentStock(120)
+            .purchaseQuantity(BigDecimal.valueOf(120))
             .reservedStock(0)
             .minimumStock(10)
             .reorderPoint(20)

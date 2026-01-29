@@ -49,18 +49,27 @@ public class InventoryUnitPrice extends BaseEntity {
     private String unitType;
 
     /**
+     * Cost price for this unit in this specific batch (calculated from total purchase cost)
+     */
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
+    /**
      * Selling price for this unit in this specific batch
      */
-    @Column(name = "selling_price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "selling_price", precision = 10, scale = 2)
     private BigDecimal sellingPrice;
 
     /**
-     * Validates that selling price is non-negative
+     * Validates that prices are non-negative
      */
     @PrePersist
     @PreUpdate
     private void validatePrice() {
-        if (sellingPrice.compareTo(BigDecimal.ZERO) < 0) {
+        if (costPrice != null && costPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException("Cost price cannot be negative");
+        }
+        if (sellingPrice != null && sellingPrice.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalStateException("Selling price cannot be negative");
         }
     }

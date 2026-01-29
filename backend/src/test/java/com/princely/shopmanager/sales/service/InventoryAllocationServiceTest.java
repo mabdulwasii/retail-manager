@@ -97,7 +97,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
             .shop(mockShop)
-            .currentStock(100)
+            .purchaseQuantity(BigDecimal.valueOf(100))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .expiryDate(LocalDate.now().plusMonths(6))
@@ -153,7 +153,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
             .shop(mockShop)
-            .currentStock(300)
+            .purchaseQuantity(BigDecimal.valueOf(300))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -198,7 +198,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
             .shop(mockShop)
-            .currentStock(50)
+            .purchaseQuantity(BigDecimal.valueOf(50))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -246,7 +246,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory = Inventory.builder()
             .id("inv1")
             .shop(mockShop)
-            .currentStock(50)
+            .purchaseQuantity(BigDecimal.valueOf(50))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -345,7 +345,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory1 = Inventory.builder()
             .id("inv1")
             .shop(mockShop)
-            .currentStock(100)
+            .purchaseQuantity(BigDecimal.valueOf(100))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -353,7 +353,7 @@ class InventoryAllocationServiceTest {
         Inventory mockInventory2 = Inventory.builder()
             .id("inv2")
             .shop(mockShop)
-            .currentStock(100)
+            .purchaseQuantity(BigDecimal.valueOf(100))
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();

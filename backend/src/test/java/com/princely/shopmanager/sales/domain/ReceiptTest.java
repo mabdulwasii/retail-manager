@@ -32,6 +32,7 @@ class ReceiptTest {
         receipt = Receipt.builder()
             .receiptNumber("RCT-001")
             .transaction(testTransaction)
+            .shopId("shop-1")
             .issuedDate(LocalDateTime.now())
             .generatedAt(LocalDateTime.now())
             .build();
@@ -211,6 +212,7 @@ class ReceiptTest {
     void getShopId_shouldReturnNullWhenTransactionIsNull() {
         // Given
         receipt.setTransaction(null);
+        receipt.setShopId(null); // Clear shopId to match transaction
 
         // When
         String shopId = receipt.getShopId();
@@ -229,6 +231,7 @@ class ReceiptTest {
             .shop(null)
             .build();
         receipt.setTransaction(transactionWithoutShop);
+        receipt.setShopId(null); // Clear shopId to match transaction
 
         // When
         String shopId = receipt.getShopId();

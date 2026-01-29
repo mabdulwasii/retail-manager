@@ -57,6 +57,12 @@ public class InventoryUnitPriceResponse {
     private BigDecimal conversionFactor;
 
     /**
+     * Cost price for this unit in this specific batch (calculated from total purchase cost).
+     * Example: ₦5,300 for a pack, ₦441.67 for a piece
+     */
+    private BigDecimal costPrice;
+
+    /**
      * Selling price for this unit in this specific batch.
      * Example: ₦12,000 for a pack, ₦1,050 for a piece
      */

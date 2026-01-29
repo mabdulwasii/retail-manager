@@ -56,6 +56,12 @@ class InventoryServiceSimpleTest {
     @Mock
     private com.princely.shopmanager.inventory.repository.InventoryUnitPriceRepository inventoryUnitPriceRepository;
 
+    @Mock
+    private com.princely.shopmanager.core.repository.ProductUnitDefinitionRepository productUnitDefRepository;
+
+    @Mock
+    private InventoryCostCalculator costCalculator;
+
     private InventoryService inventoryService;
 
     private Inventory testInventory;
@@ -75,7 +81,7 @@ class InventoryServiceSimpleTest {
         testInventory.setId("inventory-1");
         testInventory.setShop(testShop);
         testInventory.setProduct(testProduct);
-        testInventory.setCurrentStock(100);
+        testInventory.setPurchaseQuantity(BigDecimal.valueOf(100));
         testInventory.setMinimumStock(10);
         testInventory.setMaximumStock(500);
         testInventory.setReorderPoint(25);
@@ -100,6 +106,8 @@ class InventoryServiceSimpleTest {
             historyRepository,
             inventoryUnitPriceRepository,
             productRepository,
+            productUnitDefRepository,
+            costCalculator,
             auditService,
             eventPublisher
         );
