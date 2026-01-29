@@ -541,7 +541,7 @@ class ProductServiceTest {
             .id(id)
             .shop(testShop)
             .product(testProduct)
-            .currentStock(currentStock)
+            .purchaseQuantity(BigDecimal.valueOf(currentStock))
             .reservedStock(reservedStock)
             .minimumStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
