@@ -31,10 +31,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
         @Param("batchNumber") String batchNumber
     );
 
-    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.currentStock - i.reservedStock) <= i.minimumStock")
+    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.purchaseQuantity - i.reservedStock) <= i.minimumStock")
     List<Inventory> findLowStockItems(@Param("shopId") String shopId);
 
-    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.currentStock - i.reservedStock) <= 0")
+    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.purchaseQuantity - i.reservedStock) <= 0")
     List<Inventory> findOutOfStockItems(@Param("shopId") String shopId);
 
     @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND i.expiryDate BETWEEN :startDate AND :endDate")
@@ -66,13 +66,13 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
         @Param("maxPrice") BigDecimal maxPrice
     );
 
-    @Query("SELECT SUM(i.currentStock * i.costPrice) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
+    @Query("SELECT SUM(COALESCE(i.totalPurchaseCost, i.purchaseQuantity * i.costPrice)) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
     BigDecimal calculateTotalInventoryValue(@Param("shopId") String shopId);
 
     @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i WHERE i.shop.id = :shopId AND i.status = 'ACTIVE'")
     Long countActiveProducts(@Param("shopId") String shopId);
 
-    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.currentStock - i.reservedStock) >= :quantity AND i.status = 'ACTIVE' AND (i.expiryDate IS NULL OR i.expiryDate > CURRENT_DATE)")
+    @Query("SELECT i FROM Inventory i WHERE i.shop.id = :shopId AND (i.purchaseQuantity - i.reservedStock) >= :quantity AND i.status = 'ACTIVE' AND (i.expiryDate IS NULL OR i.expiryDate > CURRENT_DATE)")
     List<Inventory> findAvailableForSale(@Param("shopId") String shopId, @Param("quantity") Integer quantity);
 
     @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId")

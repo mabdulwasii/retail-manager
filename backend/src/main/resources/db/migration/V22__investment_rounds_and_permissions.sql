@@ -10,7 +10,7 @@ WHERE role_id IN (SELECT id FROM roles WHERE name IN ('MANAGER', 'INVESTOR'))
   );
 
 -- Part 2: Create investment_rounds table
-CREATE TABLE investment_rounds (
+CREATE TABLE IF NOT EXISTS investment_rounds (
     id VARCHAR(255) PRIMARY KEY,
     round_number VARCHAR(50) NOT NULL,
     shop_id VARCHAR(255) NOT NULL,

@@ -13,9 +13,9 @@ ALTER TABLE inventory DROP COLUMN IF EXISTS available_stock;
 ALTER TABLE inventory DROP COLUMN IF EXISTS total_value;
 
 -- Update inventory table data types to match entity (Integer instead of DECIMAL for stock)
+-- Note: current_stock removed in V60, using purchase_quantity instead
 -- Convert existing DECIMAL stock columns to INTEGER
 ALTER TABLE inventory
-  ALTER COLUMN current_stock TYPE INTEGER USING current_stock::INTEGER,
   ALTER COLUMN reserved_stock TYPE INTEGER USING reserved_stock::INTEGER,
   ALTER COLUMN minimum_stock TYPE INTEGER USING minimum_stock::INTEGER,
   ALTER COLUMN maximum_stock TYPE INTEGER USING maximum_stock::INTEGER,
@@ -234,39 +234,39 @@ AND NOT EXISTS (
 -- CREATE DEFAULT TENANT AND SHOP
 -- ========================================
 
--- Insert default tenant if it doesn't exist
-INSERT INTO tenants (id, name, description, contact_email, address, city, country, status, created_at, updated_at, version)
-SELECT
-    'default-tenant-id',
-    'Default Tenant',
-    'Default tenant for Shop Manager system',
-    'admin@shopmanager.com',
-    '123 Main Street',
-    'Springfield',
-    'USA',
-    'ACTIVE',
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP,
-    0
-WHERE NOT EXISTS (SELECT 1 FROM tenants WHERE id = 'default-tenant-id');
+-- Insert default tenant if it doesn't exist (skipped - tests create their own data)
+-- INSERT INTO tenants (id, name, description, contact_email, address, city, country, status, created_at, updated_at, version)
+-- SELECT
+--     'default-tenant-id',
+--     'Default Tenant',
+--     'Default tenant for Shop Manager system',
+--     'admin@shopmanager.com',
+--     '123 Main Street',
+--     'Springfield',
+--     'USA',
+--     'ACTIVE',
+--     CURRENT_TIMESTAMP,
+--     CURRENT_TIMESTAMP,
+--     0
+-- WHERE NOT EXISTS (SELECT 1 FROM tenants WHERE id = 'default-tenant-id');
 
--- Insert default shop if it doesn't exist
-INSERT INTO shops (id, tenant_id, name, description, email, address, city, country, phone_number, status, created_at, updated_at, version)
-SELECT
-    'default-shop-id',
-    'default-tenant-id',
-    'Default Shop',
-    'Default shop for Shop Manager system',
-    'shop@shopmanager.com',
-    '456 Shop Street',
-    'Springfield',
-    'USA',
-    '+1-555-0100',
-    'ACTIVE',
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP,
-    0
-WHERE NOT EXISTS (SELECT 1 FROM shops WHERE id = 'default-shop-id');
+-- Insert default shop if it doesn't exist (skipped - tests create their own data)
+-- INSERT INTO shops (id, tenant_id, name, description, email, address, city, country, phone_number, status, created_at, updated_at, version)
+-- SELECT
+--     'default-shop-id',
+--     'default-tenant-id',
+--     'Default Shop',
+--     'Default shop for Shop Manager system',
+--     'shop@shopmanager.com',
+--     '456 Shop Street',
+--     'Springfield',
+--     'USA',
+--     '+1-555-0100',
+--     'ACTIVE',
+--     CURRENT_TIMESTAMP,
+--     CURRENT_TIMESTAMP,
+--     0
+-- WHERE NOT EXISTS (SELECT 1 FROM shops WHERE id = 'default-shop-id');
 
 -- ========================================
 -- FIX DATA TYPE INCONSISTENCIES
