@@ -14,7 +14,7 @@ public class InventorySpecifications {
     public static Specification<Inventory> hasLowStock() {
         return (root, query, cb) ->
             cb.lessThanOrEqualTo(
-                cb.diff(root.<Integer>get("currentStock"), root.<Integer>get("reservedStock")),
+                cb.diff(root.<Integer>get("purchaseQuantity").as(Integer.class), root.<Integer>get("reservedStock")),
                 root.<Integer>get("minimumStock")
             );
     }
@@ -51,7 +51,7 @@ public class InventorySpecifications {
     public static Specification<Inventory> hasStockAvailable(int minimumQuantity) {
         return (root, query, cb) ->
             cb.greaterThanOrEqualTo(
-                cb.diff(root.<Integer>get("currentStock"), root.<Integer>get("reservedStock")),
+                cb.diff(root.<Integer>get("purchaseQuantity").as(Integer.class), root.<Integer>get("reservedStock")),
                 minimumQuantity
             );
     }

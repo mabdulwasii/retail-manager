@@ -474,12 +474,14 @@ ON CONFLICT (id) DO NOTHING;
 -- Note: Inventory is shop-scoped only. Tenant is derived via shop.tenant relationship.
 -- Note: V32 renamed unit_cost to cost_price and added selling_price (batch-specific pricing)
 -- ========================================
-INSERT INTO inventory (id, product_id, shop_id, current_stock, reserved_stock, minimum_stock, maximum_stock, reorder_point, cost_price, selling_price, location, batch_number, expiry_date, status, created_at, updated_at, version)
+-- Updated to match new inventory design: purchase_quantity instead of current_stock
+-- cost_price is now total_purchase_cost, base_unit and purchase_unit added
+INSERT INTO inventory (id, product_id, shop_id, reserved_stock, minimum_stock, maximum_stock, reorder_point, cost_price, selling_price, base_unit, purchase_unit, purchase_quantity, total_purchase_cost, location, batch_number, expiry_date, status, created_at, updated_at, version)
 VALUES
-    ('a50e8400-e29b-41d4-a716-446655440001', '850e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 100, 5, 20, 200, 30, 15.00, 25.99, 'A1-B2', 'BATCH-MOUSE-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440002', '850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 75, 3, 15, 150, 25, 20.00, 35.99, 'A2-C1', 'BATCH-KB-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 200, 10, 50, 500, 75, 10.00, 19.99, 'B1-A3', 'BATCH-SHIRT-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440004', '850e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440001', 500, 0, 100, 1000, 150, 1.50, 2.99, 'C1-D2', 'BATCH-DRINK-001', CURRENT_DATE + INTERVAL '6 months', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('a50e8400-e29b-41d4-a716-446655440001', '850e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 5, 20, 200, 30, 15.00, 25.99, 'piece', 'piece', 100.00, 1500.00, 'A1-B2', 'BATCH-MOUSE-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440002', '850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 3, 15, 150, 25, 20.00, 35.99, 'piece', 'piece', 75.00, 1500.00, 'A2-C1', 'BATCH-KB-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 10, 50, 500, 75, 10.00, 19.99, 'piece', 'piece', 200.00, 2000.00, 'B1-A3', 'BATCH-SHIRT-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440004', '850e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440001', 0, 100, 1000, 150, 1.50, 2.99, 'piece', 'piece', 500.00, 750.00, 'C1-D2', 'BATCH-DRINK-001', CURRENT_DATE + INTERVAL '6 months', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
@@ -520,10 +522,11 @@ ON CONFLICT (id) DO NOTHING;
 -- 13. RECEIPTS
 -- Note: No tenant_id. Receipt linked to transaction which is shop-scoped.
 -- ========================================
-INSERT INTO receipts (id, receipt_number, transaction_id, issued_date, generated_at, format, status, receipt_content, printable_content, email_sent, sms_sent, printed_count, created_at, updated_at, version)
+-- Updated to include shop_id column (required in current schema)
+INSERT INTO receipts (id, receipt_number, transaction_id, shop_id, issued_date, generated_at, format, status, receipt_content, printable_content, email_sent, sms_sent, printed_count, created_at, updated_at, version)
 VALUES
-    ('e50e8400-e29b-41d4-a716-446655440001', 'RCP-2024-001', 'c50e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-001', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 0),
-    ('e50e8400-e29b-41d4-a716-446655440002', 'RCP-2024-002', 'c50e8400-e29b-41d4-a716-446655440002', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-002', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 0)
+    ('e50e8400-e29b-41d4-a716-446655440001', 'RCP-2024-001', 'c50e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-001', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days', 0),
+    ('e50e8400-e29b-41d4-a716-446655440002', 'RCP-2024-002', 'c50e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 'TEXT', 'GENERATED', '=== RECEIPT ===\nShop Test\nTransaction #: TXN-2024-002', 'SALES RECEIPT\nTHANK YOU!', false, false, 0, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
