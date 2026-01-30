@@ -3,6 +3,7 @@ package com.princely.shopmanager.shared.config;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
@@ -12,9 +13,11 @@ import javax.sql.DataSource;
 /**
  * Custom Flyway configuration to avoid circular dependency.
  * Runs migrations early in the bean lifecycle using @PostConstruct with highest priority.
+ * Only active when spring.flyway.enabled=true.
  */
 @Slf4j
 @Configuration
+@ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "true", matchIfMissing = false)
 @Order(Integer.MIN_VALUE)
 public class FlywayConfig {
 

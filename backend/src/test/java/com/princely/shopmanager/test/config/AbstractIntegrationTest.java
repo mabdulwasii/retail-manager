@@ -198,10 +198,8 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.password", postgresContainer::getPassword);
         registry.add("spring.datasource.driver-class-name", postgresContainer::getDriverClassName);
 
-        // Flyway 10.x compatible (NO deprecated properties)
-        registry.add("spring.flyway.enabled", () -> "true");
-        registry.add("spring.flyway.validate-on-migrate", () -> "false");
-        registry.add("spring.flyway.clean-disabled", () -> "false");
+        // Flyway disabled in tests - use JPA entity structure instead
+        registry.add("spring.flyway.enabled", () -> "false");
 
         // Feature flags
         registry.add("app.features.investment.enabled", () -> "true");
