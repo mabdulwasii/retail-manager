@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAuth } from '@/context/UnifiedAuthContext'
-import { analyticsService, SalesSummary, RevenueAnalytics, InvestmentRoi, FraudStatistics } from '@/services/analyticsService'
+import { analyticsService } from '@/services/analyticsService'
 import { Permission } from '@/types/permissions'
-import { CalendarIcon, TrendingUp, DollarSign, ShoppingCart, AlertTriangle, RefreshCw } from 'lucide-react'
+import { TrendingUp, DollarSign, ShoppingCart, AlertTriangle, RefreshCw, Calendar } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
@@ -97,11 +96,11 @@ export const AnalyticsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("justify-start text-left font-normal")}>
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <Calendar className="mr-2 h-4 w-4" />
                 {dateRange.from && dateRange.to
                   ? `${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`
                   : 'Select date range'}
