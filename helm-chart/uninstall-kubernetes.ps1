@@ -17,9 +17,36 @@ param()
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-# Configuration
-$NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { "gomco" }
-$RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { "retail" }
+# Configuration - Auto-detect from Helm releases if not set via environment variables
+if (-not $env:NAMESPACE -or -not $env:RELEASE_NAME) {
+    Write-Host "[INFO] Auto-detecting Shop Manager installation..." -ForegroundColor Blue
+
+    # Find all Helm releases with shop-manager chart
+    try {
+        $helmOutput = helm list --all-namespaces -o json 2>$null | ConvertFrom-Json
+        $shopManagerRelease = $helmOutput | Where-Object { $_.chart -like "shop-manager-*" } | Select-Object -First 1
+
+        if ($shopManagerRelease) {
+            $NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { $shopManagerRelease.namespace }
+            $RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { $shopManagerRelease.name }
+
+            Write-Host "[INFO] Detected installation: release='$RELEASE_NAME' in namespace='$NAMESPACE'" -ForegroundColor Blue
+        } else {
+            # Fallback to defaults
+            $NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { "gomco" }
+            $RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { "retail" }
+            Write-Host "[WARNING] Could not auto-detect installation, using defaults" -ForegroundColor Yellow
+        }
+    } catch {
+        # Fallback to defaults on error
+        $NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { "gomco" }
+        $RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { "retail" }
+        Write-Host "[WARNING] Could not auto-detect installation, using defaults" -ForegroundColor Yellow
+    }
+} else {
+    $NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { "gomco" }
+    $RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { "retail" }
+}
 
 # Functions
 function Write-Header {

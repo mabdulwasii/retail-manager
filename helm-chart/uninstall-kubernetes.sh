@@ -12,9 +12,40 @@ echo "Shop Manager - Kubernetes Uninstallation"
 echo "============================================================================"
 echo ""
 
-# Configuration
-NAMESPACE="${NAMESPACE:-gomco}"
-RELEASE_NAME="${RELEASE_NAME:-retail}"
+# Configuration - Auto-detect from Helm releases if not set via environment variables
+if [ -z "$NAMESPACE" ] || [ -z "$RELEASE_NAME" ]; then
+    print_info() {
+        echo -e "\033[0;36m[INFO] $1\033[0m"
+    }
+
+    print_info "Auto-detecting Shop Manager installation..."
+
+    # Find all Helm releases with shop-manager chart using jq for proper JSON parsing
+    if command -v jq >/dev/null 2>&1; then
+        DETECTED=$(helm list --all-namespaces -o json 2>/dev/null | jq -r '.[] | select(.chart | startswith("shop-manager")) | "\(.name) \(.namespace)"' | head -1)
+    else
+        # Fallback to grep if jq is not available
+        DETECTED=$(helm list --all-namespaces 2>/dev/null | grep -E "shop-manager" | awk '{print $1, $2}' | head -1)
+    fi
+
+    if [ -n "$DETECTED" ]; then
+        DETECTED_RELEASE=$(echo "$DETECTED" | awk '{print $1}')
+        DETECTED_NAMESPACE=$(echo "$DETECTED" | awk '{print $2}')
+
+        NAMESPACE="${NAMESPACE:-$DETECTED_NAMESPACE}"
+        RELEASE_NAME="${RELEASE_NAME:-$DETECTED_RELEASE}"
+
+        print_info "Detected installation: release='$RELEASE_NAME' in namespace='$NAMESPACE'"
+    else
+        # Fallback to defaults
+        NAMESPACE="${NAMESPACE:-gomco}"
+        RELEASE_NAME="${RELEASE_NAME:-retail}"
+        echo -e "\033[1;33m[WARNING] Could not auto-detect installation, using defaults\033[0m"
+    fi
+else
+    NAMESPACE="${NAMESPACE:-gomco}"
+    RELEASE_NAME="${RELEASE_NAME:-retail}"
+fi
 
 # Colors for output
 RED='\033[0;31m'
