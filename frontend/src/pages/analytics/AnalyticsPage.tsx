@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAuth } from '@/context/UnifiedAuthContext'
 import { analyticsService } from '@/services/analyticsService'
 import { Permission } from '@/types/permissions'
@@ -96,35 +97,43 @@ export const AnalyticsPage: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
         <div className="flex gap-3 items-center">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            <span>
-              {format(dateRange.from, 'MMM dd, yyyy')} - {format(dateRange.to, 'MMM dd, yyyy')}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant={dateRange.from.getTime() === subDays(new Date(), 7).setHours(0,0,0,0) ? "default" : "outline"}
-              onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
-            >
-              7 days
-            </Button>
-            <Button
-              size="sm"
-              variant={dateRange.from.getTime() === subDays(new Date(), 30).setHours(0,0,0,0) ? "default" : "outline"}
-              onClick={() => setDateRange({ from: subDays(new Date(), 30), to: new Date() })}
-            >
-              30 days
-            </Button>
-            <Button
-              size="sm"
-              variant={dateRange.from.getTime() === subDays(new Date(), 90).setHours(0,0,0,0) ? "default" : "outline"}
-              onClick={() => setDateRange({ from: subDays(new Date(), 90), to: new Date() })}
-            >
-              90 days
-            </Button>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("justify-start text-left font-normal")}>
+                <Calendar className="mr-2 h-4 w-4" />
+                {dateRange.from && dateRange.to
+                  ? `${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`
+                  : 'Select date range'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <div className="p-3 space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
+                  >
+                    Last 7 days
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDateRange({ from: subDays(new Date(), 30), to: new Date() })}
+                  >
+                    Last 30 days
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDateRange({ from: subDays(new Date(), 90), to: new Date() })}
+                  >
+                    Last 90 days
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button onClick={handleRefreshAll} variant="outline" size="icon">
             <RefreshCw className="h-4 w-4" />
           </Button>
