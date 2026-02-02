@@ -71,65 +71,59 @@ public class UserController {
         log.debug("Getting profile for user: {} (sub: {}, email: {})",
             principal.getUsername(), principal.getSubject(), principal.getEmail());
 
-        try {
-            User user = null;
+        User user = null;
 
-            // Primary lookup: by Keycloak ID (sub claim)
-            if (principal.getSubject() != null && !principal.getSubject().isBlank()) {
-                user = userService.getUserByKeycloakId(principal.getSubject());
-            }
-
-            // Fallback: lookup by email if keycloakId lookup fails
-            if (user == null && principal.getEmail() != null && !principal.getEmail().isBlank()) {
-                log.warn("User not found by keycloakId: {}. Falling back to email lookup: {}",
-                    principal.getSubject(), principal.getEmail());
-                user = userService.getUserByEmail(principal.getEmail());
-            }
-
-            if (user == null) {
-                log.error("User not found in database. KeycloakId: {}, Email: {}, Username: {}",
-                    principal.getSubject(), principal.getEmail(), principal.getUsername());
-                throw new IllegalStateException(
-                    "User not found in database. Please contact administrator to sync your account."
-                );
-            }
-
-            // Convert database roles to RoleResponse DTOs
-            List<RoleResponse> roleResponses = user.getRoles().stream()
-                .map(RoleResponse::fromEntity)
-                .toList();
-
-            // Convert User entity to response DTO
-            // IMPORTANT: Use database values for tenantId/shopId, NOT JWT principal
-            // JWT can be stale after user updates (e.g., shop transfer)
-            UserProfileResponse response = UserProfileResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .fullName(user.getFullName())
-                .phoneNumber(user.getPhoneNumber())
-                .status(user.getStatus().name())
-                .roles(roleResponses) // Database roles with permissions
-                .tenantId(user.getTenant() != null ? user.getTenant().getId() : null) // From DB, not JWT (prevents staleness)
-                .shopId(user.getShop() != null ? user.getShop().getId() : null) // From DB, not JWT
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-
-            log.debug("Successfully retrieved profile for user: {} with {} roles",
-                user.getUsername(), roleResponses.size());
-
-            // Prevent caching of profile data
-            return ResponseEntity.ok()
-                .cacheControl(CacheControl.noStore())
-                .body(response);
-
-        } catch (Exception e) {
-            log.error("Error retrieving user profile for {}: {}", principal.getUsername(), e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        // Primary lookup: by Keycloak ID (sub claim)
+        if (principal.getSubject() != null && !principal.getSubject().isBlank()) {
+            user = userService.getUserByKeycloakId(principal.getSubject());
         }
+
+        // Fallback: lookup by email if keycloakId lookup fails
+        if (user == null && principal.getEmail() != null && !principal.getEmail().isBlank()) {
+            log.warn("User not found by keycloakId: {}. Falling back to email lookup: {}",
+                principal.getSubject(), principal.getEmail());
+            user = userService.getUserByEmail(principal.getEmail());
+        }
+
+        if (user == null) {
+            log.error("User not found in database. KeycloakId: {}, Email: {}, Username: {}",
+                principal.getSubject(), principal.getEmail(), principal.getUsername());
+            throw new IllegalStateException(
+                "User not found in database. Please contact administrator to sync your account."
+            );
+        }
+
+        // Convert database roles to RoleResponse DTOs
+        List<RoleResponse> roleResponses = user.getRoles().stream()
+            .map(RoleResponse::fromEntity)
+            .toList();
+
+        // Convert User entity to response DTO
+        // IMPORTANT: Use database values for tenantId/shopId, NOT JWT principal
+        // JWT can be stale after user updates (e.g., shop transfer)
+        UserProfileResponse response = UserProfileResponse.builder()
+            .id(user.getId())
+            .username(user.getUsername())
+            .email(user.getEmail())
+            .firstName(user.getFirstName())
+            .lastName(user.getLastName())
+            .fullName(user.getFullName())
+            .phoneNumber(user.getPhoneNumber())
+            .status(user.getStatus().name())
+            .roles(roleResponses) // Database roles with permissions
+            .tenantId(user.getTenant() != null ? user.getTenant().getId() : null) // From DB, not JWT (prevents staleness)
+            .shopId(user.getShop() != null ? user.getShop().getId() : null) // From DB, not JWT
+            .createdAt(user.getCreatedAt())
+            .updatedAt(user.getUpdatedAt())
+            .build();
+
+        log.debug("Successfully retrieved profile for user: {} with {} roles",
+            user.getUsername(), roleResponses.size());
+
+        // Prevent caching of profile data
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore())
+            .body(response);
     }
 
     /**
