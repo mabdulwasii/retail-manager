@@ -30,6 +30,7 @@ import { CategoriesPage } from "@/pages/categories";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { SystemSettingsPage } from "@/pages/settings/SystemSettingsPage";
 import { ReceiptsPage } from "@/pages/receipts/ReceiptsPage";
+import { ExpensesPage } from "@/pages/ExpensesPage";
 import { RolesPage } from "@/pages/admin/RolesPage";
 import { CreateRolePage } from "@/pages/admin/CreateRolePage";
 import { EditRolePage } from "@/pages/admin/EditRolePage";
@@ -315,6 +316,18 @@ export const AuthenticatedApp: React.FC = () => {
           <Layout>
             <ProtectedRoute permissions={[Permission.RECEIPT_LIST, Permission.RECEIPT_READ]}>
               <ReceiptsPage />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      {/* Expenses */}
+      <Route
+        path="/expenses"
+        element={
+          <Layout>
+            <ProtectedRoute permissions={[Permission.EXPENSE_LIST, Permission.EXPENSE_READ]}>
+              <ExpensesPage />
             </ProtectedRoute>
           </Layout>
         }
