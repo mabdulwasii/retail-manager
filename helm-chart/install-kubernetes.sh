@@ -18,9 +18,10 @@ VALUES_FILE="${VALUES_FILE:-values-template.yaml}"
 TIMEOUT="${TIMEOUT:-10m}"
 CHART_REPO="oci://registry-1.docker.io/princely/shop-manager"
 
-# Extract app name from values file (must be done early to set NAMESPACE and RELEASE_NAME)
+# Extract app name from values file EARLY (must be done before setting NAMESPACE and RELEASE_NAME)
+APP_NAME=""
 if [ -f "${VALUES_FILE}" ]; then
-    APP_NAME=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "appName:" | awk '{print $2}' | tr -d '"')
+    APP_NAME=$(grep -A 10 "^global:" "${VALUES_FILE}" | grep "appName:" | awk '{print $2}' | tr -d '"' | tr -d "'")
 fi
 
 # Use APP_NAME for both namespace and release name, fallback to "retail" if not set
@@ -188,19 +189,20 @@ if helm list -n "${NAMESPACE}" | grep -q "${RELEASE_NAME}"; then
     print_info "Helm release '${RELEASE_NAME}' already exists. Upgrading..."
     HELM_CMD=$(echo "$HELM_CMD" | sed 's/install/upgrade/')
     eval "$HELM_CMD"
-
-    # Force pod restart to pull latest images and apply configuration changes
-    print_info "Restarting pods to apply changes..."
-    kubectl rollout restart deployment/${APP_NAME}-backend -n "${NAMESPACE}" 2>/dev/null || true
-    kubectl rollout restart deployment/${APP_NAME}-frontend -n "${NAMESPACE}" 2>/dev/null || true
-
-    print_success "Helm release upgraded and pods restarted"
+    print_success "Helm release upgraded"
 else
     print_info "Installing new Helm release..."
     print_info "This may take several minutes as Kubernetes pulls Docker images..."
     eval "$HELM_CMD"
     print_success "Helm release installed"
 fi
+
+# Force pod restart to ensure Flyway migrations run and configuration changes are applied
+print_info "Restarting backend pod to run database migrations..."
+kubectl rollout restart deployment/${APP_NAME}-backend -n "${NAMESPACE}" 2>/dev/null || true
+print_info "Waiting for backend rollout to complete..."
+kubectl rollout status deployment/${APP_NAME}-backend -n "${NAMESPACE}" --timeout=5m 2>/dev/null || true
+print_success "Backend pod restarted and ready"
 echo ""
 
 # Step 8: Verify deployment

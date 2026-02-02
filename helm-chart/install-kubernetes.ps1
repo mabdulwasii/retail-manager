@@ -23,11 +23,27 @@ param()
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { "gomco" }
-$RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { "retail" }
 $VALUES_FILE = if ($env:VALUES_FILE) { $env:VALUES_FILE } else { "values-template.yaml" }
 $TIMEOUT = if ($env:TIMEOUT) { $env:TIMEOUT } else { "10m" }
 $CHART_REPO = "oci://registry-1.docker.io/princely/shop-manager"
+
+# Extract app name from values file EARLY (must be done before setting NAMESPACE and RELEASE_NAME)
+$APP_NAME = ""
+if (Test-Path $VALUES_FILE) {
+    try {
+        $valuesContent = Get-Content $VALUES_FILE -Raw
+        if ($valuesContent -match 'appName:\s+[''"]?([^\s''"]+)[''"]?') {
+            $APP_NAME = $Matches[1]
+        }
+    } catch {
+        # Silently continue if parsing fails
+    }
+}
+
+# Use APP_NAME for both namespace and release name, fallback to "retail" if not set
+if (-not $APP_NAME) { $APP_NAME = "retail" }
+$NAMESPACE = if ($env:NAMESPACE) { $env:NAMESPACE } else { $APP_NAME }
+$RELEASE_NAME = if ($env:RELEASE_NAME) { $env:RELEASE_NAME } else { $APP_NAME }
 
 # Detect version from directory name
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -322,6 +338,20 @@ function Install-ShopManager {
     }
 
     Write-Success "Helm release $action completed successfully"
+    Write-Host ""
+
+    # Force pod restart to ensure Flyway migrations run and configuration changes are applied
+    Write-Info "Restarting backend pod to run database migrations..."
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl rollout restart "deployment/$APP_NAME-backend" -n $NAMESPACE 2>&1 | Out-Null
+    }
+    Write-Info "Waiting for backend rollout to complete..."
+    & {
+        $ErrorActionPreference = 'Continue'
+        kubectl rollout status "deployment/$APP_NAME-backend" -n $NAMESPACE --timeout=5m 2>&1 | Out-Null
+    }
+    Write-Success "Backend pod restarted and ready"
     Write-Host ""
 
     # Step 9: Verify deployment
