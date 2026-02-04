@@ -29,6 +29,7 @@ import {
   Building2,
   CreditCard,
   Key,
+  Wallet,
 } from 'lucide-react'
 
 interface NavItem {
@@ -81,6 +82,12 @@ const navItems: NavItem[] = [
     href: '/receipts',
     icon: Receipt,
     permissions: [Permission.RECEIPT_LIST],
+  },
+  {
+    title: 'Expenses',
+    href: '/expenses',
+    icon: Wallet,
+    permissions: [Permission.EXPENSE_LIST, Permission.EXPENSE_READ],
   },
   {
     title: 'Investments',
