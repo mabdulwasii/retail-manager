@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAuth } from '@/context/UnifiedAuthContext'
+import { useCurrency } from '@/hooks/useCurrency'
 import { analyticsService } from '@/services/analyticsService'
 import { Permission } from '@/types/permissions'
 import { TrendingUp, DollarSign, ShoppingCart, AlertTriangle, RefreshCw, Calendar } from 'lucide-react'
@@ -14,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export const AnalyticsPage: React.FC = () => {
   const { user, hasAnyPermission } = useAuth()
+  const { formatCurrency } = useCurrency()
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -83,13 +85,6 @@ export const AnalyticsPage: React.FC = () => {
         </Alert>
       </div>
     )
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
   }
 
   return (
