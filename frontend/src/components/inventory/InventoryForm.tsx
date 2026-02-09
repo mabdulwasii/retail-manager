@@ -15,6 +15,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { UnitPricingForm } from '@/components/inventory/UnitPricingForm'
 import { useInventory, CreateInventoryRequest, Product } from '@/hooks/useInventory'
 import { useCurrency } from '@/hooks/useCurrency'
+import { productService } from '@/services/productService'
 import { InventoryUnitPriceRequest } from '@/types/api'
 import {
   PackageIcon,
@@ -48,7 +49,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
   const [searchLoading, setSearchLoading] = useState(false)
 
   const [formData, setFormData] = useState({
-    currentStock: '',
     minimumStock: '0',
     maximumStock: '',
     reorderPoint: '0',
@@ -60,7 +60,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
     baseUnit: 'piece',
     purchaseUnit: '',
     purchaseQuantity: '',
-    purchaseUnitCost: ''
+    totalPurchaseCost: ''
   })
 
   const [unitPrices, setUnitPrices] = useState<InventoryUnitPriceRequest[]>([])
@@ -85,7 +85,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       setProductSearch('')
       setAvailableProducts([])
       setFormData({
-        currentStock: '',
         minimumStock: '0',
         maximumStock: '',
         reorderPoint: '0',
@@ -97,7 +96,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
         baseUnit: 'piece',
         purchaseUnit: '',
         purchaseQuantity: '',
-        purchaseUnitCost: ''
+        totalPurchaseCost: ''
       })
       setUnitPrices([])
       setValidationErrors({})
@@ -112,52 +111,11 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
     try {
       setSearchLoading(true)
-      // Mock product search - in real app, this would call an API
-      const mockProducts: Product[] = [
-        {
-          id: '1',
-          name: 'Apple iPhone 15 Pro',
-          description: '128GB, Natural Titanium',
-          price: 999.99,
-          category: 'Electronics',
-          sku: 'IP15-PRO-128-NT',
-          barcode: '194253433989',
-          isActive: true,
-          supplierName: 'Apple Inc.'
-        },
-        {
-          id: '2',
-          name: 'Samsung Galaxy S24 Ultra',
-          description: '256GB, Titanium Black',
-          price: 1199.99,
-          category: 'Electronics',
-          sku: 'SGS24-ULTRA-256-TB',
-          barcode: '887276706789',
-          isActive: true,
-          supplierName: 'Samsung'
-        },
-        {
-          id: '3',
-          name: 'Coca-Cola 500ml',
-          description: 'Refreshing cola drink',
-          price: 1.50,
-          category: 'Beverages',
-          sku: 'COKE-500ML',
-          barcode: '5449000000996',
-          isActive: true,
-          supplierName: 'Coca-Cola Company'
-        }
-      ]
-
-      const filtered = mockProducts.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.sku?.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase())
-      )
-
-      setAvailableProducts(filtered)
+      const products = await productService.searchProducts(shopId, query)
+      setAvailableProducts(products)
     } catch (error) {
       console.error('Error searching products:', error)
+      setAvailableProducts([])
     } finally {
       setSearchLoading(false)
     }
@@ -186,15 +144,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       errors.product = 'Please select a product'
     }
 
-    if (!formData.currentStock || formData.currentStock.trim() === '') {
-      errors.currentStock = 'Current stock is required'
-    } else {
-      const stock = parseInt(formData.currentStock, 10)
-      if (isNaN(stock) || stock < 0) {
-        errors.currentStock = 'Current stock must be a non-negative number'
-      }
-    }
-
     // Minimum stock is now optional, defaults to 0
     if (formData.minimumStock && formData.minimumStock.trim() !== '') {
       const minStock = parseInt(formData.minimumStock, 10)
@@ -205,11 +154,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
     if (formData.maximumStock && formData.maximumStock.trim() !== '') {
       const maxStock = parseInt(formData.maximumStock, 10)
-      const currentStock = parseInt(formData.currentStock, 10)
       if (isNaN(maxStock) || maxStock < 0) {
         errors.maximumStock = 'Maximum stock must be a non-negative number'
-      } else if (!isNaN(currentStock) && maxStock < currentStock) {
-        errors.maximumStock = 'Maximum stock cannot be less than current stock'
       }
     }
 
@@ -263,7 +209,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
     const request: CreateInventoryRequest = {
       productId: selectedProduct.id,
-      currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       maximumStock: formData.maximumStock ? parseInt(formData.maximumStock, 10) : undefined,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
@@ -275,7 +220,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       baseUnit: formData.baseUnit || 'piece',
       purchaseUnit: formData.purchaseUnit || undefined,
       purchaseQuantity: formData.purchaseQuantity ? parseFloat(formData.purchaseQuantity) : undefined,
-      purchaseUnitCost: formData.purchaseUnitCost ? parseFloat(formData.purchaseUnitCost) : undefined,
+      totalPurchaseCost: formData.totalPurchaseCost ? parseFloat(formData.totalPurchaseCost) : undefined,
       unitPrices: unitPrices.length > 0 ? unitPrices : undefined
     }
 
@@ -382,25 +327,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
           {/* Stock Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="currentStock">Current Stock *</Label>
-              <NumericInput
-                id="currentStock"
-                value={formData.currentStock}
-                onValueChange={(values) => {
-                  handleInputChange('currentStock', values.value || '')
-                }}
-                placeholder="0"
-                className={validationErrors.currentStock ? 'border-red-500' : ''}
-                isNumberInput={true}
-                allowNegative={false}
-                decimalScale={0}
-              />
-              {validationErrors.currentStock && (
-                <p className="text-sm text-red-600">{validationErrors.currentStock}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
               <NumericInput
                 id="minimumStock"
@@ -490,19 +416,19 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="purchaseUnitCost">Purchase Unit Cost</Label>
+                <Label htmlFor="totalPurchaseCost">Total Purchase Cost</Label>
                 <NumericInput
-                  id="purchaseUnitCost"
-                  value={formData.purchaseUnitCost}
+                  id="totalPurchaseCost"
+                  value={formData.totalPurchaseCost}
                   onValueChange={(values) => {
-                    handleInputChange('purchaseUnitCost', values.value || '')
+                    handleInputChange('totalPurchaseCost', values.value || '')
                   }}
                   placeholder="0.00"
                   decimalScale={2}
                   fixedDecimalScale={true}
                   allowNegative={false}
                 />
-                <p className="text-xs text-muted-foreground">Cost per purchase unit</p>
+                <p className="text-xs text-muted-foreground">Total cost for all purchase units</p>
               </div>
 
               <div className="space-y-2">

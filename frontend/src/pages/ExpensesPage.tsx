@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,8 @@ import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseSummaryCards } from '@/components/expenses/ExpenseSummaryCards'
 import { useExpenses, ExpenseFilter } from '@/hooks/useExpenses'
 import { useCurrency } from '@/hooks/useCurrency'
+import { useAuth } from '@/context/UnifiedAuthContext'
+import { Permission } from '@/types/permissions'
 import {
   PlusIcon,
   ReceiptIcon,
@@ -21,65 +23,44 @@ import {
 } from 'lucide-react'
 
 export const ExpensesPage: React.FC = () => {
-  const {
-    expenses,
-    summary,
-    isLoading,
-    error,
-    canCreateExpense,
-    canApproveExpense,
-    canViewAllExpenses,
-    fetchExpenses,
-    fetchExpenseSummary,
-    exportExpenses,
-    clearError
-  } = useExpenses()
+  const { user, hasPermission } = useAuth()
+  const [filter, setFilter] = useState<ExpenseFilter>({})
+
+  const { data: expenses = [], isLoading, error, refetch } = useExpenses(user?.shopId, filter)
 
   const { formatCurrency } = useCurrency()
   const [activeTab, setActiveTab] = useState<'overview' | 'list' | 'pending'>('overview')
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<string | null>(null)
-  const [filter, setFilter] = useState<ExpenseFilter>({})
 
-  useEffect(() => {
-    fetchExpenses()
-    fetchExpenseSummary()
-  }, [fetchExpenses, fetchExpenseSummary])
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError()
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error, clearError])
+  // Permission checks
+  const canCreateExpense = hasPermission(Permission.EXPENSE_CREATE)
+  const canApproveExpense = hasPermission(Permission.EXPENSE_APPROVE)
+  const canViewAllExpenses = hasPermission(Permission.EXPENSE_LIST)
 
   const handleFilterChange = (newFilter: ExpenseFilter) => {
     setFilter(newFilter)
-    fetchExpenses(newFilter)
   }
 
   const handleExport = async (format: 'csv' | 'excel' = 'csv') => {
-    const url = await exportExpenses(filter, format)
-    if (url) {
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `expenses-${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-    }
+    // TODO: Implement export functionality
+    console.log('Export expenses:', format, filter)
   }
 
   const handleRefresh = () => {
-    fetchExpenses(filter)
-    fetchExpenseSummary()
+    refetch()
   }
 
-  const pendingExpenses = expenses.filter(expense => expense.status === 'PENDING_APPROVAL')
-  const recentExpenses = expenses.slice(0, 5)
+  const pendingExpenses = expenses?.filter(expense => expense.status === 'PENDING_APPROVAL') || []
+  const recentExpenses = expenses?.slice(0, 5) || []
+
+  // Mock summary data - TODO: Implement proper summary endpoint
+  const summary = {
+    totalExpenses: expenses?.length || 0,
+    totalAmount: expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0,
+    pendingCount: pendingExpenses.length,
+    approvedCount: expenses?.filter(e => e.status === 'APPROVED').length || 0
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -125,16 +106,9 @@ export const ExpensesPage: React.FC = () => {
               <XCircleIcon className="h-5 w-5 text-red-400" />
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <button
-                onClick={clearError}
-                className="text-red-400 hover:text-red-600"
-              >
-                <span className="sr-only">Dismiss</span>
-                <XCircleIcon className="h-5 w-5" />
-              </button>
+              <p className="text-sm text-red-700">
+                {error instanceof Error ? error.message : 'Failed to load expenses'}
+              </p>
             </div>
           </div>
         </div>
