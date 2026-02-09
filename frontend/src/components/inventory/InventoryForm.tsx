@@ -15,6 +15,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { UnitPricingForm } from '@/components/inventory/UnitPricingForm'
 import { useInventory, CreateInventoryRequest, Product } from '@/hooks/useInventory'
 import { useCurrency } from '@/hooks/useCurrency'
+import { productService } from '@/services/productService'
 import { InventoryUnitPriceRequest } from '@/types/api'
 import {
   PackageIcon,
@@ -110,52 +111,11 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
     try {
       setSearchLoading(true)
-      // Mock product search - in real app, this would call an API
-      const mockProducts: Product[] = [
-        {
-          id: '1',
-          name: 'Apple iPhone 15 Pro',
-          description: '128GB, Natural Titanium',
-          price: 999.99,
-          category: 'Electronics',
-          sku: 'IP15-PRO-128-NT',
-          barcode: '194253433989',
-          isActive: true,
-          supplierName: 'Apple Inc.'
-        },
-        {
-          id: '2',
-          name: 'Samsung Galaxy S24 Ultra',
-          description: '256GB, Titanium Black',
-          price: 1199.99,
-          category: 'Electronics',
-          sku: 'SGS24-ULTRA-256-TB',
-          barcode: '887276706789',
-          isActive: true,
-          supplierName: 'Samsung'
-        },
-        {
-          id: '3',
-          name: 'Coca-Cola 500ml',
-          description: 'Refreshing cola drink',
-          price: 1.50,
-          category: 'Beverages',
-          sku: 'COKE-500ML',
-          barcode: '5449000000996',
-          isActive: true,
-          supplierName: 'Coca-Cola Company'
-        }
-      ]
-
-      const filtered = mockProducts.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.sku?.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase())
-      )
-
-      setAvailableProducts(filtered)
+      const products = await productService.searchProducts(shopId, query)
+      setAvailableProducts(products)
     } catch (error) {
       console.error('Error searching products:', error)
+      setAvailableProducts([])
     } finally {
       setSearchLoading(false)
     }
