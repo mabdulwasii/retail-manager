@@ -553,6 +553,7 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
                               }
                               e.stopPropagation();
                             }}
+                            disabled={disabled}
                             className="h-8 text-sm"
                           />
                         </div>

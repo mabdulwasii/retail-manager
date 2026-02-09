@@ -41,7 +41,6 @@ export const CreateInventoryPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     productId: '',
-    currentStock: '',
     minimumStock: '0',
     maximumStock: '',
     reorderPoint: '0',
@@ -90,15 +89,6 @@ export const CreateInventoryPage: React.FC = () => {
       newErrors.productId = 'Please select a product'
     }
 
-    if (!formData.currentStock || formData.currentStock.trim() === '') {
-      newErrors.currentStock = 'Current stock is required'
-    } else {
-      const stock = parseInt(formData.currentStock, 10)
-      if (isNaN(stock) || stock < 0) {
-        newErrors.currentStock = 'Current stock must be a non-negative number'
-      }
-    }
-
     // Minimum stock is now optional, defaults to 0
     if (formData.minimumStock && formData.minimumStock.trim() !== '') {
       const minStock = parseInt(formData.minimumStock, 10)
@@ -109,11 +99,8 @@ export const CreateInventoryPage: React.FC = () => {
 
     if (formData.maximumStock && formData.maximumStock.trim() !== '') {
       const maxStock = parseInt(formData.maximumStock, 10)
-      const currentStock = parseInt(formData.currentStock, 10)
       if (isNaN(maxStock) || maxStock < 0) {
         newErrors.maximumStock = 'Maximum stock must be a non-negative number'
-      } else if (!isNaN(currentStock) && maxStock < currentStock) {
-        newErrors.maximumStock = 'Maximum stock cannot be less than current stock'
       }
     }
 
@@ -186,7 +173,6 @@ export const CreateInventoryPage: React.FC = () => {
 
     const request: CreateInventoryRequest = {
       productId: formData.productId,
-      currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
       reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       costPrice: parseFloat(formData.costPrice),
@@ -351,26 +337,6 @@ export const CreateInventoryPage: React.FC = () => {
 
             {/* Stock Levels */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentStock">
-                  Current Stock <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="currentStock"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={formData.currentStock}
-                  onChange={(e) =>
-                    handleInputChange("currentStock", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.currentStock && (
-                  <p className="text-sm text-red-500">{errors.currentStock}</p>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
                 <Input
