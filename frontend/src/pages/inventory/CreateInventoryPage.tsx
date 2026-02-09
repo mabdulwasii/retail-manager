@@ -42,8 +42,6 @@ export const CreateInventoryPage: React.FC = () => {
   const [formData, setFormData] = useState({
     productId: '',
     minimumStock: '0',
-    maximumStock: '',
-    reorderPoint: '0',
     costPrice: '',
     purchaseUnit: '',
     purchaseQuantity: '',
@@ -94,21 +92,6 @@ export const CreateInventoryPage: React.FC = () => {
       const minStock = parseInt(formData.minimumStock, 10)
       if (isNaN(minStock) || minStock < 0) {
         newErrors.minimumStock = 'Minimum stock must be a non-negative number'
-      }
-    }
-
-    if (formData.maximumStock && formData.maximumStock.trim() !== '') {
-      const maxStock = parseInt(formData.maximumStock, 10)
-      if (isNaN(maxStock) || maxStock < 0) {
-        newErrors.maximumStock = 'Maximum stock must be a non-negative number'
-      }
-    }
-
-    // Reorder point is now optional, defaults to 0
-    if (formData.reorderPoint && formData.reorderPoint.trim() !== '') {
-      const reorderPoint = parseInt(formData.reorderPoint, 10)
-      if (isNaN(reorderPoint) || reorderPoint < 0) {
-        newErrors.reorderPoint = 'Reorder point must be a non-negative number'
       }
     }
 
@@ -174,7 +157,6 @@ export const CreateInventoryPage: React.FC = () => {
     const request: CreateInventoryRequest = {
       productId: formData.productId,
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
-      reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       costPrice: parseFloat(formData.costPrice),
       sellingPrice: baseSellingPrice,
       baseUnit: selectedProduct?.unitDefinitions?.find(u => u.isBaseUnit)?.unitType || 'piece',
@@ -185,9 +167,6 @@ export const CreateInventoryPage: React.FC = () => {
       ...(formData.purchaseUnit && { purchaseUnit: formData.purchaseUnit }),
       ...(formData.purchaseQuantity && { purchaseQuantity: parseFloat(formData.purchaseQuantity) }),
       ...(formData.purchaseUnitCost && { purchaseUnitCost: parseFloat(formData.purchaseUnitCost) }),
-      ...(formData.maximumStock && {
-        maximumStock: parseInt(formData.maximumStock, 10),
-      }),
       ...(formData.location && { location: formData.location }),
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
@@ -355,41 +334,6 @@ export const CreateInventoryPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="maximumStock">Maximum Stock</Label>
-                <Input
-                  id="maximumStock"
-                  type="number"
-                  min="0"
-                  placeholder="Optional"
-                  value={formData.maximumStock}
-                  onChange={(e) =>
-                    handleInputChange("maximumStock", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.maximumStock && (
-                  <p className="text-sm text-red-500">{errors.maximumStock}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
-                <Input
-                  id="reorderPoint"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={formData.reorderPoint}
-                  onChange={(e) =>
-                    handleInputChange("reorderPoint", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.reorderPoint && (
-                  <p className="text-sm text-red-500">{errors.reorderPoint}</p>
-                )}
-              </div>
             </div>
 
             {/* Pricing - Unit Based */}

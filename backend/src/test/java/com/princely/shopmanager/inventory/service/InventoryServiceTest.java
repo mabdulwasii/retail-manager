@@ -100,8 +100,6 @@ class InventoryServiceTest {
         testInventory.setProduct(testProduct);
         testInventory.setPurchaseQuantity(BigDecimal.valueOf(100)); // Changed from setCurrentStock
         testInventory.setMinimumStock(10);
-        testInventory.setMaximumStock(500);
-        testInventory.setReorderPoint(25);
         testInventory.setCostPrice(BigDecimal.valueOf(15.50));
         testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
 
@@ -109,8 +107,6 @@ class InventoryServiceTest {
             .productId("product-1")
             .purchaseQuantity(BigDecimal.valueOf(100))
             .minimumStock(10)
-            .maximumStock(500)
-            .reorderPoint(25)
             .costPrice(BigDecimal.valueOf(15.50))
             .sellingPrice(BigDecimal.valueOf(50.00))
             .location("A1-B2")
@@ -493,8 +489,6 @@ class InventoryServiceTest {
             .location("B2-C3")
             .expiryDate(LocalDate.now().plusMonths(12))
             .minimumStock(20)
-            .maximumStock(1000)
-            .reorderPoint(50)
             .costPrice(BigDecimal.valueOf(18.00))
             .sellingPrice(BigDecimal.valueOf(50.00))
             .build();

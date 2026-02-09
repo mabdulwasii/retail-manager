@@ -262,8 +262,6 @@ export function formatInventoryForExport(items: any[]): any[] {
     'SKU': item.productSku || '',
     'Current Stock': item.currentStock || 0,
     'Minimum Stock': item.minimumStock || 0,
-    'Maximum Stock': item.maximumStock || 0,
-    'Reorder Point': item.reorderPoint || 0,
     'Unit Cost': item.unitCost || 0,
     'Total Value': item.unitCost ? (item.currentStock * item.unitCost) : 0,
     'Status': item.status || '',
@@ -281,8 +279,7 @@ export function formatLowStockForExport(items: any[]): any[] {
     'SKU': item.productSku || '',
     'Current Stock': item.currentStock || 0,
     'Minimum Stock': item.minimumStock || 0,
-    'Reorder Point': item.reorderPoint || 0,
-    'Suggested Reorder': item.maximumStock ? (item.maximumStock - item.currentStock) : (item.reorderPoint * 2),
+    'Suggested Reorder': item.minimumStock * 3 - item.currentStock,
     'Status': item.currentStock < item.minimumStock ? 'Critical' : 'Low Stock',
     'Unit Cost': item.unitCost || 0,
     'Total Value': item.unitCost ? (item.currentStock * item.unitCost) : 0

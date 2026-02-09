@@ -50,8 +50,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
 
   const [formData, setFormData] = useState({
     minimumStock: '0',
-    maximumStock: '',
-    reorderPoint: '0',
     costPrice: '',
     sellingPrice: '',
     location: '',
@@ -86,8 +84,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       setAvailableProducts([])
       setFormData({
         minimumStock: '0',
-        maximumStock: '',
-        reorderPoint: '0',
         costPrice: '',
         sellingPrice: '',
         location: '',
@@ -152,21 +148,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
       }
     }
 
-    if (formData.maximumStock && formData.maximumStock.trim() !== '') {
-      const maxStock = parseInt(formData.maximumStock, 10)
-      if (isNaN(maxStock) || maxStock < 0) {
-        errors.maximumStock = 'Maximum stock must be a non-negative number'
-      }
-    }
-
-    // Reorder point is now optional, defaults to 0
-    if (formData.reorderPoint && formData.reorderPoint.trim() !== '') {
-      const reorderPoint = parseInt(formData.reorderPoint, 10)
-      if (isNaN(reorderPoint) || reorderPoint < 0) {
-        errors.reorderPoint = 'Reorder point must be a non-negative number'
-      }
-    }
-
     if (!formData.costPrice || formData.costPrice.trim() === '') {
       errors.costPrice = 'Cost price is required'
     } else {
@@ -210,8 +191,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
     const request: CreateInventoryRequest = {
       productId: selectedProduct.id,
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
-      maximumStock: formData.maximumStock ? parseInt(formData.maximumStock, 10) : undefined,
-      reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       costPrice: parseFloat(formData.costPrice),
       sellingPrice: parseFloat(formData.sellingPrice),
       location: formData.location || undefined,
@@ -342,44 +321,6 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({
               />
               {validationErrors.minimumStock && (
                 <p className="text-sm text-red-600">{validationErrors.minimumStock}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maximumStock">Maximum Stock</Label>
-              <NumericInput
-                id="maximumStock"
-                value={formData.maximumStock}
-                onValueChange={(values) => {
-                  handleInputChange('maximumStock', values.value || '')
-                }}
-                placeholder="0"
-                className={validationErrors.maximumStock ? 'border-red-500' : ''}
-                isNumberInput={true}
-                allowNegative={false}
-                decimalScale={0}
-              />
-              {validationErrors.maximumStock && (
-                <p className="text-sm text-red-600">{validationErrors.maximumStock}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
-              <NumericInput
-                id="reorderPoint"
-                value={formData.reorderPoint}
-                onValueChange={(values) => {
-                  handleInputChange('reorderPoint', values.value || '0')
-                }}
-                placeholder="0"
-                className={validationErrors.reorderPoint ? 'border-red-500' : ''}
-                isNumberInput={true}
-                allowNegative={false}
-                decimalScale={0}
-              />
-              {validationErrors.reorderPoint && (
-                <p className="text-sm text-red-600">{validationErrors.reorderPoint}</p>
               )}
             </div>
           </div>

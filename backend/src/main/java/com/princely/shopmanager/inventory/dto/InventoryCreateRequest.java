@@ -27,12 +27,6 @@ public class InventoryCreateRequest {
     @Builder.Default
     private Integer minimumStock = 0;
 
-    private Integer maximumStock;
-
-    @Min(value = 0, message = "Reorder point cannot be negative")
-    @Builder.Default
-    private Integer reorderPoint = 0;
-
     @NotNull(message = "Cost price is required")
     @Min(value = 0, message = "Cost price cannot be negative")
     private BigDecimal costPrice;

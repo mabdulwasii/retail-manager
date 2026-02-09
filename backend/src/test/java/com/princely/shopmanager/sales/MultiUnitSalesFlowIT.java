@@ -141,7 +141,6 @@ class MultiUnitSalesFlowIT {
             .purchaseQuantity(BigDecimal.valueOf(120))
             .reservedStock(0)
             .minimumStock(10)
-            .reorderPoint(20)
             .costPrice(BigDecimal.valueOf(900))
             .sellingPrice(BigDecimal.valueOf(1050))
             .baseUnit("piece")

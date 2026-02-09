@@ -47,8 +47,6 @@ export const InventoryEditPage: React.FC = () => {
 
   // Form state
   const [minimumStock, setMinimumStock] = useState('')
-  const [maximumStock, setMaximumStock] = useState('')
-  const [reorderPoint, setReorderPoint] = useState('')
   const [costPrice, setCostPrice] = useState('')
   const [unitPrices, setUnitPrices] = useState<UnitPrice[]>([])
   const [location, setLocation] = useState('')
@@ -69,8 +67,6 @@ export const InventoryEditPage: React.FC = () => {
   useEffect(() => {
     if (currentItem) {
       setMinimumStock(currentItem.minimumStock.toString())
-      setMaximumStock(currentItem.maximumStock?.toString() || '')
-      setReorderPoint(currentItem.reorderPoint.toString())
       setCostPrice(currentItem.costPrice?.toString() || currentItem.unitCost?.toString() || '')
       setLocation(currentItem.location || '')
       setBatchNumber(currentItem.batchNumber || '')
@@ -101,10 +97,8 @@ export const InventoryEditPage: React.FC = () => {
 
     const updates: any = {
       minimumStock: parseInt(minimumStock),
-      reorderPoint: parseInt(reorderPoint),
     }
 
-    if (maximumStock) updates.maximumStock = parseInt(maximumStock)
     if (costPrice) updates.costPrice = parseFloat(costPrice)
     if (unitPrices.length > 0) {
       updates.sellingPrice = baseSellingPrice
@@ -209,39 +203,6 @@ export const InventoryEditPage: React.FC = () => {
                 />
                 <p className="text-xs text-muted-foreground">
                   Alert threshold for low stock
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reorderPoint">
-                  Reorder Point <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="reorderPoint"
-                  type="number"
-                  value={reorderPoint}
-                  onChange={(e) => setReorderPoint(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Stock level to trigger reorder
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maximumStock">Maximum Stock</Label>
-                <Input
-                  id="maximumStock"
-                  type="number"
-                  value={maximumStock}
-                  onChange={(e) => setMaximumStock(e.target.value)}
-                  placeholder="Optional"
-                  min="0"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Maximum storage capacity
                 </p>
               </div>
             </CardContent>
