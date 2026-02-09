@@ -71,7 +71,6 @@ export interface InventoryHistory {
 
 export interface CreateInventoryRequest {
   productId: string
-  currentStock: number
   minimumStock: number
   maximumStock?: number | undefined
   reorderPoint: number
@@ -84,7 +83,7 @@ export interface CreateInventoryRequest {
   }> | undefined
   purchaseUnit?: string | undefined
   purchaseQuantity?: number | undefined
-  purchaseUnitCost?: number | undefined
+  totalPurchaseCost?: number | undefined
   location?: string | undefined
   batchNumber?: string | undefined
   expiryDate?: string | undefined

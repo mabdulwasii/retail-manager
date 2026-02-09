@@ -179,13 +179,6 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  <span className="text-gray-600">Total Stock:</span>
-                  <div className="font-medium">
-                    {item.currentStock}{item.baseUnit ? ` ${item.baseUnit}s` : ''}
-                  </div>
-                </div>
-
                 {item.reservedStock > 0 && (
                   <div>
                     <span className="text-gray-600">Reserved:</span>
