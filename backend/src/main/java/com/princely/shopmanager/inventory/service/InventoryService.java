@@ -388,18 +388,6 @@ public class InventoryService extends ShopAwareService {
             changes.append(String.format("Min stock: %s → %s; ", oldValue, request.getMinimumStock()));
         }
 
-        if (request.getMaximumStock() != null) {
-            Integer oldValue = inventory.getMaximumStock();
-            inventory.setMaximumStock(request.getMaximumStock());
-            changes.append(String.format("Max stock: %s → %s; ", oldValue, request.getMaximumStock()));
-        }
-
-        if (request.getReorderPoint() != null) {
-            Integer oldValue = inventory.getReorderPoint();
-            inventory.setReorderPoint(request.getReorderPoint());
-            changes.append(String.format("Reorder point: %s → %s; ", oldValue, request.getReorderPoint()));
-        }
-
         if (request.getCostPrice() != null) {
             BigDecimal oldValue = inventory.getCostPrice();
             inventory.setCostPrice(request.getCostPrice());
@@ -545,13 +533,12 @@ public class InventoryService extends ShopAwareService {
             int currentStock = inventory.getAvailableStock();
             int minimumStock = inventory.getMinimumStock();
 
-            // Calculate suggested reorder point
-            int suggestedReorderPoint = Math.max(minimumStock,
-                (int) (currentStock * 0.2 * forecastDays / 30.0));
+            // Log forecast information for monitoring
+            log.debug("Demand forecast for inventory {}: current={}, minimum={}, forecastDays={}",
+                inventory.getId(), currentStock, minimumStock, forecastDays);
 
-            if (suggestedReorderPoint != inventory.getReorderPoint()) {
-                updateReorderPoint(inventory.getId(), suggestedReorderPoint);
-            }
+            // Note: Reorder suggestions are now handled by the createReorderSuggestion method
+            // which uses minimumStock * 3 as the target reorder quantity
         }
     }
 
@@ -582,18 +569,6 @@ public class InventoryService extends ShopAwareService {
         // For now, we just log it
         log.info("Reorder suggestion: {} units of {} for shop {}",
             suggestedQuantity, inventory.getProduct().getName(), inventory.getShop().getName());
-    }
-
-    private void updateReorderPoint(String inventoryId, int newReorderPoint) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-            .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
-
-        int oldReorderPoint = inventory.getReorderPoint();
-        inventory.setReorderPoint(newReorderPoint);
-        inventoryRepository.save(inventory);
-
-        auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
-            String.format("Reorder point updated from %d to %d", oldReorderPoint, newReorderPoint));
     }
 
     @Transactional(readOnly = true)
