@@ -42,14 +42,6 @@ public class InventoryUpdateRequest {
     @Min(value = 0, message = "Minimum stock cannot be negative")
     private Integer minimumStock;
 
-    @Schema(description = "Maximum stock capacity", example = "1000")
-    @Min(value = 0, message = "Maximum stock cannot be negative")
-    private Integer maximumStock;
-
-    @Schema(description = "Reorder point threshold", example = "20")
-    @Min(value = 0, message = "Reorder point cannot be negative")
-    private Integer reorderPoint;
-
     @Schema(description = "Cost price for this batch", example = "15.50")
     @Min(value = 0, message = "Cost price cannot be negative")
     private BigDecimal costPrice;

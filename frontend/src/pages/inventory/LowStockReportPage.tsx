@@ -105,13 +105,13 @@ export const LowStockReportPage: React.FC = () => {
   const estimateDaysUntilOut = (item: any): string => {
     // This is a simplified calculation
     // In a real app, you'd use historical sales data
-    // For now, estimate based on reorder point and stock levels
-    const avgDailyUsage = item.reorderPoint 
-      ? Math.max(1, Math.floor((item.maximumStock - item.reorderPoint) / 30))
+    // For now, estimate based on minimum stock level
+    const avgDailyUsage = item.minimumStock
+      ? Math.max(1, Math.floor((item.minimumStock * 3 - item.minimumStock) / 30))
       : 2 // Default fallback
-    
+
     if (avgDailyUsage <= 0 || item.currentStock <= 0) return '—'
-    
+
     const days = Math.floor(item.currentStock / avgDailyUsage)
     if (days === 0) return 'Today'
     if (days === 1) return 'Tomorrow'
@@ -120,10 +120,7 @@ export const LowStockReportPage: React.FC = () => {
 
   // Calculate suggested reorder quantity
   const getSuggestedReorder = (item: any): number => {
-    if (item.maximumStock) {
-      return item.maximumStock - item.currentStock
-    }
-    return item.reorderPoint * 2
+    return item.minimumStock * 3 - item.currentStock
   }
 
   return (
@@ -278,7 +275,6 @@ export const LowStockReportPage: React.FC = () => {
                   <TableHead>Product</TableHead>
                   <TableHead className="text-right">Current</TableHead>
                   <TableHead className="text-right">Minimum</TableHead>
-                  <TableHead className="text-right">Reorder Point</TableHead>
                   <TableHead className="text-right">Suggested Reorder</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Est. Days Until Out</TableHead>
@@ -318,9 +314,6 @@ export const LowStockReportPage: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right text-red-600">
                         {item.minimumStock}
-                      </TableCell>
-                      <TableCell className="text-right text-yellow-600">
-                        {item.reorderPoint}
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="font-semibold text-green-600">

@@ -30,8 +30,6 @@ public class InventoryResponse {
     private Integer reservedStock;
     private Integer availableStock;
     private Integer minimumStock;
-    private Integer maximumStock;
-    private Integer reorderPoint;
     private BigDecimal costPrice;
     private BigDecimal sellingPrice;
     private String location;

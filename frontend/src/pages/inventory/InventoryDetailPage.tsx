@@ -235,10 +235,6 @@ export const InventoryDetailPage: React.FC = () => {
 
   if (!currentItem) return null
 
-  const stockPercentage = currentItem?.maximumStock 
-    ? (currentItem?.currentStock / currentItem?.maximumStock) * 100
-    : 0
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -563,32 +559,10 @@ export const InventoryDetailPage: React.FC = () => {
             <CardDescription>Stock management configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-muted-foreground">Minimum Stock</Label>
-                <p className="font-medium text-red-600">{currentItem?.minimumStock}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Reorder Point</Label>
-                <p className="font-medium text-yellow-600">{currentItem?.reorderPoint}</p>
-              </div>
+            <div>
+              <Label className="text-muted-foreground">Minimum Stock</Label>
+              <p className="font-medium text-red-600">{currentItem?.minimumStock}</p>
             </div>
-
-            {currentItem?.maximumStock && (
-              <div>
-                <Label className="text-muted-foreground">Maximum Stock</Label>
-                <p className="font-medium">{currentItem?.maximumStock}</p>
-                <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500"
-                    style={{ width: `${Math.min(stockPercentage, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stockPercentage.toFixed(1)}% capacity
-                </p>
-              </div>
-            )}
 
             <Separator />
 

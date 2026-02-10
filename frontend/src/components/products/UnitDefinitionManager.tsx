@@ -2,8 +2,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/ui/numeric-input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProductUnitDefinitionRequest } from "@/types/api";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2, Save } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 // Common unit type suggestions
@@ -107,6 +122,29 @@ export const UNIT_TEMPLATES: UnitTemplate[] = [
   },
 ];
 
+// LocalStorage key for custom templates
+const CUSTOM_TEMPLATES_KEY = "shop-manager-custom-unit-templates";
+
+// Load custom templates from localStorage
+const loadCustomTemplates = (): UnitTemplate[] => {
+  try {
+    const stored = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Failed to load custom templates:", error);
+    return [];
+  }
+};
+
+// Save custom templates to localStorage
+const saveCustomTemplates = (templates: UnitTemplate[]): void => {
+  try {
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
+  } catch (error) {
+    console.error("Failed to save custom templates:", error);
+  }
+};
+
 interface UnitDefinitionManagerProps {
   unitDefinitions: ProductUnitDefinitionRequest[];
   onChange: (unitDefinitions: ProductUnitDefinitionRequest[]) => void;
@@ -123,10 +161,20 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
   );
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<UnitTemplate[]>([]);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateDescription, setNewTemplateDescription] = useState("");
+  const [unitTypeSearch, setUnitTypeSearch] = useState<Record<number, string>>({});
 
   useEffect(() => {
     setLocalUnits(unitDefinitions);
   }, [unitDefinitions]);
+
+  // Load custom templates on mount
+  useEffect(() => {
+    setCustomTemplates(loadCustomTemplates());
+  }, []);
 
   const validateUnits = (units: ProductUnitDefinitionRequest[]): boolean => {
     const newErrors: Record<number, string> = {};
@@ -256,6 +304,59 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
     setShowTemplateDialog(false);
   };
 
+  const handleSaveAsTemplate = () => {
+    if (localUnits.length === 0) {
+      alert("Please define at least one unit before saving as template");
+      return;
+    }
+    setShowSaveTemplateDialog(true);
+  };
+
+  const handleConfirmSaveTemplate = () => {
+    if (!newTemplateName.trim()) {
+      alert("Please enter a template name");
+      return;
+    }
+
+    const newTemplate: UnitTemplate = {
+      name: newTemplateName.trim(),
+      description: newTemplateDescription.trim() || "Custom template",
+      units: localUnits.map((unit) => ({ ...unit })),
+    };
+
+    const updatedCustomTemplates = [...customTemplates, newTemplate];
+    setCustomTemplates(updatedCustomTemplates);
+    saveCustomTemplates(updatedCustomTemplates);
+
+    // Reset form
+    setNewTemplateName("");
+    setNewTemplateDescription("");
+    setShowSaveTemplateDialog(false);
+
+    alert(`Template "${newTemplate.name}" saved successfully!`);
+  };
+
+  const handleDeleteCustomTemplate = (templateName: string) => {
+    if (!confirm(`Are you sure you want to delete the template "${templateName}"?`)) {
+      return;
+    }
+
+    const updatedCustomTemplates = customTemplates.filter(
+      (t) => t.name !== templateName
+    );
+    setCustomTemplates(updatedCustomTemplates);
+    saveCustomTemplates(updatedCustomTemplates);
+  };
+
+  // Get filtered unit type suggestions
+  const getFilteredUnitSuggestions = (index: number) => {
+    const search = unitTypeSearch[index] || "";
+    if (!search) return UNIT_TYPE_SUGGESTIONS;
+    return UNIT_TYPE_SUGGESTIONS.filter((suggestion) =>
+      suggestion.toLowerCase().includes(search.toLowerCase())
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -275,6 +376,16 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
             size="sm"
           >
             Use Template
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSaveAsTemplate}
+            disabled={disabled || localUnits.length === 0}
+            variant="outline"
+            size="sm"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Save as Template
           </Button>
           <Button
             type="button"
@@ -307,22 +418,63 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
               ×
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {UNIT_TEMPLATES.map((template) => (
-              <button
-                key={template.name}
-                type="button"
-                onClick={() => handleApplyTemplate(template)}
-                disabled={disabled}
-                className="text-left p-3 bg-white hover:bg-blue-100 border border-blue-200 rounded-md transition-colors disabled:opacity-50"
-              >
-                <div className="font-medium text-sm text-blue-900">{template.name}</div>
-                <div className="text-xs text-blue-600 mt-1">{template.description}</div>
-                <div className="text-xs text-gray-500 mt-2">
-                  {template.units.length} units: {template.units.map(u => u.unitLabel).join(", ")}
-                </div>
-              </button>
-            ))}
+
+          {/* Custom Templates */}
+          {customTemplates.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-semibold text-blue-900">My Custom Templates</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {customTemplates.map((template) => (
+                  <div
+                    key={template.name}
+                    className="relative text-left p-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors group"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate(template)}
+                      disabled={disabled}
+                      className="w-full text-left disabled:opacity-50"
+                    >
+                      <div className="font-medium text-sm text-green-900">{template.name}</div>
+                      <div className="text-xs text-green-700 mt-1">{template.description}</div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        {template.units.length} units: {template.units.map(u => u.unitLabel).join(", ")}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCustomTemplate(template.name)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-100"
+                      title="Delete template"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-600" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Predefined Templates */}
+          <div className="space-y-2">
+            <h5 className="text-sm font-semibold text-blue-900">Predefined Templates</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {UNIT_TEMPLATES.map((template) => (
+                <button
+                  key={template.name}
+                  type="button"
+                  onClick={() => handleApplyTemplate(template)}
+                  disabled={disabled}
+                  className="text-left p-3 bg-white hover:bg-blue-100 border border-blue-200 rounded-md transition-colors disabled:opacity-50"
+                >
+                  <div className="font-medium text-sm text-blue-900">{template.name}</div>
+                  <div className="text-xs text-blue-600 mt-1">{template.description}</div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {template.units.length} units: {template.units.map(u => u.unitLabel).join(", ")}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -360,27 +512,64 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
                 {/* Unit Type */}
                 <div className="col-span-3">
                   <Label className="text-xs">Unit Type*</Label>
-                  <Input
-                    type="text"
-                    list={`unit-type-suggestions-${index}`}
-                    placeholder="e.g., piece, pack"
-                    value={unit.unitType}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      handleUpdateUnit(index, "unitType", value);
-                      // Auto-suggest label if available
-                      if (UNIT_LABEL_SUGGESTIONS[value.toLowerCase()] && !unit.unitLabel) {
-                        handleUpdateUnit(index, "unitLabel", UNIT_LABEL_SUGGESTIONS[value.toLowerCase()]);
-                      }
-                    }}
-                    disabled={disabled}
-                    className="mt-1"
-                  />
-                  <datalist id={`unit-type-suggestions-${index}`}>
-                    {UNIT_TYPE_SUGGESTIONS.map((suggestion) => (
-                      <option key={suggestion} value={suggestion} />
-                    ))}
-                  </datalist>
+                  <div className="mt-1 space-y-1">
+                    <Select
+                      value={unit.unitType}
+                      onValueChange={(value) => {
+                        handleUpdateUnit(index, "unitType", value);
+                        // Auto-suggest label if available
+                        if (UNIT_LABEL_SUGGESTIONS[value.toLowerCase()] && !unit.unitLabel) {
+                          handleUpdateUnit(index, "unitLabel", UNIT_LABEL_SUGGESTIONS[value.toLowerCase()]);
+                        }
+                      }}
+                      disabled={disabled}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* Search input inside dropdown */}
+                        <div className="px-2 py-1.5 sticky top-0 bg-white border-b">
+                          <Input
+                            type="text"
+                            placeholder="Search or type custom..."
+                            value={unitTypeSearch[index] || ""}
+                            onChange={(e) => {
+                              const newSearch = { ...unitTypeSearch };
+                              newSearch[index] = e.target.value;
+                              setUnitTypeSearch(newSearch);
+                            }}
+                            onKeyDown={(e) => {
+                              // Allow typing custom values by pressing Enter
+                              if (e.key === "Enter" && unitTypeSearch[index]) {
+                                const customValue = unitTypeSearch[index].trim();
+                                if (customValue) {
+                                  handleUpdateUnit(index, "unitType", customValue);
+                                  // Clear search
+                                  const newSearch = { ...unitTypeSearch };
+                                  delete newSearch[index];
+                                  setUnitTypeSearch(newSearch);
+                                }
+                              }
+                              e.stopPropagation();
+                            }}
+                            disabled={disabled}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        {getFilteredUnitSuggestions(index).map((suggestion) => (
+                          <SelectItem key={suggestion} value={suggestion}>
+                            {suggestion}
+                          </SelectItem>
+                        ))}
+                        {getFilteredUnitSuggestions(index).length === 0 && (
+                          <div className="px-2 py-1.5 text-sm text-gray-500">
+                            No matches. Press Enter to use custom value.
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Unit Label */}
@@ -495,6 +684,58 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
           </p>
         </div>
       )}
+
+      {/* Save Template Dialog */}
+      <Dialog open={showSaveTemplateDialog} onOpenChange={setShowSaveTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Custom Template</DialogTitle>
+            <DialogDescription>
+              Save the current unit definitions as a reusable template for future products.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="template-name">Template Name*</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g., My Beverage Units"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="template-description">Description</Label>
+              <Input
+                id="template-description"
+                placeholder="e.g., Unit structure for bottled drinks"
+                value={newTemplateDescription}
+                onChange={(e) => setNewTemplateDescription(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded p-3">
+              <p className="text-xs font-semibold text-gray-700 mb-1">Units to save:</p>
+              <p className="text-xs text-gray-600">
+                {localUnits.map((u) => u.unitLabel).join(", ")}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowSaveTemplateDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleConfirmSaveTemplate}>
+              Save Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

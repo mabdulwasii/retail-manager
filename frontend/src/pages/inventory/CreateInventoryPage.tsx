@@ -41,10 +41,7 @@ export const CreateInventoryPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     productId: '',
-    currentStock: '',
     minimumStock: '0',
-    maximumStock: '',
-    reorderPoint: '0',
     costPrice: '',
     purchaseUnit: '',
     purchaseQuantity: '',
@@ -90,38 +87,11 @@ export const CreateInventoryPage: React.FC = () => {
       newErrors.productId = 'Please select a product'
     }
 
-    if (!formData.currentStock || formData.currentStock.trim() === '') {
-      newErrors.currentStock = 'Current stock is required'
-    } else {
-      const stock = parseInt(formData.currentStock, 10)
-      if (isNaN(stock) || stock < 0) {
-        newErrors.currentStock = 'Current stock must be a non-negative number'
-      }
-    }
-
     // Minimum stock is now optional, defaults to 0
     if (formData.minimumStock && formData.minimumStock.trim() !== '') {
       const minStock = parseInt(formData.minimumStock, 10)
       if (isNaN(minStock) || minStock < 0) {
         newErrors.minimumStock = 'Minimum stock must be a non-negative number'
-      }
-    }
-
-    if (formData.maximumStock && formData.maximumStock.trim() !== '') {
-      const maxStock = parseInt(formData.maximumStock, 10)
-      const currentStock = parseInt(formData.currentStock, 10)
-      if (isNaN(maxStock) || maxStock < 0) {
-        newErrors.maximumStock = 'Maximum stock must be a non-negative number'
-      } else if (!isNaN(currentStock) && maxStock < currentStock) {
-        newErrors.maximumStock = 'Maximum stock cannot be less than current stock'
-      }
-    }
-
-    // Reorder point is now optional, defaults to 0
-    if (formData.reorderPoint && formData.reorderPoint.trim() !== '') {
-      const reorderPoint = parseInt(formData.reorderPoint, 10)
-      if (isNaN(reorderPoint) || reorderPoint < 0) {
-        newErrors.reorderPoint = 'Reorder point must be a non-negative number'
       }
     }
 
@@ -186,9 +156,7 @@ export const CreateInventoryPage: React.FC = () => {
 
     const request: CreateInventoryRequest = {
       productId: formData.productId,
-      currentStock: parseInt(formData.currentStock, 10),
       minimumStock: formData.minimumStock ? parseInt(formData.minimumStock, 10) : 0,
-      reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint, 10) : 0,
       costPrice: parseFloat(formData.costPrice),
       sellingPrice: baseSellingPrice,
       baseUnit: selectedProduct?.unitDefinitions?.find(u => u.isBaseUnit)?.unitType || 'piece',
@@ -199,9 +167,6 @@ export const CreateInventoryPage: React.FC = () => {
       ...(formData.purchaseUnit && { purchaseUnit: formData.purchaseUnit }),
       ...(formData.purchaseQuantity && { purchaseQuantity: parseFloat(formData.purchaseQuantity) }),
       ...(formData.purchaseUnitCost && { purchaseUnitCost: parseFloat(formData.purchaseUnitCost) }),
-      ...(formData.maximumStock && {
-        maximumStock: parseInt(formData.maximumStock, 10),
-      }),
       ...(formData.location && { location: formData.location }),
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
@@ -352,26 +317,6 @@ export const CreateInventoryPage: React.FC = () => {
             {/* Stock Levels */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="currentStock">
-                  Current Stock <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="currentStock"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={formData.currentStock}
-                  onChange={(e) =>
-                    handleInputChange("currentStock", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.currentStock && (
-                  <p className="text-sm text-red-500">{errors.currentStock}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
                 <Input
                   id="minimumStock"
@@ -389,41 +334,6 @@ export const CreateInventoryPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="maximumStock">Maximum Stock</Label>
-                <Input
-                  id="maximumStock"
-                  type="number"
-                  min="0"
-                  placeholder="Optional"
-                  value={formData.maximumStock}
-                  onChange={(e) =>
-                    handleInputChange("maximumStock", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.maximumStock && (
-                  <p className="text-sm text-red-500">{errors.maximumStock}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reorderPoint">Reorder Point (optional)</Label>
-                <Input
-                  id="reorderPoint"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={formData.reorderPoint}
-                  onChange={(e) =>
-                    handleInputChange("reorderPoint", e.target.value)
-                  }
-                  disabled={isLoading}
-                />
-                {errors.reorderPoint && (
-                  <p className="text-sm text-red-500">{errors.reorderPoint}</p>
-                )}
-              </div>
             </div>
 
             {/* Pricing - Unit Based */}

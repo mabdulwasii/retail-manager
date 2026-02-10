@@ -9,8 +9,6 @@ export const getMockInventoryItem = (overrides = {}) => ({
   quantity: 50,
   reservedQuantity: 5,
   availableQuantity: 45,
-  reorderPoint: 10,
-  maxStockLevel: 100,
   minStockLevel: 5,
   costPrice: 800.00,
   sellingPrice: 1200.00,
@@ -48,7 +46,6 @@ export const getMockInventoryList = () => [
     quantity: 8,
     availableQuantity: 8,
     reservedQuantity: 0,
-    reorderPoint: 10,
     sellingPrice: 45.00,
     costPrice: 30.00,
     status: 'LOW_STOCK'

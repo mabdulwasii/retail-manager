@@ -242,8 +242,6 @@ export interface Inventory {
   reservedStock: number
   availableStock: number
   minimumStock: number
-  maximumStock?: number
-  reorderPoint: number
   costPrice: number
   sellingPrice: number
   baseUnit?: string

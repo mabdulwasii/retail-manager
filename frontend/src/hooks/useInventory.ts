@@ -32,8 +32,6 @@ export interface InventoryItem {
   reservedStock: number
   availableStock: number
   minimumStock: number
-  maximumStock?: number
-  reorderPoint: number
   costPrice: number
   sellingPrice: number
   location?: string
@@ -72,8 +70,6 @@ export interface InventoryHistory {
 export interface CreateInventoryRequest {
   productId: string
   minimumStock: number
-  maximumStock?: number | undefined
-  reorderPoint: number
   costPrice: number
   sellingPrice: number
   baseUnit?: string | undefined

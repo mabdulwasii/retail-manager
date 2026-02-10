@@ -121,8 +121,6 @@ public class InventoryService extends ShopAwareService {
             .shop(shop)
             .product(product)
             .minimumStock(request.getMinimumStock())
-            .maximumStock(request.getMaximumStock())
-            .reorderPoint(request.getReorderPoint())
             .costPrice(request.getCostPrice())
             .sellingPrice(request.getSellingPrice())
             .baseUnit(request.getBaseUnit() != null ? request.getBaseUnit() : "piece")
@@ -567,10 +565,8 @@ public class InventoryService extends ShopAwareService {
         log.info("Creating reorder suggestion for inventory {}", inventory.getId());
 
         // Calculate suggested reorder quantity
-        // Use maximumStock if available, otherwise use minimumStock * 3 as default target
-        int targetStock = inventory.getMaximumStock() != null
-            ? inventory.getMaximumStock()
-            : inventory.getMinimumStock() * 3;
+        // Use minimumStock * 3 as default target
+        int targetStock = inventory.getMinimumStock() * 3;
 
         int suggestedQuantity = Math.max(
             targetStock - inventory.getAvailableStock(),
@@ -818,8 +814,6 @@ public class InventoryService extends ShopAwareService {
             .reservedStock(inventory.getReservedStock())
             .availableStock(inventory.getAvailableStock())
             .minimumStock(inventory.getMinimumStock())
-            .maximumStock(inventory.getMaximumStock())
-            .reorderPoint(inventory.getReorderPoint())
             .costPrice(inventory.getCostPrice())
             .sellingPrice(inventory.getSellingPrice())
             .baseUnit(inventory.getBaseUnit())

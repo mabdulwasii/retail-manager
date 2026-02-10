@@ -32,8 +32,6 @@ export interface InventoryItem {
   reservedStock: number;
   availableStock: number;
   minimumStock: number;
-  maximumStock?: number;
-  reorderPoint: number;
   unitCost?: number;
   location?: string;
   batchNumber?: string;
@@ -49,8 +47,6 @@ export interface CreateInventoryRequest {
   productId: string;
   currentStock: number;
   minimumStock: number;
-  maximumStock?: number;
-  reorderPoint: number;
   unitCost?: number;
   location?: string;
   batchNumber?: string;
