@@ -83,8 +83,6 @@ class InventoryServiceSimpleTest {
         testInventory.setProduct(testProduct);
         testInventory.setPurchaseQuantity(BigDecimal.valueOf(100));
         testInventory.setMinimumStock(10);
-        testInventory.setMaximumStock(500);
-        testInventory.setReorderPoint(25);
         testInventory.setCostPrice(BigDecimal.valueOf(15.50));
         testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
 
