@@ -25,7 +25,8 @@ export const CreateInventoryPage: React.FC = () => {
   
   const { createInventoryItem, isLoading, canManageInventory } = useInventory()
   const { products, isLoading: productsLoading } = useProducts({
-    shopId: effectiveShopId || undefined
+    shopId: effectiveShopId || undefined,
+    status: 'ACTIVE'  // Only show active products for inventory creation
   })
 
   // Check if user has permission to create inventory
@@ -45,7 +46,7 @@ export const CreateInventoryPage: React.FC = () => {
     costPrice: '',
     purchaseUnit: '',
     purchaseQuantity: '',
-    purchaseUnitCost: '',
+    totalPurchaseCost: '',
     location: '',
     expiryDate: ''
   })
@@ -166,7 +167,7 @@ export const CreateInventoryPage: React.FC = () => {
       })),
       ...(formData.purchaseUnit && { purchaseUnit: formData.purchaseUnit }),
       ...(formData.purchaseQuantity && { purchaseQuantity: parseFloat(formData.purchaseQuantity) }),
-      ...(formData.purchaseUnitCost && { purchaseUnitCost: parseFloat(formData.purchaseUnitCost) }),
+      ...(formData.totalPurchaseCost && { totalPurchaseCost: parseFloat(formData.totalPurchaseCost) }),
       ...(formData.location && { location: formData.location }),
       ...(formData.expiryDate && { expiryDate: formData.expiryDate }),
     };
@@ -317,7 +318,7 @@ export const CreateInventoryPage: React.FC = () => {
             {/* Stock Levels */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="minimumStock">Minimum Stock (optional)</Label>
+                <Label htmlFor="minimumStock">Minimum Stock Level (optional)</Label>
                 <Input
                   id="minimumStock"
                   type="number"
@@ -329,6 +330,9 @@ export const CreateInventoryPage: React.FC = () => {
                   }
                   disabled={isLoading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Alert threshold - you'll be notified when stock falls below this level
+                </p>
                 {errors.minimumStock && (
                   <p className="text-sm text-red-500">{errors.minimumStock}</p>
                 )}
@@ -345,14 +349,15 @@ export const CreateInventoryPage: React.FC = () => {
               onPurchaseUnitChange={(value) => handleInputChange('purchaseUnit', value)}
               purchaseQuantity={formData.purchaseQuantity}
               onPurchaseQuantityChange={(value) => handleInputChange('purchaseQuantity', value)}
-              purchaseUnitCost={formData.purchaseUnitCost}
-              onPurchaseUnitCostChange={(value) => {
-                handleInputChange('purchaseUnitCost', value)
+              totalPurchaseCost={formData.totalPurchaseCost}
+              onTotalPurchaseCostChange={(value) => {
+                handleInputChange('totalPurchaseCost', value)
                 // Auto-calculate base unit cost price
-                if (value && formData.purchaseUnit && selectedProduct?.unitDefinitions) {
+                if (value && formData.purchaseUnit && formData.purchaseQuantity && selectedProduct?.unitDefinitions) {
                   const purchaseUnitDef = selectedProduct.unitDefinitions.find(u => u.unitType === formData.purchaseUnit)
-                  if (purchaseUnitDef && parseFloat(value) > 0) {
-                    const baseCost = (parseFloat(value) / purchaseUnitDef.conversionFactor).toFixed(2)
+                  if (purchaseUnitDef && parseFloat(value) > 0 && parseFloat(formData.purchaseQuantity) > 0) {
+                    const totalBaseUnits = parseFloat(formData.purchaseQuantity) * purchaseUnitDef.conversionFactor
+                    const baseCost = (parseFloat(value) / totalBaseUnits).toFixed(2)
                     handleInputChange('costPrice', baseCost)
                   }
                 }
@@ -364,7 +369,7 @@ export const CreateInventoryPage: React.FC = () => {
                 unitPrices: errors.unitPrices,
                 purchaseUnit: errors.purchaseUnit,
                 purchaseQuantity: errors.purchaseQuantity,
-                purchaseUnitCost: errors.purchaseUnitCost,
+                totalPurchaseCost: errors.totalPurchaseCost,
               }}
             />
 

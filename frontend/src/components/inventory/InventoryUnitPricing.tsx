@@ -21,14 +21,14 @@ interface InventoryUnitPricingProps {
   onPurchaseUnitChange?: (unit: string) => void;
   purchaseQuantity?: string;
   onPurchaseQuantityChange?: (quantity: string) => void;
-  purchaseUnitCost?: string;
-  onPurchaseUnitCostChange?: (cost: string) => void;
+  totalPurchaseCost?: string;
+  onTotalPurchaseCostChange?: (cost: string) => void;
   errors?: {
     costPrice?: string;
     unitPrices?: string;
     purchaseUnit?: string;
     purchaseQuantity?: string;
-    purchaseUnitCost?: string;
+    totalPurchaseCost?: string;
   };
 }
 
@@ -42,8 +42,8 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
   onPurchaseUnitChange,
   purchaseQuantity,
   onPurchaseQuantityChange,
-  purchaseUnitCost,
-  onPurchaseUnitCostChange,
+  totalPurchaseCost,
+  onTotalPurchaseCostChange,
   errors,
 }) => {
   const [localPrices, setLocalPrices] = useState<Record<string, string>>({});
@@ -203,15 +203,15 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
               </p>
             </div>
 
-            {/* Purchase Unit Cost */}
+            {/* Total Purchase Cost */}
             <div className="space-y-2">
-              <Label htmlFor="purchaseUnitCost">
-                Cost per Unit <span className="text-red-500">*</span>
+              <Label htmlFor="totalPurchaseCost">
+                Total Purchase Cost <span className="text-red-500">*</span>
               </Label>
               <NumericInput
-                id="purchaseUnitCost"
-                value={purchaseUnitCost || ''}
-                onValueChange={(values) => onPurchaseUnitCostChange?.(values.value || '')}
+                id="totalPurchaseCost"
+                value={totalPurchaseCost || ''}
+                onValueChange={(values) => onTotalPurchaseCostChange?.(values.value || '')}
                 placeholder="0.00"
                 prefix="₦ "
                 decimalScale={2}
@@ -219,25 +219,28 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
                 allowNegative={false}
               />
               <p className="text-xs text-muted-foreground">
-                Price per {purchaseUnit ? sortedUnits.find(u => u.unitType === purchaseUnit)?.unitLabel : 'unit'}
+                Total cost for entire batch of {purchaseQuantity || '0'} {purchaseUnit ? sortedUnits.find(u => u.unitType === purchaseUnit)?.unitLabel : 'units'}
               </p>
-              {errors?.purchaseUnitCost && (
+              {errors?.totalPurchaseCost && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  {errors.purchaseUnitCost}
+                  {errors.totalPurchaseCost}
                 </p>
               )}
             </div>
           </div>
 
           {/* Auto-calculated base cost */}
-          {purchaseUnit && purchaseUnitCost && (
+          {purchaseUnit && totalPurchaseCost && purchaseQuantity && (
             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md p-3 ml-6">
               <p className="text-sm text-blue-700 dark:text-blue-400">
                 <strong>Cost per base unit:</strong> {(() => {
                   const selectedUnit = sortedUnits.find(u => u.unitType === purchaseUnit);
-                  if (selectedUnit && parseFloat(purchaseUnitCost) > 0) {
-                    const baseUnitCost = parseFloat(purchaseUnitCost) / selectedUnit.conversionFactor;
+                  const qty = parseFloat(purchaseQuantity);
+                  const cost = parseFloat(totalPurchaseCost);
+                  if (selectedUnit && cost > 0 && qty > 0) {
+                    const totalBaseUnits = qty * selectedUnit.conversionFactor;
+                    const baseUnitCost = cost / totalBaseUnits;
                     return `₦${baseUnitCost.toFixed(2)} per ${product.unitDefinitions.find(u => u.isBaseUnit)?.unitLabel || 'piece'}`;
                   }
                   return 'N/A';

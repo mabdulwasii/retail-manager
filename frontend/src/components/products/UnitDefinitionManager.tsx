@@ -165,7 +165,6 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
   const [customTemplates, setCustomTemplates] = useState<UnitTemplate[]>([]);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateDescription, setNewTemplateDescription] = useState("");
-  const [unitTypeSearch, setUnitTypeSearch] = useState<Record<number, string>>({});
 
   useEffect(() => {
     setLocalUnits(unitDefinitions);
@@ -348,15 +347,6 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
     saveCustomTemplates(updatedCustomTemplates);
   };
 
-  // Get filtered unit type suggestions
-  const getFilteredUnitSuggestions = (index: number) => {
-    const search = unitTypeSearch[index] || "";
-    if (!search) return UNIT_TYPE_SUGGESTIONS;
-    return UNIT_TYPE_SUGGESTIONS.filter((suggestion) =>
-      suggestion.toLowerCase().includes(search.toLowerCase())
-    );
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -513,9 +503,13 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
                 <div className="col-span-3">
                   <Label className="text-xs">Unit Type*</Label>
                   <div className="mt-1 space-y-1">
-                    <Select
+                    <Input
+                      type="text"
+                      list={`unit-type-suggestions-${index}`}
+                      placeholder="Select or type custom..."
                       value={unit.unitType}
-                      onValueChange={(value) => {
+                      onChange={(e) => {
+                        const value = e.target.value;
                         handleUpdateUnit(index, "unitType", value);
                         // Auto-suggest label if available
                         if (UNIT_LABEL_SUGGESTIONS[value.toLowerCase()] && !unit.unitLabel) {
@@ -523,52 +517,12 @@ export const UnitDefinitionManager: React.FC<UnitDefinitionManagerProps> = ({
                         }
                       }}
                       disabled={disabled}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select unit type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* Search input inside dropdown */}
-                        <div className="px-2 py-1.5 sticky top-0 bg-white border-b">
-                          <Input
-                            type="text"
-                            placeholder="Search or type custom..."
-                            value={unitTypeSearch[index] || ""}
-                            onChange={(e) => {
-                              const newSearch = { ...unitTypeSearch };
-                              newSearch[index] = e.target.value;
-                              setUnitTypeSearch(newSearch);
-                            }}
-                            onKeyDown={(e) => {
-                              // Allow typing custom values by pressing Enter
-                              if (e.key === "Enter" && unitTypeSearch[index]) {
-                                const customValue = unitTypeSearch[index].trim();
-                                if (customValue) {
-                                  handleUpdateUnit(index, "unitType", customValue);
-                                  // Clear search
-                                  const newSearch = { ...unitTypeSearch };
-                                  delete newSearch[index];
-                                  setUnitTypeSearch(newSearch);
-                                }
-                              }
-                              e.stopPropagation();
-                            }}
-                            disabled={disabled}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                        {getFilteredUnitSuggestions(index).map((suggestion) => (
-                          <SelectItem key={suggestion} value={suggestion}>
-                            {suggestion}
-                          </SelectItem>
-                        ))}
-                        {getFilteredUnitSuggestions(index).length === 0 && (
-                          <div className="px-2 py-1.5 text-sm text-gray-500">
-                            No matches. Press Enter to use custom value.
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    />
+                    <datalist id={`unit-type-suggestions-${index}`}>
+                      {UNIT_TYPE_SUGGESTIONS.map((suggestion) => (
+                        <option key={suggestion} value={suggestion} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
 
