@@ -158,7 +158,7 @@ class InventoryServiceTest {
             assertThat(result.getId()).isEqualTo("inventory-1");
             assertThat(result.getCurrentStock()).isEqualTo(100);
 
-            verify(inventoryRepository).save(any(Inventory.class));
+            verify(inventoryRepository, times(2)).save(any(Inventory.class)); // first: initial save, second: after setting currentStock
             verify(historyRepository).save(any(InventoryHistory.class));
             verify(auditService).logEntityCreation(eq("Inventory"), eq("inventory-1"), anyString());
         }

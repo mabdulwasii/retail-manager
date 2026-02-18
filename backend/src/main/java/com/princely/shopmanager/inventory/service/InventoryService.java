@@ -140,6 +140,7 @@ public class InventoryService extends ShopAwareService {
             long baseUnits = request.getPurchaseQuantity().multiply(conversionFactor)
                 .setScale(0, java.math.RoundingMode.HALF_UP).longValue();
             inventory.setCurrentStock(baseUnits);
+            inventory = inventoryRepository.save(inventory); // explicit save to persist currentStock
         }
 
         // Auto-create a purchase unit if missing and calculate unit costs
@@ -164,7 +165,7 @@ public class InventoryService extends ShopAwareService {
             handleUnitPrices(inventory, request.getUnitPrices());
         }
 
-        Integer initialStock = inventory.getCurrentStock();
+        int initialStock = inventory.getCurrentStock().intValue();
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.STOCK_IN,
             initialStock, 0, initialStock,
             null, InventoryHistory.ReferenceType.PROCUREMENT, "Initial stock");
@@ -192,7 +193,7 @@ public class InventoryService extends ShopAwareService {
     public InventoryResponse adjustStock(String inventoryId, InventoryAdjustmentRequest request, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
-        int previousStock = inventory.getCurrentStock();
+        int previousStock = inventory.getCurrentStock().intValue();
         int newStock = request.getNewStock();
         int quantityChange = newStock - previousStock;
 
@@ -250,7 +251,7 @@ public class InventoryService extends ShopAwareService {
         inventory = inventoryRepository.save(inventory);
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.RESERVATION,
-            request.getQuantity(), inventory.getCurrentStock(), inventory.getCurrentStock(),
+            request.getQuantity(), inventory.getCurrentStock().intValue(), inventory.getCurrentStock().intValue(),
             request.getReferenceId(), request.getReferenceType(),
             request.getReason() != null ? request.getReason() : "Stock reserved");
 
@@ -281,13 +282,13 @@ public class InventoryService extends ShopAwareService {
             throw new IllegalStateException("Cannot sell " + quantity + " units. Available: " + inventory.getAvailableStock());
         }
 
-        int previousStock = inventory.getCurrentStock();
+        int previousStock = inventory.getCurrentStock().intValue();
         inventory.removeStock(quantity);
         inventory.releaseReservedStock(quantity);
         inventory = inventoryRepository.save(inventory);
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.SALE,
-            -quantity, previousStock, inventory.getCurrentStock(),
+            -quantity, previousStock, inventory.getCurrentStock().intValue(),
             saleId, InventoryHistory.ReferenceType.SALE, "Stock sold");
 
         auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
@@ -297,12 +298,12 @@ public class InventoryService extends ShopAwareService {
     public void returnStock(String inventoryId, int quantity, String returnId, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
-        int previousStock = inventory.getCurrentStock();
+        int previousStock = inventory.getCurrentStock().intValue();
         inventory.addStock(quantity);
         inventory = inventoryRepository.save(inventory);
 
         recordHistoryEntry(inventory, InventoryHistory.ChangeType.RETURN,
-            quantity, previousStock, inventory.getCurrentStock(),
+            quantity, previousStock, inventory.getCurrentStock().intValue(),
             returnId, InventoryHistory.ReferenceType.RETURN, "Stock returned");
 
         auditService.logEntityModification(ENTITY_TYPE_INVENTORY, inventory.getId(),
@@ -424,7 +425,13 @@ public class InventoryService extends ShopAwareService {
         if (request.getPurchaseQuantity() != null) {
             BigDecimal oldValue = inventory.getPurchaseQuantity();
             inventory.setPurchaseQuantity(request.getPurchaseQuantity());
-            changes.append(String.format("Purchase quantity: %s → %s; ", oldValue, request.getPurchaseQuantity()));
+            // Recalculate currentStock in base units to match the new purchaseQuantity
+            BigDecimal cf = findConversionFactor(inventory.getProduct().getId(), inventory.getPurchaseUnit());
+            long newBaseUnits = request.getPurchaseQuantity().multiply(cf)
+                .setScale(0, java.math.RoundingMode.HALF_UP).longValue();
+            inventory.setCurrentStock(newBaseUnits);
+            changes.append(String.format("Purchase quantity: %s → %s (stock recalculated to %d base units); ",
+                oldValue, request.getPurchaseQuantity(), newBaseUnits));
         }
 
         if (request.getTotalPurchaseCost() != null) {
@@ -756,7 +763,7 @@ public class InventoryService extends ShopAwareService {
         // currentStock is in base units; divide by conversionFactor to get purchase units
         Integer currentStockInPurchaseUnit = null;
         Integer stockRemainder = null;
-        int currentStockBaseUnits = inventory.getCurrentStock();
+        long currentStockBaseUnits = inventory.getCurrentStock();
 
         if (inventory.getPurchaseUnit() != null && inventory.getProduct().getUnitDefinitions() != null) {
             BigDecimal conversionFactor = inventory.getProduct().getUnitDefinitions().stream()
@@ -822,7 +829,7 @@ public class InventoryService extends ShopAwareService {
             .productSku(inventory.getProduct().getSku())
             .productCategory(inventory.getProduct().getCategory() != null
                 ? inventory.getProduct().getCategory().getName() : null)
-            .currentStock(inventory.getCurrentStock())
+            .currentStock(inventory.getCurrentStock().intValue())
             .currentStockInPurchaseUnit(currentStockInPurchaseUnit)
             .stockRemainder(stockRemainder)
             .reservedStock(inventory.getReservedStock())
@@ -997,7 +1004,7 @@ public class InventoryService extends ShopAwareService {
      * @return Remaining stock in base units
      */
     private BigDecimal getStockInBaseUnits(Inventory inventory) {
-        int stock = inventory.getCurrentStock();
+        long stock = inventory.getCurrentStock();
         return stock > 0 ? BigDecimal.valueOf(stock) : BigDecimal.ZERO;
     }
 

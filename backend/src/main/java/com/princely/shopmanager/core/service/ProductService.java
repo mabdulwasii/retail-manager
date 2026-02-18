@@ -325,8 +325,8 @@ public class ProductService extends ShopAwareService {
 
         List<Inventory> inventories = inventoryRepository.findByProductId(productId);
 
-        int totalStock = inventories.stream()
-            .mapToInt(Inventory::getCurrentStock)
+        int totalStock = (int) inventories.stream()
+            .mapToLong(Inventory::getCurrentStock)
             .sum();
 
         int reservedStock = inventories.stream()
@@ -437,8 +437,8 @@ public class ProductService extends ShopAwareService {
 
         return allProducts.stream()
             .filter(product -> {
-                int totalStock = inventoryRepository.findByProductId(product.getId()).stream()
-                    .mapToInt(Inventory::getCurrentStock)
+                long totalStock = inventoryRepository.findByProductId(product.getId()).stream()
+                    .mapToLong(Inventory::getCurrentStock)
                     .sum();
                 return totalStock == 0;
             })

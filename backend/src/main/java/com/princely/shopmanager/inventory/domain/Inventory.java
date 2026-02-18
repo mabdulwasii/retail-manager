@@ -120,17 +120,16 @@ public class Inventory extends BaseEntity implements ShopAware {
     }
 
     public Integer getAvailableStock() {
-        // Calculate current stock from purchase quantity converted to base units
-        Integer currentStockInBaseUnits = getCurrentStock();
-        return Math.max(0, currentStockInBaseUnits - reservedStock);
+        long current = getCurrentStock();
+        return (int) Math.max(0L, current - reservedStock);
     }
 
     /**
      * Returns current stock in base units (e.g., pieces).
      * This is the authoritative remaining stock counter.
      */
-    public Integer getCurrentStock() {
-        return currentStock != null ? currentStock.intValue() : 0;
+    public Long getCurrentStock() {
+        return currentStock != null ? currentStock : 0L;
     }
 
     public boolean isLowStock() {
