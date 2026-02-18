@@ -234,14 +234,32 @@ export const InventoryUnitPricing: React.FC<InventoryUnitPricingProps> = ({
           {purchaseUnit && totalPurchaseCost && purchaseQuantity && (
             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md p-3 ml-6">
               <p className="text-sm text-blue-700 dark:text-blue-400">
-                <strong>Cost per base unit:</strong> {(() => {
+                {(() => {
                   const selectedUnit = sortedUnits.find(u => u.unitType === purchaseUnit);
+                  const baseUnitDef = product.unitDefinitions.find(u => u.isBaseUnit);
                   const qty = parseFloat(purchaseQuantity);
                   const cost = parseFloat(totalPurchaseCost);
                   if (selectedUnit && cost > 0 && qty > 0) {
+                    const purchaseUnitCost = cost / qty;
+                    const baseUnitLabel = baseUnitDef?.unitLabel || 'piece';
+
+                    if (selectedUnit.isBaseUnit) {
+                      // Purchase unit IS the base unit — one line is enough
+                      return (
+                        <><strong>Cost per {baseUnitLabel}:</strong> ₦{purchaseUnitCost.toFixed(2)}</>
+                      );
+                    }
+
+                    // Purchase unit differs from base unit — show both
                     const totalBaseUnits = qty * selectedUnit.conversionFactor;
                     const baseUnitCost = cost / totalBaseUnits;
-                    return `₦${baseUnitCost.toFixed(2)} per ${product.unitDefinitions.find(u => u.isBaseUnit)?.unitLabel || 'piece'}`;
+                    return (
+                      <>
+                        <strong>Cost per {selectedUnit.unitLabel}:</strong> ₦{purchaseUnitCost.toFixed(2)}
+                        <span className="mx-2 text-blue-400">·</span>
+                        <strong>Cost per {baseUnitLabel}:</strong> ₦{baseUnitCost.toFixed(2)}
+                      </>
+                    );
                   }
                   return 'N/A';
                 })()}

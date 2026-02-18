@@ -509,7 +509,7 @@ export const InventoryDetailPage: React.FC = () => {
               </div>
               <div>
                 <Label className="text-muted-foreground">Category</Label>
-                <p className="font-medium">{currentItem?.product?.category || '—'}</p>
+                <p className="font-medium">{currentItem?.productCategory || currentItem?.product?.category || '—'}</p>
               </div>
             </div>
 

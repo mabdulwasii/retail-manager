@@ -130,7 +130,6 @@ class InventoryServiceTest {
             shopRepository,
             inventoryRepository,
             historyRepository,
-            inventoryUnitPriceRepository,
             productRepository,
             productUnitDefRepository,
             costCalculator,

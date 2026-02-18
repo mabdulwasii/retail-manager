@@ -60,7 +60,6 @@ public class InventoryService extends ShopAwareService {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository historyRepository;
-    private final InventoryUnitPriceRepository inventoryUnitPriceRepository;
     private final ProductRepository productRepository;
     private final ProductUnitDefinitionRepository productUnitDefRepository;
     private final InventoryCostCalculator costCalculator;
@@ -72,7 +71,6 @@ public class InventoryService extends ShopAwareService {
             ShopRepository shopRepository,
             InventoryRepository inventoryRepository,
             InventoryHistoryRepository historyRepository,
-            InventoryUnitPriceRepository inventoryUnitPriceRepository,
             ProductRepository productRepository,
             ProductUnitDefinitionRepository productUnitDefRepository,
             InventoryCostCalculator costCalculator,
@@ -81,7 +79,6 @@ public class InventoryService extends ShopAwareService {
         super(shopAccessValidator, shopRepository);
         this.inventoryRepository = inventoryRepository;
         this.historyRepository = historyRepository;
-        this.inventoryUnitPriceRepository = inventoryUnitPriceRepository;
         this.productRepository = productRepository;
         this.productUnitDefRepository = productUnitDefRepository;
         this.costCalculator = costCalculator;
@@ -135,7 +132,7 @@ public class InventoryService extends ShopAwareService {
 
         inventory = inventoryRepository.save(inventory);
 
-        // Auto-create purchase unit if missing and calculate unit costs
+        // Auto-create a purchase unit if missing and calculate unit costs
         if (request.getPurchaseUnit() != null && request.getTotalPurchaseCost() != null &&
             request.getPurchaseQuantity() != null) {
 
@@ -624,13 +621,14 @@ public class InventoryService extends ShopAwareService {
             InventorySpecifications.forShop(shopId)
         );
 
-        // Use totalPurchaseCost if available, fallback to costPrice calculation
+        // Use totalPurchaseCost if available, fallback to costPrice × base unit count
         BigDecimal totalValue = allInventory.stream()
             .map(inv -> {
                 if (inv.getTotalPurchaseCost() != null) {
                     return inv.getTotalPurchaseCost();
                 } else if (inv.getCostPrice() != null) {
-                    return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                    BigDecimal baseUnits = getStockInBaseUnits(inv);
+                    return inv.getCostPrice().multiply(baseUnits);
                 }
                 return BigDecimal.ZERO;
             })
@@ -665,7 +663,8 @@ public class InventoryService extends ShopAwareService {
                         if (inv.getTotalPurchaseCost() != null) {
                             return inv.getTotalPurchaseCost();
                         } else if (inv.getCostPrice() != null) {
-                            return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                            BigDecimal baseUnits = getStockInBaseUnits(inv);
+                            return inv.getCostPrice().multiply(baseUnits);
                         }
                         return BigDecimal.ZERO;
                     })
@@ -691,15 +690,20 @@ public class InventoryService extends ShopAwareService {
                 if (inv.getTotalPurchaseCost() != null) {
                     return inv.getTotalPurchaseCost();
                 } else if (inv.getCostPrice() != null) {
-                    return inv.getCostPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock()));
+                    BigDecimal baseUnits = getStockInBaseUnits(inv);
+                    return inv.getCostPrice().multiply(baseUnits);
                 }
                 return BigDecimal.ZERO;
             })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Use base unit count (purchase qty × conversion factor) for accurate sales projection
         BigDecimal projectedTotalSales = allInventory.stream()
             .filter(inv -> inv.getSellingPrice() != null)
-            .map(inv -> inv.getSellingPrice().multiply(BigDecimal.valueOf(inv.getCurrentStock())))
+            .map(inv -> {
+                BigDecimal baseUnits = getStockInBaseUnits(inv);
+                return inv.getSellingPrice().multiply(baseUnits);
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal projectedProfit = projectedTotalSales.subtract(totalInventoryCost);
@@ -740,6 +744,10 @@ public class InventoryService extends ShopAwareService {
             currentStockInPurchaseUnit = inventory.getPurchaseQuantity().intValue();
         }
 
+        // Calculate stock in base units (purchase quantity × conversion factor)
+        // e.g., 20 packs × 12 pieces/pack = 240 pieces
+        BigDecimal stockInBaseUnits = getStockInBaseUnits(inventory);
+
         // Calculate financial projections using totalPurchaseCost if available
         BigDecimal itemTotalCost = null;
         BigDecimal itemProjectedSales = null;
@@ -748,13 +756,14 @@ public class InventoryService extends ShopAwareService {
         if (inventory.getTotalPurchaseCost() != null) {
             // Use actual total purchase cost
             itemTotalCost = inventory.getTotalPurchaseCost();
-        } else if (inventory.getCostPrice() != null) {
-            // Fallback to cost price calculation
-            itemTotalCost = inventory.getCostPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+        } else if (inventory.getCostPrice() != null && stockInBaseUnits.compareTo(BigDecimal.ZERO) > 0) {
+            // Fallback: cost per base unit × total base units
+            itemTotalCost = inventory.getCostPrice().multiply(stockInBaseUnits);
         }
 
-        if (inventory.getSellingPrice() != null) {
-            itemProjectedSales = inventory.getSellingPrice().multiply(BigDecimal.valueOf(inventory.getCurrentStock()));
+        if (inventory.getSellingPrice() != null && stockInBaseUnits.compareTo(BigDecimal.ZERO) > 0) {
+            // Projected sales = selling price per base unit × total base units
+            itemProjectedSales = inventory.getSellingPrice().multiply(stockInBaseUnits);
         }
 
         if (itemTotalCost != null && itemProjectedSales != null) {
@@ -766,7 +775,7 @@ public class InventoryService extends ShopAwareService {
         if (inventory.getUnitPrices() != null && !inventory.getUnitPrices().isEmpty()) {
             unitPriceResponses = inventory.getUnitPrices().stream()
                 .map(this::mapUnitPriceToResponse)
-                .collect(Collectors.toList());
+                .toList();
         }
 
         // Map product unit definitions for POS multi-unit selection
@@ -774,7 +783,7 @@ public class InventoryService extends ShopAwareService {
         if (inventory.getProduct().getUnitDefinitions() != null && !inventory.getProduct().getUnitDefinitions().isEmpty()) {
             unitDefResponses = inventory.getProduct().getUnitDefinitions().stream()
                 .map(this::mapProductUnitDefinitionToResponse)
-                .collect(Collectors.toList());
+                .toList();
         }
 
         return InventoryResponse.builder()
@@ -784,6 +793,8 @@ public class InventoryService extends ShopAwareService {
             .productId(inventory.getProduct().getId())
             .productName(inventory.getProduct().getName())
             .productSku(inventory.getProduct().getSku())
+            .productCategory(inventory.getProduct().getCategory() != null
+                ? inventory.getProduct().getCategory().getName() : null)
             .currentStock(inventory.getCurrentStock())
             .currentStockInPurchaseUnit(currentStockInPurchaseUnit)
             .reservedStock(inventory.getReservedStock())
@@ -946,6 +957,42 @@ public class InventoryService extends ShopAwareService {
             .createdBy(unitPrice.getCreatedBy())
             .updatedBy(unitPrice.getUpdatedBy())
             .build();
+    }
+
+    /**
+     * Calculates stock in base units by converting purchase quantity using the product's
+     * unit definition conversion factor.
+     *
+     * Example: 20 packs × 12 pieces/pack = 240 pieces
+     *
+     * Falls back to purchase quantity as-is if no conversion factor is found
+     * (e.g., when purchase unit is already the base unit like "piece").
+     *
+     * @param inventory Inventory entity
+     * @return Stock count in base units
+     */
+    private BigDecimal getStockInBaseUnits(Inventory inventory) {
+        if (inventory.getPurchaseQuantity() == null ||
+            inventory.getPurchaseQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // Find conversion factor for the purchase unit
+        if (inventory.getPurchaseUnit() != null &&
+            inventory.getProduct().getUnitDefinitions() != null &&
+            !inventory.getProduct().getUnitDefinitions().isEmpty()) {
+
+            BigDecimal conversionFactor = inventory.getProduct().getUnitDefinitions().stream()
+                .filter(ud -> ud.getUnitType().equalsIgnoreCase(inventory.getPurchaseUnit()))
+                .findFirst()
+                .map(com.princely.shopmanager.core.domain.ProductUnitDefinition::getConversionFactor)
+                .orElse(BigDecimal.ONE);
+
+            return inventory.getPurchaseQuantity().multiply(conversionFactor);
+        }
+
+        // No unit definitions or no purchase unit: assume purchase quantity IS in base units
+        return inventory.getPurchaseQuantity();
     }
 
     /**
