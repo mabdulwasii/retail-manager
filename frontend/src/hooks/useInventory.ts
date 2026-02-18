@@ -28,13 +28,17 @@ export interface InventoryItem {
   productSku?: string
   productBarcode?: string
   productCategory?: string
-  currentStock: number
+  currentStock: number            // Remaining stock in base units (e.g., 599 pieces)
+  currentStockInPurchaseUnit?: number  // Floor(currentStock / conversionFactor) e.g., 49 packs
+  stockRemainder?: number         // currentStock % conversionFactor e.g., 11 pieces
   unitCost?: number
   reservedStock: number
   availableStock: number
   minimumStock: number
   costPrice: number
   sellingPrice: number
+  baseUnit?: string               // Smallest sellable unit (piece, kg, liter)
+  purchaseUnit?: string           // Unit in which batch was purchased (pack, carton)
   location?: string
   batchNumber?: string
   expiryDate?: string

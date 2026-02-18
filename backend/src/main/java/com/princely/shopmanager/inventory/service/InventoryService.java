@@ -134,6 +134,14 @@ public class InventoryService extends ShopAwareService {
 
         inventory = inventoryRepository.save(inventory);
 
+        // Initialise current_stock in base units = purchaseQuantity × conversionFactor
+        if (request.getPurchaseQuantity() != null && request.getPurchaseQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal conversionFactor = findConversionFactor(product.getId(), request.getPurchaseUnit());
+            long baseUnits = request.getPurchaseQuantity().multiply(conversionFactor)
+                .setScale(0, java.math.RoundingMode.HALF_UP).longValue();
+            inventory.setCurrentStock(baseUnits);
+        }
+
         // Auto-create a purchase unit if missing and calculate unit costs
         if (request.getPurchaseUnit() != null && request.getTotalPurchaseCost() != null &&
             request.getPurchaseQuantity() != null) {
@@ -190,26 +198,24 @@ public class InventoryService extends ShopAwareService {
 
         inventory.adjustStock(newStock, request.getReason());
 
-        // Update total purchase cost and recalculate unit costs
+        // Update total purchase cost and recalculate unit costs if provided.
+        // NOTE: purchaseQuantity (original purchase amount in purchase units) is intentionally
+        // NOT updated here — it remains as the historical record of what was purchased.
         if (request.getTotalPurchaseCost() != null && inventory.getPurchaseUnit() != null) {
             inventory.setTotalPurchaseCost(request.getTotalPurchaseCost());
 
-            // Recalculate purchase quantity based on new stock
             if (inventory.getPurchaseQuantity() != null) {
-                BigDecimal newPurchaseQuantity = BigDecimal.valueOf(newStock);
-                inventory.setPurchaseQuantity(newPurchaseQuantity);
-
-                // Recalculate unit costs
+                // Recalculate unit costs using the original purchase quantity
                 List<ProductUnitDefinition> unitDefs = productUnitDefRepository
                     .findByProductId(inventory.getProduct().getId());
                 Map<String, BigDecimal> unitCosts = costCalculator.calculateCostsForAllUnits(
                     request.getTotalPurchaseCost(),
-                    newPurchaseQuantity,
+                    inventory.getPurchaseQuantity(),
                     inventory.getPurchaseUnit(),
                     unitDefs
                 );
 
-                // Update unit prices with new costs
+                // Update unit prices with recalculated costs
                 updateUnitPrices(inventory, unitCosts, null);
             }
         }
@@ -736,22 +742,37 @@ public class InventoryService extends ShopAwareService {
     }
 
     private InventoryResponse mapToResponse(Inventory inventory) {
-        // Calculate purchase unit cost and stock in purchase units
-        Integer currentStockInPurchaseUnit = null;
+        // Calculate purchase unit cost from original purchase data
         BigDecimal purchaseUnitCost = null;
-
         if (inventory.getTotalPurchaseCost() != null &&
             inventory.getPurchaseQuantity() != null &&
             inventory.getPurchaseQuantity().compareTo(BigDecimal.ZERO) > 0) {
 
             purchaseUnitCost = inventory.getTotalPurchaseCost()
                 .divide(inventory.getPurchaseQuantity(), 2, RoundingMode.HALF_UP);
-
-            currentStockInPurchaseUnit = inventory.getPurchaseQuantity().intValue();
         }
 
-        // Calculate stock in base units (purchase quantity × conversion factor)
-        // e.g., 20 packs × 12 pieces/pack = 240 pieces
+        // Compute current stock breakdown: X packs + Y pieces
+        // currentStock is in base units; divide by conversionFactor to get purchase units
+        Integer currentStockInPurchaseUnit = null;
+        Integer stockRemainder = null;
+        int currentStockBaseUnits = inventory.getCurrentStock();
+
+        if (inventory.getPurchaseUnit() != null && inventory.getProduct().getUnitDefinitions() != null) {
+            BigDecimal conversionFactor = inventory.getProduct().getUnitDefinitions().stream()
+                .filter(ud -> ud.getUnitType().equalsIgnoreCase(inventory.getPurchaseUnit()))
+                .findFirst()
+                .map(com.princely.shopmanager.core.domain.ProductUnitDefinition::getConversionFactor)
+                .orElse(null);
+
+            if (conversionFactor != null && conversionFactor.compareTo(BigDecimal.ONE) > 0) {
+                long factor = conversionFactor.longValue();
+                currentStockInPurchaseUnit = (int) (currentStockBaseUnits / factor);
+                stockRemainder = (int) (currentStockBaseUnits % factor);
+            }
+        }
+
+        // Use currentStock (base units) directly for financial projections
         BigDecimal stockInBaseUnits = getStockInBaseUnits(inventory);
 
         // Calculate financial projections using totalPurchaseCost if available
@@ -803,6 +824,7 @@ public class InventoryService extends ShopAwareService {
                 ? inventory.getProduct().getCategory().getName() : null)
             .currentStock(inventory.getCurrentStock())
             .currentStockInPurchaseUnit(currentStockInPurchaseUnit)
+            .stockRemainder(stockRemainder)
             .reservedStock(inventory.getReservedStock())
             .availableStock(inventory.getAvailableStock())
             .minimumStock(inventory.getMinimumStock())
@@ -966,39 +988,32 @@ public class InventoryService extends ShopAwareService {
     }
 
     /**
-     * Calculates stock in base units by converting purchase quantity using the product's
-     * unit definition conversion factor.
-     *
-     * Example: 20 packs × 12 pieces/pack = 240 pieces
-     *
-     * Falls back to purchase quantity as-is if no conversion factor is found
-     * (e.g., when purchase unit is already the base unit like "piece").
+     * Returns the current stock in base units.
+     * Uses the authoritative {@code currentStock} field (base units) rather than
+     * deriving from purchaseQuantity × conversionFactor, which would give the
+     * original purchase amount rather than the remaining stock.
      *
      * @param inventory Inventory entity
-     * @return Stock count in base units
+     * @return Remaining stock in base units
      */
     private BigDecimal getStockInBaseUnits(Inventory inventory) {
-        if (inventory.getPurchaseQuantity() == null ||
-            inventory.getPurchaseQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ZERO;
+        int stock = inventory.getCurrentStock();
+        return stock > 0 ? BigDecimal.valueOf(stock) : BigDecimal.ZERO;
+    }
+
+    /**
+     * Looks up the conversion factor for a purchase unit from the product's unit definitions.
+     * Returns BigDecimal.ONE if no matching definition is found (purchase unit = base unit).
+     */
+    private BigDecimal findConversionFactor(String productId, String purchaseUnit) {
+        if (purchaseUnit == null) {
+            return BigDecimal.ONE;
         }
-
-        // Find conversion factor for the purchase unit
-        if (inventory.getPurchaseUnit() != null &&
-            inventory.getProduct().getUnitDefinitions() != null &&
-            !inventory.getProduct().getUnitDefinitions().isEmpty()) {
-
-            BigDecimal conversionFactor = inventory.getProduct().getUnitDefinitions().stream()
-                .filter(ud -> ud.getUnitType().equalsIgnoreCase(inventory.getPurchaseUnit()))
-                .findFirst()
-                .map(com.princely.shopmanager.core.domain.ProductUnitDefinition::getConversionFactor)
-                .orElse(BigDecimal.ONE);
-
-            return inventory.getPurchaseQuantity().multiply(conversionFactor);
-        }
-
-        // No unit definitions or no purchase unit: assume purchase quantity IS in base units
-        return inventory.getPurchaseQuantity();
+        return productUnitDefRepository.findByProductId(productId).stream()
+            .filter(ud -> ud.getUnitType().equalsIgnoreCase(purchaseUnit))
+            .findFirst()
+            .map(com.princely.shopmanager.core.domain.ProductUnitDefinition::getConversionFactor)
+            .orElse(BigDecimal.ONE);
     }
 
     /**

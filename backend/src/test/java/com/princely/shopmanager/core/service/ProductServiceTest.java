@@ -726,12 +726,13 @@ class ProductServiceTest {
 
     // Helper methods
 
-    private Inventory createInventory(String id, int currentStock, int reservedStock) {
+    private Inventory createInventory(String id, int stock, int reservedStock) {
         return Inventory.builder()
             .id(id)
             .shop(testShop)
             .product(testProduct)
-            .purchaseQuantity(BigDecimal.valueOf(currentStock))
+            .purchaseQuantity(BigDecimal.valueOf(stock))
+            .currentStock((long) stock) // stock in base units
             .reservedStock(reservedStock)
             .minimumStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)

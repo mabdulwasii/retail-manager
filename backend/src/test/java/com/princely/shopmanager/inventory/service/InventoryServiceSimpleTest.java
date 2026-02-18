@@ -84,6 +84,7 @@ class InventoryServiceSimpleTest {
         testInventory.setShop(testShop);
         testInventory.setProduct(testProduct);
         testInventory.setPurchaseQuantity(BigDecimal.valueOf(100));
+        testInventory.setCurrentStock(100L); // 100 units in base units
         testInventory.setMinimumStock(10);
         testInventory.setCostPrice(BigDecimal.valueOf(15.50));
         testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
@@ -184,12 +185,14 @@ class InventoryServiceSimpleTest {
         productWithUnits.setUnitDefinitions(new ArrayList<>(List.of(pieceDef, packDef)));
 
         // 20 packs purchased, ₦500/piece selling price, ₦106,000 total cost
+        // 20 packs × 12 pieces/pack = 240 pieces in base units
         Inventory packInventory = new Inventory();
         packInventory.setId("inventory-pack");
         packInventory.setShop(testShop);
         packInventory.setProduct(productWithUnits);
         packInventory.setPurchaseUnit("pack");
-        packInventory.setPurchaseQuantity(BigDecimal.valueOf(20)); // 20 packs
+        packInventory.setPurchaseQuantity(BigDecimal.valueOf(20)); // 20 packs (original purchase)
+        packInventory.setCurrentStock(240L); // 240 pieces = 20 packs × 12
         packInventory.setTotalPurchaseCost(BigDecimal.valueOf(106000)); // ₦106,000
         packInventory.setCostPrice(BigDecimal.valueOf(441.67)); // ₦441.67/piece
         packInventory.setSellingPrice(BigDecimal.valueOf(500)); // ₦500/piece
@@ -241,7 +244,8 @@ class InventoryServiceSimpleTest {
         pieceInventory.setShop(testShop);
         pieceInventory.setProduct(productWithPiece);
         pieceInventory.setPurchaseUnit("piece");
-        pieceInventory.setPurchaseQuantity(BigDecimal.valueOf(50)); // 50 pieces
+        pieceInventory.setPurchaseQuantity(BigDecimal.valueOf(50)); // 50 pieces purchased
+        pieceInventory.setCurrentStock(50L); // 50 pieces in base units (piece = base unit)
         pieceInventory.setTotalPurchaseCost(BigDecimal.valueOf(5000)); // ₦5,000 total
         pieceInventory.setSellingPrice(BigDecimal.valueOf(120)); // ₦120/piece
         pieceInventory.setMinimumStock(5);
