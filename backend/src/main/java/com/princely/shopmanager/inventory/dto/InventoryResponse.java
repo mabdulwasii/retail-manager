@@ -25,6 +25,7 @@ public class InventoryResponse {
     private String productId;
     private String productName;
     private String productSku;
+    private String productCategory;
     private Integer currentStock;              // Computed from purchaseQuantity (in base units)
     private Integer currentStockInPurchaseUnit; // Stock in purchase units (for display)
     private Integer reservedStock;

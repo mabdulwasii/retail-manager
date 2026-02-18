@@ -27,6 +27,7 @@ export interface InventoryItem {
   productName?: string
   productSku?: string
   productBarcode?: string
+  productCategory?: string
   currentStock: number
   unitCost?: number
   reservedStock: number

@@ -548,9 +548,9 @@ export const InventoryListPage: React.FC = () => {
                     <TableCell className="font-medium">
                       <div>
                         <div className="font-semibold">{item?.productName}</div>
-                        {item?.product?.category && (
+                        {(item?.productCategory || item?.product?.category) && (
                           <div className="text-xs text-muted-foreground">
-                            {item?.product?.category}
+                            {item?.productCategory || item?.product?.category}
                           </div>
                         )}
                       </div>

@@ -1,6 +1,7 @@
 package com.princely.shopmanager.inventory.service;
 
 import com.princely.shopmanager.auth.security.ShopAccessValidator;
+import com.princely.shopmanager.core.domain.ProductUnitDefinition;
 import com.princely.shopmanager.inventory.domain.Inventory;
 import com.princely.shopmanager.inventory.dto.InventoryResponse;
 import com.princely.shopmanager.inventory.repository.InventoryHistoryRepository;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,7 +104,6 @@ class InventoryServiceSimpleTest {
             shopRepository,
             inventoryRepository,
             historyRepository,
-            inventoryUnitPriceRepository,
             productRepository,
             productUnitDefRepository,
             costCalculator,
@@ -153,6 +154,112 @@ class InventoryServiceSimpleTest {
         // Assert
         assertThat(result).isEqualByComparingTo(expectedValue);
         verify(inventoryRepository).calculateTotalInventoryValue("shop-1");
+    }
+
+    @Test
+    void getInventoryById_WithPackPurchaseUnit_ShouldCalculateProjectedSalesInBaseUnits() {
+        // Arrange: product with piece (base) and pack (12 pieces per pack) unit definitions
+        Shop testShop = new Shop();
+        testShop.setId("shop-1");
+        testShop.setName("Test Shop");
+
+        Product productWithUnits = new Product();
+        productWithUnits.setId("product-2");
+        productWithUnits.setName("Water Sachets");
+
+        ProductUnitDefinition pieceDef = new ProductUnitDefinition();
+        pieceDef.setUnitType("piece");
+        pieceDef.setUnitLabel("Piece");
+        pieceDef.setConversionFactor(BigDecimal.ONE);
+        pieceDef.setIsBaseUnit(true);
+        pieceDef.setProduct(productWithUnits);
+
+        ProductUnitDefinition packDef = new ProductUnitDefinition();
+        packDef.setUnitType("pack");
+        packDef.setUnitLabel("Pack");
+        packDef.setConversionFactor(BigDecimal.valueOf(12));
+        packDef.setIsBaseUnit(false);
+        packDef.setProduct(productWithUnits);
+
+        productWithUnits.setUnitDefinitions(new ArrayList<>(List.of(pieceDef, packDef)));
+
+        // 20 packs purchased, ₦500/piece selling price, ₦106,000 total cost
+        Inventory packInventory = new Inventory();
+        packInventory.setId("inventory-pack");
+        packInventory.setShop(testShop);
+        packInventory.setProduct(productWithUnits);
+        packInventory.setPurchaseUnit("pack");
+        packInventory.setPurchaseQuantity(BigDecimal.valueOf(20)); // 20 packs
+        packInventory.setTotalPurchaseCost(BigDecimal.valueOf(106000)); // ₦106,000
+        packInventory.setCostPrice(BigDecimal.valueOf(441.67)); // ₦441.67/piece
+        packInventory.setSellingPrice(BigDecimal.valueOf(500)); // ₦500/piece
+        packInventory.setMinimumStock(5);
+
+        when(inventoryRepository.findById("inventory-pack")).thenReturn(Optional.of(packInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
+
+        // Act
+        InventoryResponse result = inventoryService.getInventoryById("inventory-pack", testPrincipal);
+
+        // Assert: 20 packs × 12 pieces/pack = 240 pieces
+        assertThat(result).isNotNull();
+        // Projected sales = ₦500/piece × 240 pieces = ₦120,000
+        assertThat(result.getItemProjectedSales())
+            .isNotNull()
+            .isEqualByComparingTo(BigDecimal.valueOf(120000));
+        // Projected profit = ₦120,000 - ₦106,000 = ₦14,000
+        assertThat(result.getItemProjectedProfit())
+            .isNotNull()
+            .isEqualByComparingTo(BigDecimal.valueOf(14000));
+        // Total cost uses totalPurchaseCost directly
+        assertThat(result.getItemTotalCost())
+            .isEqualByComparingTo(BigDecimal.valueOf(106000));
+    }
+
+    @Test
+    void getInventoryById_WithPieceAsPurchaseUnit_ShouldCalculateProjectedSalesCorrectly() {
+        // Arrange: product purchased in pieces (base unit), no conversion needed
+        Shop testShop = new Shop();
+        testShop.setId("shop-1");
+        testShop.setName("Test Shop");
+
+        Product productWithPiece = new Product();
+        productWithPiece.setId("product-3");
+        productWithPiece.setName("Single Item Product");
+
+        ProductUnitDefinition pieceDef = new ProductUnitDefinition();
+        pieceDef.setUnitType("piece");
+        pieceDef.setUnitLabel("Piece");
+        pieceDef.setConversionFactor(BigDecimal.ONE);
+        pieceDef.setIsBaseUnit(true);
+        pieceDef.setProduct(productWithPiece);
+
+        productWithPiece.setUnitDefinitions(new ArrayList<>(List.of(pieceDef)));
+
+        Inventory pieceInventory = new Inventory();
+        pieceInventory.setId("inventory-piece");
+        pieceInventory.setShop(testShop);
+        pieceInventory.setProduct(productWithPiece);
+        pieceInventory.setPurchaseUnit("piece");
+        pieceInventory.setPurchaseQuantity(BigDecimal.valueOf(50)); // 50 pieces
+        pieceInventory.setTotalPurchaseCost(BigDecimal.valueOf(5000)); // ₦5,000 total
+        pieceInventory.setSellingPrice(BigDecimal.valueOf(120)); // ₦120/piece
+        pieceInventory.setMinimumStock(5);
+
+        when(inventoryRepository.findById("inventory-piece")).thenReturn(Optional.of(pieceInventory));
+        when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
+
+        // Act
+        InventoryResponse result = inventoryService.getInventoryById("inventory-piece", testPrincipal);
+
+        // Assert: 50 pieces × ₦120 = ₦6,000
+        assertThat(result.getItemProjectedSales())
+            .isNotNull()
+            .isEqualByComparingTo(BigDecimal.valueOf(6000));
+        // Profit = ₦6,000 - ₦5,000 = ₦1,000
+        assertThat(result.getItemProjectedProfit())
+            .isNotNull()
+            .isEqualByComparingTo(BigDecimal.valueOf(1000));
     }
 
     @Test

@@ -32,6 +32,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -532,6 +533,195 @@ class ProductServiceTest {
         assertThat(event.productId()).isEqualTo("product-1");
         assertThat(event.shopId()).isEqualTo("shop-1");
         assertThat(event.productName()).isEqualTo("Coca-Cola 500ml");
+    }
+
+    // -------------------------------------------------------------------------
+    // Tests for Bug: Activating a DISCONTINUED product returns 500 error
+    // Root cause: handleUnitDefinitions clears and re-adds unit definitions with
+    // the same unit_type, violating UNIQUE(product_id, unit_type) when Hibernate
+    // batches INSERT before DELETE in the same transaction.
+    // -------------------------------------------------------------------------
+
+    @Test
+    void updateProduct_ReactivateDiscontinuedProduct_ShouldSucceedAndReturnActiveStatus() {
+        // Arrange: product is currently DISCONTINUED
+        testProduct.setStatus(Product.ProductStatus.DISCONTINUED);
+
+        ProductUpdateRequest activateRequest = ProductUpdateRequest.builder()
+            .status(Product.ProductStatus.ACTIVE)
+            .build();
+
+        when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+        when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
+
+        // Simulate real ProductFieldUpdater behaviour: status field update populates changes
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Product product = invocation.getArgument(0);
+            ProductUpdateRequest request = invocation.getArgument(1);
+            StringBuilder changes = invocation.getArgument(2);
+            if (request.getStatus() != null && request.getStatus() != product.getStatus()) {
+                changes.append("Status: ").append(product.getStatus())
+                    .append(" → ").append(request.getStatus()).append("; ");
+                product.setStatus(request.getStatus());
+            }
+            return null;
+        }).when(productFieldUpdater).updateBasicFields(any(), any(), any());
+
+        // Act
+        ProductResponse response = productService.updateProduct("product-1", activateRequest, testPrincipal);
+
+        // Assert
+        assertThat(response).isNotNull();
+        verify(productRepository).save(any(Product.class));
+        // Audit should be called with the status-change description
+        org.mockito.ArgumentCaptor<String> descCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(auditService).logEntityModification(eq("Product"), eq("product-1"), descCaptor.capture());
+        assertThat(descCaptor.getValue()).contains("DISCONTINUED").contains("ACTIVE");
+    }
+
+    @Test
+    void updateProduct_ReactivateDiscontinuedProductWithUnitDefinitions_ShouldNotThrowBatchUpdateException() {
+        // Arrange: discontinued product with two existing unit definitions
+        // When re-activating and sending the same unit definitions in the request,
+        // handleUnitDefinitions clears and re-adds them.
+        // This test verifies the fix prevents a BatchUpdateException caused by
+        // Hibernate inserting new rows before deleting the old ones (UNIQUE constraint violation).
+        com.princely.shopmanager.core.domain.ProductUnitDefinition pieceDef =
+            com.princely.shopmanager.core.domain.ProductUnitDefinition.builder()
+                .unitType("piece")
+                .unitLabel("Piece")
+                .conversionFactor(BigDecimal.ONE)
+                .isBaseUnit(true)
+                .sortOrder(0)
+                .product(testProduct)
+                .build();
+
+        com.princely.shopmanager.core.domain.ProductUnitDefinition packDef =
+            com.princely.shopmanager.core.domain.ProductUnitDefinition.builder()
+                .unitType("pack")
+                .unitLabel("Pack")
+                .conversionFactor(BigDecimal.valueOf(12))
+                .isBaseUnit(false)
+                .sortOrder(1)
+                .product(testProduct)
+                .build();
+
+        testProduct.setStatus(Product.ProductStatus.DISCONTINUED);
+        testProduct.setUnitDefinitions(new ArrayList<>(List.of(pieceDef, packDef)));
+
+        com.princely.shopmanager.core.dto.ProductUnitDefinitionRequest pieceReq =
+            com.princely.shopmanager.core.dto.ProductUnitDefinitionRequest.builder()
+                .unitType("piece")
+                .unitLabel("Piece")
+                .conversionFactor(BigDecimal.ONE)
+                .isBaseUnit(true)
+                .sortOrder(0)
+                .build();
+
+        com.princely.shopmanager.core.dto.ProductUnitDefinitionRequest packReq =
+            com.princely.shopmanager.core.dto.ProductUnitDefinitionRequest.builder()
+                .unitType("pack")
+                .unitLabel("Pack")
+                .conversionFactor(BigDecimal.valueOf(12))
+                .isBaseUnit(false)
+                .sortOrder(1)
+                .build();
+
+        ProductUpdateRequest activateRequest = ProductUpdateRequest.builder()
+            .status(Product.ProductStatus.ACTIVE)
+            .unitDefinitions(List.of(pieceReq, packReq))
+            .build();
+
+        when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+        when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Product product = invocation.getArgument(0);
+            ProductUpdateRequest request = invocation.getArgument(1);
+            StringBuilder changes = invocation.getArgument(2);
+            if (request.getStatus() != null && request.getStatus() != product.getStatus()) {
+                changes.append("Status: ").append(product.getStatus())
+                    .append(" → ").append(request.getStatus()).append("; ");
+                product.setStatus(request.getStatus());
+            }
+            return null;
+        }).when(productFieldUpdater).updateBasicFields(any(), any(), any());
+
+        // Act: should NOT throw BatchUpdateException
+        // (In production this fails with Hibernate batch insert-before-delete violation;
+        //  the fix is to explicitly delete unit defs before re-adding them via repository)
+        org.assertj.core.api.Assertions.assertThatCode(
+            () -> productService.updateProduct("product-1", activateRequest, testPrincipal))
+            .doesNotThrowAnyException();
+
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    void updateProduct_AuditDescriptionShouldNotExceedColumnLimit() {
+        // Arrange: product with a very long name — the changes string must be truncated
+        // to ≤ 480 chars so the full "Product updated: <changes>" stays within VARCHAR(500)
+        String longOldName = "A".repeat(200);
+        String longNewName = "B".repeat(200);
+        testProduct.setName(longOldName);
+
+        ProductUpdateRequest updateRequest = ProductUpdateRequest.builder()
+            .name(longNewName)
+            .status(Product.ProductStatus.ACTIVE)
+            .build();
+
+        when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+        when(inventoryRepository.findByProductId("product-1")).thenReturn(Collections.emptyList());
+
+        // Real field updater behaviour: both name and status appended to changes
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Product product = invocation.getArgument(0);
+            ProductUpdateRequest req = invocation.getArgument(1);
+            StringBuilder changes = invocation.getArgument(2);
+            if (req.getName() != null && !req.getName().equals(product.getName())) {
+                changes.append("Name: ").append(product.getName()).append(" → ").append(req.getName()).append("; ");
+                product.setName(req.getName());
+            }
+            if (req.getStatus() != null && req.getStatus() != product.getStatus()) {
+                changes.append("Status: ").append(product.getStatus())
+                    .append(" → ").append(req.getStatus()).append("; ");
+                product.setStatus(req.getStatus());
+            }
+            return null;
+        }).when(productFieldUpdater).updateBasicFields(any(), any(), any());
+
+        // Act
+        productService.updateProduct("product-1", updateRequest, testPrincipal);
+
+        // Assert: audit description must not exceed VARCHAR(500) column limit
+        org.mockito.ArgumentCaptor<String> descCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(auditService).logEntityModification(eq("Product"), eq("product-1"), descCaptor.capture());
+        String auditDesc = descCaptor.getValue();
+        assertThat(auditDesc.length())
+            .as("Audit actionDescription must not exceed VARCHAR(500) column limit")
+            .isLessThanOrEqualTo(500);
+    }
+
+    // -------------------------------------------------------------------------
+    // Tests for Bug: UI can delete a product that is already DISCONTINUED
+    // -------------------------------------------------------------------------
+
+    @Test
+    void deleteProduct_WhenAlreadyDiscontinued_ShouldThrowIllegalStateException() {
+        // Arrange: product already DISCONTINUED
+        testProduct.setStatus(Product.ProductStatus.DISCONTINUED);
+        when(productRepository.findById("product-1")).thenReturn(Optional.of(testProduct));
+
+        // Act & Assert: re-deleting a discontinued product should be rejected
+        assertThatThrownBy(() -> productService.deleteProduct("product-1", testPrincipal))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("already discontinued");
+
+        // Verify: product should NOT be saved again
+        verify(productRepository, never()).save(any());
     }
 
     // Helper methods
