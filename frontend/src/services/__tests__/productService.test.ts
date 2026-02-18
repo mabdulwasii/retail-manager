@@ -33,10 +33,9 @@ const server = setupServer(
   }),
 
   // Update product status
-  http.patch('*/products/:productId/status', ({ params, request }) => {
-    const url = new URL(request.url)
-    const status = url.searchParams.get('status')
-    return HttpResponse.json(getMockProduct({ id: params.productId as string, status }))
+  http.patch('*/products/:productId/status', async ({ params, request }) => {
+    const body = await request.json() as any
+    return HttpResponse.json(getMockProduct({ id: params.productId as string, status: body.status }))
   })
 )
 

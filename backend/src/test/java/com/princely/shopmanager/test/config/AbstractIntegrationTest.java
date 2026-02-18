@@ -92,7 +92,7 @@ import static org.mockito.Mockito.when;
  * </pre>
  */
 @Slf4j
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
