@@ -29,6 +29,7 @@ import com.princely.shopmanager.shared.events.InventoryUpdatedEvent;
 import com.princely.shopmanager.shared.service.AuditService;
 import com.princely.shopmanager.shared.service.ShopAwareService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.CacheEvict;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -100,6 +101,7 @@ public class InventoryService extends ShopAwareService {
         return inventory;
     }
 
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public InventoryResponse createInventory(String shopId, InventoryCreateRequest request, JwtPrincipal principal) {
         validateShopAccess(shopId, principal);
         Shop shop = shopRepository.findById(shopId)
@@ -178,6 +180,7 @@ public class InventoryService extends ShopAwareService {
         return mapToResponse(inventory);
     }
 
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public InventoryResponse adjustStock(String inventoryId, InventoryAdjustmentRequest request, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
@@ -264,6 +267,7 @@ public class InventoryService extends ShopAwareService {
         log.debug("Released {} reserved units for inventory {}", quantity, inventoryId);
     }
 
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public void sellStock(String inventoryId, int quantity, String saleId, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
@@ -332,6 +336,7 @@ public class InventoryService extends ShopAwareService {
         return historyRepository.findByInventoryIdOrderByCreatedAtDesc(inventoryId);
     }
 
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public InventoryResponse updateInventoryStatus(String inventoryId, Inventory.InventoryStatus status, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
@@ -355,6 +360,7 @@ public class InventoryService extends ShopAwareService {
         return mapToResponse(inventory);
     }
 
+    @CacheEvict(cacheNames = "products", allEntries = true)
     public InventoryResponse updateInventory(String inventoryId, InventoryUpdateRequest request, JwtPrincipal principal) {
         Inventory inventory = findInventoryForUser(inventoryId, principal);
 
