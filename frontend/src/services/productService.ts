@@ -51,9 +51,7 @@ export const productService = {
   },
 
   async updateProductStatus(productId: string, status: string): Promise<Product> {
-    const response = await api.patch(`/products/${productId}/status`, null, {
-      params: { status }
-    })
+    const response = await api.patch(`/products/${productId}`, { status })
     return response.data
   },
 

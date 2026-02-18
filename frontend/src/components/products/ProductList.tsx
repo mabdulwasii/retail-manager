@@ -173,7 +173,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                         </DropdownMenuItem>
                       </>
                     )}
-                    {onDelete && (
+                    {onDelete && product.status !== ProductStatus.DISCONTINUED && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
