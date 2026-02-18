@@ -3,6 +3,7 @@ package com.princely.shopmanager.core.repository;
 import com.princely.shopmanager.core.domain.ProductUnitDefinition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -52,10 +53,21 @@ public interface ProductUnitDefinitionRepository extends JpaRepository<ProductUn
     boolean existsByProductIdAndUnitType(@Param("productId") String productId, @Param("unitType") String unitType);
 
     /**
+     * Delete all unit definitions for a product (used before re-inserting to avoid BatchUpdateException
+     * caused by Hibernate inserting new rows before deleting old ones when the collection has a
+     * UNIQUE(product_id, unit_type) constraint).
+     * @param productId the product ID
+     */
+    @Modifying
+    @Query("DELETE FROM ProductUnitDefinition pud WHERE pud.product.id = :productId")
+    void deleteAllByProductId(@Param("productId") String productId);
+
+    /**
      * Delete a specific unit definition by product ID and unit type.
      * @param productId the product ID
      * @param unitType the unit type
      */
+    @Modifying
     @Query("DELETE FROM ProductUnitDefinition pud WHERE pud.product.id = :productId AND pud.unitType = :unitType")
     void deleteByProductIdAndUnitType(@Param("productId") String productId, @Param("unitType") String unitType);
 

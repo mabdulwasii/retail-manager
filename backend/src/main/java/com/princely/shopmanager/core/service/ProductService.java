@@ -224,10 +224,15 @@ public class ProductService extends ShopAwareService {
 
         product = productRepository.save(product);
 
-        // Audit if there were changes
+        // Audit if there were changes — truncate to stay within VARCHAR(500) column limit
         if (!changes.isEmpty()) {
+            String changesStr = changes.toString();
+            // "Product updated: " is 17 chars; leave room so total ≤ 500
+            if (changesStr.length() > 480) {
+                changesStr = changesStr.substring(0, 477) + "...";
+            }
             auditService.logEntityModification(ENTITY_TYPE_PRODUCT, product.getId(),
-                "Product updated: " + changes);
+                "Product updated: " + changesStr);
         }
 
         log.info("Successfully updated product: {}", productId);
@@ -288,6 +293,10 @@ public class ProductService extends ShopAwareService {
         log.info("Soft deleting product: {}, user: {}", productId, principal.getUsername());
 
         Product product = findProductForUser(productId, principal);
+
+        if (product.getStatus() == Product.ProductStatus.DISCONTINUED) {
+            throw new IllegalStateException("Product is already discontinued: " + productId);
+        }
 
         product.setStatus(Product.ProductStatus.DISCONTINUED);
         productRepository.save(product);
@@ -597,7 +606,15 @@ public class ProductService extends ShopAwareService {
      * @param unitDefinitionRequests List of unit definition requests
      */
     private void handleUnitDefinitions(Product product, List<ProductUnitDefinitionRequest> unitDefinitionRequests) {
-        // Clear existing unit definitions
+        // Explicitly delete via JPQL before re-inserting to avoid Hibernate BatchUpdateException.
+        // When orphanRemoval = true, Hibernate may batch INSERT before DELETE, violating the
+        // UNIQUE(product_id, unit_type) constraint on product_unit_definitions.
+        if (product.getId() != null) {
+            productUnitDefinitionRepository.deleteAllByProductId(product.getId());
+            productUnitDefinitionRepository.flush();
+        }
+
+        // Clear the in-memory collection to stay consistent with the DB state
         product.getUnitDefinitions().clear();
 
         // Create new unit definitions
