@@ -98,6 +98,7 @@ class InventoryAllocationServiceTest {
             .id("inv1")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(100))
+            .currentStock(1200L) // 100 packs × 12 pieces/pack = 1200 base units
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .expiryDate(LocalDate.now().plusMonths(6))
@@ -154,6 +155,7 @@ class InventoryAllocationServiceTest {
             .id("inv1")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(300))
+            .currentStock(43200L) // 300 cartons × 144 pieces/carton = 43200 base units
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -199,6 +201,7 @@ class InventoryAllocationServiceTest {
             .id("inv1")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(50))
+            .currentStock(50L) // 50 pieces (base unit purchase)
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -247,6 +250,7 @@ class InventoryAllocationServiceTest {
             .id("inv1")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(50))
+            .currentStock(50L) // 50 pieces in base units
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -346,6 +350,7 @@ class InventoryAllocationServiceTest {
             .id("inv1")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(100))
+            .currentStock(1200L) // 100 packs × 12 pieces = 1200 base units
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();
@@ -354,6 +359,7 @@ class InventoryAllocationServiceTest {
             .id("inv2")
             .shop(mockShop)
             .purchaseQuantity(BigDecimal.valueOf(100))
+            .currentStock(2400L) // 100 cartons × 24 pieces = 2400 base units
             .reservedStock(0)
             .status(Inventory.InventoryStatus.ACTIVE)
             .build();

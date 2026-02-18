@@ -1,10 +1,10 @@
 import React from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Edit, Trash2, Package, Tag, Barcode, Loader2 } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Package, Tag, Barcode, Loader2, Power } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useProduct, useDeleteProduct } from '@/hooks/useProducts'
+import { useProduct, useDeleteProduct, useUpdateProductStatus } from '@/hooks/useProducts'
 import { ProductStatus } from '@/types/api'
 import { formatDate } from '@/lib/utils'
 import {
@@ -24,6 +24,7 @@ export const ProductDetailPage: React.FC = () => {
   
   const { data: product, isLoading, error } = useProduct(productId)
   const deleteProductMutation = useDeleteProduct()
+  const updateStatusMutation = useUpdateProductStatus()
 
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
 
@@ -37,6 +38,11 @@ export const ProductDetailPage: React.FC = () => {
       // Error handled by mutation
       setShowDeleteDialog(false)
     }
+  }
+
+  const handleActivate = async () => {
+    if (!productId) return
+    await updateStatusMutation.mutateAsync({ productId, status: ProductStatus.ACTIVE })
   }
 
   const getStatusBadge = (status: ProductStatus) => {
@@ -120,13 +126,24 @@ export const ProductDetailPage: React.FC = () => {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+            {product.status === ProductStatus.DISCONTINUED ? (
+              <Button
+                variant="outline"
+                onClick={handleActivate}
+                disabled={updateStatusMutation.isPending}
+              >
+                <Power className="h-4 w-4 mr-2" />
+                {updateStatusMutation.isPending ? 'Activating...' : 'Activate'}
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -95,6 +95,15 @@ public class Inventory extends BaseEntity implements ShopAware {
     private LocalDateTime lastStockUpdate;
 
     /**
+     * Current stock in base units (e.g., pieces).
+     * This is the authoritative stock counter decremented on each sale.
+     * Initialised to purchaseQuantity × conversionFactor when stock is created.
+     */
+    @Builder.Default
+    @Column(name = "current_stock", nullable = false)
+    private Long currentStock = 0L;
+
+    /**
      * Batch-specific selling prices for each unit type.
      * Different units can have different prices for this inventory batch.
      */
@@ -111,22 +120,16 @@ public class Inventory extends BaseEntity implements ShopAware {
     }
 
     public Integer getAvailableStock() {
-        // Calculate current stock from purchase quantity converted to base units
-        Integer currentStockInBaseUnits = getCurrentStock();
-        return Math.max(0, currentStockInBaseUnits - reservedStock);
+        long current = getCurrentStock();
+        return (int) Math.max(0L, current - reservedStock);
     }
 
     /**
-     * Calculate current stock in base units from purchase quantity
-     * This is computed dynamically, not stored
+     * Returns current stock in base units (e.g., pieces).
+     * This is the authoritative remaining stock counter.
      */
-    public Integer getCurrentStock() {
-        if (purchaseQuantity == null || purchaseQuantity.compareTo(BigDecimal.ZERO) == 0) {
-            return 0;
-        }
-        // Stock is tracked via purchaseQuantity - need to convert to base units
-        // This will be properly calculated with conversion factors
-        return purchaseQuantity.intValue(); // Temporary - will be enhanced with proper conversion
+    public Long getCurrentStock() {
+        return currentStock != null ? currentStock : 0L;
     }
 
     public boolean isLowStock() {
@@ -167,26 +170,35 @@ public class Inventory extends BaseEntity implements ShopAware {
         this.lastStockUpdate = LocalDateTime.now();
     }
 
+    /**
+     * Sets the current stock to an absolute value (base units).
+     * Used for manual stock adjustments.
+     */
     public void adjustStock(int newStock, String reason) {
-        // Stock is now tracked via purchaseQuantity
-        // This method updates the purchase quantity
-        this.purchaseQuantity = BigDecimal.valueOf(newStock);
+        this.currentStock = (long) Math.max(0, newStock);
         this.lastStockUpdate = LocalDateTime.now();
     }
 
+    /**
+     * Adds stock in base units (e.g., after a stock return or new purchase).
+     */
     public void addStock(int quantity) {
-        if (this.purchaseQuantity == null) {
-            this.purchaseQuantity = BigDecimal.ZERO;
+        if (this.currentStock == null) {
+            this.currentStock = 0L;
         }
-        this.purchaseQuantity = this.purchaseQuantity.add(BigDecimal.valueOf(quantity));
+        this.currentStock = this.currentStock + quantity;
         this.lastStockUpdate = LocalDateTime.now();
     }
 
+    /**
+     * Removes stock in base units (e.g., after a sale).
+     * The sales pipeline always converts to base units before calling this.
+     */
     public void removeStock(int quantity) {
-        if (this.purchaseQuantity == null) {
-            this.purchaseQuantity = BigDecimal.ZERO;
+        if (this.currentStock == null) {
+            this.currentStock = 0L;
         }
-        this.purchaseQuantity = this.purchaseQuantity.subtract(BigDecimal.valueOf(quantity)).max(BigDecimal.ZERO);
+        this.currentStock = Math.max(0L, this.currentStock - quantity);
         this.lastStockUpdate = LocalDateTime.now();
     }
 

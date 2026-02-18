@@ -146,6 +146,25 @@ export const InventoryDetailPage: React.FC = () => {
     }
   }
 
+  // Format stock as "49 packs + 11 pieces" when purchase unit differs from base unit
+  const formatStock = (item: InventoryItem): string => {
+    if (
+      item.purchaseUnit &&
+      item.baseUnit &&
+      item.purchaseUnit.toLowerCase() !== item.baseUnit.toLowerCase() &&
+      item.currentStockInPurchaseUnit !== undefined
+    ) {
+      const packs = item.currentStockInPurchaseUnit
+      const remainder = item.stockRemainder ?? 0
+      if (remainder > 0) {
+        return `${packs} ${item.purchaseUnit} + ${remainder} ${item.baseUnit}`
+      }
+      return `${packs} ${item.purchaseUnit}`
+    }
+    const unit = item.baseUnit || 'units'
+    return `${item.currentStock} ${unit}`
+  }
+
   // Get stock level color
   const getStockLevelColor = (item: InventoryItem): string => {
     if (item.currentStock === 0) return 'text-gray-500'
@@ -320,8 +339,14 @@ export const InventoryDetailPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${getStockLevelColor(currentItem)}`}>
-              {currentItem?.currentStock}
+              {formatStock(currentItem)}
             </div>
+            {currentItem?.purchaseUnit && currentItem?.baseUnit &&
+              currentItem.purchaseUnit.toLowerCase() !== currentItem.baseUnit.toLowerCase() && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {currentItem.currentStock} {currentItem.baseUnit} total
+              </p>
+            )}
             <div className="mt-2">
               {getStockLevelBadge(currentItem)}
             </div>
@@ -353,7 +378,7 @@ export const InventoryDetailPage: React.FC = () => {
               {currentItem?.availableStock}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Ready to sell
+              {currentItem?.baseUnit || 'units'} ready to sell
             </p>
           </CardContent>
         </Card>
@@ -703,8 +728,14 @@ export const InventoryDetailPage: React.FC = () => {
             <div className="space-y-2">
               <Label>Current Stock</Label>
               <div className="text-2xl font-bold">
-                {currentItem?.currentStock} units
+                {formatStock(currentItem)}
               </div>
+              {currentItem?.purchaseUnit && currentItem?.baseUnit &&
+                currentItem.purchaseUnit.toLowerCase() !== currentItem.baseUnit.toLowerCase() && (
+                <p className="text-xs text-muted-foreground">
+                  ({currentItem.currentStock} {currentItem.baseUnit} total) — enter new quantity in {currentItem.baseUnit}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

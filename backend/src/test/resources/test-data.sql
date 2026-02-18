@@ -476,12 +476,12 @@ ON CONFLICT (id) DO NOTHING;
 -- ========================================
 -- Updated to match new inventory design: purchase_quantity instead of current_stock
 -- cost_price is now total_purchase_cost, base_unit and purchase_unit added
-INSERT INTO inventory (id, product_id, shop_id, reserved_stock, minimum_stock, cost_price, selling_price, base_unit, purchase_unit, purchase_quantity, total_purchase_cost, location, batch_number, expiry_date, status, created_at, updated_at, version)
+INSERT INTO inventory (id, product_id, shop_id, reserved_stock, minimum_stock, cost_price, selling_price, base_unit, purchase_unit, purchase_quantity, current_stock, total_purchase_cost, location, batch_number, expiry_date, status, created_at, updated_at, version)
 VALUES
-    ('a50e8400-e29b-41d4-a716-446655440001', '850e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 5, 20, 15.00, 25.99, 'piece', 'piece', 100.00, 1500.00, 'A1-B2', 'BATCH-MOUSE-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440002', '850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 3, 15, 20.00, 35.99, 'piece', 'piece', 75.00, 1500.00, 'A2-C1', 'BATCH-KB-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 10, 50, 10.00, 19.99, 'piece', 'piece', 200.00, 2000.00, 'B1-A3', 'BATCH-SHIRT-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('a50e8400-e29b-41d4-a716-446655440004', '850e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440001', 0, 100, 1.50, 2.99, 'piece', 'piece', 500.00, 750.00, 'C1-D2', 'BATCH-DRINK-001', CURRENT_DATE + INTERVAL '6 months', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('a50e8400-e29b-41d4-a716-446655440001', '850e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', 5, 20, 15.00, 25.99, 'piece', 'piece', 100.00, 100, 1500.00, 'A1-B2', 'BATCH-MOUSE-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440002', '850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440001', 3, 15, 20.00, 35.99, 'piece', 'piece', 75.00, 75, 1500.00, 'A2-C1', 'BATCH-KB-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440001', 10, 50, 10.00, 19.99, 'piece', 'piece', 200.00, 200, 2000.00, 'B1-A3', 'BATCH-SHIRT-001', NULL, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('a50e8400-e29b-41d4-a716-446655440004', '850e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440001', 0, 100, 1.50, 2.99, 'piece', 'piece', 500.00, 500, 750.00, 'C1-D2', 'BATCH-DRINK-001', CURRENT_DATE + INTERVAL '6 months', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================

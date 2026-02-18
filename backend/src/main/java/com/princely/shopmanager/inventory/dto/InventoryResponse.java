@@ -26,8 +26,9 @@ public class InventoryResponse {
     private String productName;
     private String productSku;
     private String productCategory;
-    private Integer currentStock;              // Computed from purchaseQuantity (in base units)
-    private Integer currentStockInPurchaseUnit; // Stock in purchase units (for display)
+    private Integer currentStock;              // Remaining stock in base units (e.g., 599 pieces)
+    private Integer currentStockInPurchaseUnit; // Floor(currentStock / conversionFactor) e.g., 49 packs
+    private Integer stockRemainder;            // currentStock % conversionFactor e.g., 11 pieces
     private Integer reservedStock;
     private Integer availableStock;
     private Integer minimumStock;

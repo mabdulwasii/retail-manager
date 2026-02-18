@@ -236,6 +236,26 @@ export const InventoryListPage: React.FC = () => {
     }
   }
 
+  // Format stock compactly for table display: "49 pk + 11 pc" or "599 pieces"
+  const formatStockCompact = (item: InventoryItem): string => {
+    if (
+      item.purchaseUnit &&
+      item.baseUnit &&
+      item.purchaseUnit.toLowerCase() !== item.baseUnit.toLowerCase() &&
+      item.currentStockInPurchaseUnit !== undefined
+    ) {
+      const packs = item.currentStockInPurchaseUnit
+      const remainder = item.stockRemainder ?? 0
+      const purchaseLabel = item.purchaseUnit.slice(0, 3)
+      const baseLabel = item.baseUnit.slice(0, 3)
+      if (remainder > 0) {
+        return `${packs} ${purchaseLabel} + ${remainder} ${baseLabel}`
+      }
+      return `${packs} ${item.purchaseUnit}`
+    }
+    return `${item.currentStock}`
+  }
+
   // Get stock level color
   const getStockLevelColor = (item: InventoryItem): string => {
     if (item.currentStock === 0) return 'text-gray-500'
@@ -567,7 +587,7 @@ export const InventoryListPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <span className={`font-semibold ${getStockLevelColor(item)}`}>
-                        {item.currentStock}
+                        {formatStockCompact(item)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -659,8 +679,14 @@ export const InventoryListPage: React.FC = () => {
             <div className="space-y-2">
               <Label>Current Stock</Label>
               <div className="text-2xl font-bold">
-                {selectedItem?.currentStock || 0} units
+                {selectedItem ? formatStockCompact(selectedItem) : '0'}
               </div>
+              {selectedItem?.purchaseUnit && selectedItem?.baseUnit &&
+                selectedItem.purchaseUnit.toLowerCase() !== selectedItem.baseUnit.toLowerCase() && (
+                <p className="text-xs text-muted-foreground">
+                  ({selectedItem.currentStock} {selectedItem.baseUnit} total) — enter new quantity in {selectedItem.baseUnit}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

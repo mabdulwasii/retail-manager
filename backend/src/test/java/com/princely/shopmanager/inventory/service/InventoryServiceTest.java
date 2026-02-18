@@ -98,7 +98,8 @@ class InventoryServiceTest {
         testInventory.setId("inventory-1");
         testInventory.setShop(testShop);
         testInventory.setProduct(testProduct);
-        testInventory.setPurchaseQuantity(BigDecimal.valueOf(100)); // Changed from setCurrentStock
+        testInventory.setPurchaseQuantity(BigDecimal.valueOf(100));
+        testInventory.setCurrentStock(100L); // 100 units in base units
         testInventory.setMinimumStock(10);
         testInventory.setCostPrice(BigDecimal.valueOf(15.50));
         testInventory.setSellingPrice(BigDecimal.valueOf(25.00));
@@ -157,7 +158,7 @@ class InventoryServiceTest {
             assertThat(result.getId()).isEqualTo("inventory-1");
             assertThat(result.getCurrentStock()).isEqualTo(100);
 
-            verify(inventoryRepository).save(any(Inventory.class));
+            verify(inventoryRepository, times(2)).save(any(Inventory.class)); // first: initial save, second: after setting currentStock
             verify(historyRepository).save(any(InventoryHistory.class));
             verify(auditService).logEntityCreation(eq("Inventory"), eq("inventory-1"), anyString());
         }
@@ -369,8 +370,8 @@ class InventoryServiceTest {
     @Test
     void sellStock_WithInsufficientStock_ShouldThrowException() {
         // Arrange
-        testInventory.setPurchaseQuantity(BigDecimal.valueOf(10));
-        testInventory.setReservedStock(5);
+        testInventory.setCurrentStock(10L); // only 10 units available
+        testInventory.setReservedStock(5);  // 5 reserved → only 5 available
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
 
@@ -547,7 +548,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithZeroStock_ShouldDeleteSuccessfully() {
         // Arrange
-        testInventory.setPurchaseQuantity(BigDecimal.ZERO);
+        testInventory.setCurrentStock(0L); // no stock remaining
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
@@ -563,7 +564,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithActiveStock_ShouldThrowException() {
         // Arrange
-        testInventory.setPurchaseQuantity(BigDecimal.valueOf(50));
+        testInventory.setCurrentStock(50L); // active stock present
         testInventory.setReservedStock(0);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
@@ -579,7 +580,7 @@ class InventoryServiceTest {
     @Test
     void deleteInventory_WithReservedStock_ShouldThrowException() {
         // Arrange
-        testInventory.setPurchaseQuantity(BigDecimal.ZERO);
+        testInventory.setCurrentStock(0L); // no active stock (so we get past the first guard)
         testInventory.setReservedStock(10);
         when(inventoryRepository.findById("inventory-1")).thenReturn(Optional.of(testInventory));
         when(shopAccessValidator.hasNoAccessToShop("shop-1", testPrincipal)).thenReturn(false);
