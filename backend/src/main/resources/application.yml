@@ -65,7 +65,7 @@ spring:
     republish-outstanding-events-on-restart: ${SPRING_MODULITH_REPUBLISH_OUTSTANDING_EVENTS:true}
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${PORT:${SERVER_PORT:8081}}
   error:
     include-message: ${SERVER_ERROR_INCLUDE_MESSAGE:always}
     include-binding-errors: ${SERVER_ERROR_INCLUDE_BINDING_ERRORS:always}
