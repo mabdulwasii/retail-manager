@@ -177,6 +177,7 @@ application:
 # Server Configuration
 server:
   port: ${SERVER_PORT:8081}
+  address: 0.0.0.0
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,application/json
