@@ -20,7 +20,7 @@ export const ShopPerformanceChart: React.FC<ShopPerformanceChartProps> = ({
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NGN',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);

@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
   const plans = [
     {
       name: 'Cloud Starter',
-      price: '$49',
+      price: '₦25,000',
       period: '/month',
       description: 'Perfect for single shop owners',
       features: [
@@ -103,7 +103,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       name: 'Cloud Professional',
-      price: '$149',
+      price: '₦75,000',
       period: '/month',
       description: 'Ideal for growing businesses',
       features: [
@@ -137,7 +137,7 @@ export const LandingPage: React.FC = () => {
     {
       name: 'Sarah Johnson',
       role: 'Retail Chain Owner',
-      content: 'Shop Manager transformed how we operate our 12 locations. The investment tracking alone has increased our ROI by 30%.',
+      content: 'RetailHQ transformed how we operate our 12 locations. The investment tracking alone has increased our ROI by 30%.',
       rating: 5
     },
     {
@@ -162,7 +162,7 @@ export const LandingPage: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
               <Store className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">Shop Manager</span>
+              <span className="text-2xl font-bold text-gray-900">RetailHQ</span>
             </div>
             
             {/* Mobile menu button */}
@@ -316,7 +316,7 @@ export const LandingPage: React.FC = () => {
               <div className="text-gray-600">Active Shops</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-blue-600">$2M+</div>
+              <div className="text-3xl font-bold text-blue-600">₦2B+</div>
               <div className="text-gray-600">Transactions Processed</div>
             </div>
             <div>
@@ -503,7 +503,7 @@ export const LandingPage: React.FC = () => {
               Trusted by Retail Leaders
             </h2>
             <p className="text-xl text-gray-600">
-              See what our customers say about Shop Manager
+              See what our customers say about RetailHQ
             </p>
           </div>
 
@@ -537,7 +537,7 @@ export const LandingPage: React.FC = () => {
                 Built for Modern Retail
               </h2>
               <p className="text-lg text-gray-600 mb-6">
-                Shop Manager is a comprehensive retail management platform designed to help
+                RetailHQ is a comprehensive retail management platform designed to help
                 businesses of all sizes streamline operations, increase profitability, and scale efficiently.
               </p>
               <p className="text-lg text-gray-600 mb-8">
@@ -566,7 +566,7 @@ export const LandingPage: React.FC = () => {
             </div>
             <div className="relative">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white">
-                <h3 className="text-2xl font-bold mb-4">Why Choose Shop Manager?</h3>
+                <h3 className="text-2xl font-bold mb-4">Why Choose RetailHQ?</h3>
                 <ul className="space-y-3">
                   <li className="flex items-center">
                     <Check className="h-5 w-5 mr-3" />
@@ -603,22 +603,22 @@ export const LandingPage: React.FC = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-gray-600">
-              Get answers to common questions about Shop Manager
+              Get answers to common questions about RetailHQ
             </p>
           </div>
 
           <div className="space-y-6">
             {[
               {
-                q: "What makes Shop Manager different from other retail platforms?",
-                a: "Shop Manager offers unique features like multi-tenant architecture, sophisticated investment tracking with profit sharing, AI-powered fraud detection, and comprehensive analytics all in one platform."
+                q: "What makes RetailHQ different from other retail platforms?",
+                a: "RetailHQ offers unique features like multi-tenant architecture, sophisticated investment tracking with profit sharing, AI-powered fraud detection, and comprehensive analytics all in one platform."
               },
               {
-                q: "Can I migrate my existing data to Shop Manager?",
+                q: "Can I migrate my existing data to RetailHQ?",
                 a: "Yes, we provide comprehensive migration tools and dedicated support to help you seamlessly transfer your existing data from other platforms."
               },
               {
-                q: "Is my data secure with Shop Manager?",
+                q: "Is my data secure with RetailHQ?",
                 a: "Absolutely. We implement enterprise-grade security with encryption at rest and in transit, regular security audits, and compliance with industry standards."
               },
               {
@@ -732,7 +732,7 @@ export const LandingPage: React.FC = () => {
             Ready to Transform Your Retail Business?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join hundreds of successful retailers using Shop Manager to increase profitability
+            Join hundreds of successful retailers using RetailHQ to increase profitability
             and streamline operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -756,7 +756,7 @@ export const LandingPage: React.FC = () => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Store className="h-8 w-8 text-blue-400" />
-                <span className="text-2xl font-bold">Shop Manager</span>
+                <span className="text-2xl font-bold">RetailHQ</span>
               </div>
               <p className="text-gray-400">
                 The complete retail management platform for modern businesses.
@@ -795,7 +795,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Shop Manager. All rights reserved.</p>
+            <p>&copy; 2024 RetailHQ. All rights reserved.</p>
           </div>
         </div>
       </footer>

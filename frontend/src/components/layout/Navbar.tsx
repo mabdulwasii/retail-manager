@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
         </Button>
         
         <div className="mr-4 flex">
-          <h1 className="text-xl font-bold">Shop Manager</h1>
+          <h1 className="text-xl font-bold">RetailHQ</h1>
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-2 md:justify-end">

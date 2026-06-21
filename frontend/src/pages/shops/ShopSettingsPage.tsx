@@ -105,7 +105,7 @@ export const ShopSettingsPage: React.FC = () => {
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
   const [fraudDetectionEnabled, setFraudDetectionEnabled] = useState(false);
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("NGN");
   const [taxRate, setTaxRate] = useState("0");
   const [maxDiscountPercent, setMaxDiscountPercent] = useState("20");
   const [receiptFooter, setReceiptFooter] = useState("");
@@ -139,7 +139,7 @@ export const ShopSettingsPage: React.FC = () => {
       setAnalyticsEnabled(configuration.analyticsEnabled ?? false);
       setFraudDetectionEnabled(configuration.fraudDetectionEnabled ?? false);
       setAutoBackupEnabled(configuration.autoBackupEnabled ?? false);
-      setCurrency(configuration.currency || "USD");
+      setCurrency(configuration.currency || "NGN");
       setTaxRate(configuration.taxRate?.toString() || "0");
       setMaxDiscountPercent(
         configuration.maxDiscountPercentage?.toString() || "20"
@@ -404,7 +404,7 @@ export const ShopSettingsPage: React.FC = () => {
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD - US Dollar</SelectItem>
+                      <SelectItem value="NGN">USD - US Dollar</SelectItem>
                       <SelectItem value="EUR">EUR - Euro</SelectItem>
                       <SelectItem value="GBP">GBP - British Pound</SelectItem>
                       <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
