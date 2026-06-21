@@ -21,7 +21,7 @@ interface TierDetails {
 const TIER_DETAILS: Record<SubscriptionTier, TierDetails> = {
   [SubscriptionTier.FREE]: {
     name: 'Free',
-    price: '$0',
+    price: '₦0',
     period: 'forever',
     description: 'Perfect for single store startups',
     color: 'gray',
@@ -37,7 +37,7 @@ const TIER_DETAILS: Record<SubscriptionTier, TierDetails> = {
   },
   [SubscriptionTier.BASIC]: {
     name: 'Basic',
-    price: '$29',
+    price: '₦15,000',
     period: '/month',
     description: 'For growing businesses',
     color: 'blue',
@@ -53,7 +53,7 @@ const TIER_DETAILS: Record<SubscriptionTier, TierDetails> = {
   },
   [SubscriptionTier.PREMIUM]: {
     name: 'Premium',
-    price: '$99',
+    price: '₦50,000',
     period: '/month',
     description: 'For established multi-location businesses',
     color: 'purple',

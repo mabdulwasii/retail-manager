@@ -85,7 +85,7 @@ export const LoginPage: React.FC = () => {
             </Button>
             <Store className="h-12 w-12 text-blue-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Shop Manager</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">RetailHQ</h1>
           <p className="text-lg text-gray-600">
             Sign in to access your retail management platform
           </p>
@@ -175,7 +175,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Features */}
           <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-gray-900">Why Choose Shop Manager?</h3>
+            <h3 className="text-xl font-semibold text-gray-900">Why Choose RetailHQ?</h3>
             <div className="space-y-4">
               {features.map((feature) => (
                 <div key={feature.title} className="flex items-start space-x-3">
@@ -205,14 +205,14 @@ export const LoginPage: React.FC = () => {
                 <li>1. Click "Continue to Login" below</li>
                 <li>2. You'll be redirected to our custom Keycloak login page</li>
                 <li>3. Enter your credentials on the secure login form</li>
-                <li>4. Return to Shop Manager dashboard automatically</li>
+                <li>4. Return to RetailHQ dashboard automatically</li>
               </ol>
             </div>
           </div>
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          Shop Manager v1.0.0 - Multi-tenant retail management platform
+          RetailHQ v1.0.0 - Multi-tenant retail management platform
         </div>
       </div>
     </div>

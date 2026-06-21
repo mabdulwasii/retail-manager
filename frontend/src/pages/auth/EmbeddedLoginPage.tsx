@@ -47,7 +47,7 @@ export const EmbeddedLoginPage: React.FC = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Store className="h-12 w-12 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Shop Manager</h1>
+            <h1 className="text-3xl font-bold text-gray-900">RetailHQ</h1>
           </div>
           <p className="text-gray-600">Standalone Edition</p>
         </div>

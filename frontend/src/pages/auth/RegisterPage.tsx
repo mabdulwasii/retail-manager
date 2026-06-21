@@ -119,7 +119,7 @@ export const RegisterPage: React.FC = () => {
               <li>✓ Built-in security and compliance</li>
             </ul>
             <div className="mt-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">Starting at $49/month</div>
+              <div className="text-2xl font-bold text-blue-600">Starting at ₦25,000/month</div>
               <div className="text-sm text-gray-500">30-day free trial</div>
             </div>
           </CardContent>
@@ -424,7 +424,7 @@ export const RegisterPage: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <Link to="/" className="flex items-center space-x-2">
               <Store className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">Shop Manager</span>
+              <span className="text-2xl font-bold text-gray-900">RetailHQ</span>
             </Link>
 
             <div className="text-sm text-gray-600">

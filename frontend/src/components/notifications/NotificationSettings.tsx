@@ -33,14 +33,14 @@ export const NotificationSettings: React.FC = () => {
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
         new Notification('Test Notification', {
-          body: 'This is a test notification from Shop Manager fraud detection system.',
+          body: 'This is a test notification from RetailHQ fraud detection system.',
           icon: '/favicon.ico'
         })
       } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(permission => {
           if (permission === 'granted') {
             new Notification('Test Notification', {
-              body: 'Browser notifications are now enabled for Shop Manager.',
+              body: 'Browser notifications are now enabled for RetailHQ.',
               icon: '/favicon.ico'
             })
           }
