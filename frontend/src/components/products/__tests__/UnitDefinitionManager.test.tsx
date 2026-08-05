@@ -112,12 +112,11 @@ describe('UnitDefinitionManager', () => {
       />
     );
 
-    // Unit labels shown in text inputs
+    // Unit labels and unit types both appear as input values
     expect(screen.getByDisplayValue('Piece')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Pack (12pcs)')).toBeInTheDocument();
-    // Unit types shown in Select buttons (multiple instances expected from dropdown)
-    expect(screen.getAllByText('piece').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('pack').length).toBeGreaterThan(0);
+    expect(screen.getByDisplayValue('piece')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('pack')).toBeInTheDocument();
   });
 
   it('validates base unit has conversion factor of 1.0', () => {
@@ -140,7 +139,7 @@ describe('UnitDefinitionManager', () => {
 
     // Component should render even with invalid data
     expect(screen.getByDisplayValue('Piece')).toBeInTheDocument();
-    expect(screen.getAllByText('piece').length).toBeGreaterThan(0);
+    expect(screen.getByDisplayValue('piece')).toBeInTheDocument();
   });
 
   it('validates that only one base unit exists', () => {
@@ -213,8 +212,8 @@ describe('UnitDefinitionManager', () => {
       />
     );
 
-    // Component should render with empty unit label
-    expect(screen.getAllByText('piece').length).toBeGreaterThan(0);
+    // Component should render with empty unit label — unitType appears as input value
+    expect(screen.getByDisplayValue('piece')).toBeInTheDocument();
   });
 
   it('validates conversion factor must be positive', () => {
